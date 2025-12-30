@@ -1,0 +1,368 @@
+import 'package:dio/dio.dart';
+import 'package:logger/logger.dart';
+import '../models/entity/entities.dart';
+
+/// TMDB API 服务
+/// 负责与 TMDB API 交互并返回解析后的 Entity 模型
+class TmdbService {
+  // --- 配置 ---
+  late final String _apiKey;
+  static const String _baseUrl = 'https://api.themoviedb.org/3';
+  static const String _imageBaseUrl = 'https://image.tmdb.org/t/p/w500';
+  static const String _backdropBaseUrl = 'https://image.tmdb.org/t/p/w1280';
+  static const String _profileBaseUrl = 'https://image.tmdb.org/t/p/w185';
+  static const String _language = 'zh-CN';
+
+  final Dio _dio = Dio();
+  final Logger _logger = Logger(printer: PrettyPrinter(methodCount: 0));
+
+  // 单例模式
+  static final TmdbService _instance = TmdbService._internal();
+
+  factory TmdbService({String? apiKey}) {
+    if (apiKey != null) {
+      _instance._apiKey = apiKey;
+    }
+    return _instance;
+  }
+
+  TmdbService._internal() {
+    _apiKey = const String.fromEnvironment(
+      'TMDB_API_KEY',
+      defaultValue: '8f256bccbacc37341c6f01aa1e35af29',
+    );
+    _dio.options.connectTimeout = const Duration(seconds: 10);
+    _dio.options.receiveTimeout = const Duration(seconds: 10);
+  }
+
+  // ===== 公开 API =====
+
+  /// 搜索并获取电影完整元数据
+  Future<MovieMetadataEntity?> fetchMovie(String title, {int? year}) async {
+    final searchData = await _search('/search/movie', title, year: year);
+    if (searchData == null) return null;
+
+    final movieId = searchData['id'] as int;
+    return await fetchMovieById(movieId);
+  }
+
+  /// 根据 ID 获取电影元数据
+  Future<MovieMetadataEntity?> fetchMovieById(int movieId) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/movie/$movieId',
+        queryParameters: {
+          'api_key': _apiKey,
+          'language': _language,
+          'append_to_response': 'credits,release_dates',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return _parseMovieEntity(response.data);
+      }
+    } catch (e) {
+      _logger.w("⚠️ TMDB 获取电影详情失败: ID:$movieId - $e");
+    }
+    return null;
+  }
+
+  /// 搜索并获取剧集完整元数据
+  Future<TVShowMetadataEntity?> fetchTVShow(String title, {int? year}) async {
+    final searchData = await _search(
+      '/search/tv',
+      title,
+      year: year,
+      yearKey: 'first_air_date_year',
+    );
+    if (searchData == null) return null;
+
+    final tvId = searchData['id'] as int;
+    return await fetchTVShowById(tvId);
+  }
+
+  /// 根据 ID 获取剧集元数据
+  Future<TVShowMetadataEntity?> fetchTVShowById(int tvId) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/tv/$tvId',
+        queryParameters: {
+          'api_key': _apiKey,
+          'language': _language,
+          'append_to_response': 'credits,content_ratings',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return _parseTVShowEntity(response.data);
+      }
+    } catch (e) {
+      _logger.w("⚠️ TMDB 获取剧集详情失败: ID:$tvId - $e");
+    }
+    return null;
+  }
+
+  /// 获取季详情（包含所有集）
+  Future<SeasonMetadataEntity?> fetchSeason(
+    int tvId,
+    int seasonNumber, {
+    required String showTmdbId,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/tv/$tvId/season/$seasonNumber',
+        queryParameters: {'api_key': _apiKey, 'language': _language},
+      );
+
+      if (response.statusCode == 200) {
+        return _parseSeasonEntity(response.data, showTmdbId, seasonNumber);
+      }
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 404) {
+        _logger.w("⚠️ TMDB 未找到季详情: ID:$tvId S$seasonNumber");
+      } else {
+        _logger.e("❌ TMDB 获取季详情异常: ID:$tvId S$seasonNumber - $e");
+      }
+    }
+    return null;
+  }
+
+  /// 获取季原始数据（用于解析集）
+  Future<Map<String, dynamic>?> fetchSeasonRaw(
+    int tvId,
+    int seasonNumber,
+  ) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/tv/$tvId/season/$seasonNumber',
+        queryParameters: {'api_key': _apiKey, 'language': _language},
+      );
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      }
+    } catch (e) {
+      _logger.w("⚠️ TMDB 获取季原始数据失败: ID:$tvId S$seasonNumber - $e");
+    }
+    return null;
+  }
+
+  // ===== 图片 URL 构建 =====
+
+  static String? buildPosterUrl(String? path) {
+    if (path == null || path.isEmpty) return null;
+    return '$_imageBaseUrl$path';
+  }
+
+  static String? buildBackdropUrl(String? path) {
+    if (path == null || path.isEmpty) return null;
+    return '$_backdropBaseUrl$path';
+  }
+
+  static String? buildProfileUrl(String? path) {
+    if (path == null || path.isEmpty) return null;
+    return '$_profileBaseUrl$path';
+  }
+
+  // ===== 私有方法：API 请求 =====
+
+  Future<Map<String, dynamic>?> _search(
+    String endpoint,
+    String query, {
+    int? year,
+    String yearKey = 'year',
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'api_key': _apiKey,
+        'language': _language,
+        'query': query,
+        'include_adult': false,
+      };
+
+      if (year != null) {
+        queryParams[yearKey] = year;
+      }
+
+      final response = await _dio.get(
+        '$_baseUrl$endpoint',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        final results = response.data['results'] as List;
+        if (results.isNotEmpty) {
+          return results.first as Map<String, dynamic>;
+        }
+      }
+    } catch (e) {
+      _logger.w("⚠️ TMDB 搜索失败: $query ($year) - $e");
+    }
+    return null;
+  }
+
+  // ===== 私有方法：Entity 解析 =====
+
+  MovieMetadataEntity _parseMovieEntity(Map<String, dynamic> data) {
+    return MovieMetadataEntity()
+      ..tmdbId = data['id'].toString()
+      ..title = data['title'] ?? ''
+      ..originalTitle = data['original_title']
+      ..releaseYear = _parseYear(data['release_date'])
+      ..releaseDate = _parseDate(data['release_date'])
+      ..posterUrl = buildPosterUrl(data['poster_path'])
+      ..backdropUrl = buildBackdropUrl(data['backdrop_path'])
+      ..overview = data['overview']
+      ..certification = _parseCertification(data['release_dates'])
+      ..rating = (data['vote_average'] ?? 0.0).toDouble()
+      ..genres = _parseGenres(data['genres'])
+      ..cast = _parseCast(data['credits']);
+  }
+
+  TVShowMetadataEntity _parseTVShowEntity(Map<String, dynamic> data) {
+    return TVShowMetadataEntity()
+      ..tmdbId = data['id'].toString()
+      ..title = data['name'] ?? ''
+      ..originalTitle = data['original_name']
+      ..releaseYear = _parseYear(data['first_air_date'])
+      ..firstAirDate = _parseDate(data['first_air_date'])
+      ..posterUrl = buildPosterUrl(data['poster_path'])
+      ..backdropUrl = buildBackdropUrl(data['backdrop_path'])
+      ..overview = data['overview']
+      ..certification = _parseTvCertification(data['content_ratings'])
+      ..rating = (data['vote_average'] ?? 0.0).toDouble()
+      ..genres = _parseGenres(data['genres'])
+      ..cast = _parseCast(data['credits'])
+      ..status = data['status']
+      ..numberOfSeasons = data['number_of_seasons']
+      ..numberOfEpisodes = data['number_of_episodes'];
+  }
+
+  SeasonMetadataEntity _parseSeasonEntity(
+    Map<String, dynamic> data,
+    String showTmdbId,
+    int seasonNumber,
+  ) {
+    final seasonKey = '${showTmdbId}_s$seasonNumber';
+    final episodesData = data['episodes'] as List? ?? [];
+
+    return SeasonMetadataEntity()
+      ..seasonKey = seasonKey
+      ..seasonNumber = seasonNumber
+      ..title = data['name'] ?? 'Season $seasonNumber'
+      ..posterUrl = buildPosterUrl(data['poster_path'])
+      ..overview = data['overview']
+      ..numberOfEpisodes = episodesData.length;
+  }
+
+  /// 解析单集数据
+  EpisodeMetadataEntity parseEpisodeEntity(
+    Map<String, dynamic> data,
+    String showTmdbId,
+    int seasonNumber,
+  ) {
+    final epNum = data['episode_number'] as int;
+    final epTmdbId = '${showTmdbId}_s${seasonNumber}e$epNum';
+
+    return EpisodeMetadataEntity()
+      ..tmdbId = epTmdbId
+      ..episodeNumber = epNum
+      ..title = data['name'] ?? 'Episode $epNum'
+      ..airDate = _parseDate(data['air_date'])
+      ..overview = data['overview']
+      ..stillUrl = buildBackdropUrl(data['still_path'])
+      ..guestStars = _parseGuestStars(data['guest_stars']);
+  }
+
+  // ===== 私有方法：数据解析 =====
+
+  int? _parseYear(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return null;
+    return int.tryParse(dateStr.split('-').first);
+  }
+
+  DateTime? _parseDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return null;
+    return DateTime.tryParse(dateStr);
+  }
+
+  List<String> _parseGenres(List<dynamic>? genres) {
+    if (genres == null) return [];
+    return genres.map((g) => g['name'].toString()).toList();
+  }
+
+  List<ArtistEmbedded> _parseCast(Map<String, dynamic>? credits) {
+    if (credits == null || credits['cast'] == null) return [];
+    final castList = credits['cast'] as List;
+    return castList.take(10).map((c) {
+      return ArtistEmbedded()
+        ..tmdbId = c['id']?.toString()
+        ..name = c['name'] ?? 'Unknown'
+        ..character = c['character']
+        ..profileUrl = buildProfileUrl(c['profile_path']);
+    }).toList();
+  }
+
+  List<ArtistEmbedded> _parseGuestStars(List<dynamic>? guests) {
+    if (guests == null) return [];
+    return guests.take(5).map((g) {
+      return ArtistEmbedded()
+        ..tmdbId = g['id']?.toString()
+        ..name = g['name'] ?? 'Unknown'
+        ..character = g['character']
+        ..profileUrl = buildProfileUrl(g['profile_path']);
+    }).toList();
+  }
+
+  String? _parseCertification(Map<String, dynamic>? releaseDates) {
+    if (releaseDates == null) return null;
+    final results = releaseDates['results'] as List?;
+    if (results == null || results.isEmpty) return null;
+
+    // 优先查找 US 或 CN 的分级
+    final targetIso = ['US', 'CN'];
+    for (final iso in targetIso) {
+      final countryData = results.firstWhere(
+        (element) => element['iso_3166_1'] == iso,
+        orElse: () => null,
+      );
+      if (countryData != null) {
+        final dates = countryData['release_dates'] as List?;
+        if (dates != null && dates.isNotEmpty) {
+          // 找第一个非空的 certification
+          final cert = dates.firstWhere(
+            (d) =>
+                d['certification'] != null &&
+                d['certification'].toString().isNotEmpty,
+            orElse: () => null,
+          );
+          if (cert != null) {
+            return cert['certification'].toString();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  String? _parseTvCertification(Map<String, dynamic>? contentRatings) {
+    if (contentRatings == null) return null;
+    final results = contentRatings['results'] as List?;
+    if (results == null || results.isEmpty) return null;
+
+    final targetIso = ['US', 'CN'];
+    for (final iso in targetIso) {
+      final countryData = results.firstWhere(
+        (element) => element['iso_3166_1'] == iso,
+        orElse: () => null,
+      );
+      if (countryData != null) {
+        final rating = countryData['rating'] as String?;
+        if (rating != null && rating.isNotEmpty) {
+          return rating;
+        }
+      }
+    }
+    return null;
+  }
+}
