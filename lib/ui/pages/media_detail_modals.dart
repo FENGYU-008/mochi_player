@@ -49,6 +49,8 @@ void showMediaDetailModal(BuildContext context, dynamic item) {
       );
     },
     pageBuilder: (context, animation, secondaryAnimation) {
+      final theme = Theme.of(context);
+      final isDark = theme.brightness == Brightness.dark;
       return Center(
         child: Material(
           color: Colors.transparent,
@@ -61,7 +63,7 @@ void showMediaDetailModal(BuildContext context, dynamic item) {
               ),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -184,6 +186,7 @@ class _MediaDetailCardContentState extends State<_MediaDetailCardContent> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Stack(
       children: [
         CustomScrollView(
@@ -314,28 +317,33 @@ class _MediaDetailCardContentState extends State<_MediaDetailCardContent> {
                   const SizedBox(height: 32),
 
                   // 简介
-                  const Text(
+                  Text(
                     "Storyline",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     _overview,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       height: 1.6,
-                      color: Color(0xFF555555),
+                      color: theme.textTheme.bodyMedium?.color?.withAlpha(180),
                     ),
                   ),
                   const SizedBox(height: 32),
 
                   // 演职员表 (使用 HorizontalScrollView)
                   if (_cast.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       "Cast",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
+                        color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -378,68 +386,187 @@ class _MediaDetailCardContentState extends State<_MediaDetailCardContent> {
   // --- 子组件构建方法 ---
 
   Widget _buildMovieActions(BuildContext context, Movie movie) {
-    return Row(
+    final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
+    final versions = provider.getVersions(movie.tmdbId);
+    final hasMultipleVersions = versions.length > 1;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ElevatedButton.icon(
-          onPressed: () => _playMovie(context, movie),
-          icon: const Icon(
-            Icons.play_arrow_rounded,
-            color: Colors.white,
-            size: 28,
-          ),
-          label: const Text(
-            "Play Now",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+        Row(
+          children: [
+            ElevatedButton.icon(
+              onPressed: () => hasMultipleVersions
+                  ? _showVersionPicker(context, movie, versions)
+                  : _playMovie(context, movie),
+              icon: const Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
+              label: Text(
+                hasMultipleVersions ? "Play" : "Play Now",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF007AFF),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 20,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 4,
+                shadowColor: const Color(
+                  0xFF007AFF,
+                ).withAlpha((255 * 0.4).round()),
+              ),
             ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF007AFF),
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 4,
-            shadowColor: const Color(0xFF007AFF).withAlpha((255 * 0.4).round()),
-          ),
+            const SizedBox(width: 16),
+            _FavoriteButton(tmdbId: movie.tmdbId),
+          ],
         ),
-        const SizedBox(width: 20),
-        OutlinedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.add, color: Color(0xFF007AFF)),
-          label: const Text(
-            "My List",
-            style: TextStyle(
-              color: Color(0xFF007AFF),
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+        // 版本信息
+        if (hasMultipleVersions) ...[
+          const SizedBox(height: 16),
+          Text(
+            "${versions.length} versions available",
+            style: TextStyle(fontSize: 13, color: Colors.grey[500]),
           ),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-            side: const BorderSide(color: Color(0xFF007AFF), width: 1.5),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        ),
+        ],
       ],
     );
   }
 
+  void _showVersionPicker(
+    BuildContext modalContext,
+    Movie movie,
+    List<MediaFile> versions,
+  ) {
+    showModalBottomSheet(
+      context: modalContext,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        final isDark = theme.brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF2C2C2E) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  "Select Version",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: versions.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final file = versions[index];
+                  final label =
+                      file.versionLabel ??
+                      [
+                            file.quality,
+                            file.videoCodec,
+                            if (file.isHdr) file.hdrFormat ?? 'HDR',
+                          ]
+                          .whereType<String>()
+                          .where((s) => s.isNotEmpty)
+                          .join(' • ');
+                  return ListTile(
+                    leading: Icon(
+                      Icons.movie_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
+                    title: Text(
+                      label.isNotEmpty ? label : file.fileName,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      _buildVersionSubtitle(file),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      // 使用 modalContext 而不是 sheetContext，因为 sheet 已关闭
+                      _openPlayer(modalContext, file);
+                    },
+                  );
+                },
+              ),
+              SizedBox(height: MediaQuery.of(sheetContext).padding.bottom + 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _buildVersionSubtitle(MediaFile file) {
+    final parts = <String>[];
+    if (file.audioCodec != null) parts.add(file.audioCodec!);
+    if (file.audioChannels != null) parts.add(file.audioChannels!);
+    if (file.size > 0) parts.add(_formatFileSize(file.size));
+    return parts.join(' • ');
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+  }
+
   Widget _buildTVShowActions(BuildContext context, TVShow show) {
     if (_sortedSeasons.isEmpty) {
-      return const Text(
-        "No seasons available.",
-        style: TextStyle(color: Colors.grey),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [_FavoriteButton(tmdbId: show.tmdbId)]),
+          const SizedBox(height: 20),
+          const Text(
+            "No seasons available.",
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
       );
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 收藏按钮
+        Row(children: [_FavoriteButton(tmdbId: show.tmdbId)]),
+        const SizedBox(height: 24),
         // 季选择器
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -476,7 +603,7 @@ class _MediaDetailCardContentState extends State<_MediaDetailCardContent> {
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _sortedEpisodes.length, // 使用排序后的列表
+            itemCount: _sortedEpisodes.length,
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final episode = _sortedEpisodes[index];
@@ -722,6 +849,89 @@ class _CloseButtonState extends State<_CloseButton> {
           ),
           child: const Icon(Icons.close, color: Colors.white, size: 18),
         ),
+      ),
+    );
+  }
+}
+
+/// 收藏按钮
+class _FavoriteButton extends StatefulWidget {
+  final String tmdbId;
+
+  const _FavoriteButton({required this.tmdbId});
+
+  @override
+  State<_FavoriteButton> createState() => _FavoriteButtonState();
+}
+
+class _FavoriteButtonState extends State<_FavoriteButton> {
+  bool _isFavorite = false;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      _checkFavoriteStatus();
+    }
+  }
+
+  void _checkFavoriteStatus() {
+    final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
+    final files = provider.getVersions(widget.tmdbId);
+    if (files.isNotEmpty) {
+      setState(() => _isFavorite = files.any((f) => f.isFavorite));
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
+    final files = provider.getVersions(widget.tmdbId);
+    if (files.isEmpty) return;
+
+    for (final file in files) {
+      await provider.toggleFavorite(file);
+    }
+
+    setState(() => _isFavorite = !_isFavorite);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isFavorite ? 'Added to Favorites' : 'Removed from Favorites',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: _toggleFavorite,
+      icon: Icon(
+        _isFavorite ? Icons.favorite : Icons.favorite_border,
+        color: _isFavorite ? Colors.red : const Color(0xFF007AFF),
+        size: 22,
+      ),
+      label: Text(
+        _isFavorite ? "Favorited" : "Favorite",
+        style: TextStyle(
+          color: _isFavorite ? Colors.red : const Color(0xFF007AFF),
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+        side: BorderSide(
+          color: _isFavorite ? Colors.red : const Color(0xFF007AFF),
+          width: 1.5,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }

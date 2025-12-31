@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/media_library_provider.dart';
 import '../../models/domain/models.dart';
 import '../pages/section_view_page.dart';
+import '../pages/media_detail_modals.dart';
 import 'media_poster_card.dart';
 import 'horizontal_scroll_view.dart';
 
@@ -214,6 +215,20 @@ class _HomeContentState extends State<HomeContent> {
                   cardType: MediaCardType.backdrop,
                   progress: file.progress,
                   showProgress: true,
+                  onTap: () {
+                    // 获取对应的 Movie 或 TVShow 元数据后打开详情
+                    if (file.mediaType == MediaType.movie) {
+                      final movie = provider.getMovieMetadata(
+                        file.tmdbId ?? '',
+                      );
+                      if (movie != null) showMediaDetailModal(context, movie);
+                    } else {
+                      final show = provider.getTVShowMetadata(
+                        file.tmdbId ?? '',
+                      );
+                      if (show != null) showMediaDetailModal(context, show);
+                    }
+                  },
                 ),
               ),
             );
@@ -252,6 +267,7 @@ class _HomeContentState extends State<HomeContent> {
                   rating: movie.rating,
                   tmdbId: movie.tmdbId,
                   cardType: MediaCardType.poster,
+                  onTap: () => showMediaDetailModal(context, movie),
                 ),
               ),
             );
@@ -300,6 +316,7 @@ class _HomeContentState extends State<HomeContent> {
                   rating: show.rating,
                   tmdbId: show.tmdbId,
                   cardType: MediaCardType.poster,
+                  onTap: () => showMediaDetailModal(context, show),
                 ),
               ),
             );

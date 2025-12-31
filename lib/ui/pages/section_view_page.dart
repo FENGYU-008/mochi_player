@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/domain/models.dart';
 import '../../providers/media_library_provider.dart';
 import '../widgets/media_poster_card.dart';
+import 'media_detail_modals.dart';
 
 /// Section 类型
 enum SectionType { continueWatching, movies, tvShows }
@@ -230,7 +231,7 @@ class _SectionModalContent extends StatelessWidget {
             mainAxisSpacing: 20,
           ),
           itemBuilder: (context, index) {
-            return _buildCard(index, provider);
+            return _buildCard(context, index, provider);
           },
         );
       },
@@ -248,18 +249,26 @@ class _SectionModalContent extends StatelessWidget {
     }
   }
 
-  Widget _buildCard(int index, MediaLibraryProvider provider) {
+  Widget _buildCard(
+    BuildContext context,
+    int index,
+    MediaLibraryProvider provider,
+  ) {
     switch (sectionType) {
       case SectionType.movies:
-        return _buildMovieCard(movies![index]);
+        return _buildMovieCard(context, movies![index]);
       case SectionType.tvShows:
-        return _buildTVShowCard(tvShows![index]);
+        return _buildTVShowCard(context, tvShows![index]);
       case SectionType.continueWatching:
-        return _buildContinueWatchingCard(mediaFiles![index], provider);
+        return _buildContinueWatchingCard(
+          context,
+          mediaFiles![index],
+          provider,
+        );
     }
   }
 
-  Widget _buildMovieCard(Movie movie) {
+  Widget _buildMovieCard(BuildContext context, Movie movie) {
     return MediaPosterCard(
       title: movie.title,
       subtitle: movie.releaseYear?.toString(),
@@ -267,13 +276,11 @@ class _SectionModalContent extends StatelessWidget {
       rating: movie.rating,
       tmdbId: movie.tmdbId,
       cardType: MediaCardType.poster,
-      onTap: () {
-        // TODO: 打开电影详情
-      },
+      onTap: () => showMediaDetailModal(context, movie),
     );
   }
 
-  Widget _buildTVShowCard(TVShow show) {
+  Widget _buildTVShowCard(BuildContext context, TVShow show) {
     String? subtitle;
     if (show.numberOfSeasons != null && show.numberOfSeasons! > 0) {
       subtitle = show.numberOfSeasons == 1
@@ -290,13 +297,12 @@ class _SectionModalContent extends StatelessWidget {
       rating: show.rating,
       tmdbId: show.tmdbId,
       cardType: MediaCardType.poster,
-      onTap: () {
-        // TODO: 打开剧集详情
-      },
+      onTap: () => showMediaDetailModal(context, show),
     );
   }
 
   Widget _buildContinueWatchingCard(
+    BuildContext context,
     MediaFile file,
     MediaLibraryProvider provider,
   ) {
@@ -304,9 +310,10 @@ class _SectionModalContent extends StatelessWidget {
     String? subtitle;
     String? imageUrl;
     double rating = 0.0;
+    dynamic metadata;
 
     if (file.mediaType == MediaType.movie) {
-      final metadata = provider.getMovieMetadata(file.tmdbId ?? '');
+      metadata = provider.getMovieMetadata(file.tmdbId ?? '');
       if (metadata != null) {
         title = metadata.title;
         imageUrl = metadata.backdropUrl;
@@ -314,7 +321,7 @@ class _SectionModalContent extends StatelessWidget {
         subtitle = metadata.releaseYear?.toString();
       }
     } else {
-      final metadata = provider.getTVShowMetadata(file.tmdbId ?? '');
+      metadata = provider.getTVShowMetadata(file.tmdbId ?? '');
       if (metadata != null) {
         title = metadata.title;
         imageUrl = metadata.backdropUrl;
@@ -337,7 +344,7 @@ class _SectionModalContent extends StatelessWidget {
       progress: file.progress,
       showProgress: true,
       onTap: () {
-        // TODO: 继续播放
+        if (metadata != null) showMediaDetailModal(context, metadata);
       },
     );
   }

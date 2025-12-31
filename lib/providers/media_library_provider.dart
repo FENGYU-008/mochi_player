@@ -50,7 +50,7 @@ class MediaLibraryProvider extends ChangeNotifier {
           final seasonEpisodes = _episodeMetadataEntities
               .where(
                 (e) =>
-                    e.tmdbId.startsWith('${show.tmdbId}-s${s.seasonNumber}e'),
+                    e.tmdbId.startsWith('${show.tmdbId}_s${s.seasonNumber}e'),
               )
               .map(ModelConverter.toEpisode)
               .toList();
@@ -116,13 +116,13 @@ class MediaLibraryProvider extends ChangeNotifier {
     }
   }
 
-  /// 根据 TMDB ID 获取剧集元数据
+  /// 根据 TMDB ID 获取剧集元数据 (包含 seasons/episodes)
   TVShow? getTVShowMetadata(String tmdbId) {
     try {
       final entity = _tvShowMetadataEntities.firstWhere(
         (t) => t.tmdbId == tmdbId,
       );
-      return ModelConverter.toTVShow(entity);
+      return _convertTVShowWithSeasons(entity);
     } catch (_) {
       return null;
     }
