@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/media_library_provider.dart';
 import '../../models/domain/models.dart';
+import '../pages/section_view_page.dart';
 import 'media_poster_card.dart';
 import 'horizontal_scroll_view.dart';
 
@@ -65,21 +66,39 @@ class _HomeContentState extends State<HomeContent> {
           children: [
             // Continue Watching
             if (continueWatchingItems.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Continue Watching'),
+              _buildSectionHeader(
+                context,
+                'Continue Watching',
+                onSeeAll: () => showContinueWatchingSection(
+                  context,
+                  'Continue Watching',
+                  provider.continueWatching,
+                ),
+              ),
               _buildContinueWatchingList(continueWatchingItems, provider),
               const SizedBox(height: 30),
             ],
 
             // Recent Movies
             if (recentMovies.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Movies'),
+              _buildSectionHeader(
+                context,
+                'Movies',
+                onSeeAll: () =>
+                    showMoviesSection(context, 'Movies', provider.movies),
+              ),
               _buildMovieList(recentMovies),
               const SizedBox(height: 30),
             ],
 
             // Recent TV Shows
             if (recentTVShows.isNotEmpty) ...[
-              _buildSectionHeader(context, 'TV Shows'),
+              _buildSectionHeader(
+                context,
+                'TV Shows',
+                onSeeAll: () =>
+                    showTVShowsSection(context, 'TV Shows', provider.tvShows),
+              ),
               _buildTVShowList(recentTVShows),
               const SizedBox(height: 30),
             ],
@@ -89,7 +108,11 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title, {
+    VoidCallback? onSeeAll,
+  }) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(40, 0, 40, 15),
       child: Row(
@@ -106,9 +129,7 @@ class _HomeContentState extends State<HomeContent> {
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
-              onTap: () {
-                // TODO: Navigate to full list
-              },
+              onTap: onSeeAll,
               child: Row(
                 children: [
                   Text(
@@ -152,78 +173,53 @@ class _HomeContentState extends State<HomeContent> {
           itemBuilder: (context, index) {
             final file = items[index];
             // 获取关联的元数据
-            dynamic metadata;
+            String title = file.parsedTitle;
+            String? subtitle;
+            String? imageUrl;
+            double rating = 0.0;
+
             if (file.mediaType == MediaType.movie) {
-              metadata = provider.getMovieMetadata(file.tmdbId ?? '');
+              final metadata = provider.getMovieMetadata(file.tmdbId ?? '');
+              if (metadata != null) {
+                title = metadata.title;
+                imageUrl = metadata.backdropUrl;
+                rating = metadata.rating;
+                subtitle = metadata.releaseYear?.toString();
+              }
             } else {
-              metadata = provider.getTVShowMetadata(file.tmdbId ?? '');
+              final metadata = provider.getTVShowMetadata(file.tmdbId ?? '');
+              if (metadata != null) {
+                title = metadata.title;
+                imageUrl = metadata.backdropUrl;
+                rating = metadata.rating;
+                // 显示当前观看的季和集
+                if (file.parsedSeason != null && file.parsedEpisode != null) {
+                  subtitle = 'S${file.parsedSeason} E${file.parsedEpisode}';
+                } else if (metadata.numberOfSeasons != null) {
+                  subtitle = '${metadata.numberOfSeasons} Seasons';
+                }
+              }
             }
 
             return SizedBox(
               width: wideImageWidth,
               child: Padding(
                 padding: const EdgeInsets.only(right: 20),
-                child: _buildContinueWatchingCard(file, metadata),
+                child: MediaPosterCard(
+                  title: title,
+                  subtitle: subtitle,
+                  posterUrl: imageUrl,
+                  rating: rating,
+                  tmdbId: file.tmdbId,
+                  cardType: MediaCardType.backdrop,
+                  progress: file.progress,
+                  showProgress: true,
+                ),
               ),
             );
           },
         ),
       ),
-    );
-  }
-
-  Widget _buildContinueWatchingCard(MediaFile file, dynamic metadata) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  color: Colors.grey[800],
-                  child: metadata?.backdropUrl != null
-                      ? Image.network(
-                          metadata.backdropUrl!,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        )
-                      : const Center(
-                          child: Icon(
-                            Icons.movie,
-                            color: Colors.white54,
-                            size: 48,
-                          ),
-                        ),
-                ),
-              ),
-              // 进度条
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: LinearProgressIndicator(
-                  value: file.progress,
-                  backgroundColor: Colors.black45,
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    Colors.orange,
-                  ),
-                  minHeight: 4,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          metadata?.title ?? file.parsedTitle,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
     );
   }
 
@@ -251,9 +247,11 @@ class _HomeContentState extends State<HomeContent> {
                 padding: const EdgeInsets.only(right: 20),
                 child: MediaPosterCard(
                   title: movie.title,
+                  subtitle: movie.releaseYear?.toString(),
                   posterUrl: movie.posterUrl,
                   rating: movie.rating,
                   tmdbId: movie.tmdbId,
+                  cardType: MediaCardType.poster,
                 ),
               ),
             );
@@ -281,15 +279,27 @@ class _HomeContentState extends State<HomeContent> {
           itemCount: items.length,
           itemBuilder: (context, index) {
             final show = items[index];
+            // 构建副标题：显示季数
+            String? subtitle;
+            if (show.numberOfSeasons != null && show.numberOfSeasons! > 0) {
+              subtitle = show.numberOfSeasons == 1
+                  ? '1 Season'
+                  : '${show.numberOfSeasons} Seasons';
+            } else if (show.releaseYear != null) {
+              subtitle = show.releaseYear.toString();
+            }
+
             return SizedBox(
               width: posterWidth,
               child: Padding(
                 padding: const EdgeInsets.only(right: 20),
                 child: MediaPosterCard(
                   title: show.title,
+                  subtitle: subtitle,
                   posterUrl: show.posterUrl,
                   rating: show.rating,
                   tmdbId: show.tmdbId,
+                  cardType: MediaCardType.poster,
                 ),
               ),
             );
