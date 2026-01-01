@@ -23,6 +23,9 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0; // 默认选中 Home
 
+  // 用于接收首页滚动偏移量以控制 header 透明度
+  double _homeScrollOffset = 0;
+
   @override
   void initState() {
     super.initState();
@@ -43,13 +46,25 @@ class _MainPageState extends State<MainPage> {
 
     // 3. 扫描媒体库 (增量更新)
     await libraryProvider.scanLibrary();
+
+    // 4. 加载 TMDB 热门趋势
+    await libraryProvider.fetchTrending();
+  }
+
+  // 接收首页滚动偏移量
+  void _onHomeScroll(double offset) {
+    if (_selectedIndex == 0) {
+      setState(() {
+        _homeScrollOffset = offset;
+      });
+    }
   }
 
   // === 核心修改：页面路由表 ===
   Widget _getPageContent(int index) {
     switch (index) {
       case 0:
-        return const HomeContent(); // 首页聚合
+        return HomeContent(onScroll: _onHomeScroll); // 首页聚合
       case 1:
         return const LibraryPage(category: 'Movies'); // 电影库
       case 2:
@@ -88,13 +103,30 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // 计算 header 透明度：首页时根据滚动位置渐变
+    double headerOpacity = 1.0;
+    if (_selectedIndex == 0) {
+      // 0-200px 滚动范围内从 0 渐变到 1
+      headerOpacity = (_homeScrollOffset / 200).clamp(0.0, 1.0);
+    }
+
+    // 是否显示标准 header (非首页或首页滚动后)
+    final showHeader = _selectedIndex != 3 && _selectedIndex != 5;
+
     return Scaffold(
       body: Row(
         children: [
           // 左侧：侧边栏
           SideBar(
             selectedIndex: _selectedIndex,
-            onItemSelected: (index) => setState(() => _selectedIndex = index),
+            onItemSelected: (index) {
+              setState(() {
+                _selectedIndex = index;
+                // 切换页面时重置滚动偏移
+                if (index != 0) _homeScrollOffset = 0;
+              });
+            },
           ),
 
           // 右侧：内容容器
@@ -106,56 +138,70 @@ class _MainPageState extends State<MainPage> {
                   // === 1. 底层内容 (动态切换) ===
                   _getPageContent(_selectedIndex),
 
-                  // === 2. 顶层毛玻璃 Header (当不是文件浏览器或设置页面时显示) ===
-                  if (_selectedIndex != 3 && _selectedIndex != 5)
+                  // === 2. 顶层毛玻璃 Header ===
+                  if (showHeader)
                     Positioned(
                       top: 0,
                       left: 0,
                       right: 0,
                       height: 60,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onPanStart: (details) {
-                          windowManager.startDragging();
-                        },
-                        child: ClipRect(
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 40,
-                              ),
-                              decoration: BoxDecoration(
-                                // 根据主题调整毛玻璃颜色
-                                color: theme.brightness == Brightness.light
-                                    ? Colors.white.withAlpha(
-                                        (255 * 0.8).round(),
-                                      )
-                                    : const Color(0xFF2C2C2E).withAlpha(
-                                        (255 * 0.8).round(),
-                                      ), // 使用深色模式下的canvasColor
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: theme.dividerColor,
-                                    width: 1,
-                                  ),
+                      child: IgnorePointer(
+                        // 当 header 透明时，允许点击穿透到下层内容
+                        ignoring: _selectedIndex == 0 && headerOpacity < 0.1,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 150),
+                          opacity: headerOpacity,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onPanStart: (details) {
+                              windowManager.startDragging();
+                            },
+                            child: ClipRect(
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                  sigmaX: 20,
+                                  sigmaY: 20,
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    _getTitle(_selectedIndex), // 标题随 index 变
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: -0.5,
-                                      color: theme.textTheme.bodyMedium?.color,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 40,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    // 根据主题调整毛玻璃颜色
+                                    color: theme.brightness == Brightness.light
+                                        ? Colors.white.withAlpha(
+                                            (255 * 0.85).round(),
+                                          )
+                                        : const Color(
+                                            0xFF2C2C2E,
+                                          ).withAlpha((255 * 0.85).round()),
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: theme.dividerColor.withAlpha(
+                                          (255 * headerOpacity).round(),
+                                        ),
+                                        width: 1,
+                                      ),
                                     ),
                                   ),
-                                  const AppSearchBar(),
-                                ],
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        _getTitle(_selectedIndex),
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: -0.5,
+                                          color:
+                                              theme.textTheme.bodyMedium?.color,
+                                        ),
+                                      ),
+                                      const AppSearchBar(),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ),

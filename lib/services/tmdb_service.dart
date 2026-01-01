@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import '../models/entity/entities.dart';
+import '../models/domain/trending_item.dart';
 
 /// TMDB API 服务
 /// 负责与 TMDB API 交互并返回解析后的 Entity 模型
@@ -145,6 +146,55 @@ class TmdbService {
       _logger.w("⚠️ TMDB 获取季原始数据失败: ID:$tvId S$seasonNumber - $e");
     }
     return null;
+  }
+
+  /// 获取热门趋势内容（电影和剧集混合）
+  /// [timeWindow] 可选 'day' 或 'week'
+  /// 返回包含 movie 和 tv 类型的原始数据列表
+  Future<List<Map<String, dynamic>>> fetchTrending({
+    String timeWindow = 'week',
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/trending/all/$timeWindow',
+        queryParameters: {'api_key': _apiKey, 'language': _language},
+      );
+
+      if (response.statusCode == 200) {
+        final results = response.data['results'] as List;
+        // 过滤只保留 movie 和 tv，限制数量
+        return results
+            .where(
+              (item) =>
+                  item['media_type'] == 'movie' || item['media_type'] == 'tv',
+            )
+            .take(limit)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+      }
+    } catch (e) {
+      _logger.w('⚠️ TMDB 获取热门趋势失败: $e');
+    }
+    return [];
+  }
+
+  /// 将热门趋势的原始数据转换为简化的展示模型
+  TrendingItem parseTrendingItem(Map<String, dynamic> data) {
+    final isMovie = data['media_type'] == 'movie';
+    return TrendingItem(
+      tmdbId: data['id'].toString(),
+      title: isMovie ? (data['title'] ?? '') : (data['name'] ?? ''),
+      posterUrl: buildPosterUrl(data['poster_path']),
+      backdropUrl: buildBackdropUrl(data['backdrop_path']),
+      overview: data['overview'],
+      rating: (data['vote_average'] ?? 0.0).toDouble(),
+      releaseYear: _parseYear(
+        isMovie ? data['release_date'] : data['first_air_date'],
+      ),
+      genres: [], // Trending API 不返回详细 genres，需要单独请求
+      isMovie: isMovie,
+    );
   }
 
   // ===== 图片 URL 构建 =====

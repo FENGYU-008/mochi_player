@@ -9,3 +9,4 @@ export 'movie.dart';
 export 'tv_show.dart';
 export 'season.dart';
 export 'episode.dart';
+export 'trending_item.dart';

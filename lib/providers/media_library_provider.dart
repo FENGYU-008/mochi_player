@@ -8,6 +8,7 @@ import '../services/database_service.dart';
 import '../services/library_scanner.dart';
 import '../services/webdav_service.dart';
 import '../services/metadata_scraper.dart';
+import '../services/tmdb_service.dart';
 
 /// 媒体库 Provider
 /// 管理媒体文件和元数据的状态
@@ -28,6 +29,10 @@ class MediaLibraryProvider extends ChangeNotifier {
   bool _isInitialized = false;
   String? _error;
   StreamSubscription? _scanSubscription;
+
+  // Trending 状态 (从 TMDB 获取，不持久化)
+  List<TrendingItem> _trendingItems = [];
+  bool _isTrendingLoading = false;
 
   // ===== 公开 API (返回 Domain 模型) =====
 
@@ -129,11 +134,68 @@ class MediaLibraryProvider extends ChangeNotifier {
   }
 
   /// 根据 TMDB ID 获取同一资源的所有版本
+  /// 对于电影：精确匹配 tmdbId
+  /// 对于剧集：匹配以 tmdbId 开头的文件（如 123_s1e1）
   List<MediaFile> getVersions(String tmdbId) {
     return _mediaFileEntities
-        .where((f) => f.tmdbId == tmdbId)
+        .where(
+          (f) =>
+              f.tmdbId == tmdbId ||
+              (f.tmdbId?.startsWith('${tmdbId}_') ?? false),
+        )
         .map(ModelConverter.toMediaFile)
         .toList();
+  }
+
+  /// 获取 Trending 列表
+  List<TrendingItem> get trending => _trendingItems;
+  bool get isTrendingLoading => _isTrendingLoading;
+
+  /// 获取最近添加的电影和剧集（用于首页展示）
+  List<dynamic> get recentlyAddedContent {
+    // 合并电影和剧集，按添加时间排序（使用相关 mediaFile 的 addedAt）
+    final List<MapEntry<DateTime, dynamic>> items = [];
+
+    for (final movie in _movieMetadataEntities) {
+      // 找到该电影关联的 mediaFile 的最早添加时间
+      final relatedFiles = _mediaFileEntities.where(
+        (f) => f.tmdbId == movie.tmdbId,
+      );
+      if (relatedFiles.isNotEmpty) {
+        final earliestDate = relatedFiles
+            .map((f) => f.addedAt)
+            .reduce((a, b) => a.isBefore(b) ? a : b);
+        items.add(MapEntry(earliestDate, ModelConverter.toMovie(movie)));
+      }
+    }
+
+    for (final show in _tvShowMetadataEntities) {
+      final relatedFiles = _mediaFileEntities.where(
+        (f) => f.tmdbId != null && f.tmdbId!.startsWith(show.tmdbId),
+      );
+      if (relatedFiles.isNotEmpty) {
+        final earliestDate = relatedFiles
+            .map((f) => f.addedAt)
+            .reduce((a, b) => a.isBefore(b) ? a : b);
+        items.add(MapEntry(earliestDate, _convertTVShowWithSeasons(show)));
+      }
+    }
+
+    // 按添加时间倒序
+    items.sort((a, b) => b.key.compareTo(a.key));
+    return items.map((e) => e.value).toList();
+  }
+
+  /// 获取随机 Hero 项目 (Movie 或 TVShow)
+  dynamic getRandomHeroItem() {
+    final allItems = <dynamic>[...movies, ...tvShows];
+    if (allItems.isEmpty) return null;
+
+    // 使用当前日期作为种子，使同一天内显示相同的 hero
+    final today = DateTime.now();
+    final seed = today.year * 10000 + today.month * 100 + today.day;
+    final random = (seed % allItems.length);
+    return allItems[random];
   }
 
   // ===== 初始化 =====
@@ -155,6 +217,28 @@ class MediaLibraryProvider extends ChangeNotifier {
       '✅ 加载完成: ${_mediaFileEntities.length} 个文件, ${_movieMetadataEntities.length} 部电影, ${_tvShowMetadataEntities.length} 部剧集, ${_seasonMetadataEntities.length} 季, ${_episodeMetadataEntities.length} 集',
     );
     notifyListeners();
+  }
+
+  /// 加载 TMDB 热门趋势
+  Future<void> fetchTrending() async {
+    if (_isTrendingLoading) return;
+
+    _isTrendingLoading = true;
+    notifyListeners();
+
+    try {
+      final tmdb = TmdbService();
+      final rawData = await tmdb.fetchTrending(timeWindow: 'week', limit: 15);
+      _trendingItems = rawData
+          .map((data) => tmdb.parseTrendingItem(data))
+          .toList();
+      _logger.i('✅ 加载热门趋势: ${_trendingItems.length} 项');
+    } catch (e) {
+      _logger.e('❌ 加载热门趋势失败: $e');
+    } finally {
+      _isTrendingLoading = false;
+      notifyListeners();
+    }
   }
 
   // ===== 扫描 =====
