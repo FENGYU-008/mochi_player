@@ -31,7 +31,9 @@ class MediaLibraryProvider extends ChangeNotifier {
   StreamSubscription? _scanSubscription;
 
   // Trending 状态 (从 TMDB 获取，不持久化)
-  List<TrendingItem> _trendingItems = [];
+  List<TrendingItem> _trendingMovies = [];
+  List<TrendingItem> _trendingTV = [];
+  List<TrendingItem> _topRated = [];
   bool _isTrendingLoading = false;
 
   // ===== 公开 API (返回 Domain 模型) =====
@@ -148,7 +150,9 @@ class MediaLibraryProvider extends ChangeNotifier {
   }
 
   /// 获取 Trending 列表
-  List<TrendingItem> get trending => _trendingItems;
+  List<TrendingItem> get trendingMovies => _trendingMovies;
+  List<TrendingItem> get trendingTV => _trendingTV;
+  List<TrendingItem> get topRated => _topRated;
   bool get isTrendingLoading => _isTrendingLoading;
 
   /// 获取最近添加的电影和剧集（用于首页展示）
@@ -219,7 +223,7 @@ class MediaLibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 加载 TMDB 热门趋势
+  /// 加载 TMDB 热门趋势（三个分类并行加载）
   Future<void> fetchTrending() async {
     if (_isTrendingLoading) return;
 
@@ -228,11 +232,18 @@ class MediaLibraryProvider extends ChangeNotifier {
 
     try {
       final tmdb = TmdbService();
-      final rawData = await tmdb.fetchTrending(timeWindow: 'week', limit: 15);
-      _trendingItems = rawData
-          .map((data) => tmdb.parseTrendingItem(data))
-          .toList();
-      _logger.i('✅ 加载热门趋势: ${_trendingItems.length} 项');
+      // 并行请求三个分类
+      final results = await Future.wait([
+        tmdb.fetchTrendingMovies(limit: 3),
+        tmdb.fetchTrendingTV(limit: 3),
+        tmdb.fetchTopRated(limit: 3),
+      ]);
+      _trendingMovies = results[0];
+      _trendingTV = results[1];
+      _topRated = results[2];
+      _logger.i(
+        '✅ 加载热门趋势: 电影 ${_trendingMovies.length}, 剧集 ${_trendingTV.length}, 高分 ${_topRated.length}',
+      );
     } catch (e) {
       _logger.e('❌ 加载热门趋势失败: $e');
     } finally {

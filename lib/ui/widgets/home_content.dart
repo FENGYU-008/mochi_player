@@ -7,6 +7,7 @@ import '../pages/media_detail_modals.dart';
 import 'media_poster_card.dart';
 import 'horizontal_scroll_view.dart';
 import 'hero_section.dart';
+import 'trending_category_card.dart';
 
 class HomeContent extends StatefulWidget {
   /// 回调函数，用于通知父组件滚动偏移量
@@ -22,7 +23,6 @@ class _HomeContentState extends State<HomeContent> {
   final ScrollController _mainScrollController = ScrollController();
   final ScrollController _continueWatchingCtrl = ScrollController();
   final ScrollController _recentlyAddedCtrl = ScrollController();
-  final ScrollController _trendingCtrl = ScrollController();
 
   @override
   void initState() {
@@ -40,7 +40,6 @@ class _HomeContentState extends State<HomeContent> {
     _mainScrollController.dispose();
     _continueWatchingCtrl.dispose();
     _recentlyAddedCtrl.dispose();
-    _trendingCtrl.dispose();
     super.dispose();
   }
 
@@ -57,13 +56,16 @@ class _HomeContentState extends State<HomeContent> {
         final recentlyAddedItems = provider.recentlyAddedContent
             .take(15)
             .toList();
-        final trendingItems = provider.trending;
+        final hasTrendingData =
+            provider.trendingMovies.isNotEmpty ||
+            provider.trendingTV.isNotEmpty ||
+            provider.topRated.isNotEmpty;
 
         // 如果库完全为空，显示空状态
         if (heroItem == null &&
             continueWatchingItems.isEmpty &&
             recentlyAddedItems.isEmpty &&
-            trendingItems.isEmpty) {
+            !hasTrendingData) {
           return _buildEmptyState();
         }
 
@@ -108,19 +110,11 @@ class _HomeContentState extends State<HomeContent> {
               const SliverToBoxAdapter(child: SizedBox(height: 30)),
             ],
 
-            // Trending on TMDB
-            if (trendingItems.isNotEmpty) ...[
+            // Trending on TMDB (三卡片布局)
+            if (hasTrendingData || provider.isTrendingLoading) ...[
               _buildSectionHeaderSliver(context, 'Trending on TMDB'),
-              SliverToBoxAdapter(child: _buildTrendingList(trendingItems)),
+              SliverToBoxAdapter(child: _buildTrendingCards(provider)),
               const SliverToBoxAdapter(child: SizedBox(height: 30)),
-            ] else if (provider.isTrendingLoading) ...[
-              _buildSectionHeaderSliver(context, 'Trending on TMDB'),
-              const SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 248,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
             ],
 
             // 底部留白
@@ -348,52 +342,56 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _buildTrendingList(List<TrendingItem> items) {
-    const double posterWidth = 160;
-    const double posterHeight = 200;
-    const double textSectionHeight = 48;
-    final double listHeight = posterHeight + textSectionHeight;
-
-    return SizedBox(
-      height: listHeight,
-      child: HorizontalScrollView(
-        controller: _trendingCtrl,
-        bottomPadding: textSectionHeight,
-        child: ListView.builder(
-          controller: _trendingCtrl,
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          scrollDirection: Axis.horizontal,
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return SizedBox(
-              width: posterWidth,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 20),
-                child: MediaPosterCard(
-                  title: item.title,
-                  subtitle: item.releaseYear?.toString(),
-                  posterUrl: item.posterUrl,
-                  rating: item.rating,
-                  tmdbId: item.tmdbId,
-                  cardType: MediaCardType.poster,
-                  onTap: () {
-                    // Trending items 是外部数据，点击时显示提示
-                    // TODO: 后续可以实现跳转到 TMDB 详情或添加到库
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '${item.title} - ${item.isMovie ? "Movie" : "TV Show"}',
-                        ),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                ),
+  /// 构建趋势三卡片布局
+  Widget _buildTrendingCards(MediaLibraryProvider provider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Trending Movies
+          Expanded(
+            child: TrendingCategoryCard(
+              config: const TrendingCardConfig(
+                icon: Icons.local_fire_department_rounded,
+                iconColor: Color(0xFFFF6B35),
+                title: 'Trending Movies',
+                subtitle: 'GLOBAL TOP 3',
               ),
-            );
-          },
-        ),
+              items: provider.trendingMovies,
+              isLoading: provider.isTrendingLoading,
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Trending TV
+          Expanded(
+            child: TrendingCategoryCard(
+              config: const TrendingCardConfig(
+                icon: Icons.tv_rounded,
+                iconColor: Color(0xFF0A84FF),
+                title: 'Trending TV',
+                subtitle: 'MOST WATCHED',
+              ),
+              items: provider.trendingTV,
+              isLoading: provider.isTrendingLoading,
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Top Rated
+          Expanded(
+            child: TrendingCategoryCard(
+              config: const TrendingCardConfig(
+                icon: Icons.star_rounded,
+                iconColor: Color(0xFFFFD60A),
+                title: 'Critical Acclaim',
+                subtitle: 'HIGHEST RATED',
+              ),
+              items: provider.topRated,
+              isLoading: provider.isTrendingLoading,
+              showRating: true,
+            ),
+          ),
+        ],
       ),
     );
   }

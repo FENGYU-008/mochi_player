@@ -180,8 +180,11 @@ class TmdbService {
   }
 
   /// 将热门趋势的原始数据转换为简化的展示模型
-  TrendingItem parseTrendingItem(Map<String, dynamic> data) {
-    final isMovie = data['media_type'] == 'movie';
+  TrendingItem parseTrendingItem(
+    Map<String, dynamic> data, {
+    bool? forceMovie,
+  }) {
+    final isMovie = forceMovie ?? (data['media_type'] == 'movie');
     return TrendingItem(
       tmdbId: data['id'].toString(),
       title: isMovie ? (data['title'] ?? '') : (data['name'] ?? ''),
@@ -192,9 +195,96 @@ class TmdbService {
       releaseYear: _parseYear(
         isMovie ? data['release_date'] : data['first_air_date'],
       ),
-      genres: [], // Trending API 不返回详细 genres，需要单独请求
+      genres: _parseGenreNames(data['genre_ids']),
       isMovie: isMovie,
     );
+  }
+
+  /// 获取热门电影（仅电影）
+  Future<List<TrendingItem>> fetchTrendingMovies({int limit = 3}) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/trending/movie/week',
+        queryParameters: {'api_key': _apiKey, 'language': _language},
+      );
+      if (response.statusCode == 200) {
+        return _parseTrendingList(response.data, isMovie: true, limit: limit);
+      }
+    } catch (e) {
+      _logger.w('⚠️ TMDB 获取热门电影失败: $e');
+    }
+    return [];
+  }
+
+  /// 获取热门剧集（仅 TV）
+  Future<List<TrendingItem>> fetchTrendingTV({int limit = 3}) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/trending/tv/week',
+        queryParameters: {'api_key': _apiKey, 'language': _language},
+      );
+      if (response.statusCode == 200) {
+        return _parseTrendingList(response.data, isMovie: false, limit: limit);
+      }
+    } catch (e) {
+      _logger.w('⚠️ TMDB 获取热门剧集失败: $e');
+    }
+    return [];
+  }
+
+  /// 获取高分佳作（电影）
+  Future<List<TrendingItem>> fetchTopRated({int limit = 3}) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/movie/top_rated',
+        queryParameters: {'api_key': _apiKey, 'language': _language},
+      );
+      if (response.statusCode == 200) {
+        return _parseTrendingList(response.data, isMovie: true, limit: limit);
+      }
+    } catch (e) {
+      _logger.w('⚠️ TMDB 获取高分佳作失败: $e');
+    }
+    return [];
+  }
+
+  /// 解析趋势列表数据
+  List<TrendingItem> _parseTrendingList(
+    Map<String, dynamic> data, {
+    required bool isMovie,
+    required int limit,
+  }) {
+    final results = data['results'] as List? ?? [];
+    return results
+        .take(limit)
+        .map(
+          (item) => parseTrendingItem(
+            item as Map<String, dynamic>,
+            forceMovie: isMovie,
+          ),
+        )
+        .toList();
+  }
+
+  /// 从 genre_ids 解析类型名称
+  List<String> _parseGenreNames(List<dynamic>? genreIds) {
+    if (genreIds == null || genreIds.isEmpty) return [];
+    // 常见类型 ID 映射（简化版本）
+    const genreMap = {
+      28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy',
+      80: 'Crime', 99: 'Documentary', 18: 'Drama', 10751: 'Family',
+      14: 'Fantasy', 36: 'History', 27: 'Horror', 10402: 'Music',
+      9648: 'Mystery', 10749: 'Romance', 878: 'Sci-Fi', 10770: 'TV Movie',
+      53: 'Thriller', 10752: 'War', 37: 'Western',
+      // TV genres
+      10759: 'Action', 10762: 'Kids', 10763: 'News', 10764: 'Reality',
+      10765: 'Sci-Fi', 10766: 'Soap', 10767: 'Talk', 10768: 'Politics',
+    };
+    return genreIds
+        .take(2)
+        .map((id) => genreMap[id] ?? '')
+        .where((name) => name.isNotEmpty)
+        .toList();
   }
 
   // ===== 图片 URL 构建 =====

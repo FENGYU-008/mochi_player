@@ -252,25 +252,22 @@ class HeroSection extends StatelessWidget {
         // 更多信息按钮
         OutlinedButton.icon(
           onPressed: () => _handleMoreInfo(context),
-          icon: Icon(
-            Icons.info_outline,
-            color: Colors.white.withAlpha(220),
-            size: 20,
-          ),
-          label: Text(
+          icon: const Icon(Icons.info_outline, color: Colors.white, size: 20),
+          label: const Text(
             'More Info',
             style: TextStyle(
-              color: Colors.white.withAlpha(220),
+              color: Colors.white,
               fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
           style: OutlinedButton.styleFrom(
+            backgroundColor: Colors.black.withAlpha(60),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            side: BorderSide(color: Colors.white.withAlpha(80), width: 1.5),
+            side: BorderSide(color: Colors.white.withAlpha(100), width: 1.5),
           ),
         ),
       ],

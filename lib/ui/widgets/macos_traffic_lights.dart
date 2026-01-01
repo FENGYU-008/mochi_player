@@ -53,6 +53,8 @@ class _MacosTrafficLightsState extends State<MacosTrafficLights>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       child: MouseRegion(
@@ -65,7 +67,9 @@ class _MacosTrafficLightsState extends State<MacosTrafficLights>
               normalIcon: 'assets/icons/1-close-1-normal.svg',
               hoverIcon: 'assets/icons/2-close-2-hover.svg',
               pressIcon: 'assets/icons/2-close-3-press.svg',
-              noFocusIcon: 'assets/icons/0-all-three-nofocus.svg',
+              noFocusIcon: isDark
+                  ? 'assets/icons/0-all-three-nofocus-dark.svg'
+                  : 'assets/icons/0-all-three-nofocus.svg',
               onPressed: () => windowManager.close(),
               isGroupHovered: _isHovered,
               isWindowFocused: _isWindowFocused,
@@ -75,7 +79,9 @@ class _MacosTrafficLightsState extends State<MacosTrafficLights>
               normalIcon: 'assets/icons/2-minimize-1-normal.svg',
               hoverIcon: 'assets/icons/2-minimize-2-hover.svg',
               pressIcon: 'assets/icons/2-minimize-3-press.svg',
-              noFocusIcon: 'assets/icons/0-all-three-nofocus.svg',
+              noFocusIcon: isDark
+                  ? 'assets/icons/0-all-three-nofocus-dark.svg'
+                  : 'assets/icons/0-all-three-nofocus.svg',
               onPressed: () => windowManager.minimize(),
               isGroupHovered: _isHovered,
               isWindowFocused: _isWindowFocused,
@@ -85,7 +91,9 @@ class _MacosTrafficLightsState extends State<MacosTrafficLights>
               normalIcon: 'assets/icons/3-maximize-1-normal.svg',
               hoverIcon: 'assets/icons/3-maximize-2-hover.svg',
               pressIcon: 'assets/icons/3-maximize-3-press.svg',
-              noFocusIcon: 'assets/icons/0-all-three-nofocus.svg',
+              noFocusIcon: isDark
+                  ? 'assets/icons/0-all-three-nofocus-dark.svg'
+                  : 'assets/icons/0-all-three-nofocus.svg',
               onPressed: () async {
                 if (await windowManager.isMaximized()) {
                   windowManager.unmaximize();
