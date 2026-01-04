@@ -12,6 +12,7 @@ class TmdbService {
   static const String _imageBaseUrl = 'https://image.tmdb.org/t/p/w500';
   static const String _backdropBaseUrl = 'https://image.tmdb.org/t/p/w1280';
   static const String _profileBaseUrl = 'https://image.tmdb.org/t/p/w185';
+  static const String _logoBaseUrl = 'https://image.tmdb.org/t/p/w500';
   static const String _language = 'zh-CN';
 
   final Dio _dio = Dio();
@@ -55,7 +56,8 @@ class TmdbService {
         queryParameters: {
           'api_key': _apiKey,
           'language': _language,
-          'append_to_response': 'credits,release_dates',
+          'append_to_response': 'credits,release_dates,images',
+          'include_image_language': 'zh,en,null',
         },
       );
 
@@ -90,7 +92,8 @@ class TmdbService {
         queryParameters: {
           'api_key': _apiKey,
           'language': _language,
-          'append_to_response': 'credits,content_ratings',
+          'append_to_response': 'credits,content_ratings,images',
+          'include_image_language': 'zh,en,null',
         },
       );
 
@@ -304,6 +307,11 @@ class TmdbService {
     return '$_profileBaseUrl$path';
   }
 
+  static String? buildLogoUrl(String? path) {
+    if (path == null || path.isEmpty) return null;
+    return '$_logoBaseUrl$path';
+  }
+
   // ===== 私有方法：API 请求 =====
 
   Future<Map<String, dynamic>?> _search(
@@ -356,7 +364,8 @@ class TmdbService {
       ..certification = _parseCertification(data['release_dates'])
       ..rating = (data['vote_average'] ?? 0.0).toDouble()
       ..genres = _parseGenres(data['genres'])
-      ..cast = _parseCast(data['credits']);
+      ..cast = _parseCast(data['credits'])
+      ..logoUrl = _parseLogoUrl(data['images']);
   }
 
   TVShowMetadataEntity _parseTVShowEntity(Map<String, dynamic> data) {
@@ -373,6 +382,7 @@ class TmdbService {
       ..rating = (data['vote_average'] ?? 0.0).toDouble()
       ..genres = _parseGenres(data['genres'])
       ..cast = _parseCast(data['credits'])
+      ..logoUrl = _parseLogoUrl(data['images'])
       ..status = data['status']
       ..numberOfSeasons = data['number_of_seasons']
       ..numberOfEpisodes = data['number_of_episodes'];
@@ -441,6 +451,30 @@ class TmdbService {
         ..character = c['character']
         ..profileUrl = buildProfileUrl(c['profile_path']);
     }).toList();
+  }
+
+  /// 解析 Logo URL，优先选择中文 Logo
+  String? _parseLogoUrl(Map<String, dynamic>? images) {
+    if (images == null) return null;
+    final logos = images['logos'] as List?;
+    if (logos == null || logos.isEmpty) return null;
+
+    // 优先级: zh > en > null (无语言标记)
+    final priorities = ['zh', 'en', null];
+    for (final lang in priorities) {
+      final logo = logos.firstWhere(
+        (l) => l['iso_639_1'] == lang,
+        orElse: () => null,
+      );
+      if (logo != null && logo['file_path'] != null) {
+        return buildLogoUrl(logo['file_path']);
+      }
+    }
+    // 如果都没找到，返回第一个
+    if (logos.first['file_path'] != null) {
+      return buildLogoUrl(logos.first['file_path']);
+    }
+    return null;
   }
 
   List<ArtistEmbedded> _parseGuestStars(List<dynamic>? guests) {

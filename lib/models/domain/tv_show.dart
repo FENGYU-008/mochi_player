@@ -10,6 +10,7 @@ class TVShow {
   final DateTime? firstAirDate;
   final String? posterUrl;
   final String? backdropUrl;
+  final String? logoUrl;
   final String? overview;
   final String? certification;
   final double rating;
@@ -28,6 +29,7 @@ class TVShow {
     this.firstAirDate,
     this.posterUrl,
     this.backdropUrl,
+    this.logoUrl,
     this.overview,
     this.certification,
     this.rating = 0.0,

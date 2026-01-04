@@ -9,6 +9,7 @@ class Movie {
   final DateTime? releaseDate;
   final String? posterUrl;
   final String? backdropUrl;
+  final String? logoUrl;
   final String? overview;
   final String? certification;
   final double rating;
@@ -23,6 +24,7 @@ class Movie {
     this.releaseDate,
     this.posterUrl,
     this.backdropUrl,
+    this.logoUrl,
     this.overview,
     this.certification,
     this.rating = 0.0,

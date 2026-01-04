@@ -44,53 +44,58 @@ const TVShowMetadataEntitySchema = CollectionSchema(
       name: r'genres',
       type: IsarType.stringList,
     ),
-    r'numberOfEpisodes': PropertySchema(
+    r'logoUrl': PropertySchema(
       id: 5,
+      name: r'logoUrl',
+      type: IsarType.string,
+    ),
+    r'numberOfEpisodes': PropertySchema(
+      id: 6,
       name: r'numberOfEpisodes',
       type: IsarType.long,
     ),
     r'numberOfSeasons': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'numberOfSeasons',
       type: IsarType.long,
     ),
     r'originalTitle': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'originalTitle',
       type: IsarType.string,
     ),
     r'overview': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'overview',
       type: IsarType.string,
     ),
     r'posterUrl': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'posterUrl',
       type: IsarType.string,
     ),
     r'rating': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'rating',
       type: IsarType.double,
     ),
     r'releaseYear': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'releaseYear',
       type: IsarType.long,
     ),
     r'status': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'status',
       type: IsarType.string,
     ),
     r'title': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'title',
       type: IsarType.string,
     ),
     r'tmdbId': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'tmdbId',
       type: IsarType.string,
     )
@@ -166,6 +171,12 @@ int _tVShowMetadataEntityEstimateSize(
     }
   }
   {
+    final value = object.logoUrl;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.originalTitle;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -210,16 +221,17 @@ void _tVShowMetadataEntitySerialize(
   writer.writeString(offsets[2], object.certification);
   writer.writeDateTime(offsets[3], object.firstAirDate);
   writer.writeStringList(offsets[4], object.genres);
-  writer.writeLong(offsets[5], object.numberOfEpisodes);
-  writer.writeLong(offsets[6], object.numberOfSeasons);
-  writer.writeString(offsets[7], object.originalTitle);
-  writer.writeString(offsets[8], object.overview);
-  writer.writeString(offsets[9], object.posterUrl);
-  writer.writeDouble(offsets[10], object.rating);
-  writer.writeLong(offsets[11], object.releaseYear);
-  writer.writeString(offsets[12], object.status);
-  writer.writeString(offsets[13], object.title);
-  writer.writeString(offsets[14], object.tmdbId);
+  writer.writeString(offsets[5], object.logoUrl);
+  writer.writeLong(offsets[6], object.numberOfEpisodes);
+  writer.writeLong(offsets[7], object.numberOfSeasons);
+  writer.writeString(offsets[8], object.originalTitle);
+  writer.writeString(offsets[9], object.overview);
+  writer.writeString(offsets[10], object.posterUrl);
+  writer.writeDouble(offsets[11], object.rating);
+  writer.writeLong(offsets[12], object.releaseYear);
+  writer.writeString(offsets[13], object.status);
+  writer.writeString(offsets[14], object.title);
+  writer.writeString(offsets[15], object.tmdbId);
 }
 
 TVShowMetadataEntity _tVShowMetadataEntityDeserialize(
@@ -241,16 +253,17 @@ TVShowMetadataEntity _tVShowMetadataEntityDeserialize(
   object.firstAirDate = reader.readDateTimeOrNull(offsets[3]);
   object.genres = reader.readStringList(offsets[4]) ?? [];
   object.id = id;
-  object.numberOfEpisodes = reader.readLongOrNull(offsets[5]);
-  object.numberOfSeasons = reader.readLongOrNull(offsets[6]);
-  object.originalTitle = reader.readStringOrNull(offsets[7]);
-  object.overview = reader.readStringOrNull(offsets[8]);
-  object.posterUrl = reader.readStringOrNull(offsets[9]);
-  object.rating = reader.readDouble(offsets[10]);
-  object.releaseYear = reader.readLongOrNull(offsets[11]);
-  object.status = reader.readStringOrNull(offsets[12]);
-  object.title = reader.readString(offsets[13]);
-  object.tmdbId = reader.readString(offsets[14]);
+  object.logoUrl = reader.readStringOrNull(offsets[5]);
+  object.numberOfEpisodes = reader.readLongOrNull(offsets[6]);
+  object.numberOfSeasons = reader.readLongOrNull(offsets[7]);
+  object.originalTitle = reader.readStringOrNull(offsets[8]);
+  object.overview = reader.readStringOrNull(offsets[9]);
+  object.posterUrl = reader.readStringOrNull(offsets[10]);
+  object.rating = reader.readDouble(offsets[11]);
+  object.releaseYear = reader.readLongOrNull(offsets[12]);
+  object.status = reader.readStringOrNull(offsets[13]);
+  object.title = reader.readString(offsets[14]);
+  object.tmdbId = reader.readString(offsets[15]);
   return object;
 }
 
@@ -278,24 +291,26 @@ P _tVShowMetadataEntityDeserializeProp<P>(
     case 4:
       return (reader.readStringList(offset) ?? []) as P;
     case 5:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
       return (reader.readLongOrNull(offset)) as P;
     case 7:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
       return (reader.readStringOrNull(offset)) as P;
     case 10:
-      return (reader.readDouble(offset)) as P;
-    case 11:
-      return (reader.readLongOrNull(offset)) as P;
-    case 12:
       return (reader.readStringOrNull(offset)) as P;
+    case 11:
+      return (reader.readDouble(offset)) as P;
+    case 12:
+      return (reader.readLongOrNull(offset)) as P;
     case 13:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 14:
+      return (reader.readString(offset)) as P;
+    case 15:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1256,6 +1271,162 @@ extension TVShowMetadataEntityQueryFilter on QueryBuilder<TVShowMetadataEntity,
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+      QAfterFilterCondition> logoUrlIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'logoUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+      QAfterFilterCondition> logoUrlIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'logoUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+      QAfterFilterCondition> logoUrlEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+      QAfterFilterCondition> logoUrlGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+      QAfterFilterCondition> logoUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+      QAfterFilterCondition> logoUrlBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'logoUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+      QAfterFilterCondition> logoUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+      QAfterFilterCondition> logoUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+          QAfterFilterCondition>
+      logoUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+          QAfterFilterCondition>
+      logoUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'logoUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+      QAfterFilterCondition> logoUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'logoUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity,
+      QAfterFilterCondition> logoUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'logoUrl',
+        value: '',
       ));
     });
   }
@@ -2568,6 +2739,20 @@ extension TVShowMetadataEntityQuerySortBy
   }
 
   QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity, QAfterSortBy>
+      sortByLogoUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logoUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity, QAfterSortBy>
+      sortByLogoUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logoUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity, QAfterSortBy>
       sortByNumberOfEpisodes() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'numberOfEpisodes', Sort.asc);
@@ -2767,6 +2952,20 @@ extension TVShowMetadataEntityQuerySortThenBy
   }
 
   QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity, QAfterSortBy>
+      thenByLogoUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logoUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity, QAfterSortBy>
+      thenByLogoUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logoUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity, QAfterSortBy>
       thenByNumberOfEpisodes() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'numberOfEpisodes', Sort.asc);
@@ -2939,6 +3138,13 @@ extension TVShowMetadataEntityQueryWhereDistinct
   }
 
   QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity, QDistinct>
+      distinctByLogoUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'logoUrl', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, TVShowMetadataEntity, QDistinct>
       distinctByNumberOfEpisodes() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'numberOfEpisodes');
@@ -3050,6 +3256,13 @@ extension TVShowMetadataEntityQueryProperty on QueryBuilder<
       genresProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'genres');
+    });
+  }
+
+  QueryBuilder<TVShowMetadataEntity, String?, QQueryOperations>
+      logoUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'logoUrl');
     });
   }
 

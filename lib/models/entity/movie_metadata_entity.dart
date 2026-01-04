@@ -30,6 +30,9 @@ class MovieMetadataEntity {
   /// 背景图 URL
   String? backdropUrl;
 
+  /// Logo 图片 URL
+  String? logoUrl;
+
   /// 剧情简介
   String? overview;
 

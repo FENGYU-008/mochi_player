@@ -39,43 +39,48 @@ const MovieMetadataEntitySchema = CollectionSchema(
       name: r'genres',
       type: IsarType.stringList,
     ),
-    r'originalTitle': PropertySchema(
+    r'logoUrl': PropertySchema(
       id: 4,
+      name: r'logoUrl',
+      type: IsarType.string,
+    ),
+    r'originalTitle': PropertySchema(
+      id: 5,
       name: r'originalTitle',
       type: IsarType.string,
     ),
     r'overview': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'overview',
       type: IsarType.string,
     ),
     r'posterUrl': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'posterUrl',
       type: IsarType.string,
     ),
     r'rating': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'rating',
       type: IsarType.double,
     ),
     r'releaseDate': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'releaseDate',
       type: IsarType.dateTime,
     ),
     r'releaseYear': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'releaseYear',
       type: IsarType.long,
     ),
     r'title': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'title',
       type: IsarType.string,
     ),
     r'tmdbId': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'tmdbId',
       type: IsarType.string,
     )
@@ -143,6 +148,12 @@ int _movieMetadataEntityEstimateSize(
     }
   }
   {
+    final value = object.logoUrl;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.originalTitle;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -180,14 +191,15 @@ void _movieMetadataEntitySerialize(
   );
   writer.writeString(offsets[2], object.certification);
   writer.writeStringList(offsets[3], object.genres);
-  writer.writeString(offsets[4], object.originalTitle);
-  writer.writeString(offsets[5], object.overview);
-  writer.writeString(offsets[6], object.posterUrl);
-  writer.writeDouble(offsets[7], object.rating);
-  writer.writeDateTime(offsets[8], object.releaseDate);
-  writer.writeLong(offsets[9], object.releaseYear);
-  writer.writeString(offsets[10], object.title);
-  writer.writeString(offsets[11], object.tmdbId);
+  writer.writeString(offsets[4], object.logoUrl);
+  writer.writeString(offsets[5], object.originalTitle);
+  writer.writeString(offsets[6], object.overview);
+  writer.writeString(offsets[7], object.posterUrl);
+  writer.writeDouble(offsets[8], object.rating);
+  writer.writeDateTime(offsets[9], object.releaseDate);
+  writer.writeLong(offsets[10], object.releaseYear);
+  writer.writeString(offsets[11], object.title);
+  writer.writeString(offsets[12], object.tmdbId);
 }
 
 MovieMetadataEntity _movieMetadataEntityDeserialize(
@@ -208,14 +220,15 @@ MovieMetadataEntity _movieMetadataEntityDeserialize(
   object.certification = reader.readStringOrNull(offsets[2]);
   object.genres = reader.readStringList(offsets[3]) ?? [];
   object.id = id;
-  object.originalTitle = reader.readStringOrNull(offsets[4]);
-  object.overview = reader.readStringOrNull(offsets[5]);
-  object.posterUrl = reader.readStringOrNull(offsets[6]);
-  object.rating = reader.readDouble(offsets[7]);
-  object.releaseDate = reader.readDateTimeOrNull(offsets[8]);
-  object.releaseYear = reader.readLongOrNull(offsets[9]);
-  object.title = reader.readString(offsets[10]);
-  object.tmdbId = reader.readString(offsets[11]);
+  object.logoUrl = reader.readStringOrNull(offsets[4]);
+  object.originalTitle = reader.readStringOrNull(offsets[5]);
+  object.overview = reader.readStringOrNull(offsets[6]);
+  object.posterUrl = reader.readStringOrNull(offsets[7]);
+  object.rating = reader.readDouble(offsets[8]);
+  object.releaseDate = reader.readDateTimeOrNull(offsets[9]);
+  object.releaseYear = reader.readLongOrNull(offsets[10]);
+  object.title = reader.readString(offsets[11]);
+  object.tmdbId = reader.readString(offsets[12]);
   return object;
 }
 
@@ -247,14 +260,16 @@ P _movieMetadataEntityDeserializeProp<P>(
     case 6:
       return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 9:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 10:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 11:
+      return (reader.readString(offset)) as P;
+    case 12:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1131,6 +1146,160 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'logoUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'logoUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'logoUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'logoUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'logoUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'logoUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+      logoUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'logoUrl',
+        value: '',
       ));
     });
   }
@@ -2128,6 +2297,20 @@ extension MovieMetadataEntityQuerySortBy
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
+      sortByLogoUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logoUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
+      sortByLogoUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logoUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
       sortByOriginalTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'originalTitle', Sort.asc);
@@ -2285,6 +2468,20 @@ extension MovieMetadataEntityQuerySortThenBy
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
+      thenByLogoUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logoUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
+      thenByLogoUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'logoUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
       thenByOriginalTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'originalTitle', Sort.asc);
@@ -2422,6 +2619,13 @@ extension MovieMetadataEntityQueryWhereDistinct
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
+      distinctByLogoUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'logoUrl', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
       distinctByOriginalTitle({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'originalTitle',
@@ -2512,6 +2716,13 @@ extension MovieMetadataEntityQueryProperty
       genresProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'genres');
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, String?, QQueryOperations>
+      logoUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'logoUrl');
     });
   }
 
