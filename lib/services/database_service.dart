@@ -233,6 +233,17 @@ class DatabaseService {
     _logger.i('🗑️ 已清空所有数据库数据');
   }
 
+  /// 清空刮削元数据，保留媒体文件、播放进度和收藏状态
+  Future<void> clearMetadata() async {
+    await _isar.writeTxn(() async {
+      await _isar.movieMetadataEntitys.clear();
+      await _isar.tVShowMetadataEntitys.clear();
+      await _isar.seasonMetadataEntitys.clear();
+      await _isar.episodeMetadataEntitys.clear();
+    });
+    _logger.i('🗑️ 已清空所有刮削元数据');
+  }
+
   /// 关闭数据库
   Future<void> close() async {
     await _isar.close();

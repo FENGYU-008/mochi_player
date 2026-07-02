@@ -394,13 +394,116 @@ class TmdbService {
       if (response.statusCode == 200) {
         final results = response.data['results'] as List;
         if (results.isNotEmpty) {
-          return results.first as Map<String, dynamic>;
+          return _pickBestSearchResult(results, query, endpoint);
         }
       }
     } catch (e) {
       _logger.w("⚠️ TMDB 搜索失败: $query ($year) - ${_describeError(e)}");
     }
     return null;
+  }
+
+  Map<String, dynamic> _pickBestSearchResult(
+    List<dynamic> results,
+    String query,
+    String endpoint,
+  ) {
+    final isTV = endpoint.contains('/tv');
+    Map<String, dynamic>? best;
+    var bestScore = double.negativeInfinity;
+
+    for (final item in results) {
+      if (item is! Map<String, dynamic>) continue;
+
+      final score = _scoreSearchResult(item, query, isTV: isTV);
+      if (score > bestScore) {
+        best = item;
+        bestScore = score;
+      }
+    }
+
+    return best ?? results.first as Map<String, dynamic>;
+  }
+
+  double _scoreSearchResult(
+    Map<String, dynamic> item,
+    String query, {
+    required bool isTV,
+  }) {
+    final title = (isTV ? item['name'] : item['title'])?.toString() ?? '';
+    final originalTitle =
+        (isTV ? item['original_name'] : item['original_title'])?.toString() ??
+        '';
+    final queryKey = _normalizeSearchText(query);
+    final titleKey = _normalizeSearchText(title);
+    final originalTitleKey = _normalizeSearchText(originalTitle);
+
+    final titleScore = _titleSimilarityScore(queryKey, titleKey);
+    final originalTitleScore = _titleSimilarityScore(
+      queryKey,
+      originalTitleKey,
+    );
+
+    var score = titleScore > originalTitleScore
+        ? titleScore + originalTitleScore * 0.15
+        : originalTitleScore + titleScore * 0.15;
+
+    if (item['poster_path'] != null) score += 3;
+    final popularity = (item['popularity'] as num?)?.toDouble() ?? 0;
+    score += popularity.clamp(0, 80) / 20;
+
+    return score;
+  }
+
+  double _titleSimilarityScore(String query, String candidate) {
+    if (query.isEmpty || candidate.isEmpty) return 0;
+    if (query == candidate) return 120;
+
+    if (candidate.contains(query) || query.contains(candidate)) {
+      final shortest = query.length < candidate.length
+          ? query.length
+          : candidate.length;
+      final longest = query.length > candidate.length
+          ? query.length
+          : candidate.length;
+      final ratio = shortest / longest;
+      if (ratio >= 0.65) return 76;
+      if (ratio >= 0.4) return 48;
+      return 18;
+    }
+
+    final queryTokens = _tokenizeSearchText(query);
+    final candidateTokens = _tokenizeSearchText(candidate);
+    if (queryTokens.isEmpty || candidateTokens.isEmpty) return 0;
+
+    final intersection = queryTokens.intersection(candidateTokens).length;
+    final union = queryTokens.union(candidateTokens).length;
+    if (union == 0) return 0;
+
+    return (intersection / union) * 55;
+  }
+
+  String _normalizeSearchText(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[\u3000\s._\-:：，。/\\\(\)\[\]【】]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  Set<String> _tokenizeSearchText(String value) {
+    final tokens = value
+        .split(' ')
+        .map((token) => token.trim())
+        .where((token) => token.isNotEmpty)
+        .toSet();
+
+    final cjk = RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf]+')
+        .allMatches(value)
+        .map((match) => match.group(0)!)
+        .where((token) => token.isNotEmpty);
+
+    return {...tokens, ...cjk};
   }
 
   bool _requireApiKey(String operation) {

@@ -89,9 +89,33 @@ class FileNameParser {
 
   // 季集号: S01E05, S01.E05, Season 1 Episode 5
   static final _seasonEpisodePattern = RegExp(
-    r'[.\s_\[\(](?:S|Season\s?)(\d{1,2})[.\s_]?(?:E|Episode\s?)(\d{1,3})[.\s_\]\)]?',
+    r'(?:^|[.\s_\[\(])(?:S|Season\s?)(\d{1,2})[.\s_]?(?:E|Episode\s?)(\d{1,3})(?:$|[.\s_\]\)])?',
     caseSensitive: false,
   );
+
+  // 单季: S01, Season 1, 第一季
+  static final _seasonOnlyPattern = RegExp(
+    r'(?:^|[.\s_\-\[\(])(?:S|Season\s?)(\d{1,2})(?:季|$|[.\s_\-\]\)])',
+    caseSensitive: false,
+  );
+
+  static final _chineseSeasonPattern = RegExp(
+    r'(?:^|[.\s_\-\[\(])第([一二两三四五六七八九十\d]{1,3})季(?:$|[.\s_\-\]\)])?',
+  );
+
+  // 单集: E01, EP01, 第1集, 01
+  static final _episodeOnlyPattern = RegExp(
+    r'(?:^|[.\s_\-\[\(])(?:E|EP|Episode\s?)(\d{1,3})(?:$|[.\s_\-\]\)])',
+    caseSensitive: false,
+  );
+
+  static final _chineseEpisodePattern = RegExp(
+    r'(?:^|[.\s_\-\[\(])第?([一二两三四五六七八九十百\d]{1,3})(?:集|话)(?:$|[.\s_\-\]\)])?',
+  );
+
+  static final _bareEpisodePattern = RegExp(r'^\s*0*(\d{1,3})\s*$');
+
+  static final _trailingEpisodePattern = RegExp(r'(.+?)[.\s_\-]*0*(\d{1,3})$');
 
   // 年份: (2024), .2024., _2024_
   static final _yearPattern = RegExp(r'[.\s_\(\[](\d{4})[.\s_\)\]]');
@@ -155,6 +179,14 @@ class FileNameParser {
 
   /// 解析文件名
   static ParsedResult parse({required String fileName, String? filePath}) {
+    final pathSegments = _pathSegments(filePath);
+    final parentSegments = pathSegments.isNotEmpty
+        ? pathSegments.take(pathSegments.length - 1).toList()
+        : const <String>[];
+    var seasonContext = _extractSeasonContext(parentSegments);
+    final standaloneEpisode = _extractStandaloneEpisodeFromFileName(fileName);
+    seasonContext ??= _inferSeasonOneContext(parentSegments, standaloneEpisode);
+
     // 提取容器格式（扩展名）
     String? container;
     if (fileName.contains('.')) {
@@ -178,6 +210,14 @@ class FileNameParser {
       nameForTitle = fileName.substring(0, seMatch.start);
     }
 
+    season ??= seasonContext?.season;
+    if (season != null) {
+      episode ??= _extractEpisodeFromFileName(fileName);
+    }
+    if (season != null && episode != null) {
+      isEpisode = true;
+    }
+
     // 提取年份
     int? year;
     for (final match in _yearPattern.allMatches(fileName)) {
@@ -191,14 +231,20 @@ class FileNameParser {
         break;
       }
     }
+    year ??= _extractYearFromPath(parentSegments);
 
     // 清理标题
-    String title = nameForTitle
-        .replaceAll(RegExp(r'[._\[\]]'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .replaceAll(RegExp(r'[\(\)\-]'), '')
-        .trim();
+    final titleSource = _stripExtension(nameForTitle);
+    String title = _cleanTitle(titleSource) ?? _stripExtension(fileName).trim();
     if (title.isEmpty) title = fileName;
+
+    final pathTitle =
+        _extractTitleFromPath(parentSegments, seasonContext) ??
+        _extractNearestTitleFromPath(parentSegments);
+    if (pathTitle != null &&
+        _shouldUsePathTitle(title, fileName, isEpisode, seasonContext)) {
+      title = pathTitle;
+    }
 
     // 提取 TMDB ID（从文件路径）
     String? tmdbId;
@@ -290,6 +336,272 @@ class FileNameParser {
   }
 
   // ===== 辅助方法 =====
+
+  static List<String> _pathSegments(String? filePath) {
+    if (filePath == null || filePath.isEmpty) return const [];
+    return filePath
+        .split(RegExp(r'[\\/]'))
+        .where((segment) => segment.trim().isNotEmpty)
+        .toList();
+  }
+
+  static _SeasonContext? _extractSeasonContext(List<String> parentSegments) {
+    for (var i = parentSegments.length - 1; i >= 0; i--) {
+      final segment = parentSegments[i];
+      final match = _seasonOnlyPattern.firstMatch(segment);
+      if (match != null) {
+        return _SeasonContext(
+          season: int.parse(match.group(1)!),
+          segmentIndex: i,
+          titleHint: _cleanTitle(segment.substring(0, match.start)),
+        );
+      }
+
+      final chineseMatch = _chineseSeasonPattern.firstMatch(segment);
+      if (chineseMatch != null) {
+        final season = _parseFlexibleNumber(chineseMatch.group(1)!);
+        if (season != null) {
+          return _SeasonContext(
+            season: season,
+            segmentIndex: i,
+            titleHint: _cleanTitle(segment.substring(0, chineseMatch.start)),
+          );
+        }
+      }
+    }
+    return null;
+  }
+
+  static _SeasonContext? _inferSeasonOneContext(
+    List<String> parentSegments,
+    int? standaloneEpisode,
+  ) {
+    if (standaloneEpisode == null) return null;
+
+    final title = _extractNearestTitleFromPath(parentSegments);
+    if (title == null) return null;
+
+    return _SeasonContext(
+      season: 1,
+      segmentIndex: parentSegments.length,
+      titleHint: title,
+    );
+  }
+
+  static int? _extractEpisodeFromFileName(String fileName) {
+    final standaloneEpisode = _extractStandaloneEpisodeFromFileName(fileName);
+    if (standaloneEpisode != null) return standaloneEpisode;
+
+    final stem = _stripExtension(fileName);
+    final trailingMatch = _trailingEpisodePattern.firstMatch(stem);
+    if (trailingMatch != null) {
+      return int.tryParse(trailingMatch.group(2)!);
+    }
+
+    return null;
+  }
+
+  static int? _extractStandaloneEpisodeFromFileName(String fileName) {
+    final stem = _stripExtension(fileName);
+
+    final episodeMatch = _episodeOnlyPattern.firstMatch(stem);
+    if (episodeMatch != null) {
+      return int.tryParse(episodeMatch.group(1)!);
+    }
+
+    final chineseMatch = _chineseEpisodePattern.firstMatch(stem);
+    if (chineseMatch != null) {
+      return _parseFlexibleNumber(chineseMatch.group(1)!);
+    }
+
+    final bareMatch = _bareEpisodePattern.firstMatch(stem);
+    if (bareMatch != null) {
+      return int.tryParse(bareMatch.group(1)!);
+    }
+
+    return null;
+  }
+
+  static String? _extractTitleFromPath(
+    List<String> parentSegments,
+    _SeasonContext? seasonContext,
+  ) {
+    if (seasonContext == null) return null;
+
+    final titleHint = seasonContext.titleHint;
+    if (titleHint != null && titleHint.isNotEmpty) {
+      return titleHint;
+    }
+
+    for (var i = seasonContext.segmentIndex - 1; i >= 0; i--) {
+      final title = _cleanTitle(parentSegments[i]);
+      if (title != null && !_isGenericDirectoryName(title)) {
+        return title;
+      }
+    }
+    return null;
+  }
+
+  static String? _extractNearestTitleFromPath(List<String> parentSegments) {
+    for (var i = parentSegments.length - 1; i >= 0; i--) {
+      final segment = parentSegments[i];
+      if (_isSeasonDirectorySegment(segment)) continue;
+
+      final title = _cleanTitle(segment);
+      if (title != null && !_isGenericDirectoryName(title)) {
+        return title;
+      }
+    }
+    return null;
+  }
+
+  static bool _shouldUsePathTitle(
+    String fileTitle,
+    String fileName,
+    bool isEpisode,
+    _SeasonContext? seasonContext,
+  ) {
+    if (_isGenericFileTitle(fileTitle)) return true;
+
+    if (!isEpisode || seasonContext == null) return false;
+    if (fileTitle.trim().isEmpty) return true;
+    if (int.tryParse(fileTitle.trim()) != null) return true;
+    if (_extractEpisodeFromFileName(fileName) != null) return true;
+
+    return seasonContext.titleHint != null;
+  }
+
+  static String _stripExtension(String fileName) {
+    final dotIndex = fileName.lastIndexOf('.');
+    if (dotIndex <= 0) return fileName;
+
+    final ext = fileName.substring(dotIndex + 1).toLowerCase();
+    return _videoExtensions.contains(ext)
+        ? fileName.substring(0, dotIndex)
+        : fileName;
+  }
+
+  static String? _cleanTitle(String value) {
+    final title = _removeYearMarkers(value)
+        .replaceAll(RegExp(r'[._\[\]]'), ' ')
+        .replaceAll(RegExp(r'[\(\)\-]'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return title.isEmpty ? null : title;
+  }
+
+  static String _removeYearMarkers(String value) {
+    return value
+        .replaceAll(RegExp(r'[\(\[](?:19\d{2}|20\d{2}|2100)[\)\]]'), ' ')
+        .replaceAll(
+          RegExp(r'[._\s]+(?:19\d{2}|20\d{2}|2100)(?=$|[._\s])'),
+          ' ',
+        );
+  }
+
+  static int? _extractYearFromPath(List<String> parentSegments) {
+    for (var i = parentSegments.length - 1; i >= 0; i--) {
+      final segment = parentSegments[i];
+      final match = RegExp(
+        r'(?:^|[.\s_\(\[])(19\d{2}|20\d{2}|2100)(?=$|[.\s_\)\]])',
+      ).firstMatch(segment);
+      if (match != null) {
+        return int.tryParse(match.group(1)!);
+      }
+    }
+    return null;
+  }
+
+  static bool _isSeasonDirectorySegment(String segment) {
+    return _seasonOnlyPattern.hasMatch(segment) ||
+        _chineseSeasonPattern.hasMatch(segment);
+  }
+
+  static bool _isGenericFileTitle(String title) {
+    final normalized = title.toLowerCase().replaceAll(RegExp(r'[\s._\-]+'), '');
+    return {
+      'movie',
+      'film',
+      'video',
+      'main',
+      'feature',
+      'featurefilm',
+      'play',
+      'default',
+      'index',
+      '正片',
+      '影片',
+      '电影',
+    }.contains(normalized);
+  }
+
+  static bool _isGenericDirectoryName(String title) {
+    final normalized = title.toLowerCase().replaceAll(' ', '');
+    return {
+      'tv',
+      'tvshows',
+      'media',
+      'library',
+      'video',
+      'videos',
+      'collection',
+      'series',
+      'show',
+      'shows',
+      'anime',
+      'animation',
+      'season',
+      'season1',
+      'season01',
+      'movie',
+      'movies',
+      'film',
+      'films',
+      '剧集',
+      '电视剧',
+      '动画',
+      '动漫',
+      '电影',
+    }.contains(normalized);
+  }
+
+  static int? _parseFlexibleNumber(String value) {
+    final numeric = int.tryParse(value);
+    if (numeric != null) return numeric;
+
+    return _parseChineseNumber(value);
+  }
+
+  static int? _parseChineseNumber(String value) {
+    const digits = {
+      '零': 0,
+      '一': 1,
+      '二': 2,
+      '两': 2,
+      '三': 3,
+      '四': 4,
+      '五': 5,
+      '六': 6,
+      '七': 7,
+      '八': 8,
+      '九': 9,
+    };
+
+    if (digits.containsKey(value)) return digits[value];
+    if (value == '十') return 10;
+
+    final tenIndex = value.indexOf('十');
+    if (tenIndex >= 0) {
+      final tensText = value.substring(0, tenIndex);
+      final onesText = value.substring(tenIndex + 1);
+      final tens = tensText.isEmpty ? 1 : digits[tensText];
+      final ones = onesText.isEmpty ? 0 : digits[onesText];
+      if (tens == null || ones == null) return null;
+      return tens * 10 + ones;
+    }
+
+    return null;
+  }
 
   static int? _parseResolutionToHeight(String resolution) {
     switch (resolution.toLowerCase()) {
@@ -402,4 +714,16 @@ class FileNameParser {
         return hdr.toUpperCase();
     }
   }
+}
+
+class _SeasonContext {
+  final int season;
+  final int segmentIndex;
+  final String? titleHint;
+
+  const _SeasonContext({
+    required this.season,
+    required this.segmentIndex,
+    required this.titleHint,
+  });
 }

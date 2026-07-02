@@ -74,6 +74,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildWebDavSettings(context),
                   const SizedBox(height: 36),
                   _buildTmdbSettings(context),
+                  const SizedBox(height: 36),
+                  _buildLibraryMaintenance(context),
                   const SizedBox(height: 32),
                   _buildActions(context, settingsProvider),
                   if (settingsProvider.error != null) ...[
@@ -262,6 +264,41 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildLibraryMaintenance(BuildContext context) {
+    final mediaLibraryProvider = context.watch<MediaLibraryProvider>();
+    final isBusy = mediaLibraryProvider.isLoading;
+
+    return _SettingsSection(
+      title: 'Library',
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: [
+          OutlinedButton.icon(
+            onPressed: isBusy ? null : _confirmRescrapeLibrary,
+            icon: isBusy
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.manage_search_outlined),
+            label: Text(isBusy ? 'Rescraping' : 'Rescrape Library'),
+          ),
+          OutlinedButton.icon(
+            onPressed: isBusy ? null : _confirmClearLibrary,
+            icon: const Icon(Icons.delete_sweep_outlined),
+            label: const Text('Clear Media Library'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.redAccent,
+              side: const BorderSide(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   InputDecoration _inputDecoration(
     BuildContext context, {
     required String label,
@@ -351,6 +388,102 @@ class _SettingsPageState extends State<SettingsPage> {
         content: Text(isConnected ? 'TMDB connected' : 'TMDB failed'),
         backgroundColor: isConnected ? null : Colors.redAccent,
       ),
+    );
+  }
+
+  Future<void> _confirmRescrapeLibrary() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Rescrape media library?'),
+          content: const Text(
+            'This clears local metadata and TMDB matches, then scrapes the existing scanned files again. '
+            'Watch progress, favorites, and WebDAV files are kept.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Rescrape'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final didSave = await _persistSettings();
+    if (!didSave || !mounted) return;
+
+    final settingsProvider = context.read<AppSettingsProvider>();
+    final mediaLibraryProvider = context.read<MediaLibraryProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    if (!settingsProvider.hasTmdbApiKey) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Set a TMDB API key before rescraping'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    await mediaLibraryProvider.rescrapeLibrary();
+    if (!mounted) return;
+
+    final error = mediaLibraryProvider.error;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(error ?? 'Media library rescraped from WebDAV root'),
+        backgroundColor: error == null ? null : Colors.redAccent,
+      ),
+    );
+  }
+
+  Future<void> _confirmClearLibrary() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Clear media library?'),
+          content: const Text(
+            'This clears local scanned files, metadata, watch progress, and favorites. '
+            'It will not delete files from WebDAV.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Clear'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final mediaLibraryProvider = context.read<MediaLibraryProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    await mediaLibraryProvider.clearLibrary();
+    if (!mounted) return;
+
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Media library cleared')),
     );
   }
 

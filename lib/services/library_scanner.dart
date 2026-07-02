@@ -17,16 +17,15 @@ class LibraryScanner {
 
   LibraryScanner(this._webDavService);
 
-  /// 扫描媒体库，返回 Stream<MediaFileEntity>
+  /// 扫描媒体库，返回 `Stream<MediaFileEntity>`
   Stream<MediaFileEntity> scan(String rootPath) async* {
     _logger.i("🚀 开始扫描媒体库: $rootPath");
 
     int fileCount = 0;
 
-    await for (final file in _recursivelyListFiles(rootPath)) {
-      final filePath = file.path;
-      if (filePath == null) continue;
-
+    await for (final scannedFile in _recursivelyListFiles(rootPath)) {
+      final file = scannedFile.file;
+      final filePath = scannedFile.path;
       final fileName = file.name ?? '';
 
       // 解析文件名，提取所有信息
@@ -81,23 +80,56 @@ class LibraryScanner {
   }
 
   /// 递归列出所有文件
-  Stream<webdav.File> _recursivelyListFiles(String path) async* {
+  Stream<_ScannedWebDavFile> _recursivelyListFiles(String path) async* {
     try {
-      final files = await _webDavService.readDir(path);
+      final directoryPath = _normalizeDirectoryPath(path);
+      final files = await _webDavService.readDir(directoryPath);
 
       for (final file in files) {
+        final name = file.name;
+        if (name == null || name.isEmpty) continue;
+
+        final itemPath = _joinPath(
+          directoryPath,
+          name,
+          isDirectory: file.isDir == true,
+        );
+
         if (file.isDir == true) {
-          // 递归扫描子目录
-          if (file.path != null) {
-            yield* _recursivelyListFiles(file.path!);
-          }
+          yield* _recursivelyListFiles(itemPath);
         } else {
-          // 输出文件
-          yield file;
+          yield _ScannedWebDavFile(file, itemPath);
         }
       }
     } catch (e) {
       _logger.w("⚠️ 扫描路径失败: $path - $e");
     }
   }
+
+  String _normalizeDirectoryPath(String path) {
+    final trimmed = path.trim();
+    if (trimmed.isEmpty || trimmed == '/') return '/';
+    final withLeadingSlash = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return withLeadingSlash.endsWith('/')
+        ? withLeadingSlash
+        : '$withLeadingSlash/';
+  }
+
+  String _joinPath(
+    String directoryPath,
+    String name, {
+    required bool isDirectory,
+  }) {
+    final base = _normalizeDirectoryPath(directoryPath);
+    final cleanName = name.replaceAll(RegExp(r'^/+|/+$'), '');
+    final path = base == '/' ? '/$cleanName' : '$base$cleanName';
+    return isDirectory && !path.endsWith('/') ? '$path/' : path;
+  }
+}
+
+class _ScannedWebDavFile {
+  final webdav.File file;
+  final String path;
+
+  const _ScannedWebDavFile(this.file, this.path);
 }

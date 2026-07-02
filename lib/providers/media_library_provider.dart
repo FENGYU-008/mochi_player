@@ -9,6 +9,7 @@ import '../services/library_scanner.dart';
 import '../services/webdav_service.dart';
 import '../services/metadata_scraper.dart';
 import '../services/tmdb_service.dart';
+import '../utils/filename_parser.dart';
 
 /// 媒体库 Provider
 /// 管理媒体文件和元数据的状态
@@ -26,8 +27,14 @@ class MediaLibraryProvider extends ChangeNotifier {
   List<entity.EpisodeMetadataEntity> _episodeMetadataEntities = [];
 
   bool _isLoading = false;
+  bool _isScraping = false;
   bool _isInitialized = false;
   String? _error;
+  int _scrapeCompleted = 0;
+  int _scrapeTotal = 0;
+  int _scrapeSuccessCount = 0;
+  int _scrapeFailCount = 0;
+  String? _scrapeCurrentTitle;
   StreamSubscription? _scanSubscription;
 
   // Trending 状态 (从 TMDB 获取，不持久化)
@@ -73,9 +80,34 @@ class MediaLibraryProvider extends ChangeNotifier {
     return ModelConverter.toTVShowWithSeasons(show, showSeasons);
   }
 
-  bool get isLoading => _isLoading;
+  bool get isLoading => _isLoading || _isScraping;
+  bool get isScraping => _isScraping;
   bool get isInitialized => _isInitialized;
   String? get error => _error;
+  int get scrapeCompleted => _scrapeCompleted;
+  int get scrapeTotal => _scrapeTotal;
+  double? get scrapeProgress {
+    if (!_isScraping || _scrapeTotal <= 0) return null;
+    return (_scrapeCompleted / _scrapeTotal).clamp(0.0, 1.0);
+  }
+
+  String? get libraryActivityMessage {
+    if (_isScraping) {
+      final count = _scrapeTotal > 0
+          ? '$_scrapeCompleted/$_scrapeTotal'
+          : '准备中';
+      final title = _scrapeCurrentTitle;
+      final summary = '已匹配 $_scrapeSuccessCount，失败 $_scrapeFailCount';
+      if (title != null && title.isNotEmpty) {
+        return '正在刮削 $count：$title · $summary';
+      }
+      return '正在刮削媒体库 $count · $summary';
+    }
+    if (_isLoading) {
+      return '正在扫描媒体库...';
+    }
+    return null;
+  }
 
   int get totalFiles => _mediaFileEntities.length;
 
@@ -338,7 +370,7 @@ class MediaLibraryProvider extends ChangeNotifier {
 
   /// 扫描媒体库
   Future<void> scanLibrary({String rootPath = '/'}) async {
-    if (_isLoading) return;
+    if (isLoading) return;
 
     _isLoading = true;
     _error = null;
@@ -353,34 +385,19 @@ class MediaLibraryProvider extends ChangeNotifier {
       }
 
       final webDavService = WebDavService();
-      final scanner = LibraryScanner(webDavService);
-
-      int newCount = 0;
-
-      // 扫描文件
-      await for (final entity in scanner.scan(rootPath)) {
-        // 使用数据库查询检查是否已存在（比内存更可靠）
-        final existing = await _db.getMediaFileByPath(entity.path);
-
-        if (existing == null) {
-          await _db.saveMediaFile(entity);
-          _mediaFileEntities.add(entity);
-          newCount++;
-
-          if (newCount % 10 == 0) {
-            notifyListeners();
-          }
-        }
-      }
+      final newCount = await _scanFilesFromWebDav(
+        webDavService: webDavService,
+        rootPath: rootPath,
+      );
 
       _logger.i('✅ 扫描完成，发现 $newCount 个新文件');
       notifyListeners();
 
-      // 刮削元数据
-      await _scrapeMetadata();
-
       _isLoading = false;
       notifyListeners();
+
+      // 刮削元数据在后台执行，扫描结果可以先显示出来。
+      unawaited(_scrapeMetadata());
     } catch (e, stackTrace) {
       _logger.e('❌ 扫描失败: $e', error: e, stackTrace: stackTrace);
       _error = '扫描失败: $e';
@@ -391,28 +408,137 @@ class MediaLibraryProvider extends ChangeNotifier {
 
   /// 刮削元数据
   Future<void> _scrapeMetadata() async {
+    if (_isScraping) return;
+
     final scraper = MetadataScraper();
 
+    _isScraping = true;
+    _scrapeCompleted = 0;
+    _scrapeTotal = _mediaFileEntities.length;
+    _scrapeSuccessCount = 0;
+    _scrapeFailCount = 0;
+    _scrapeCurrentTitle = null;
+    notifyListeners();
+
     _logger.i('🎬 开始批量刮削...');
-    final result = await scraper.scrapeBatch(_mediaFileEntities);
 
-    // 更新内存状态 (避免全量 Movie/TVShow 重载)
-    if (result.successCount > 0) {
-      _movieMetadataEntities.addAll(result.newMovies);
-      _tvShowMetadataEntities.addAll(result.newTVShows);
+    try {
+      final result = await scraper.scrapeBatch(
+        _mediaFileEntities,
+        onProgress: (progress) async {
+          _scrapeCompleted = progress.completed;
+          _scrapeTotal = progress.total;
+          _scrapeSuccessCount = progress.successCount;
+          _scrapeFailCount = progress.failCount;
+          _scrapeCurrentTitle = progress.currentTitle;
 
-      // 季和集信息更新 (由于 Scraper 内部产生且未返回，这里做一次增量/全量刷新)
-      // 考虑到季/集数量可能较多但通常变动的是新增部分，
-      // 这里暂时全量刷新 季/集 (比刷新 Movie 快)，或者后续优化 Scraper 返回它们
+          if (progress.movie != null) {
+            _upsertMovieMetadata(progress.movie!);
+          }
+          if (progress.tvShow != null) {
+            _upsertTVShowMetadata(progress.tvShow!);
+          }
+          if (progress.seasonsChanged) {
+            _seasonMetadataEntities = await _db.getAllSeasons();
+            _episodeMetadataEntities = await _db.getAllEpisodes();
+          }
+
+          notifyListeners();
+        },
+      );
+
+      // 最后全量同步一次，确保并发刮削期间的缓存与数据库一致。
+      _movieMetadataEntities = await _db.getAllMovies();
+      _tvShowMetadataEntities = await _db.getAllTVShows();
       _seasonMetadataEntities = await _db.getAllSeasons();
       _episodeMetadataEntities = await _db.getAllEpisodes();
 
-      _logger.i(
-        '✅ 刮削更新: 新增电影 ${result.newMovies.length}, 新增剧集 ${result.newTVShows.length}',
-      );
+      if (result.successCount > 0) {
+        _logger.i(
+          '✅ 刮削更新: 新增电影 ${result.newMovies.length}, 新增剧集 ${result.newTVShows.length}',
+        );
+      } else {
+        _logger.i('✅ 刮削完成: 无新增元数据');
+      }
+    } finally {
+      _isScraping = false;
+      _scrapeCurrentTitle = null;
       notifyListeners();
-    } else {
-      _logger.i('✅ 刮削完成: 无新增元数据');
+    }
+  }
+
+  /// 重新刮削元数据
+  Future<void> rescrapeLibrary() async {
+    if (isLoading) return;
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      if (!_isInitialized) {
+        await loadFromDatabase();
+      }
+
+      _mediaFileEntities = await _db.getAllMediaFiles();
+      _isInitialized = true;
+
+      _logger.i('重新刮削前按启动算法扫描 WebDAV 根目录...');
+      final newCount = await _scanFilesFromWebDav(
+        webDavService: WebDavService(),
+        rootPath: '/',
+      );
+      _logger.i('✅ 重新刮削前根目录扫描完成，发现 $newCount 个新文件');
+
+      if (_mediaFileEntities.isEmpty) {
+        _error = '已扫描 WebDAV 根目录，但没有发现可刮削视频文件';
+        return;
+      }
+
+      final tmdb = TmdbService();
+      if (!tmdb.isConfigured) {
+        _error = '未配置 TMDB API Key，无法重新刮削';
+        return;
+      }
+
+      await _db.clearMetadata();
+      _movieMetadataEntities.clear();
+      _tvShowMetadataEntities.clear();
+      _seasonMetadataEntities.clear();
+      _episodeMetadataEntities.clear();
+
+      for (final file in _mediaFileEntities) {
+        final parsed = FileNameParser.parse(
+          fileName: file.fileName,
+          filePath: file.path,
+        );
+        file.parsedTitle = parsed.title;
+        file.parsedYear = parsed.year;
+        file.parsedSeason = parsed.season;
+        file.parsedEpisode = parsed.episode;
+        file.mediaType = _determineMediaType(parsed);
+        file.tmdbId = parsed.tmdbId;
+        file.container = parsed.container;
+        file.height = parsed.height;
+        file.videoCodec = parsed.videoCodec;
+        file.audioCodec = parsed.audioCodec;
+        file.audioChannels = parsed.audioChannels;
+        file.isHdr = parsed.isHdr;
+        file.hdrFormat = parsed.hdrFormat;
+        file.versionLabel = parsed.versionLabel.isNotEmpty
+            ? parsed.versionLabel
+            : null;
+      }
+      await _db.saveMediaFiles(_mediaFileEntities);
+      notifyListeners();
+
+      await _scrapeMetadata();
+    } catch (e, stackTrace) {
+      _logger.e('❌ 重新刮削失败: $e', error: e, stackTrace: stackTrace);
+      _error = '重新刮削失败: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -458,6 +584,8 @@ class MediaLibraryProvider extends ChangeNotifier {
     _mediaFileEntities.clear();
     _movieMetadataEntities.clear();
     _tvShowMetadataEntities.clear();
+    _seasonMetadataEntities.clear();
+    _episodeMetadataEntities.clear();
     _error = null;
     notifyListeners();
   }
@@ -469,4 +597,60 @@ class MediaLibraryProvider extends ChangeNotifier {
   }
 
   // ===== 辅助方法 =====
+
+  Future<int> _scanFilesFromWebDav({
+    required WebDavService webDavService,
+    required String rootPath,
+  }) async {
+    final scanner = LibraryScanner(webDavService);
+    var newCount = 0;
+
+    await for (final mediaFileEntity in scanner.scan(rootPath)) {
+      final existing = await _db.getMediaFileByPath(mediaFileEntity.path);
+
+      if (existing == null) {
+        await _db.saveMediaFile(mediaFileEntity);
+        _mediaFileEntities.add(mediaFileEntity);
+        newCount++;
+
+        if (newCount % 10 == 0) {
+          notifyListeners();
+        }
+      }
+    }
+
+    return newCount;
+  }
+
+  void _upsertMovieMetadata(entity.MovieMetadataEntity movie) {
+    final index = _movieMetadataEntities.indexWhere(
+      (item) => item.tmdbId == movie.tmdbId,
+    );
+    if (index >= 0) {
+      _movieMetadataEntities[index] = movie;
+    } else {
+      _movieMetadataEntities.add(movie);
+    }
+  }
+
+  void _upsertTVShowMetadata(entity.TVShowMetadataEntity show) {
+    final index = _tvShowMetadataEntities.indexWhere(
+      (item) => item.tmdbId == show.tmdbId,
+    );
+    if (index >= 0) {
+      _tvShowMetadataEntities[index] = show;
+    } else {
+      _tvShowMetadataEntities.add(show);
+    }
+  }
+
+  entity.MediaType _determineMediaType(ParsedResult parsed) {
+    if (parsed.season != null || parsed.episode != null) {
+      return entity.MediaType.episode;
+    }
+    if (parsed.title.isNotEmpty) {
+      return entity.MediaType.movie;
+    }
+    return entity.MediaType.unknown;
+  }
 }

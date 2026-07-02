@@ -13,6 +13,30 @@ class ScrapeResult {
   int failCount = 0;
 }
 
+class ScrapeProgress {
+  final int completed;
+  final int total;
+  final int successCount;
+  final int failCount;
+  final String currentTitle;
+  final MovieMetadataEntity? movie;
+  final TVShowMetadataEntity? tvShow;
+  final bool seasonsChanged;
+
+  const ScrapeProgress({
+    required this.completed,
+    required this.total,
+    required this.successCount,
+    required this.failCount,
+    required this.currentTitle,
+    this.movie,
+    this.tvShow,
+    this.seasonsChanged = false,
+  });
+}
+
+typedef ScrapeProgressCallback = Future<void> Function(ScrapeProgress progress);
+
 /// 元数据刮削服务
 /// 负责协调 TMDB 搜索和数据库存储
 class MetadataScraper {
@@ -29,7 +53,10 @@ class MetadataScraper {
 
   /// 批量刮削文件
   /// 自动区分电影和剧集，处理并发和去重
-  Future<ScrapeResult> scrapeBatch(List<MediaFileEntity> allFiles) async {
+  Future<ScrapeResult> scrapeBatch(
+    List<MediaFileEntity> allFiles, {
+    ScrapeProgressCallback? onProgress,
+  }) async {
     final result = ScrapeResult();
     if (!_tmdb.isConfigured) {
       _logger.w('⚠️ 未配置 TMDB API Key，跳过元数据刮削');
@@ -57,21 +84,50 @@ class MetadataScraper {
       }
     }
 
+    final tvGroups = <String, _TVShowScrapeGroup>{};
+    for (final file in tvFiles) {
+      final key = _buildTVGroupKey(file);
+      tvGroups
+          .putIfAbsent(key, () => _TVShowScrapeGroup(file.parsedTitle))
+          .add(file);
+    }
+
+    final totalCount = movieFiles.length + tvFiles.length;
+    var completedCount = 0;
+
     _logger.i('🎬 批量刮削开始: 电影 ${movieFiles.length} 个, 剧集文件 ${tvFiles.length} 个');
 
     // 2. 刮削电影 (并发)
     await _runWithConcurrency(movieFiles, (file) async {
-      await _scrapeMovieSingle(file, result);
+      final movie = await _scrapeMovieSingle(file, result);
+      completedCount++;
+      await onProgress?.call(
+        ScrapeProgress(
+          completed: completedCount,
+          total: totalCount,
+          successCount: result.successCount,
+          failCount: result.failCount,
+          currentTitle: file.parsedTitle,
+          movie: movie,
+        ),
+      );
     }, 5);
 
     // 3. 刮削剧集 (按剧名分组后并发)
-    final tvGroups = <String, List<MediaFileEntity>>{};
-    for (final file in tvFiles) {
-      tvGroups.putIfAbsent(file.parsedTitle, () => []).add(file);
-    }
-
-    await _runWithConcurrency(tvGroups.entries.toList(), (entry) async {
-      await _scrapeTVShowGroup(entry.key, entry.value, result);
+    await _runWithConcurrency(tvGroups.values.toList(), (group) async {
+      final tvShow = await _scrapeTVShowGroup(group.title, group.files, result);
+      completedCount += group.files.length;
+      await onProgress?.call(
+        ScrapeProgress(
+          completed: completedCount,
+          total: totalCount,
+          successCount: result.successCount,
+          failCount: result.failCount,
+          currentTitle: group.title,
+          tvShow: tvShow,
+          seasonsChanged: tvShow != null,
+        ),
+      );
     }, 5);
 
     _logger.i(
@@ -82,7 +138,7 @@ class MetadataScraper {
 
   // ===== 电影处理 =====
 
-  Future<void> _scrapeMovieSingle(
+  Future<MovieMetadataEntity?> _scrapeMovieSingle(
     MediaFileEntity file,
     ScrapeResult result,
   ) async {
@@ -108,7 +164,7 @@ class MetadataScraper {
       if (metadata == null) {
         _logger.w('⚠️ 未找到电影: ${file.parsedTitle}');
         result.failCount++;
-        return;
+        return null;
       }
 
       // C. 保存与关联
@@ -122,15 +178,17 @@ class MetadataScraper {
       file.tmdbId = metadata.tmdbId;
       await _db.saveMediaFile(file);
       result.successCount++;
+      return metadata;
     } catch (e) {
       _logger.e('❌ 刮削电影出错: ${file.fileName} - $e');
       result.failCount++;
+      return null;
     }
   }
 
   // ===== 剧集处理 =====
 
-  Future<void> _scrapeTVShowGroup(
+  Future<TVShowMetadataEntity?> _scrapeTVShowGroup(
     String showTitle,
     List<MediaFileEntity> files,
     ScrapeResult result,
@@ -157,7 +215,7 @@ class MetadataScraper {
       if (metadata == null) {
         _logger.w('⚠️ 未找到剧集: $showTitle');
         result.failCount += files.length;
-        return;
+        return null;
       }
 
       // 3. 保存剧集主体
@@ -191,9 +249,11 @@ class MetadataScraper {
         }
       }
       result.successCount += files.length;
+      return metadata;
     } catch (e) {
       _logger.e('❌ 刮削剧集出错: $showTitle - $e');
       result.failCount += files.length;
+      return null;
     }
   }
 
@@ -260,30 +320,27 @@ class MetadataScraper {
     Future<T?> Function(String, int?) searchWithYear,
     Future<T?> Function(String) searchWithoutYear,
   ) async {
-    // A. 带年份搜索
-    var result = await searchWithYear(title, year);
-    if (result != null) return result;
+    final variants = _buildSearchTitleVariants(title);
 
-    final variants = _extractTitleVariants(title);
+    // A. 带年份搜索
     for (final variant in variants) {
-      if (variant == title) continue;
-      result = await searchWithYear(variant, year);
+      final result = await searchWithYear(variant, year);
       if (result != null) {
-        _logger.d('🎯 变体搜索成功(带年份): "$variant"');
+        if (variant != title) {
+          _logger.d('🎯 变体搜索成功(带年份): "$variant"');
+        }
         return result;
       }
     }
 
     // B. 无年份搜索 (如果年份存在)
     if (year != null) {
-      result = await searchWithoutYear(title);
-      if (result != null) return result;
-
       for (final variant in variants) {
-        if (variant == title) continue;
-        result = await searchWithoutYear(variant);
+        final result = await searchWithoutYear(variant);
         if (result != null) {
-          _logger.d('🎯 变体搜索成功(无年份): "$variant"');
+          if (variant != title) {
+            _logger.d('🎯 变体搜索成功(无年份): "$variant"');
+          }
           return result;
         }
       }
@@ -294,31 +351,71 @@ class MetadataScraper {
 
   // ===== 辅助方法 =====
 
+  String _buildTVGroupKey(MediaFileEntity file) {
+    final showTmdbId = _extractShowTmdbId(file.tmdbId);
+    if (showTmdbId != null) return 'tmdb:$showTmdbId';
+
+    final titleKey = _normalizeGroupKey(file.parsedTitle);
+    final yearKey = file.parsedYear?.toString() ?? '';
+    return 'title:$titleKey:$yearKey';
+  }
+
+  String _normalizeGroupKey(String title) {
+    final normalized = title.toLowerCase().replaceAll(
+      RegExp(r'[\s._\-:：，。/\\\(\)\[\]【】]+'),
+      '',
+    );
+    return normalized.isEmpty ? title.trim().toLowerCase() : normalized;
+  }
+
   String? _extractShowTmdbIdFromFiles(List<MediaFileEntity> files) {
     for (final file in files) {
-      if (file.tmdbId == null || file.tmdbId!.isEmpty) continue;
-      // 匹配 "12345_s1e1" 或 "12345"
-      final match = RegExp(r'^(\d+)(?:_s|$)').firstMatch(file.tmdbId!);
-      if (match != null) return match.group(1);
+      final showTmdbId = _extractShowTmdbId(file.tmdbId);
+      if (showTmdbId != null) return showTmdbId;
     }
     return null;
   }
 
-  List<String> _extractTitleVariants(String title) {
+  String? _extractShowTmdbId(String? tmdbId) {
+    if (tmdbId == null || tmdbId.isEmpty) return null;
+
+    // 匹配 "12345_s1e1" 或 "12345"
+    final match = RegExp(r'^(\d+)(?:_s|$)').firstMatch(tmdbId);
+    return match?.group(1);
+  }
+
+  List<String> _buildSearchTitleVariants(String title) {
     final variants = <String>[];
+    _addTitleVariant(variants, title);
+
+    final withoutBrackets = title
+        .replaceAll(RegExp(r'[\[\(（【][^\]\)）】]+[\]\)）】]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    _addTitleVariant(variants, withoutBrackets);
+
     // 中文
     final zh = RegExp(
       r'[\u4e00-\u9fff\u3400-\u4dbf：，。！？]+',
     ).allMatches(title).map((m) => m.group(0)!).join(' ').trim();
-    if (zh.isNotEmpty) variants.add(zh);
+    _addTitleVariant(variants, zh);
 
     // 英文
     final en = RegExp(
       r"[A-Za-z][A-Za-z\s\-']+[A-Za-z]",
     ).allMatches(title).map((m) => m.group(0)!).join(' ').trim();
-    if (en.isNotEmpty) variants.add(en);
+    _addTitleVariant(variants, en);
 
     return variants;
+  }
+
+  void _addTitleVariant(List<String> variants, String value) {
+    final normalized = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.isEmpty) return;
+
+    final key = _normalizeGroupKey(normalized);
+    final exists = variants.any((item) => _normalizeGroupKey(item) == key);
+    if (!exists) variants.add(normalized);
   }
 
   Future<void> _runWithConcurrency<T>(
@@ -342,5 +439,31 @@ class MetadataScraper {
     }
 
     await Future.wait(List.generate(workerCount, (_) => runWorker()));
+  }
+}
+
+class _TVShowScrapeGroup {
+  String title;
+  final List<MediaFileEntity> files = [];
+
+  _TVShowScrapeGroup(this.title);
+
+  void add(MediaFileEntity file) {
+    files.add(file);
+    if (_isBetterTitle(file.parsedTitle, title)) {
+      title = file.parsedTitle;
+    }
+  }
+
+  bool _isBetterTitle(String candidate, String current) {
+    final candidateText = candidate.trim();
+    final currentText = current.trim();
+    if (candidateText.isEmpty) return false;
+    if (currentText.isEmpty) return true;
+    if (int.tryParse(currentText) != null &&
+        int.tryParse(candidateText) == null) {
+      return true;
+    }
+    return candidateText.length > currentText.length;
   }
 }

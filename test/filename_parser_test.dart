@@ -1,37 +1,161 @@
-// 测试 FileNameParser 的解析结果
-// 运行方式: dart run test/filename_parser_test.dart
-
-import '../lib/utils/filename_parser.dart';
+import 'package:mochi_player/utils/filename_parser.dart';
 
 void main() {
-  final testCases = [
-    '怪奇物语.S05E04.2016.2160p.WEB-DL.Netflix.DV.H.265.DDP.5.1.Atmos-JZMM.mkv',
-    '长安的荔枝.The Lychee Road.2025.2160p.WEB-DL.WEB-DL.DoVi.DoVi.DTS 5.1.H.265.10-bit.mp4',
-    'Pluribus.S01E02.2160p.ATVP.WEB-DL.DDP5.1.Atmos.DV.H.265.mkv',
-    '我的大叔.2018.S01E14.2160p.WEB-DL.High Frame Rate.H.265.AAC.mkv',
-    '孤单又灿烂的神：鬼怪.2016.S01E16.死生契阔 与子成说.1080p.BluRay.Remux.PCM.2.0.AVC.mkv',
-    '黑白厨师Culinary.Class.Wars.S01E08.2024.1080p.NF.WEB-DL.x264.DDP5.1.mkv',
+  _parsesCommonEpisodeFilenames();
+  _usesSeasonFolders();
+  _infersSeasonOneForEpisodeOnlyFiles();
+  _usesMovieFolderTitleAndYear();
+  _parsesShortMovieTitlesWithTechnicalTags();
+}
+
+void _parsesCommonEpisodeFilenames() {
+  final cases = [
+    _ExpectedParse(
+      '怪奇物语.S05E04.2016.2160p.WEB-DL.Netflix.DV.H.265.DDP.5.1.Atmos-JZMM.mkv',
+      title: '怪奇物语',
+      year: 2016,
+      season: 5,
+      episode: 4,
+      container: 'mkv',
+      height: 2160,
+    ),
+    _ExpectedParse(
+      'Pluribus.S01E02.2160p.ATVP.WEB-DL.DDP5.1.Atmos.DV.H.265.mkv',
+      title: 'Pluribus',
+      season: 1,
+      episode: 2,
+      container: 'mkv',
+      height: 2160,
+    ),
+    _ExpectedParse(
+      '我的大叔.2018.S01E14.2160p.WEB-DL.High Frame Rate.H.265.AAC.mkv',
+      title: '我的大叔',
+      year: 2018,
+      season: 1,
+      episode: 14,
+      container: 'mkv',
+      height: 2160,
+    ),
   ];
 
-  for (int i = 0; i < testCases.length; i++) {
-    final fileName = testCases[i];
-    final result = FileNameParser.parse(fileName: fileName);
-
-    print('\n${'=' * 60}');
-    print('【测试 ${i + 1}】$fileName');
-    print('${'=' * 60}');
-    print('  标题:     ${result.title}');
-    print('  年份:     ${result.year}');
-    print('  季:       ${result.season}');
-    print('  集:       ${result.episode}');
-    print('  是否剧集: ${result.isEpisode}');
-    print('  容器:     ${result.container}');
-    print('  分辨率:   ${result.resolution} (height: ${result.height})');
-    print('  视频编码: ${result.videoCodec}');
-    print('  音频编码: ${result.audioCodec}');
-    print('  声道:     ${result.audioChannels}');
-    print('  HDR:      ${result.isHdr} (${result.hdrFormat})');
-    print('  来源:     ${result.source}');
-    print('  版本标签: ${result.versionLabel}');
+  for (final testCase in cases) {
+    final result = FileNameParser.parse(fileName: testCase.fileName);
+    _expectParse(result, testCase);
   }
+}
+
+void _usesSeasonFolders() {
+  final cases = [
+    _ExpectedParse(
+      '进击的巨人01.mp4',
+      path: '/media/进击的巨人/进击的巨人 S01/进击的巨人01.mp4',
+      title: '进击的巨人',
+      season: 1,
+      episode: 1,
+      container: 'mp4',
+    ),
+    _ExpectedParse(
+      '1.mp4',
+      path: '/media/进击的巨人/第一季/1.mp4',
+      title: '进击的巨人',
+      season: 1,
+      episode: 1,
+      container: 'mp4',
+    ),
+    _ExpectedParse(
+      '第3集.mkv',
+      path: '/media/进击的巨人/第十二季/第3集.mkv',
+      title: '进击的巨人',
+      season: 12,
+      episode: 3,
+      container: 'mkv',
+    ),
+  ];
+
+  for (final testCase in cases) {
+    final result = FileNameParser.parse(
+      fileName: testCase.fileName,
+      filePath: testCase.path,
+    );
+    _expectParse(result, testCase);
+  }
+}
+
+void _infersSeasonOneForEpisodeOnlyFiles() {
+  final result = FileNameParser.parse(
+    fileName: '01.mp4',
+    filePath: '/media/进击的巨人/01.mp4',
+  );
+
+  _expectEquals(result.title, '进击的巨人', 'title');
+  _expectEquals(result.season, 1, 'season');
+  _expectEquals(result.episode, 1, 'episode');
+  _expectEquals(result.isEpisode, true, 'isEpisode');
+}
+
+void _usesMovieFolderTitleAndYear() {
+  final result = FileNameParser.parse(
+    fileName: 'movie.mkv',
+    filePath: '/media/Movies/Inception (2010)/movie.mkv',
+  );
+
+  _expectEquals(result.title, 'Inception', 'title');
+  _expectEquals(result.year, 2010, 'year');
+  _expectEquals(result.isEpisode, false, 'isEpisode');
+}
+
+void _parsesShortMovieTitlesWithTechnicalTags() {
+  final result = FileNameParser.parse(
+    fileName:
+        'Saw.2004.2160p.BluRay.REMUX.DV.HDR.HEVC.DTS-HD.MA.TrueHD.7.1.Atmos.mkv',
+    filePath:
+        '/quark/来自：分享/电锯惊魂系列/电锯惊魂1 4K原盘REMUX 杜比视界 内封字幕/Saw.2004.2160p.BluRay.REMUX.DV.HDR.HEVC.DTS-HD.MA.TrueHD.7.1.Atmos.mkv',
+  );
+
+  _expectEquals(result.title, 'Saw', 'title');
+  _expectEquals(result.year, 2004, 'year');
+  _expectEquals(result.height, 2160, 'height');
+  _expectEquals(result.container, 'mkv', 'container');
+  _expectEquals(result.isEpisode, false, 'isEpisode');
+}
+
+void _expectParse(ParsedResult result, _ExpectedParse expected) {
+  _expectEquals(result.title, expected.title, 'title');
+  _expectEquals(result.year, expected.year, 'year');
+  _expectEquals(result.season, expected.season, 'season');
+  _expectEquals(result.episode, expected.episode, 'episode');
+  _expectEquals(
+    result.isEpisode,
+    expected.season != null || expected.episode != null,
+    'isEpisode',
+  );
+  _expectEquals(result.container, expected.container, 'container');
+  _expectEquals(result.height, expected.height, 'height');
+}
+
+void _expectEquals(Object? actual, Object? expected, String field) {
+  if (actual == expected) return;
+  throw StateError('Expected $field to be "$expected", got "$actual".');
+}
+
+class _ExpectedParse {
+  final String fileName;
+  final String? path;
+  final String title;
+  final int? year;
+  final int? season;
+  final int? episode;
+  final String? container;
+  final int? height;
+
+  const _ExpectedParse(
+    this.fileName, {
+    this.path,
+    required this.title,
+    this.year,
+    this.season,
+    this.episode,
+    this.container,
+    this.height,
+  });
 }

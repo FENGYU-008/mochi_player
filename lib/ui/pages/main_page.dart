@@ -145,6 +145,23 @@ class _MainPageState extends State<MainPage> {
                   // === 1. 底层内容 (动态切换) ===
                   _getPageContent(_selectedIndex),
 
+                  Consumer<MediaLibraryProvider>(
+                    builder: (context, provider, child) {
+                      final message = provider.libraryActivityMessage;
+                      if (message == null) return const SizedBox.shrink();
+
+                      return Positioned(
+                        top: showHeader ? 70 : 16,
+                        left: 40,
+                        right: 40,
+                        child: _LibraryActivityBanner(
+                          message: message,
+                          progress: provider.scrapeProgress,
+                        ),
+                      );
+                    },
+                  ),
+
                   // === 2. 顶层毛玻璃 Header ===
                   if (showHeader)
                     Positioned(
@@ -220,6 +237,84 @@ class _MainPageState extends State<MainPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LibraryActivityBanner extends StatelessWidget {
+  final String message;
+  final double? progress;
+
+  const _LibraryActivityBanner({required this.message, this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final surfaceColor = theme.brightness == Brightness.light
+        ? Colors.white.withAlpha((255 * 0.92).round())
+        : const Color(0xFF1F1F22).withAlpha((255 * 0.92).round());
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 620),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: theme.dividerColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((255 * 0.12).round()),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    value: progress,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (progress != null) ...[
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  minHeight: 3,
+                  value: progress,
+                  backgroundColor: theme.dividerColor.withAlpha(
+                    (255 * 0.45).round(),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
