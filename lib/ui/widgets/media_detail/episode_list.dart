@@ -85,7 +85,7 @@ class _EpisodeListState extends State<EpisodeList> {
                 elevation: 4,
                 tooltip: '', // Disable tooltip
                 onSelected: (season) {
-                  if (season != null) _selectSeason(season);
+                  _selectSeason(season);
                 },
                 itemBuilder: (context) {
                   return _sortedSeasons.map((season) {

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:mochi_player/providers/app_settings_provider.dart';
 import 'package:mochi_player/providers/file_browser_provider.dart';
 import 'package:mochi_player/providers/media_library_provider.dart';
 import 'package:mochi_player/ui/pages/file_browser_page.dart';
@@ -36,19 +37,25 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> _initializeApp() async {
+    final settingsProvider = context.read<AppSettingsProvider>();
+    final fileBrowserProvider = context.read<FileBrowserProvider>();
     final libraryProvider = context.read<MediaLibraryProvider>();
 
     // 1. 先从数据库加载缓存数据 (快速显示)
     await libraryProvider.loadFromDatabase();
 
-    // 2. 加载文件列表 (WebDAV 已在 main.dart 初始化)
-    await context.read<FileBrowserProvider>().fetchFiles('/');
+    // 2. 加载文件列表并扫描媒体库
+    if (settingsProvider.hasWebDavConfig) {
+      await fileBrowserProvider.fetchFiles('/');
 
-    // 3. 扫描媒体库 (增量更新)
-    await libraryProvider.scanLibrary();
+      // 3. 扫描媒体库 (增量更新)
+      await libraryProvider.scanLibrary();
+    }
 
     // 4. 加载 TMDB 热门趋势
-    await libraryProvider.fetchTrending();
+    if (settingsProvider.hasTmdbApiKey) {
+      await libraryProvider.fetchTrending();
+    }
   }
 
   // 接收首页滚动偏移量

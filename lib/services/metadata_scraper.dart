@@ -31,6 +31,11 @@ class MetadataScraper {
   /// 自动区分电影和剧集，处理并发和去重
   Future<ScrapeResult> scrapeBatch(List<MediaFileEntity> allFiles) async {
     final result = ScrapeResult();
+    if (!_tmdb.isConfigured) {
+      _logger.w('⚠️ 未配置 TMDB API Key，跳过元数据刮削');
+      return result;
+    }
+
     final movieFiles = <MediaFileEntity>[];
     final tvFiles = <MediaFileEntity>[];
 
@@ -321,23 +326,21 @@ class MetadataScraper {
     Future<void> Function(T) action,
     int maxConcurrent,
   ) async {
-    final active = <Future<void>>[];
-    for (final item in tasks) {
-      while (active.length >= maxConcurrent) {
-        await Future.any(active);
-        active.removeWhere(
-          (f) => f.hashCode == f.hashCode,
-        ); // Cleaning finished tasks?
-        // Future.any doesn't return the completed future, just a value.
-        // Better implementation:
-        // We just wait for "any" to complete.
-        // But we need to remove the one that completed.
-      }
+    if (tasks.isEmpty) return;
 
-      final task = action(item);
-      active.add(task);
-      task.whenComplete(() => active.remove(task));
+    final workerCount = tasks.length < maxConcurrent
+        ? tasks.length
+        : maxConcurrent;
+    var nextIndex = 0;
+
+    Future<void> runWorker() async {
+      while (nextIndex < tasks.length) {
+        final item = tasks[nextIndex];
+        nextIndex++;
+        await action(item);
+      }
     }
-    await Future.wait(active);
+
+    await Future.wait(List.generate(workerCount, (_) => runWorker()));
   }
 }

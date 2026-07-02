@@ -1,38 +1,408 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:mochi_player/providers/app_settings_provider.dart';
+import 'package:mochi_player/providers/file_browser_provider.dart';
+import 'package:mochi_player/providers/media_library_provider.dart';
 import 'package:mochi_player/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  final _webDavUrlController = TextEditingController();
+  final _webDavUsernameController = TextEditingController();
+  final _webDavPasswordController = TextEditingController();
+  final _tmdbApiKeyController = TextEditingController();
+  final _tmdbApiBaseUrlController = TextEditingController();
+  final _tmdbProxyUrlController = TextEditingController();
+
+  bool _controllersInitialized = false;
+  bool _showWebDavPassword = false;
+  bool _showTmdbApiKey = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_controllersInitialized) return;
+
+    final settings = context.read<AppSettingsProvider>();
+    _syncControllers(settings);
+    _controllersInitialized = true;
+  }
+
+  @override
+  void dispose() {
+    _webDavUrlController.dispose();
+    _webDavUsernameController.dispose();
+    _webDavPasswordController.dispose();
+    _tmdbApiKeyController.dispose();
+    _tmdbApiBaseUrlController.dispose();
+    _tmdbProxyUrlController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final themeProvider = context.watch<ThemeProvider>();
+    final settingsProvider = context.watch<AppSettingsProvider>();
 
     return Scaffold(
-      // 为了与深色模式兼容，背景色从 scaffoldBackgroundColor 获取
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: ListView(
         padding: const EdgeInsets.all(40.0),
         children: [
-          const Text(
-            'Settings',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          Align(
+            alignment: Alignment.topLeft,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Settings',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 40),
+                  _buildThemeSettings(context, themeProvider),
+                  const SizedBox(height: 36),
+                  _buildWebDavSettings(context),
+                  const SizedBox(height: 36),
+                  _buildTmdbSettings(context),
+                  const SizedBox(height: 32),
+                  _buildActions(context, settingsProvider),
+                  if (settingsProvider.error != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      settingsProvider.error!,
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 40),
-          _buildThemeSettings(context, themeProvider),
-          // 在这里可以添加更多设置项
         ],
       ),
     );
   }
 
-  Widget _buildThemeSettings(BuildContext context, ThemeProvider themeProvider) {
+  Widget _buildThemeSettings(
+    BuildContext context,
+    ThemeProvider themeProvider,
+  ) {
+    return _SettingsSection(
+      title: 'Appearance',
+      child: SegmentedButton<ThemeMode>(
+        segments: const [
+          ButtonSegment(
+            value: ThemeMode.light,
+            label: Text('Light'),
+            icon: Icon(Icons.light_mode_outlined),
+          ),
+          ButtonSegment(
+            value: ThemeMode.dark,
+            label: Text('Dark'),
+            icon: Icon(Icons.dark_mode_outlined),
+          ),
+          ButtonSegment(
+            value: ThemeMode.system,
+            label: Text('System'),
+            icon: Icon(Icons.computer_rounded),
+          ),
+        ],
+        selected: {themeProvider.themeMode},
+        onSelectionChanged: (selection) {
+          themeProvider.setTheme(selection.first);
+        },
+      ),
+    );
+  }
+
+  Widget _buildWebDavSettings(BuildContext context) {
+    return _SettingsSection(
+      title: 'WebDAV',
+      child: Column(
+        children: [
+          TextField(
+            controller: _webDavUrlController,
+            keyboardType: TextInputType.url,
+            decoration: _inputDecoration(
+              context,
+              label: 'Server URL',
+              icon: Icons.link_rounded,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _webDavUsernameController,
+            decoration: _inputDecoration(
+              context,
+              label: 'Username',
+              icon: Icons.person_outline_rounded,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _webDavPasswordController,
+            obscureText: !_showWebDavPassword,
+            decoration: _inputDecoration(
+              context,
+              label: 'Password',
+              icon: Icons.lock_outline_rounded,
+              suffixIcon: IconButton(
+                tooltip: _showWebDavPassword ? 'Hide' : 'Show',
+                icon: Icon(
+                  _showWebDavPassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _showWebDavPassword = !_showWebDavPassword;
+                  });
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTmdbSettings(BuildContext context) {
+    return _SettingsSection(
+      title: 'TMDB',
+      child: Column(
+        children: [
+          TextField(
+            controller: _tmdbApiKeyController,
+            obscureText: !_showTmdbApiKey,
+            decoration: _inputDecoration(
+              context,
+              label: 'API Key',
+              icon: Icons.key_rounded,
+              suffixIcon: IconButton(
+                tooltip: _showTmdbApiKey ? 'Hide' : 'Show',
+                icon: Icon(
+                  _showTmdbApiKey
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _showTmdbApiKey = !_showTmdbApiKey;
+                  });
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _tmdbApiBaseUrlController,
+            keyboardType: TextInputType.url,
+            decoration: _inputDecoration(
+              context,
+              label: 'API Base URL',
+              icon: Icons.travel_explore_rounded,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _tmdbProxyUrlController,
+            keyboardType: TextInputType.url,
+            decoration: _inputDecoration(
+              context,
+              label: 'HTTP Proxy',
+              icon: Icons.route_rounded,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActions(
+    BuildContext context,
+    AppSettingsProvider settingsProvider,
+  ) {
+    final isBusy = settingsProvider.isSaving;
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        FilledButton.icon(
+          onPressed: isBusy ? null : _saveSettings,
+          icon: isBusy
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.save_outlined),
+          label: Text(settingsProvider.isSaving ? 'Saving' : 'Save'),
+        ),
+        OutlinedButton.icon(
+          onPressed: isBusy ? null : _testWebDavConnection,
+          icon: const Icon(Icons.wifi_tethering_rounded),
+          label: const Text('Test WebDAV'),
+        ),
+        OutlinedButton.icon(
+          onPressed: isBusy ? null : _testTmdbConnection,
+          icon: const Icon(Icons.public_rounded),
+          label: const Text('Test TMDB'),
+        ),
+      ],
+    );
+  }
+
+  InputDecoration _inputDecoration(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    Widget? suffixIcon,
+  }) {
+    final theme = Theme.of(context);
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: theme.canvasColor,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: theme.dividerColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+      ),
+    );
+  }
+
+  Future<void> _saveSettings() async {
+    final didSave = await _persistSettings();
+    if (!didSave || !mounted) return;
+
+    final settingsProvider = context.read<AppSettingsProvider>();
+    final fileBrowserProvider = context.read<FileBrowserProvider>();
+    final mediaLibraryProvider = context.read<MediaLibraryProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    messenger.showSnackBar(const SnackBar(content: Text('Settings saved')));
+    unawaited(
+      _refreshAfterSave(
+        settingsProvider,
+        fileBrowserProvider,
+        mediaLibraryProvider,
+      ),
+    );
+  }
+
+  Future<void> _refreshAfterSave(
+    AppSettingsProvider settingsProvider,
+    FileBrowserProvider fileBrowserProvider,
+    MediaLibraryProvider mediaLibraryProvider,
+  ) async {
+    if (settingsProvider.hasWebDavConfig) {
+      await fileBrowserProvider.fetchFiles('/');
+    }
+
+    if (settingsProvider.hasTmdbApiKey) {
+      await mediaLibraryProvider.fetchTrending();
+    }
+  }
+
+  Future<void> _testWebDavConnection() async {
+    final didSave = await _persistSettings();
+    if (!didSave || !mounted) return;
+
+    final settingsProvider = context.read<AppSettingsProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final isConnected = await settingsProvider.testWebDavConnection();
+    if (!mounted) return;
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(isConnected ? 'WebDAV connected' : 'WebDAV failed'),
+        backgroundColor: isConnected ? null : Colors.redAccent,
+      ),
+    );
+  }
+
+  Future<void> _testTmdbConnection() async {
+    final didSave = await _persistSettings();
+    if (!didSave || !mounted) return;
+
+    final settingsProvider = context.read<AppSettingsProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final isConnected = await settingsProvider.testTmdbConnection();
+    if (!mounted) return;
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(isConnected ? 'TMDB connected' : 'TMDB failed'),
+        backgroundColor: isConnected ? null : Colors.redAccent,
+      ),
+    );
+  }
+
+  Future<bool> _persistSettings() async {
+    final settingsProvider = context.read<AppSettingsProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    await settingsProvider.saveSettings(
+      webDavUrl: _webDavUrlController.text,
+      webDavUsername: _webDavUsernameController.text,
+      webDavPassword: _webDavPasswordController.text,
+      tmdbApiKey: _tmdbApiKeyController.text,
+      tmdbApiBaseUrl: _tmdbApiBaseUrlController.text,
+      tmdbProxyUrl: _tmdbProxyUrlController.text,
+    );
+    if (!mounted) return false;
+
+    final error = settingsProvider.error;
+    if (error != null) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.redAccent),
+      );
+      return false;
+    }
+
+    _syncControllers(settingsProvider);
+    return true;
+  }
+
+  void _syncControllers(AppSettingsProvider settingsProvider) {
+    _webDavUrlController.text = settingsProvider.webDavUrl;
+    _webDavUsernameController.text = settingsProvider.webDavUsername;
+    _webDavPasswordController.text = settingsProvider.webDavPassword;
+    _tmdbApiKeyController.text = settingsProvider.tmdbApiKey;
+    _tmdbApiBaseUrlController.text = settingsProvider.tmdbApiBaseUrl;
+    _tmdbProxyUrlController.text = settingsProvider.tmdbProxyUrl;
+  }
+}
+
+class _SettingsSection extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _SettingsSection({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Appearance',
+          title,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -40,51 +410,8 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _buildThemeOption(
-          context: context,
-          title: 'Light',
-          value: ThemeMode.light,
-          currentValue: themeProvider.themeMode,
-          onChanged: (mode) => themeProvider.setTheme(mode!),
-        ),
-        const Divider(height: 1),
-        _buildThemeOption(
-          context: context,
-          title: 'Dark',
-          value: ThemeMode.dark,
-          currentValue: themeProvider.themeMode,
-          onChanged: (mode) => themeProvider.setTheme(mode!),
-        ),
-        const Divider(height: 1),
-        _buildThemeOption(
-          context: context,
-          title: 'System',
-          value: ThemeMode.system,
-          currentValue: themeProvider.themeMode,
-          onChanged: (mode) => themeProvider.setTheme(mode!),
-        ),
+        child,
       ],
-    );
-  }
-
-  // 封装的单选列表项
-  Widget _buildThemeOption({
-    required BuildContext context,
-    required String title,
-    required ThemeMode value,
-    required ThemeMode currentValue,
-    required ValueChanged<ThemeMode?> onChanged,
-  }) {
-    return RadioListTile<ThemeMode>(
-      title: Text(
-        title,
-        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
-      ),
-      value: value,
-      groupValue: currentValue,
-      onChanged: onChanged,
-      activeColor: Theme.of(context).primaryColor,
-      contentPadding: EdgeInsets.zero,
     );
   }
 }

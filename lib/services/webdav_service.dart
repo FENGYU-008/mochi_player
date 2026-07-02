@@ -16,7 +16,10 @@ class WebDavService {
 
   factory WebDavService() => _instance;
 
-  WebDavService._internal();
+  WebDavService._internal() {
+    _dio.options.connectTimeout = const Duration(seconds: 10);
+    _dio.options.receiveTimeout = const Duration(seconds: 10);
+  }
 
   // ---
 
@@ -33,22 +36,31 @@ class WebDavService {
 
   /// 初始化 WebDAV 客户端
   Future<void> init(String url, String username, String password) async {
-    _logger.i("🔌 初始化 WebDAV 连接: $url");
-    _baseUrl = url;
-    _username = username;
+    final normalizedUrl = _normalizeBaseUrl(url);
+    _logger.i("🔌 初始化 WebDAV 连接: $normalizedUrl");
+    _baseUrl = normalizedUrl;
+    _username = username.trim();
     _password = password;
+    _token = null;
 
     _client = webdav.newClient(
-      url,
-      user: username,
+      _baseUrl,
+      user: _username,
       password: password,
       debug: false,
     );
 
     _client!.setConnectTimeout(10000); // 10秒超时
 
-    // 尝试登录 Alist API 获取 Token
-    await _login();
+    // Alist token is fetched lazily when a direct playback link is needed.
+  }
+
+  void clear() {
+    _client = null;
+    _baseUrl = '';
+    _username = '';
+    _password = '';
+    _token = null;
   }
 
   Future<void> _login() async {
@@ -71,8 +83,11 @@ class WebDavService {
   /// 获取文件的直链 (用于播放器)
   Future<String?> getDirectLink(String path) async {
     if (_token == null) {
-      _logger.w("无法获取直链，因为未登录 Alist API");
-      return null;
+      await _login();
+      if (_token == null) {
+        _logger.w("无法获取直链，因为未登录 Alist API");
+        return null;
+      }
     }
 
     // 移除 WebDAV 路径中的 /dav 前缀，以适配 Alist API
@@ -141,6 +156,10 @@ class WebDavService {
     if (path == '/') return '/dav';
     if (path.startsWith('/dav')) return path;
     return '/dav$path';
+  }
+
+  String _normalizeBaseUrl(String url) {
+    return url.trim().replaceFirst(RegExp(r'/+$'), '');
   }
 
   /// 检查是否为有效的媒体文件或目录

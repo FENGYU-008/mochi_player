@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mochi_player/providers/app_settings_provider.dart';
 import 'package:mochi_player/services/webdav_service.dart';
 import 'package:mochi_player/ui/pages/player_page.dart';
 import 'package:mochi_player/ui/widgets/file_list_item.dart';
@@ -18,8 +19,12 @@ class FileBrowserPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // 监听 Provider 变化
     final provider = context.watch<FileBrowserProvider>();
+    final settingsProvider = context.watch<AppSettingsProvider>();
     final items = provider.items;
     final isLoading = provider.isLoading;
+    final error =
+        provider.error ??
+        (settingsProvider.hasWebDavConfig ? null : '请先在设置中配置 WebDAV');
 
     return Scaffold(
       body: Column(
@@ -33,7 +38,7 @@ class FileBrowserPage extends StatelessWidget {
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : items.isEmpty
-                ? _buildEmptyState()
+                ? _buildEmptyState(error)
                 : _buildContent(context, provider),
           ),
         ],
@@ -217,6 +222,7 @@ class FileBrowserPage extends StatelessWidget {
     );
 
     final directLink = await WebDavService().getDirectLink(item.path);
+    if (!context.mounted) return;
 
     messenger.hideCurrentSnackBar();
 
@@ -238,19 +244,19 @@ class FileBrowserPage extends StatelessWidget {
   }
 
   // 构建空状态视图
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(String? error) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.folder_off_outlined,
+            error == null ? Icons.folder_off_outlined : Icons.settings_outlined,
             size: 64,
             color: Colors.grey.shade300,
           ),
           const SizedBox(height: 16),
           Text(
-            "此文件夹为空",
+            error ?? "此文件夹为空",
             style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
           ),
         ],

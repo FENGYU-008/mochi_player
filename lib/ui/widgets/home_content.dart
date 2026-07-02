@@ -232,15 +232,14 @@ class _HomeContentState extends State<HomeContent> {
                 subtitle = metadata.releaseYear?.toString();
               }
             } else {
+              subtitle = _episodeLabel(file);
               final metadata = provider.getTVShowMetadata(file.tmdbId ?? '');
               if (metadata != null) {
                 title = metadata.title;
                 imageUrl = metadata.backdropUrl;
                 rating = metadata.rating;
                 // 显示当前观看的季和集
-                if (file.parsedSeason != null && file.parsedEpisode != null) {
-                  subtitle = 'S${file.parsedSeason} E${file.parsedEpisode}';
-                } else if (metadata.numberOfSeasons != null) {
+                if (subtitle == null && metadata.numberOfSeasons != null) {
                   subtitle = '${metadata.numberOfSeasons} Seasons';
                 }
               }
@@ -280,6 +279,16 @@ class _HomeContentState extends State<HomeContent> {
         ),
       ),
     );
+  }
+
+  String? _episodeLabel(MediaFile file) {
+    final season = file.parsedSeason;
+    final episode = file.parsedEpisode;
+    if (season == null || episode == null) return null;
+
+    final seasonLabel = season.toString().padLeft(2, '0');
+    final episodeLabel = episode.toString().padLeft(2, '0');
+    return 'S${seasonLabel}E$episodeLabel';
   }
 
   Widget _buildRecentlyAddedList(List<dynamic> items) {

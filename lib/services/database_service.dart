@@ -98,14 +98,25 @@ class DatabaseService {
   }
 
   /// 更新播放进度
-  Future<void> updateProgress(MediaFileEntity file, int position) async {
-    file.position = position;
+  Future<void> updateProgress(
+    MediaFileEntity file,
+    int position, {
+    int? duration,
+  }) async {
+    if (duration != null && duration > 0) {
+      file.duration = duration;
+    }
+
+    final normalizedPosition = position < 0 ? 0 : position;
+    file.position = file.duration > 0
+        ? normalizedPosition.clamp(0, file.duration).toInt()
+        : normalizedPosition;
     file.lastWatchedAt = DateTime.now();
 
     // 自动计算观看状态
-    if (position == 0) {
+    if (file.position == 0) {
       file.watchStatus = WatchStatus.notStarted;
-    } else if (file.duration > 0 && position >= file.duration * 0.95) {
+    } else if (file.duration > 0 && file.position >= file.duration * 0.95) {
       file.watchStatus = WatchStatus.completed;
     } else {
       file.watchStatus = WatchStatus.watching;

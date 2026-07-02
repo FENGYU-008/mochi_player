@@ -126,8 +126,9 @@ class MediaLibraryProvider extends ChangeNotifier {
   /// 根据 TMDB ID 获取剧集元数据 (包含 seasons/episodes)
   TVShow? getTVShowMetadata(String tmdbId) {
     try {
+      final showTmdbId = _showKeyFromTmdbId(tmdbId) ?? tmdbId;
       final entity = _tvShowMetadataEntities.firstWhere(
-        (t) => t.tmdbId == tmdbId,
+        (t) => t.tmdbId == showTmdbId,
       );
       return _convertTVShowWithSeasons(entity);
     } catch (_) {
@@ -147,6 +148,80 @@ class MediaLibraryProvider extends ChangeNotifier {
         )
         .map(ModelConverter.toMediaFile)
         .toList();
+  }
+
+  /// 为播放器构建轻量队列。
+  ///
+  /// 剧集优先按 TMDB 剧集前缀归组，未刮削或刮削不完整时退回到解析标题。
+  /// 这里只返回文件项，直链仍在播放器切换时按需获取。
+  List<MediaFile> getPlaybackQueue(MediaFile currentFile) {
+    if (currentFile.mediaType != MediaType.episode) {
+      return [currentFile];
+    }
+
+    final showKey = _showKeyForMediaFile(currentFile);
+    if (showKey == null || showKey.isEmpty) {
+      return [currentFile];
+    }
+
+    final candidates = _mediaFileEntities
+        .where(
+          (file) =>
+              file.mediaType == entity.MediaType.episode &&
+              _showKeyForEntity(file) == showKey,
+        )
+        .toList();
+
+    if (candidates.isEmpty) {
+      return [currentFile];
+    }
+
+    candidates.sort(_compareEpisodeEntities);
+
+    final queue = candidates.map(ModelConverter.toMediaFile).toList();
+    final hasCurrent = queue.any(
+      (file) => file.id == currentFile.id || file.path == currentFile.path,
+    );
+    return hasCurrent ? queue : [currentFile, ...queue];
+  }
+
+  String? _showKeyForMediaFile(MediaFile file) {
+    final tmdbKey = _showKeyFromTmdbId(file.tmdbId);
+    if (tmdbKey != null) return 'tmdb:$tmdbKey';
+
+    final title = file.parsedTitle.trim().toLowerCase();
+    return title.isEmpty ? null : 'title:$title';
+  }
+
+  String? _showKeyForEntity(entity.MediaFileEntity file) {
+    final tmdbKey = _showKeyFromTmdbId(file.tmdbId);
+    if (tmdbKey != null) return 'tmdb:$tmdbKey';
+
+    final title = file.parsedTitle.trim().toLowerCase();
+    return title.isEmpty ? null : 'title:$title';
+  }
+
+  String? _showKeyFromTmdbId(String? tmdbId) {
+    if (tmdbId == null || tmdbId.isEmpty) return null;
+    final match = RegExp(r'^(\d+)(?:_s\d+e\d+)?$').firstMatch(tmdbId);
+    return match?.group(1);
+  }
+
+  int _compareEpisodeEntities(
+    entity.MediaFileEntity a,
+    entity.MediaFileEntity b,
+  ) {
+    final seasonCompare = (a.parsedSeason ?? 999999).compareTo(
+      b.parsedSeason ?? 999999,
+    );
+    if (seasonCompare != 0) return seasonCompare;
+
+    final episodeCompare = (a.parsedEpisode ?? 999999).compareTo(
+      b.parsedEpisode ?? 999999,
+    );
+    if (episodeCompare != 0) return episodeCompare;
+
+    return a.path.toLowerCase().compareTo(b.path.toLowerCase());
   }
 
   /// 获取 Trending 列表
@@ -232,6 +307,13 @@ class MediaLibraryProvider extends ChangeNotifier {
 
     try {
       final tmdb = TmdbService();
+      if (!tmdb.isConfigured) {
+        _trendingMovies = [];
+        _trendingTV = [];
+        _topRated = [];
+        return;
+      }
+
       // 并行请求三个分类
       final results = await Future.wait([
         tmdb.fetchTrendingMovies(limit: 3),
@@ -337,10 +419,28 @@ class MediaLibraryProvider extends ChangeNotifier {
   // ===== 播放状态 =====
 
   /// 更新播放进度
-  Future<void> updateProgress(MediaFile file, int position) async {
-    final entity = _mediaFileEntities.firstWhere((e) => e.id == file.id);
-    await _db.updateProgress(entity, position);
+  Future<void> updateProgress(
+    MediaFile file,
+    int position, {
+    int? duration,
+  }) async {
+    final mediaFileEntity = _findMediaFileEntity(file);
+    if (mediaFileEntity == null) {
+      _logger.d('跳过临时文件播放进度: ${file.path}');
+      return;
+    }
+
+    await _db.updateProgress(mediaFileEntity, position, duration: duration);
     notifyListeners();
+  }
+
+  entity.MediaFileEntity? _findMediaFileEntity(MediaFile file) {
+    for (final mediaFileEntity in _mediaFileEntities) {
+      if (mediaFileEntity.id == file.id || mediaFileEntity.path == file.path) {
+        return mediaFileEntity;
+      }
+    }
+    return null;
   }
 
   /// 切换收藏

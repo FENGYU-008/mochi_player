@@ -13,9 +13,6 @@ class MediaDetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     // Use a fixed height similar to Hero Section (500-550)
     // to accommodate Metadata -> Title -> Overview -> Actions stack
     return SizedBox(

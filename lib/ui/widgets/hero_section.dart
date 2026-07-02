@@ -312,6 +312,8 @@ class HeroSection extends StatelessWidget {
     );
 
     final directLink = await WebDavService().getDirectLink(file.path);
+    if (!context.mounted) return;
+
     messenger.hideCurrentSnackBar();
 
     if (directLink != null) {

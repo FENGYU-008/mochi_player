@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:logger/logger.dart';
 import '../models/entity/entities.dart';
 import '../models/domain/trending_item.dart';
@@ -7,34 +10,63 @@ import '../models/domain/trending_item.dart';
 /// 负责与 TMDB API 交互并返回解析后的 Entity 模型
 class TmdbService {
   // --- 配置 ---
-  late final String _apiKey;
-  static const String _baseUrl = 'https://api.themoviedb.org/3';
+  static const String _defaultApiKey = String.fromEnvironment('TMDB_API_KEY');
+  static const String _defaultApiBaseUrl = 'https://api.themoviedb.org/3';
   static const String _imageBaseUrl = 'https://image.tmdb.org/t/p/w500';
   static const String _backdropBaseUrl = 'https://image.tmdb.org/t/p/w1280';
   static const String _profileBaseUrl = 'https://image.tmdb.org/t/p/w185';
   static const String _logoBaseUrl = 'https://image.tmdb.org/t/p/w500';
   static const String _language = 'zh-CN';
+  static const Duration _requestTimeout = Duration(seconds: 30);
 
   final Dio _dio = Dio();
   final Logger _logger = Logger(printer: PrettyPrinter(methodCount: 0));
+  String _apiKey = _defaultApiKey;
+  String _apiBaseUrl = _defaultApiBaseUrl;
+  String _proxyUrl = '';
 
   // 单例模式
   static final TmdbService _instance = TmdbService._internal();
 
   factory TmdbService({String? apiKey}) {
     if (apiKey != null) {
-      _instance._apiKey = apiKey;
+      _instance.configureApiKey(apiKey);
     }
     return _instance;
   }
 
   TmdbService._internal() {
-    _apiKey = const String.fromEnvironment(
-      'TMDB_API_KEY',
-      defaultValue: '8f256bccbacc37341c6f01aa1e35af29',
-    );
-    _dio.options.connectTimeout = const Duration(seconds: 10);
-    _dio.options.receiveTimeout = const Duration(seconds: 10);
+    _dio.options.connectTimeout = _requestTimeout;
+    _dio.options.receiveTimeout = _requestTimeout;
+    _dio.options.sendTimeout = _requestTimeout;
+    _configureHttpClient();
+  }
+
+  bool get isConfigured => _apiKey.trim().isNotEmpty;
+
+  void configureApiKey(String apiKey) {
+    configure(apiKey: apiKey);
+  }
+
+  void configure({String? apiKey, String? apiBaseUrl, String? proxyUrl}) {
+    final trimmedApiKey = apiKey?.trim();
+    if (trimmedApiKey != null) {
+      _apiKey = trimmedApiKey.isNotEmpty ? trimmedApiKey : _defaultApiKey;
+    }
+
+    final trimmedApiBaseUrl = apiBaseUrl?.trim();
+    if (trimmedApiBaseUrl != null) {
+      _apiBaseUrl = trimmedApiBaseUrl.isNotEmpty
+          ? _normalizeBaseUrl(trimmedApiBaseUrl)
+          : _defaultApiBaseUrl;
+    }
+
+    final trimmedProxyUrl = proxyUrl?.trim();
+    if (trimmedProxyUrl != null) {
+      _proxyUrl = trimmedProxyUrl;
+    }
+
+    _configureHttpClient();
   }
 
   // ===== 公开 API =====
@@ -50,9 +82,11 @@ class TmdbService {
 
   /// 根据 ID 获取电影元数据
   Future<MovieMetadataEntity?> fetchMovieById(int movieId) async {
+    if (!_requireApiKey('获取电影详情')) return null;
+
     try {
       final response = await _dio.get(
-        '$_baseUrl/movie/$movieId',
+        '$_apiBaseUrl/movie/$movieId',
         queryParameters: {
           'api_key': _apiKey,
           'language': _language,
@@ -65,7 +99,7 @@ class TmdbService {
         return _parseMovieEntity(response.data);
       }
     } catch (e) {
-      _logger.w("⚠️ TMDB 获取电影详情失败: ID:$movieId - $e");
+      _logger.w("⚠️ TMDB 获取电影详情失败: ID:$movieId - ${_describeError(e)}");
     }
     return null;
   }
@@ -86,9 +120,11 @@ class TmdbService {
 
   /// 根据 ID 获取剧集元数据
   Future<TVShowMetadataEntity?> fetchTVShowById(int tvId) async {
+    if (!_requireApiKey('获取剧集详情')) return null;
+
     try {
       final response = await _dio.get(
-        '$_baseUrl/tv/$tvId',
+        '$_apiBaseUrl/tv/$tvId',
         queryParameters: {
           'api_key': _apiKey,
           'language': _language,
@@ -101,7 +137,7 @@ class TmdbService {
         return _parseTVShowEntity(response.data);
       }
     } catch (e) {
-      _logger.w("⚠️ TMDB 获取剧集详情失败: ID:$tvId - $e");
+      _logger.w("⚠️ TMDB 获取剧集详情失败: ID:$tvId - ${_describeError(e)}");
     }
     return null;
   }
@@ -112,9 +148,11 @@ class TmdbService {
     int seasonNumber, {
     required String showTmdbId,
   }) async {
+    if (!_requireApiKey('获取季详情')) return null;
+
     try {
       final response = await _dio.get(
-        '$_baseUrl/tv/$tvId/season/$seasonNumber',
+        '$_apiBaseUrl/tv/$tvId/season/$seasonNumber',
         queryParameters: {'api_key': _apiKey, 'language': _language},
       );
 
@@ -125,7 +163,9 @@ class TmdbService {
       if (e is DioException && e.response?.statusCode == 404) {
         _logger.w("⚠️ TMDB 未找到季详情: ID:$tvId S$seasonNumber");
       } else {
-        _logger.e("❌ TMDB 获取季详情异常: ID:$tvId S$seasonNumber - $e");
+        _logger.e(
+          "❌ TMDB 获取季详情异常: ID:$tvId S$seasonNumber - ${_describeError(e)}",
+        );
       }
     }
     return null;
@@ -136,9 +176,11 @@ class TmdbService {
     int tvId,
     int seasonNumber,
   ) async {
+    if (!_requireApiKey('获取季原始数据')) return null;
+
     try {
       final response = await _dio.get(
-        '$_baseUrl/tv/$tvId/season/$seasonNumber',
+        '$_apiBaseUrl/tv/$tvId/season/$seasonNumber',
         queryParameters: {'api_key': _apiKey, 'language': _language},
       );
 
@@ -146,7 +188,9 @@ class TmdbService {
         return response.data as Map<String, dynamic>;
       }
     } catch (e) {
-      _logger.w("⚠️ TMDB 获取季原始数据失败: ID:$tvId S$seasonNumber - $e");
+      _logger.w(
+        "⚠️ TMDB 获取季原始数据失败: ID:$tvId S$seasonNumber - ${_describeError(e)}",
+      );
     }
     return null;
   }
@@ -158,9 +202,11 @@ class TmdbService {
     String timeWindow = 'week',
     int limit = 20,
   }) async {
+    if (!_requireApiKey('获取热门趋势')) return [];
+
     try {
       final response = await _dio.get(
-        '$_baseUrl/trending/all/$timeWindow',
+        '$_apiBaseUrl/trending/all/$timeWindow',
         queryParameters: {'api_key': _apiKey, 'language': _language},
       );
 
@@ -177,7 +223,7 @@ class TmdbService {
             .toList();
       }
     } catch (e) {
-      _logger.w('⚠️ TMDB 获取热门趋势失败: $e');
+      _logger.w('⚠️ TMDB 获取热门趋势失败: ${_describeError(e)}');
     }
     return [];
   }
@@ -205,48 +251,54 @@ class TmdbService {
 
   /// 获取热门电影（仅电影）
   Future<List<TrendingItem>> fetchTrendingMovies({int limit = 3}) async {
+    if (!_requireApiKey('获取热门电影')) return [];
+
     try {
       final response = await _dio.get(
-        '$_baseUrl/trending/movie/week',
+        '$_apiBaseUrl/trending/movie/week',
         queryParameters: {'api_key': _apiKey, 'language': _language},
       );
       if (response.statusCode == 200) {
         return _parseTrendingList(response.data, isMovie: true, limit: limit);
       }
     } catch (e) {
-      _logger.w('⚠️ TMDB 获取热门电影失败: $e');
+      _logger.w('⚠️ TMDB 获取热门电影失败: ${_describeError(e)}');
     }
     return [];
   }
 
   /// 获取热门剧集（仅 TV）
   Future<List<TrendingItem>> fetchTrendingTV({int limit = 3}) async {
+    if (!_requireApiKey('获取热门剧集')) return [];
+
     try {
       final response = await _dio.get(
-        '$_baseUrl/trending/tv/week',
+        '$_apiBaseUrl/trending/tv/week',
         queryParameters: {'api_key': _apiKey, 'language': _language},
       );
       if (response.statusCode == 200) {
         return _parseTrendingList(response.data, isMovie: false, limit: limit);
       }
     } catch (e) {
-      _logger.w('⚠️ TMDB 获取热门剧集失败: $e');
+      _logger.w('⚠️ TMDB 获取热门剧集失败: ${_describeError(e)}');
     }
     return [];
   }
 
   /// 获取高分佳作（电影）
   Future<List<TrendingItem>> fetchTopRated({int limit = 3}) async {
+    if (!_requireApiKey('获取高分佳作')) return [];
+
     try {
       final response = await _dio.get(
-        '$_baseUrl/movie/top_rated',
+        '$_apiBaseUrl/movie/top_rated',
         queryParameters: {'api_key': _apiKey, 'language': _language},
       );
       if (response.statusCode == 200) {
         return _parseTrendingList(response.data, isMovie: true, limit: limit);
       }
     } catch (e) {
-      _logger.w('⚠️ TMDB 获取高分佳作失败: $e');
+      _logger.w('⚠️ TMDB 获取高分佳作失败: ${_describeError(e)}');
     }
     return [];
   }
@@ -320,6 +372,8 @@ class TmdbService {
     int? year,
     String yearKey = 'year',
   }) async {
+    if (!_requireApiKey('搜索 TMDB')) return null;
+
     try {
       final queryParams = <String, dynamic>{
         'api_key': _apiKey,
@@ -333,7 +387,7 @@ class TmdbService {
       }
 
       final response = await _dio.get(
-        '$_baseUrl$endpoint',
+        '$_apiBaseUrl$endpoint',
         queryParameters: queryParams,
       );
 
@@ -344,9 +398,69 @@ class TmdbService {
         }
       }
     } catch (e) {
-      _logger.w("⚠️ TMDB 搜索失败: $query ($year) - $e");
+      _logger.w("⚠️ TMDB 搜索失败: $query ($year) - ${_describeError(e)}");
     }
     return null;
+  }
+
+  bool _requireApiKey(String operation) {
+    if (isConfigured) return true;
+    _logger.w('⚠️ 未配置 TMDB API Key，跳过: $operation');
+    return false;
+  }
+
+  void _configureHttpClient() {
+    final proxyConfig = _buildProxyConfig(_proxyUrl);
+    _dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        client.findProxy = (uri) {
+          if (proxyConfig != null) return proxyConfig;
+          return HttpClient.findProxyFromEnvironment(uri);
+        };
+        return client;
+      },
+    );
+  }
+
+  String _normalizeBaseUrl(String url) {
+    return url.replaceFirst(RegExp(r'/+$'), '');
+  }
+
+  String? _buildProxyConfig(String proxyUrl) {
+    if (proxyUrl.trim().isEmpty) return null;
+
+    final uri = Uri.tryParse(proxyUrl.trim());
+    if (uri == null || uri.host.isEmpty || uri.port == 0) {
+      _logger.w('⚠️ TMDB 代理地址无效，已改为直连: $proxyUrl');
+      return null;
+    }
+
+    return 'PROXY ${uri.host}:${uri.port}';
+  }
+
+  String _describeError(Object error) {
+    if (error is DioException) {
+      switch (error.type) {
+        case DioExceptionType.connectionTimeout:
+          return '连接超时（${_requestTimeout.inSeconds} 秒），请检查网络或代理';
+        case DioExceptionType.sendTimeout:
+          return '发送请求超时（${_requestTimeout.inSeconds} 秒）';
+        case DioExceptionType.receiveTimeout:
+          return '等待响应超时（${_requestTimeout.inSeconds} 秒）';
+        case DioExceptionType.badResponse:
+          return '服务器返回 ${error.response?.statusCode ?? '异常状态'}';
+        case DioExceptionType.connectionError:
+          return '网络连接失败，请检查 DNS、代理或防火墙';
+        case DioExceptionType.badCertificate:
+          return '证书校验失败';
+        case DioExceptionType.cancel:
+          return '请求已取消';
+        case DioExceptionType.unknown:
+          return error.message ?? '未知网络错误';
+      }
+    }
+    return error.toString();
   }
 
   // ===== 私有方法：Entity 解析 =====

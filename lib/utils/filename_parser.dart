@@ -338,8 +338,9 @@ class FileNameParser {
 
   static String _normalizeHdrFormat(String hdr) {
     final h = hdr.toLowerCase().replaceAll(' ', '');
-    if (h.contains('dolbyvision') || h == 'dv' || h == 'dovi')
+    if (h.contains('dolbyvision') || h == 'dv' || h == 'dovi') {
       return 'dolby_vision';
+    }
     if (h.contains('hdr10+') || h == 'hdr10plus') return 'hdr10plus';
     if (h == 'hdr10') return 'hdr10';
     if (h == 'hdr') return 'hdr';

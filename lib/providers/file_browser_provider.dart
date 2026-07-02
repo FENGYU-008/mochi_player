@@ -19,6 +19,7 @@ class FileBrowserProvider extends ChangeNotifier {
   List<MediaFile> _items = [];
   bool _isLoading = false;
   String _currentPath = '/';
+  String? _error;
   final List<String> _pathHistory = [];
   ViewMode _viewMode = ViewMode.list;
 
@@ -26,6 +27,7 @@ class FileBrowserProvider extends ChangeNotifier {
   List<MediaFile> get items => _items;
   bool get isLoading => _isLoading;
   String get currentPath => _currentPath;
+  String? get error => _error;
   bool get canGoBack => _pathHistory.isNotEmpty;
   ViewMode get viewMode => _viewMode;
 
@@ -49,9 +51,16 @@ class FileBrowserProvider extends ChangeNotifier {
   // === 核心功能 2: 加载指定路径的文件 ===
   Future<void> fetchFiles(String path) async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
+      if (!WebDavService().isInitialized) {
+        _items = [];
+        _error = '请先在设置中配置 WebDAV';
+        return;
+      }
+
       // 调用 WebDavService 获取原始文件列表
       final files = await WebDavService().readDir(path);
 
@@ -74,6 +83,7 @@ class FileBrowserProvider extends ChangeNotifier {
     } catch (e) {
       _logger.e("❌ 加载文件失败: $e");
       _items = [];
+      _error = '加载文件失败: $e';
     } finally {
       _isLoading = false;
       notifyListeners();

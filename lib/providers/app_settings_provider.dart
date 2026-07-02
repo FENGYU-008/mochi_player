@@ -1,0 +1,107 @@
+import 'package:flutter/material.dart';
+
+import '../services/app_settings_service.dart';
+import '../services/tmdb_service.dart';
+import '../services/webdav_service.dart';
+
+class AppSettingsProvider extends ChangeNotifier {
+  final AppSettingsService _settingsService;
+
+  AppSettingsProvider({AppSettingsService? settingsService})
+    : _settingsService = settingsService ?? AppSettingsService();
+
+  AppSettings _settings = const AppSettings();
+  bool _isLoading = false;
+  bool _isSaving = false;
+  String? _error;
+
+  AppSettings get settings => _settings;
+  bool get isLoading => _isLoading;
+  bool get isSaving => _isSaving;
+  String? get error => _error;
+
+  String get webDavUrl => _settings.webDavUrl;
+  String get webDavUsername => _settings.webDavUsername;
+  String get webDavPassword => _settings.webDavPassword;
+  String get tmdbApiKey => _settings.tmdbApiKey;
+  String get tmdbApiBaseUrl => _settings.tmdbApiBaseUrl;
+  String get tmdbProxyUrl => _settings.tmdbProxyUrl;
+  bool get hasWebDavConfig => _settings.hasWebDavConfig;
+  bool get hasTmdbApiKey => _settings.hasTmdbApiKey;
+
+  Future<void> load() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _settings = await _settingsService.load();
+      await _applyRuntimeSettings();
+    } catch (e) {
+      _error = '加载设置失败: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> saveSettings({
+    required String webDavUrl,
+    required String webDavUsername,
+    required String webDavPassword,
+    required String tmdbApiKey,
+    required String tmdbApiBaseUrl,
+    required String tmdbProxyUrl,
+  }) async {
+    _isSaving = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final nextSettings = AppSettings(
+        webDavUrl: webDavUrl.trim(),
+        webDavUsername: webDavUsername.trim(),
+        webDavPassword: webDavPassword,
+        tmdbApiKey: tmdbApiKey.trim(),
+        tmdbApiBaseUrl: tmdbApiBaseUrl.trim(),
+        tmdbProxyUrl: tmdbProxyUrl.trim(),
+      );
+      _settings = await _settingsService.save(nextSettings);
+      await _applyRuntimeSettings();
+    } catch (e) {
+      _error = '保存设置失败: $e';
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> testWebDavConnection() async {
+    if (!hasWebDavConfig) return false;
+    return WebDavService().testConnection();
+  }
+
+  Future<bool> testTmdbConnection() async {
+    if (!hasTmdbApiKey) return false;
+    final result = await TmdbService().fetchTrendingMovies(limit: 1);
+    return result.isNotEmpty;
+  }
+
+  Future<void> _applyRuntimeSettings() async {
+    TmdbService().configure(
+      apiKey: _settings.tmdbApiKey,
+      apiBaseUrl: _settings.tmdbApiBaseUrl,
+      proxyUrl: _settings.tmdbProxyUrl,
+    );
+
+    if (_settings.hasWebDavConfig) {
+      await WebDavService().init(
+        _settings.webDavUrl,
+        _settings.webDavUsername,
+        _settings.webDavPassword,
+      );
+    } else {
+      WebDavService().clear();
+    }
+  }
+}
