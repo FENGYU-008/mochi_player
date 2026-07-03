@@ -102,23 +102,18 @@ class _MediaDetailCardContent extends StatelessWidget {
 
             // 2. Content Body
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(40, 30, 40, 40),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  // Info (Genres, Overview)
-                  // MediaInfoSection(viewModel: viewModel),
-
-                  // Cast
-                  CastList(viewModel: viewModel),
-
-                  // TV Show Episodes
-                  if (viewModel.isTVShow)
-                    EpisodeList(tvShow: viewModel.originalItem as TVShow),
-
-                  const SizedBox(height: 40),
-                ]),
-              ),
+              padding: const EdgeInsets.fromLTRB(40, 30, 40, 0),
+              sliver: SliverToBoxAdapter(child: CastList(viewModel: viewModel)),
             ),
+
+            // TV Show Episodes
+            if (viewModel.isTVShow)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(40, 0, 40, 40),
+                sliver: EpisodeList(tvShow: viewModel.originalItem as TVShow),
+              )
+            else
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
           ],
         ),
         const Positioned(top: 24, right: 24, child: _CloseButton()),
