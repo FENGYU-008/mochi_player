@@ -58,6 +58,10 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   bool _showResumeNotice = false;
   bool _isSwitchingQueueItem = false;
   bool _overrideEmbeddedSubtitleStyle = false;
+  bool _windowWasFullScreenOnOpen = false;
+  bool _playerUsedWindowFullScreen = false;
+  Future<void>? _initialWindowFullScreenCapture;
+  Future<void>? _fullScreenTransition;
 
   List<String> _subtitle = [];
   List<AudioTrack> _audioTracks = const [];
@@ -124,7 +128,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
       FocusScope.of(context).requestFocus(_focusNode);
     });
 
-    _checkFullScreenState();
+    unawaited(_ensureInitialWindowFullScreenCaptured());
   }
 
   void _initializePlaylist() {
@@ -450,22 +454,24 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     }
   }
 
-  void _checkFullScreenState() async {
-    _isFullScreen = await windowManager.isFullScreen();
-    if (mounted) setState(() {});
+  Future<void> _ensureInitialWindowFullScreenCaptured() {
+    return _initialWindowFullScreenCapture ??= () async {
+      _windowWasFullScreenOnOpen = await windowManager.isFullScreen();
+    }();
   }
 
   @override
   void onWindowEnterFullScreen() {
-    setState(() {
-      _isFullScreen = true;
-    });
+    // Native fullscreen can also be triggered from macOS chrome. Keep that
+    // separate from the player fullscreen button.
   }
 
   @override
   void onWindowLeaveFullScreen() {
+    if (!_isFullScreen || !_playerUsedWindowFullScreen || !mounted) return;
     setState(() {
       _isFullScreen = false;
+      _playerUsedWindowFullScreen = false;
     });
   }
 
@@ -857,23 +863,79 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
       } else if (event.logicalKey == LogicalKeyboardKey.keyA) {
         _cycleAudioTrack();
       } else if (event.logicalKey == LogicalKeyboardKey.escape) {
-        bool isFullScreen = await windowManager.isFullScreen();
-        if (isFullScreen) {
-          windowManager.setFullScreen(false);
+        if (_isFullScreen) {
+          unawaited(_exitPlayerFullScreen());
         }
       }
     }
   }
 
-  void _toggleFullScreen() async {
+  void _toggleFullScreen() {
+    if (_fullScreenTransition != null) return;
+    _fullScreenTransition = _togglePlayerFullScreen().whenComplete(() {
+      _fullScreenTransition = null;
+    });
+    unawaited(_fullScreenTransition);
+  }
+
+  Future<void> _togglePlayerFullScreen() async {
     await Future.delayed(const Duration(milliseconds: 120));
-    bool isFullScreen = await windowManager.isFullScreen();
-    windowManager.setFullScreen(!isFullScreen);
+    if (_isFullScreen) {
+      await _exitPlayerFullScreen();
+    } else {
+      await _enterPlayerFullScreen();
+    }
+  }
+
+  Future<void> _enterPlayerFullScreen() async {
+    await _ensureInitialWindowFullScreenCaptured();
+    final windowIsFullScreen = await windowManager.isFullScreen();
+
+    if (!windowIsFullScreen) {
+      _playerUsedWindowFullScreen = true;
+      await windowManager.setFullScreen(true);
+    } else {
+      _playerUsedWindowFullScreen = false;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isFullScreen = true;
+    });
+  }
+
+  Future<void> _exitPlayerFullScreen({bool updateState = true}) async {
+    await _ensureInitialWindowFullScreenCaptured();
+    final shouldRestoreWindow =
+        _playerUsedWindowFullScreen && !_windowWasFullScreenOnOpen;
+
+    _playerUsedWindowFullScreen = false;
+
+    if (shouldRestoreWindow && await windowManager.isFullScreen()) {
+      await windowManager.setFullScreen(false);
+    }
+
+    _isFullScreen = false;
+    if (updateState && mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _handleBackPressed() async {
+    await _fullScreenTransition;
+    await _exitPlayerFullScreen();
+    if (mounted) {
+      Navigator.of(context).maybePop();
+    }
   }
 
   @override
   void dispose() {
     unawaited(_saveProgress(force: true));
+    unawaited(() async {
+      await _fullScreenTransition;
+      await _exitPlayerFullScreen(updateState: false);
+    }());
     windowManager.removeListener(this);
     _hideControlsTimer?.cancel();
     _progressSaveTimer?.cancel();
@@ -1007,6 +1069,9 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                 title: _displayTitle, // 🟢 使用新的组合标题
                 isVisible: _isControlsVisible,
                 isFullScreen: _isFullScreen,
+                onBack: () {
+                  unawaited(_handleBackPressed());
+                },
                 onToggleFullScreen: _toggleFullScreen,
                 onPrevious: _hasPrevious
                     ? () {

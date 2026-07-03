@@ -11,6 +11,7 @@ class PlayerControls extends StatefulWidget {
   final String title;
   final bool isVisible;
   final bool isFullScreen;
+  final VoidCallback? onBack;
   final VoidCallback onToggleFullScreen;
 
   final VoidCallback? onPrevious;
@@ -34,6 +35,7 @@ class PlayerControls extends StatefulWidget {
     this.title = '',
     required this.isVisible,
     required this.isFullScreen,
+    this.onBack,
     required this.onToggleFullScreen,
     this.onPrevious,
     this.onNext,
@@ -138,8 +140,10 @@ class _PlayerControlsState extends State<PlayerControls> {
                       children: [
                         _ControlButton(
                           size: 32, // 顶部小按钮
-                          onPressed: () =>
-                              _onTap(() => Navigator.of(context).maybePop()),
+                          onPressed: () => _onTap(
+                            widget.onBack ??
+                                () => Navigator.of(context).maybePop(),
+                          ),
                           child: const Icon(
                             Icons.arrow_back_ios_new,
                             color: Colors.white,
@@ -406,8 +410,10 @@ class _PlayerControlsState extends State<PlayerControls> {
                               size: kButtonSize,
                               onPressed: () =>
                                   _onTap(widget.onToggleFullScreen),
-                              child: const Icon(
-                                Icons.fullscreen_rounded,
+                              child: Icon(
+                                widget.isFullScreen
+                                    ? Icons.fullscreen_exit_rounded
+                                    : Icons.fullscreen_rounded,
                                 color: Colors.white,
                                 size: 24,
                               ),
