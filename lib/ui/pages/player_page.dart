@@ -7,7 +7,9 @@ import 'package:provider/provider.dart';
 
 import 'package:mochi_player/models/domain/media_file.dart';
 import 'package:mochi_player/models/domain/media_type.dart';
+import 'package:mochi_player/providers/app_settings_provider.dart';
 import 'package:mochi_player/providers/media_library_provider.dart';
+import 'package:mochi_player/services/app_settings_service.dart';
 import 'package:mochi_player/services/webdav_service.dart';
 import 'package:mochi_player/ui/widgets/player_controls.dart';
 import 'package:window_manager/window_manager.dart';
@@ -37,6 +39,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   late final Player _player;
   late final VideoController _videoController;
   late final MediaLibraryProvider _libraryProvider;
+  late final AppSettings _playbackSettings;
   late List<MediaFile> _playlist;
   late int _currentIndex;
   late MediaFile _currentItem;
@@ -54,6 +57,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   bool _playerErrorIsAudioDecode = false;
   bool _showResumeNotice = false;
   bool _isSwitchingQueueItem = false;
+  bool _overrideEmbeddedSubtitleStyle = false;
 
   List<String> _subtitle = [];
   List<AudioTrack> _audioTracks = const [];
@@ -93,15 +97,23 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   void initState() {
     super.initState();
     _libraryProvider = context.read<MediaLibraryProvider>();
+    _playbackSettings = context.read<AppSettingsProvider>().settings;
     _initializePlaylist();
     windowManager.addListener(this);
 
-    _player = Player();
+    _player = Player(
+      configuration: PlayerConfiguration(
+        title: 'Mochi Player',
+        bufferSize: _playbackSettings.playbackCacheMaxBytes,
+        libass: true,
+      ),
+    );
 
     _videoController = VideoController(
       _player,
-      configuration: const VideoControllerConfiguration(
-        enableHardwareAcceleration: true,
+      configuration: VideoControllerConfiguration(
+        enableHardwareAcceleration:
+            _playbackSettings.enableHardwareAcceleration,
       ),
     );
 
@@ -201,22 +213,23 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   Future<void> _openMedia() async {
+    await _refreshCurrentItemFromLibrary();
+    final resumePosition = _resumePosition();
+
     debugPrint('正在播放直链: $_currentUrl');
+    await _applyPlayerSettings();
+    await _applySubtitleStyleMode();
 
     final media = Media(
       _currentUrl,
       httpHeaders: {'User-Agent': 'MochiPlayer/1.0.0'},
-      extras: {
-        'cache': 'yes',
-        'demuxer-max-bytes': '128MiB',
-        'vo-profile': 'high-quality',
-        'slang': 'chi,zho,zh,chs,cht,eng',
-      },
+      start: resumePosition,
     );
 
     try {
       await _player.open(media, play: true);
-      await _restoreProgressIfNeeded();
+      await _applySubtitleStyleMode();
+      await _restoreProgressIfNeeded(resumePosition);
       _startProgressSaveTimer();
       _startHideControlsTimer();
     } catch (error) {
@@ -226,6 +239,69 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
           _playerError = error.toString();
           _playerErrorIsAudioDecode = _isTrueHdDecoderError(error.toString());
         });
+      }
+    }
+  }
+
+  Future<void> _refreshCurrentItemFromLibrary() async {
+    final latestItem = await _libraryProvider.getLatestMediaFile(_currentItem);
+    if (latestItem == null) return;
+
+    _currentItem = latestItem;
+    final index = _playlist.indexWhere(
+      (file) => file.id == latestItem.id || file.path == latestItem.path,
+    );
+    if (index >= 0) {
+      _playlist[index] = latestItem;
+    }
+  }
+
+  Future<void> _applyPlayerSettings() async {
+    final platform = _player.platform;
+    if (platform is! NativePlayer) return;
+
+    final properties = <String, String>{
+      'cache': 'yes',
+      'cache-pause': 'yes',
+      'cache-pause-wait': '3',
+      'cache-secs': _playbackSettings.playbackReadaheadSeconds.toString(),
+      'demuxer-readahead-secs': _playbackSettings.playbackReadaheadSeconds
+          .toString(),
+      'demuxer-max-bytes': _playbackSettings.playbackCacheMaxBytes.toString(),
+      'demuxer-max-back-bytes': (_playbackSettings.playbackCacheMaxBytes ~/ 4)
+          .toString(),
+      'hwdec': _playbackSettings.enableHardwareAcceleration ? 'auto' : 'no',
+      'alang': _playbackSettings.normalizedAudioLanguagePriority,
+      'slang': _playbackSettings.normalizedSubtitleLanguagePriority,
+      'vo-profile': 'high-quality',
+    };
+
+    for (final entry in properties.entries) {
+      try {
+        await platform.setProperty(entry.key, entry.value);
+      } catch (error) {
+        debugPrint('应用播放器设置失败 ${entry.key}=${entry.value}: $error');
+      }
+    }
+  }
+
+  Future<void> _applySubtitleStyleMode() async {
+    final platform = _player.platform;
+    if (platform is! NativePlayer) return;
+
+    final preserveEmbeddedStyle = !_overrideEmbeddedSubtitleStyle;
+    final value = preserveEmbeddedStyle ? 'yes' : 'no';
+    final properties = <String, String>{
+      'sub-ass': value,
+      'sub-visibility': value,
+      'secondary-sub-visibility': value,
+    };
+
+    for (final entry in properties.entries) {
+      try {
+        await platform.setProperty(entry.key, entry.value);
+      } catch (error) {
+        debugPrint('应用字幕样式模式失败 ${entry.key}=${entry.value}: $error');
       }
     }
   }
@@ -251,23 +327,39 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     });
   }
 
-  Future<void> _restoreProgressIfNeeded() async {
-    if (_hasRestoredPosition || _currentItem.position <= 0) return;
+  Duration? _resumePosition() {
+    if (_hasRestoredPosition || _currentItem.position <= 0) return null;
 
     final savedPositionMs = _currentItem.position;
     final savedDurationMs = _currentItem.duration;
     if (savedDurationMs > 0 && savedPositionMs >= savedDurationMs * 0.95) {
-      return;
+      return null;
     }
 
+    final resumePositionMs = (savedPositionMs - _resumeBackoff.inMilliseconds)
+        .clamp(0, savedPositionMs)
+        .toInt();
+    if (resumePositionMs <= 0) return null;
+    return Duration(milliseconds: resumePositionMs);
+  }
+
+  Future<void> _restoreProgressIfNeeded(Duration? resumePosition) async {
+    if (_hasRestoredPosition || resumePosition == null) return;
+
     _hasRestoredPosition = true;
-    final resumePosition = Duration(
-      milliseconds: (savedPositionMs - _resumeBackoff.inMilliseconds).clamp(
-        0,
-        savedPositionMs,
-      ),
-    );
     await _player.seek(resumePosition);
+    unawaited(
+      Future<void>.delayed(const Duration(milliseconds: 500), () async {
+        if (!mounted) return;
+        final currentPosition = _player.state.position;
+        final isStillNearStart =
+            currentPosition.inMilliseconds <
+            resumePosition.inMilliseconds - 2000;
+        if (isStillNearStart) {
+          await _player.seek(resumePosition);
+        }
+      }),
+    );
     _showResumePositionNotice(resumePosition);
   }
 
@@ -476,7 +568,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
   int _audioCompatibilityScore(AudioTrack track) {
     final text = _audioTrackText(track);
-    var score = 10;
+    var score = 10 + _preferredAudioLanguageScore(track);
     if (text.contains('aac')) score += 40;
     if (text.contains('eac3') ||
         text.contains('e-ac-3') ||
@@ -488,6 +580,22 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     if (text.contains('dts')) score += 24;
     if (text.contains('stereo') || text.contains('2.0')) score += 8;
     return score;
+  }
+
+  int _preferredAudioLanguageScore(AudioTrack track) {
+    final preferences = _languagePreferences(
+      _playbackSettings.normalizedAudioLanguagePriority,
+    );
+    for (var index = 0; index < preferences.length; index++) {
+      if (_trackMatchesLanguage(
+        language: track.language,
+        title: track.title,
+        preference: preferences[index],
+      )) {
+        return (preferences.length - index) * 20;
+      }
+    }
+    return 0;
   }
 
   bool _isTrueHdAudioTrack(AudioTrack track) {
@@ -529,32 +637,83 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
     SubtitleTrack? targetTrack;
 
-    for (final track in availableTracks) {
-      final lang = (track.language ?? '').toLowerCase();
-      final title = (track.title ?? '').toLowerCase();
-      if (lang.contains('zh') ||
-          lang.contains('chi') ||
-          lang.contains('chs') ||
-          title.contains('中文') ||
-          title.contains('简')) {
-        targetTrack = track;
-        break;
-      }
-    }
-
-    if (targetTrack == null) {
+    final preferences = _languagePreferences(
+      _playbackSettings.normalizedSubtitleLanguagePriority,
+    );
+    for (final preference in preferences) {
       for (final track in availableTracks) {
-        final lang = (track.language ?? '').toLowerCase();
-        if (lang.contains('eng') || lang.contains('en')) {
+        if (_trackMatchesLanguage(
+          language: track.language,
+          title: track.title,
+          preference: preference,
+        )) {
           targetTrack = track;
           break;
         }
       }
+      if (targetTrack != null) break;
     }
 
     if (targetTrack != null) {
       unawaited(_setSubtitleTrack(targetTrack));
     }
+  }
+
+  List<String> _languagePreferences(String value) {
+    return value
+        .split(',')
+        .map((item) => item.trim().toLowerCase())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  bool _trackMatchesLanguage({
+    required String? language,
+    required String? title,
+    required String preference,
+  }) {
+    final normalizedPreference = preference.toLowerCase();
+    final text = [language, title].whereType<String>().join(' ').toLowerCase();
+
+    if (text.contains(normalizedPreference)) return true;
+
+    if (_isChineseLanguage(normalizedPreference)) {
+      return text.contains('zh') ||
+          text.contains('chi') ||
+          text.contains('zho') ||
+          text.contains('chs') ||
+          text.contains('cht') ||
+          text.contains('中文') ||
+          text.contains('简') ||
+          text.contains('繁');
+    }
+
+    if (normalizedPreference == 'ja' || normalizedPreference == 'jpn') {
+      return text.contains('ja') ||
+          text.contains('jpn') ||
+          text.contains('japanese') ||
+          text.contains('日语') ||
+          text.contains('日文');
+    }
+
+    if (normalizedPreference == 'en' || normalizedPreference == 'eng') {
+      return text.contains('en') ||
+          text.contains('eng') ||
+          text.contains('english') ||
+          text.contains('英语') ||
+          text.contains('英文');
+    }
+
+    return false;
+  }
+
+  bool _isChineseLanguage(String value) {
+    return value == 'zh' ||
+        value == 'chi' ||
+        value == 'zho' ||
+        value == 'chs' ||
+        value == 'cht' ||
+        value.startsWith('zh-');
   }
 
   Future<void> _setSubtitleTrack(SubtitleTrack track) async {
@@ -566,9 +725,20 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     }
     try {
       await _player.setSubtitleTrack(track);
+      await _applySubtitleStyleMode();
     } catch (error) {
       debugPrint('切换字幕失败: $error');
     }
+    _startHideControlsTimer();
+  }
+
+  void _setSubtitleStyleOverride(bool value) {
+    if (_overrideEmbeddedSubtitleStyle == value) return;
+    setState(() {
+      _overrideEmbeddedSubtitleStyle = value;
+      _subtitle = [];
+    });
+    unawaited(_applySubtitleStyleMode());
     _startHideControlsTimer();
   }
 
@@ -799,37 +969,38 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                     message: '已从 ${_resumePositionLabel ?? '上次进度'} 继续播放',
                   ),
                 ),
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                left: 20,
-                right: 20,
-                bottom: _isControlsVisible ? 120.0 : 20.0,
-                child: IgnorePointer(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (final line in _subtitle)
-                        Text(
-                          line,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            height: 1.4,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                blurRadius: 2,
-                                color: Colors.black,
-                                offset: Offset(1, 1),
-                              ),
-                            ],
+              if (_overrideEmbeddedSubtitleStyle)
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeInOut,
+                  left: 20,
+                  right: 20,
+                  bottom: _isControlsVisible ? 120.0 : 20.0,
+                  child: IgnorePointer(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final line in _subtitle)
+                          Text(
+                            line,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: _playbackSettings.subtitleFontSize,
+                              height: 1.4,
+                              color: Colors.white,
+                              shadows: const [
+                                Shadow(
+                                  blurRadius: 2,
+                                  color: Colors.black,
+                                  offset: Offset(1, 1),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
               PlayerControls(
                 player: _player,
                 controller: _videoController,
@@ -854,6 +1025,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                 },
                 subtitleTracks: _subtitleTracks,
                 selectedSubtitleTrack: _selectedSubtitleTrack,
+                overrideEmbeddedSubtitleStyle: _overrideEmbeddedSubtitleStyle,
+                onSubtitleStyleOverrideChanged: _setSubtitleStyleOverride,
                 onSubtitleSelected: (track) {
                   unawaited(_setSubtitleTrack(track));
                 },

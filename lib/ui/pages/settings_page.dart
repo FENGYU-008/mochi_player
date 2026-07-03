@@ -5,6 +5,7 @@ import 'package:mochi_player/providers/app_settings_provider.dart';
 import 'package:mochi_player/providers/file_browser_provider.dart';
 import 'package:mochi_player/providers/media_library_provider.dart';
 import 'package:mochi_player/providers/theme_provider.dart';
+import 'package:mochi_player/services/app_settings_service.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -21,10 +22,17 @@ class _SettingsPageState extends State<SettingsPage> {
   final _tmdbApiKeyController = TextEditingController();
   final _tmdbApiBaseUrlController = TextEditingController();
   final _tmdbProxyUrlController = TextEditingController();
+  final _playbackCacheSizeMbController = TextEditingController();
+  final _playbackReadaheadSecondsController = TextEditingController();
+  final _audioLanguagePriorityController = TextEditingController();
+  final _subtitleLanguagePriorityController = TextEditingController();
 
   bool _controllersInitialized = false;
   bool _showWebDavPassword = false;
   bool _showTmdbApiKey = false;
+  bool _enableHardwareAcceleration =
+      AppSettings.defaultEnableHardwareAcceleration;
+  double _subtitleFontSize = AppSettings.defaultSubtitleFontSize;
 
   @override
   void didChangeDependencies() {
@@ -44,6 +52,10 @@ class _SettingsPageState extends State<SettingsPage> {
     _tmdbApiKeyController.dispose();
     _tmdbApiBaseUrlController.dispose();
     _tmdbProxyUrlController.dispose();
+    _playbackCacheSizeMbController.dispose();
+    _playbackReadaheadSecondsController.dispose();
+    _audioLanguagePriorityController.dispose();
+    _subtitleLanguagePriorityController.dispose();
     super.dispose();
   }
 
@@ -74,6 +86,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildWebDavSettings(context),
                   const SizedBox(height: 36),
                   _buildTmdbSettings(context),
+                  const SizedBox(height: 36),
+                  _buildPlaybackSettings(context),
                   const SizedBox(height: 36),
                   _buildLibraryMaintenance(context),
                   const SizedBox(height: 32),
@@ -222,6 +236,102 @@ class _SettingsPageState extends State<SettingsPage> {
               context,
               label: 'HTTP Proxy',
               icon: Icons.route_rounded,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlaybackSettings(BuildContext context) {
+    return _SettingsSection(
+      title: 'Playback',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SettingsRow(
+            label: 'Cache Size',
+            child: TextField(
+              controller: _playbackCacheSizeMbController,
+              keyboardType: TextInputType.number,
+              decoration: _inputDecoration(
+                context,
+                label: 'MB',
+                icon: Icons.storage_rounded,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          _SettingsRow(
+            label: 'Readahead',
+            child: TextField(
+              controller: _playbackReadaheadSecondsController,
+              keyboardType: TextInputType.number,
+              decoration: _inputDecoration(
+                context,
+                label: 'Seconds',
+                icon: Icons.cloud_download_rounded,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Hardware Decoding'),
+            secondary: const Icon(Icons.memory_rounded),
+            value: _enableHardwareAcceleration,
+            onChanged: (value) {
+              setState(() {
+                _enableHardwareAcceleration = value;
+              });
+            },
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _audioLanguagePriorityController,
+            decoration: _inputDecoration(
+              context,
+              label: 'Default Audio Languages',
+              icon: Icons.graphic_eq_rounded,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _subtitleLanguagePriorityController,
+            decoration: _inputDecoration(
+              context,
+              label: 'Default Subtitle Languages',
+              icon: Icons.subtitles_rounded,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _SettingsRow(
+            label: 'Subtitle Size',
+            child: Row(
+              children: [
+                Expanded(
+                  child: Slider(
+                    value: _subtitleFontSize,
+                    min: 18,
+                    max: 40,
+                    divisions: 22,
+                    label: _subtitleFontSize.round().toString(),
+                    onChanged: (value) {
+                      setState(() {
+                        _subtitleFontSize = value;
+                      });
+                    },
+                  ),
+                ),
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    _subtitleFontSize.round().toString(),
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -498,6 +608,18 @@ class _SettingsPageState extends State<SettingsPage> {
       tmdbApiKey: _tmdbApiKeyController.text,
       tmdbApiBaseUrl: _tmdbApiBaseUrlController.text,
       tmdbProxyUrl: _tmdbProxyUrlController.text,
+      playbackCacheSizeMb: _parseIntField(
+        _playbackCacheSizeMbController,
+        AppSettings.defaultPlaybackCacheSizeMb,
+      ),
+      playbackReadaheadSeconds: _parseIntField(
+        _playbackReadaheadSecondsController,
+        AppSettings.defaultPlaybackReadaheadSeconds,
+      ),
+      enableHardwareAcceleration: _enableHardwareAcceleration,
+      audioLanguagePriority: _audioLanguagePriorityController.text,
+      subtitleLanguagePriority: _subtitleLanguagePriorityController.text,
+      subtitleFontSize: _subtitleFontSize,
     );
     if (!mounted) return false;
 
@@ -510,6 +632,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     _syncControllers(settingsProvider);
+    setState(() {});
     return true;
   }
 
@@ -520,6 +643,57 @@ class _SettingsPageState extends State<SettingsPage> {
     _tmdbApiKeyController.text = settingsProvider.tmdbApiKey;
     _tmdbApiBaseUrlController.text = settingsProvider.tmdbApiBaseUrl;
     _tmdbProxyUrlController.text = settingsProvider.tmdbProxyUrl;
+    _playbackCacheSizeMbController.text = settingsProvider.playbackCacheSizeMb
+        .toString();
+    _playbackReadaheadSecondsController.text = settingsProvider
+        .playbackReadaheadSeconds
+        .toString();
+    _enableHardwareAcceleration = settingsProvider.enableHardwareAcceleration;
+    _audioLanguagePriorityController.text =
+        settingsProvider.audioLanguagePriority;
+    _subtitleLanguagePriorityController.text =
+        settingsProvider.subtitleLanguagePriority;
+    _subtitleFontSize = settingsProvider.subtitleFontSize;
+  }
+
+  int _parseIntField(TextEditingController controller, int fallback) {
+    return int.tryParse(controller.text.trim()) ?? fallback;
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const _SettingsRow({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 560;
+        final labelWidget = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ],
+        );
+
+        if (compact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [labelWidget, const SizedBox(height: 8), child],
+          );
+        }
+
+        return Row(
+          children: [
+            SizedBox(width: 180, child: labelWidget),
+            Expanded(child: child),
+          ],
+        );
+      },
+    );
   }
 }
 

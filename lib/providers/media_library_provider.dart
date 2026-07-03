@@ -560,6 +560,27 @@ class MediaLibraryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 获取最新的媒体文件状态，播放恢复时避免使用旧的 UI 快照。
+  Future<MediaFile?> getLatestMediaFile(MediaFile file) async {
+    entity.MediaFileEntity? mediaFileEntity;
+
+    if (file.path.isNotEmpty) {
+      mediaFileEntity = await _db.getMediaFileByPath(file.path);
+    }
+
+    mediaFileEntity ??= _findMediaFileEntity(file);
+    if (mediaFileEntity == null) return null;
+
+    final index = _mediaFileEntities.indexWhere(
+      (item) => item.id == mediaFileEntity!.id || item.path == file.path,
+    );
+    if (index >= 0) {
+      _mediaFileEntities[index] = mediaFileEntity;
+    }
+
+    return ModelConverter.toMediaFile(mediaFileEntity);
+  }
+
   entity.MediaFileEntity? _findMediaFileEntity(MediaFile file) {
     for (final mediaFileEntity in _mediaFileEntities) {
       if (mediaFileEntity.id == file.id || mediaFileEntity.path == file.path) {

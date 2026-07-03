@@ -6,6 +6,14 @@ import 'package:mochi_player/services/webdav_service.dart';
 import 'package:mochi_player/ui/pages/player_page.dart';
 
 class PlaybackHelper {
+  static void playFile(
+    BuildContext context,
+    MediaFile file, {
+    String? contextTitle,
+  }) {
+    _openPlayer(context, file, contextTitle: contextTitle);
+  }
+
   /// 播放电影：查找文件并播放（支持多版本选择）
   static void playMovie(BuildContext context, Movie movie) {
     final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
@@ -139,7 +147,7 @@ class PlaybackHelper {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: versions.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
+                separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (ctx, index) {
                   final file = versions[index];
                   final label = _buildVersionLabel(file);

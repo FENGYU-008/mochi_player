@@ -8,6 +8,7 @@ import 'media_poster_card.dart';
 import 'horizontal_scroll_view.dart';
 import 'hero_section.dart';
 import 'trending_category_card.dart';
+import 'media_detail/playback_helper.dart';
 
 class HomeContent extends StatefulWidget {
   /// 回调函数，用于通知父组件滚动偏移量
@@ -259,18 +260,13 @@ class _HomeContentState extends State<HomeContent> {
                   progress: file.progress,
                   showProgress: true,
                   onTap: () {
-                    // 获取对应的 Movie 或 TVShow 元数据后打开详情
-                    if (file.mediaType == MediaType.movie) {
-                      final movie = provider.getMovieMetadata(
-                        file.tmdbId ?? '',
-                      );
-                      if (movie != null) showMediaDetailModal(context, movie);
-                    } else {
-                      final show = provider.getTVShowMetadata(
-                        file.tmdbId ?? '',
-                      );
-                      if (show != null) showMediaDetailModal(context, show);
-                    }
+                    PlaybackHelper.playFile(
+                      context,
+                      file,
+                      contextTitle: file.mediaType == MediaType.episode
+                          ? title
+                          : null,
+                    );
                   },
                 ),
               ),

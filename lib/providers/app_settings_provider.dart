@@ -26,6 +26,12 @@ class AppSettingsProvider extends ChangeNotifier {
   String get tmdbApiKey => _settings.tmdbApiKey;
   String get tmdbApiBaseUrl => _settings.tmdbApiBaseUrl;
   String get tmdbProxyUrl => _settings.tmdbProxyUrl;
+  int get playbackCacheSizeMb => _settings.playbackCacheSizeMb;
+  int get playbackReadaheadSeconds => _settings.playbackReadaheadSeconds;
+  bool get enableHardwareAcceleration => _settings.enableHardwareAcceleration;
+  String get audioLanguagePriority => _settings.audioLanguagePriority;
+  String get subtitleLanguagePriority => _settings.subtitleLanguagePriority;
+  double get subtitleFontSize => _settings.subtitleFontSize;
   bool get hasWebDavConfig => _settings.hasWebDavConfig;
   bool get hasTmdbApiKey => _settings.hasTmdbApiKey;
 
@@ -52,6 +58,12 @@ class AppSettingsProvider extends ChangeNotifier {
     required String tmdbApiKey,
     required String tmdbApiBaseUrl,
     required String tmdbProxyUrl,
+    required int playbackCacheSizeMb,
+    required int playbackReadaheadSeconds,
+    required bool enableHardwareAcceleration,
+    required String audioLanguagePriority,
+    required String subtitleLanguagePriority,
+    required double subtitleFontSize,
   }) async {
     _isSaving = true;
     _error = null;
@@ -65,6 +77,12 @@ class AppSettingsProvider extends ChangeNotifier {
         tmdbApiKey: tmdbApiKey.trim(),
         tmdbApiBaseUrl: tmdbApiBaseUrl.trim(),
         tmdbProxyUrl: tmdbProxyUrl.trim(),
+        playbackCacheSizeMb: playbackCacheSizeMb,
+        playbackReadaheadSeconds: playbackReadaheadSeconds,
+        enableHardwareAcceleration: enableHardwareAcceleration,
+        audioLanguagePriority: audioLanguagePriority.trim(),
+        subtitleLanguagePriority: subtitleLanguagePriority.trim(),
+        subtitleFontSize: subtitleFontSize,
       );
       _settings = await _settingsService.save(nextSettings);
       await _applyRuntimeSettings();

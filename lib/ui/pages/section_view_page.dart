@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/domain/models.dart';
 import '../../providers/media_library_provider.dart';
 import '../widgets/media_poster_card.dart';
+import '../widgets/media_detail/playback_helper.dart';
 import 'media_detail_modals.dart';
 
 /// Section 类型
@@ -343,7 +344,11 @@ class _SectionModalContent extends StatelessWidget {
       progress: file.progress,
       showProgress: true,
       onTap: () {
-        if (metadata != null) showMediaDetailModal(context, metadata);
+        PlaybackHelper.playFile(
+          context,
+          file,
+          contextTitle: file.mediaType == MediaType.episode ? title : null,
+        );
       },
     );
   }

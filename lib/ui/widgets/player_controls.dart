@@ -22,6 +22,8 @@ class PlayerControls extends StatefulWidget {
   final List<SubtitleTrack> subtitleTracks;
   final SubtitleTrack? selectedSubtitleTrack;
   final ValueChanged<SubtitleTrack>? onSubtitleSelected;
+  final bool overrideEmbeddedSubtitleStyle;
+  final ValueChanged<bool>? onSubtitleStyleOverrideChanged;
 
   final VoidCallback? onInteraction;
 
@@ -42,6 +44,8 @@ class PlayerControls extends StatefulWidget {
     this.subtitleTracks = const [],
     this.selectedSubtitleTrack,
     this.onSubtitleSelected,
+    this.overrideEmbeddedSubtitleStyle = false,
+    this.onSubtitleStyleOverrideChanged,
     this.onInteraction,
   });
 
@@ -295,9 +299,17 @@ class _PlayerControlsState extends State<PlayerControls> {
                               _SubtitleMenuButton(
                                 tracks: widget.subtitleTracks,
                                 selectedTrack: widget.selectedSubtitleTrack,
+                                overrideEmbeddedStyle:
+                                    widget.overrideEmbeddedSubtitleStyle,
                                 onSelected: (track) {
                                   widget.onInteraction?.call();
                                   widget.onSubtitleSelected?.call(track);
+                                },
+                                onStyleOverrideChanged: (value) {
+                                  widget.onInteraction?.call();
+                                  widget.onSubtitleStyleOverrideChanged?.call(
+                                    value,
+                                  );
                                 },
                               ),
                               const SizedBox(width: 4),
@@ -579,15 +591,21 @@ class _AudioMenuButton extends StatelessWidget {
   }
 }
 
+enum _SubtitleMenuAction { toggleStyleOverride }
+
 class _SubtitleMenuButton extends StatelessWidget {
   final List<SubtitleTrack> tracks;
   final SubtitleTrack? selectedTrack;
+  final bool overrideEmbeddedStyle;
   final ValueChanged<SubtitleTrack> onSelected;
+  final ValueChanged<bool> onStyleOverrideChanged;
 
   const _SubtitleMenuButton({
     required this.tracks,
     required this.selectedTrack,
+    required this.overrideEmbeddedStyle,
     required this.onSelected,
+    required this.onStyleOverrideChanged,
   });
 
   bool _isAuto(SubtitleTrack track) =>
@@ -623,16 +641,50 @@ class _SubtitleMenuButton extends StatelessWidget {
     final hasSubtitleEnabled =
         activeTrack != null && !_isAuto(activeTrack) && !_isOff(activeTrack);
 
-    return PopupMenuButton<SubtitleTrack>(
+    return PopupMenuButton<Object>(
       tooltip: '字幕',
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 220, maxWidth: 360),
       color: Colors.black.withAlpha((255 * 0.9).round()),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      onSelected: onSelected,
+      onSelected: (value) {
+        if (value is SubtitleTrack) {
+          onSelected(value);
+        } else if (value == _SubtitleMenuAction.toggleStyleOverride) {
+          onStyleOverrideChanged(!overrideEmbeddedStyle);
+        }
+      },
       itemBuilder: (context) => [
+        PopupMenuItem<Object>(
+          value: _SubtitleMenuAction.toggleStyleOverride,
+          height: 40,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                child: overrideEmbeddedStyle
+                    ? const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '覆盖内建字幕样式',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.white, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(height: 8),
         for (final track in tracks)
-          PopupMenuItem<SubtitleTrack>(
+          PopupMenuItem<Object>(
             value: track,
             height: 36,
             child: ConstrainedBox(
