@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mochi_player/providers/app_settings_provider.dart';
-import 'package:mochi_player/providers/file_browser_provider.dart';
 import 'package:mochi_player/providers/media_library_provider.dart';
 import 'package:mochi_player/ui/pages/file_browser_page.dart';
 import 'package:mochi_player/ui/pages/settings_page.dart';
@@ -38,21 +37,12 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> _initializeApp() async {
     final settingsProvider = context.read<AppSettingsProvider>();
-    final fileBrowserProvider = context.read<FileBrowserProvider>();
     final libraryProvider = context.read<MediaLibraryProvider>();
 
     // 1. 先从数据库加载缓存数据 (快速显示)
     await libraryProvider.loadFromDatabase();
 
-    // 2. 加载文件列表并扫描媒体库
-    if (settingsProvider.hasWebDavConfig) {
-      await fileBrowserProvider.fetchFiles('/');
-
-      // 3. 扫描媒体库 (增量更新)
-      await libraryProvider.scanLibrary();
-    }
-
-    // 4. 加载 TMDB 热门趋势
+    // 2. 加载 TMDB 热门趋势。媒体库扫描/刮削由设置页手动触发。
     if (settingsProvider.hasTmdbApiKey) {
       await libraryProvider.fetchTrending();
     }
@@ -145,18 +135,23 @@ class _MainPageState extends State<MainPage> {
                   // === 1. 底层内容 (动态切换) ===
                   _getPageContent(_selectedIndex),
 
-                  Consumer<MediaLibraryProvider>(
-                    builder: (context, provider, child) {
-                      final message = provider.libraryActivityMessage;
-                      if (message == null) return const SizedBox.shrink();
+                  Selector<MediaLibraryProvider, _LibraryActivityState>(
+                    selector: (context, provider) => _LibraryActivityState(
+                      message: provider.libraryActivityMessage,
+                      progress: provider.scrapeProgress,
+                    ),
+                    builder: (context, activity, child) {
+                      if (activity.message == null) {
+                        return const SizedBox.shrink();
+                      }
 
                       return Positioned(
                         top: showHeader ? 70 : 16,
                         left: 40,
                         right: 40,
                         child: _LibraryActivityBanner(
-                          message: message,
-                          progress: provider.scrapeProgress,
+                          message: activity.message!,
+                          progress: activity.progress,
                         ),
                       );
                     },
@@ -240,6 +235,23 @@ class _MainPageState extends State<MainPage> {
       ),
     );
   }
+}
+
+class _LibraryActivityState {
+  final String? message;
+  final double? progress;
+
+  const _LibraryActivityState({required this.message, required this.progress});
+
+  @override
+  bool operator ==(Object other) {
+    return other is _LibraryActivityState &&
+        other.message == message &&
+        other.progress == progress;
+  }
+
+  @override
+  int get hashCode => Object.hash(message, progress);
 }
 
 class _LibraryActivityBanner extends StatelessWidget {

@@ -8,7 +8,7 @@ import '../widgets/media_detail/playback_helper.dart';
 import 'media_detail_modals.dart';
 
 /// Section 类型
-enum SectionType { continueWatching, movies, tvShows }
+enum SectionType { continueWatching, movies, tvShows, recentlyAdded }
 
 /// 显示 Section 详情模态窗口
 void showSectionModal(
@@ -18,6 +18,7 @@ void showSectionModal(
   List<Movie>? movies,
   List<TVShow>? tvShows,
   List<MediaFile>? mediaFiles,
+  List<dynamic>? recentItems,
 }) {
   showGeneralDialog(
     context: context,
@@ -73,12 +74,27 @@ void showSectionModal(
                 movies: movies,
                 tvShows: tvShows,
                 mediaFiles: mediaFiles,
+                recentItems: recentItems,
               ),
             ),
           ),
         ),
       );
     },
+  );
+}
+
+/// 便捷方法：显示最近添加列表
+void showRecentlyAddedSection(
+  BuildContext context,
+  String title,
+  List<dynamic> items,
+) {
+  showSectionModal(
+    context,
+    title: title,
+    sectionType: SectionType.recentlyAdded,
+    recentItems: items,
   );
 }
 
@@ -126,6 +142,7 @@ class _SectionModalContent extends StatelessWidget {
   final List<Movie>? movies;
   final List<TVShow>? tvShows;
   final List<MediaFile>? mediaFiles;
+  final List<dynamic>? recentItems;
 
   const _SectionModalContent({
     required this.title,
@@ -133,6 +150,7 @@ class _SectionModalContent extends StatelessWidget {
     this.movies,
     this.tvShows,
     this.mediaFiles,
+    this.recentItems,
   });
 
   @override
@@ -247,6 +265,8 @@ class _SectionModalContent extends StatelessWidget {
         return tvShows?.length ?? 0;
       case SectionType.continueWatching:
         return mediaFiles?.length ?? 0;
+      case SectionType.recentlyAdded:
+        return recentItems?.length ?? 0;
     }
   }
 
@@ -266,6 +286,8 @@ class _SectionModalContent extends StatelessWidget {
           mediaFiles![index],
           provider,
         );
+      case SectionType.recentlyAdded:
+        return _buildRecentlyAddedCard(context, recentItems![index]);
     }
   }
 
@@ -300,6 +322,16 @@ class _SectionModalContent extends StatelessWidget {
       cardType: MediaCardType.poster,
       onTap: () => showMediaDetailModal(context, show),
     );
+  }
+
+  Widget _buildRecentlyAddedCard(BuildContext context, dynamic item) {
+    if (item is Movie) {
+      return _buildMovieCard(context, item);
+    }
+    if (item is TVShow) {
+      return _buildTVShowCard(context, item);
+    }
+    return const SizedBox.shrink();
   }
 
   Widget _buildContinueWatchingCard(

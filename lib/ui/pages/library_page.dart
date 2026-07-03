@@ -12,15 +12,22 @@ class LibraryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<MediaLibraryProvider>(
-      builder: (context, provider, child) {
-        if (provider.isLoading && provider.mediaFiles.isEmpty) {
+    return Selector<MediaLibraryProvider, _LibraryPageSnapshot>(
+      selector: (context, provider) => _LibraryPageSnapshot(
+        showInitialLoading: provider.isLoading && provider.totalFiles == 0,
+        error: provider.error,
+        contentRevision: _contentRevisionFor(provider),
+      ),
+      builder: (context, snapshot, child) {
+        if (snapshot.showInitialLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (provider.error != null) {
-          return Center(child: Text("Error: ${provider.error}"));
+        if (snapshot.error != null) {
+          return Center(child: Text("Error: ${snapshot.error}"));
         }
+
+        final provider = context.read<MediaLibraryProvider>();
 
         // 根据 category 选择显示内容
         Widget content;
@@ -41,6 +48,22 @@ class LibraryPage extends StatelessWidget {
         return content;
       },
     );
+  }
+
+  int _contentRevisionFor(MediaLibraryProvider provider) {
+    switch (category) {
+      case 'Movies':
+      case 'TV Shows':
+        return provider.metadataRevision;
+      case 'Favorites':
+        return Object.hash(
+          provider.mediaCatalogRevision,
+          provider.metadataRevision,
+          provider.favoriteRevision,
+        );
+      default:
+        return provider.mediaCatalogRevision;
+    }
   }
 
   Widget _buildMovieGrid(BuildContext context, MediaLibraryProvider provider) {
@@ -238,4 +261,27 @@ class LibraryPage extends StatelessWidget {
       ),
     );
   }
+}
+
+class _LibraryPageSnapshot {
+  final bool showInitialLoading;
+  final String? error;
+  final int contentRevision;
+
+  const _LibraryPageSnapshot({
+    required this.showInitialLoading,
+    required this.error,
+    required this.contentRevision,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return other is _LibraryPageSnapshot &&
+        other.showInitialLoading == showInitialLoading &&
+        other.error == error &&
+        other.contentRevision == contentRevision;
+  }
+
+  @override
+  int get hashCode => Object.hash(showInitialLoading, error, contentRevision);
 }

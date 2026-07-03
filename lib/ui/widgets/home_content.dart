@@ -46,27 +46,17 @@ class _HomeContentState extends State<HomeContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<MediaLibraryProvider>(
-      builder: (context, provider, child) {
-        if (provider.isLoading && provider.mediaFiles.isEmpty) {
+    return Selector<MediaLibraryProvider, _HomeShellState>(
+      selector: (context, provider) => _HomeShellState(
+        showInitialLoading: provider.isLoading && provider.totalFiles == 0,
+        hasHomeContent: provider.hasHomeContent,
+      ),
+      builder: (context, shellState, child) {
+        if (shellState.showInitialLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final heroItem = provider.getRandomHeroItem();
-        final continueWatchingItems = provider.continueWatching;
-        final recentlyAddedItems = provider.recentlyAddedContent
-            .take(15)
-            .toList();
-        final hasTrendingData =
-            provider.trendingMovies.isNotEmpty ||
-            provider.trendingTV.isNotEmpty ||
-            provider.topRated.isNotEmpty;
-
-        // 如果库完全为空，显示空状态
-        if (heroItem == null &&
-            continueWatchingItems.isEmpty &&
-            recentlyAddedItems.isEmpty &&
-            !hasTrendingData) {
+        if (!shellState.hasHomeContent) {
           return _buildEmptyState();
         }
 
@@ -74,49 +64,123 @@ class _HomeContentState extends State<HomeContent> {
           controller: _mainScrollController,
           slivers: [
             // Hero Section (无 padding，直接到顶部)
-            SliverToBoxAdapter(child: HeroSection(heroItem: heroItem)),
+            Selector<MediaLibraryProvider, _LibraryContentRevision>(
+              selector: (context, provider) => _LibraryContentRevision(
+                mediaCatalogRevision: provider.mediaCatalogRevision,
+                metadataRevision: provider.metadataRevision,
+              ),
+              builder: (context, revision, child) {
+                final heroItem = context
+                    .read<MediaLibraryProvider>()
+                    .getRandomHeroItem();
+                return SliverToBoxAdapter(
+                  child: HeroSection(heroItem: heroItem),
+                );
+              },
+            ),
 
             // Continue Watching
-            if (continueWatchingItems.isNotEmpty) ...[
-              _buildSectionHeaderSliver(
-                context,
-                'Continue Watching',
-                onSeeAll: () => showContinueWatchingSection(
-                  context,
-                  'Continue Watching',
-                  provider.continueWatching,
-                ),
+            Selector<MediaLibraryProvider, _ContinueWatchingRevision>(
+              selector: (context, provider) => _ContinueWatchingRevision(
+                mediaCatalogRevision: provider.mediaCatalogRevision,
+                metadataRevision: provider.metadataRevision,
+                watchProgressRevision: provider.watchProgressRevision,
               ),
-              SliverToBoxAdapter(
-                child: _buildContinueWatchingList(
-                  continueWatchingItems,
-                  provider,
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 30)),
-            ],
+              builder: (context, revision, child) {
+                final provider = context.read<MediaLibraryProvider>();
+                final continueWatchingItems = provider.continueWatching;
+                if (continueWatchingItems.isEmpty) {
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                }
+
+                return SliverMainAxisGroup(
+                  slivers: [
+                    _buildSectionHeaderSliver(
+                      context,
+                      'Continue Watching',
+                      onSeeAll: () => showContinueWatchingSection(
+                        context,
+                        'Continue Watching',
+                        context.read<MediaLibraryProvider>().continueWatching,
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildContinueWatchingList(
+                        continueWatchingItems,
+                        provider,
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 30)),
+                  ],
+                );
+              },
+            ),
 
             // Recently Added
-            if (recentlyAddedItems.isNotEmpty) ...[
-              _buildSectionHeaderSliver(
-                context,
-                'Recently Added',
-                onSeeAll: () {
-                  // TODO: 打开完整的最近添加页面
-                },
+            Selector<MediaLibraryProvider, _LibraryContentRevision>(
+              selector: (context, provider) => _LibraryContentRevision(
+                mediaCatalogRevision: provider.mediaCatalogRevision,
+                metadataRevision: provider.metadataRevision,
               ),
-              SliverToBoxAdapter(
-                child: _buildRecentlyAddedList(recentlyAddedItems),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 30)),
-            ],
+              builder: (context, revision, child) {
+                final recentlyAddedItems = context
+                    .read<MediaLibraryProvider>()
+                    .recentlyAddedContent
+                    .take(15)
+                    .toList();
+                if (recentlyAddedItems.isEmpty) {
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                }
+
+                return SliverMainAxisGroup(
+                  slivers: [
+                    _buildSectionHeaderSliver(
+                      context,
+                      'Recently Added',
+                      onSeeAll: () {
+                        showRecentlyAddedSection(
+                          context,
+                          'Recently Added',
+                          context
+                              .read<MediaLibraryProvider>()
+                              .recentlyAddedContent,
+                        );
+                      },
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildRecentlyAddedList(recentlyAddedItems),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 30)),
+                  ],
+                );
+              },
+            ),
 
             // Trending on TMDB (三卡片布局)
-            if (hasTrendingData || provider.isTrendingLoading) ...[
-              _buildSectionHeaderSliver(context, 'Trending on TMDB'),
-              SliverToBoxAdapter(child: _buildTrendingCards(provider)),
-              const SliverToBoxAdapter(child: SizedBox(height: 30)),
-            ],
+            Selector<MediaLibraryProvider, _TrendingRevision>(
+              selector: (context, provider) => _TrendingRevision(
+                trendingRevision: provider.trendingRevision,
+                isTrendingLoading: provider.isTrendingLoading,
+              ),
+              builder: (context, revision, child) {
+                final provider = context.read<MediaLibraryProvider>();
+                final hasTrendingData =
+                    provider.trendingMovies.isNotEmpty ||
+                    provider.trendingTV.isNotEmpty ||
+                    provider.topRated.isNotEmpty;
+                if (!hasTrendingData && !provider.isTrendingLoading) {
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                }
+
+                return SliverMainAxisGroup(
+                  slivers: [
+                    _buildSectionHeaderSliver(context, 'Trending on TMDB'),
+                    SliverToBoxAdapter(child: _buildTrendingCards(provider)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 30)),
+                  ],
+                );
+              },
+            ),
 
             // 底部留白
             const SliverToBoxAdapter(child: SizedBox(height: 40)),
@@ -400,4 +464,91 @@ class _HomeContentState extends State<HomeContent> {
       ),
     );
   }
+}
+
+class _HomeShellState {
+  final bool showInitialLoading;
+  final bool hasHomeContent;
+
+  const _HomeShellState({
+    required this.showInitialLoading,
+    required this.hasHomeContent,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return other is _HomeShellState &&
+        other.showInitialLoading == showInitialLoading &&
+        other.hasHomeContent == hasHomeContent;
+  }
+
+  @override
+  int get hashCode => Object.hash(showInitialLoading, hasHomeContent);
+}
+
+class _LibraryContentRevision {
+  final int mediaCatalogRevision;
+  final int metadataRevision;
+
+  const _LibraryContentRevision({
+    required this.mediaCatalogRevision,
+    required this.metadataRevision,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return other is _LibraryContentRevision &&
+        other.mediaCatalogRevision == mediaCatalogRevision &&
+        other.metadataRevision == metadataRevision;
+  }
+
+  @override
+  int get hashCode => Object.hash(mediaCatalogRevision, metadataRevision);
+}
+
+class _ContinueWatchingRevision {
+  final int mediaCatalogRevision;
+  final int metadataRevision;
+  final int watchProgressRevision;
+
+  const _ContinueWatchingRevision({
+    required this.mediaCatalogRevision,
+    required this.metadataRevision,
+    required this.watchProgressRevision,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return other is _ContinueWatchingRevision &&
+        other.mediaCatalogRevision == mediaCatalogRevision &&
+        other.metadataRevision == metadataRevision &&
+        other.watchProgressRevision == watchProgressRevision;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    mediaCatalogRevision,
+    metadataRevision,
+    watchProgressRevision,
+  );
+}
+
+class _TrendingRevision {
+  final int trendingRevision;
+  final bool isTrendingLoading;
+
+  const _TrendingRevision({
+    required this.trendingRevision,
+    required this.isTrendingLoading,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return other is _TrendingRevision &&
+        other.trendingRevision == trendingRevision &&
+        other.isTrendingLoading == isTrendingLoading;
+  }
+
+  @override
+  int get hashCode => Object.hash(trendingRevision, isTrendingLoading);
 }

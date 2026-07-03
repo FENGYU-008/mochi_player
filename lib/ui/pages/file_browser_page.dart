@@ -12,42 +12,117 @@ import '../../models/domain/media_file.dart';
 import '../../models/domain/media_type.dart';
 import '../widgets/file_card.dart'; // 引入刚才写的方形卡片
 
-class FileBrowserPage extends StatelessWidget {
+class FileBrowserPage extends StatefulWidget {
   const FileBrowserPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // 监听 Provider 变化
-    final provider = context.watch<FileBrowserProvider>();
-    final settingsProvider = context.watch<AppSettingsProvider>();
-    final items = provider.items;
-    final isLoading = provider.isLoading;
-    final error =
-        provider.error ??
-        (settingsProvider.hasWebDavConfig ? null : '请先在设置中配置 WebDAV');
+  State<FileBrowserPage> createState() => _FileBrowserPageState();
+}
 
+class _FileBrowserPageState extends State<FileBrowserPage> {
+  bool _didScheduleInitialLoad = false;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // === 1. 顶部功能栏 (Top Bar) ===
-          _buildTopBar(context, provider),
+          Selector<FileBrowserProvider, _FileBrowserTopBarState>(
+            selector: (context, provider) => _FileBrowserTopBarState(
+              currentPath: provider.currentPath,
+              canGoBack: provider.canGoBack,
+              viewMode: provider.viewMode,
+            ),
+            builder: (context, topBarState, child) {
+              return _buildTopBar(
+                context,
+                topBarState,
+                context.read<FileBrowserProvider>(),
+              );
+            },
+          ),
 
           // === 2. 内容区域 (Content) ===
           Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : items.isEmpty
-                ? _buildEmptyState(error)
-                : _buildContent(context, provider),
+            child:
+                Selector2<
+                  FileBrowserProvider,
+                  AppSettingsProvider,
+                  _FileBrowserContentState
+                >(
+                  selector: (context, fileProvider, settingsProvider) {
+                    final error =
+                        fileProvider.error ??
+                        (settingsProvider.hasWebDavConfig
+                            ? null
+                            : '请先在设置中配置 WebDAV');
+                    return _FileBrowserContentState(
+                      items: fileProvider.items,
+                      isLoading: fileProvider.isLoading,
+                      hasLoaded: fileProvider.hasLoaded,
+                      hasWebDavConfig: settingsProvider.hasWebDavConfig,
+                      error: error,
+                      viewMode: fileProvider.viewMode,
+                    );
+                  },
+                  builder: (context, contentState, child) {
+                    if (!contentState.hasWebDavConfig) {
+                      return _buildEmptyState(contentState.error);
+                    }
+
+                    if (contentState.shouldLoadInitialPath) {
+                      _scheduleInitialLoad();
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (contentState.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (contentState.items.isEmpty) {
+                      return _buildEmptyState(contentState.error);
+                    }
+
+                    return _buildContent(
+                      context,
+                      contentState,
+                      context.read<FileBrowserProvider>(),
+                    );
+                  },
+                ),
           ),
         ],
       ),
     );
   }
 
+  void _scheduleInitialLoad() {
+    if (_didScheduleInitialLoad) return;
+    _didScheduleInitialLoad = true;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final settingsProvider = context.read<AppSettingsProvider>();
+      final fileProvider = context.read<FileBrowserProvider>();
+      if (!settingsProvider.hasWebDavConfig ||
+          fileProvider.hasLoaded ||
+          fileProvider.isLoading) {
+        return;
+      }
+
+      fileProvider.fetchFiles(fileProvider.currentPath);
+    });
+  }
+
   // 构建顶部导航栏
-  Widget _buildTopBar(BuildContext context, FileBrowserProvider provider) {
+  Widget _buildTopBar(
+    BuildContext context,
+    _FileBrowserTopBarState state,
+    FileBrowserProvider provider,
+  ) {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
@@ -63,7 +138,7 @@ class FileBrowserPage extends StatelessWidget {
       child: Row(
         children: [
           // A. 返回按钮 (只有能返回时才显示)
-          if (provider.canGoBack)
+          if (state.canGoBack)
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: IconButton(
@@ -108,7 +183,7 @@ class FileBrowserPage extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  provider.currentPath, // 显示 WebDAV 路径
+                  state.currentPath, // 显示 WebDAV 路径
                   style: TextStyle(
                     color: theme.textTheme.bodyMedium!.color,
                     fontSize: 16,
@@ -126,7 +201,7 @@ class FileBrowserPage extends StatelessWidget {
           // D. 视图切换按钮
           IconButton(
             icon: Icon(
-              provider.viewMode == ViewMode.grid
+              state.viewMode == ViewMode.grid
                   ? Icons.view_list_rounded
                   : Icons.grid_view_rounded,
             ),
@@ -148,16 +223,24 @@ class FileBrowserPage extends StatelessWidget {
   }
 
   // 根据视图模式构建内容
-  Widget _buildContent(BuildContext context, FileBrowserProvider provider) {
-    if (provider.viewMode == ViewMode.grid) {
-      return _buildGridView(context, provider);
+  Widget _buildContent(
+    BuildContext context,
+    _FileBrowserContentState state,
+    FileBrowserProvider provider,
+  ) {
+    if (state.viewMode == ViewMode.grid) {
+      return _buildGridView(context, state.items, provider);
     } else {
-      return _buildListView(context, provider);
+      return _buildListView(context, state.items, provider);
     }
   }
 
   // 构建网格视图
-  Widget _buildGridView(BuildContext context, FileBrowserProvider provider) {
+  Widget _buildGridView(
+    BuildContext context,
+    List<MediaFile> items,
+    FileBrowserProvider provider,
+  ) {
     return GridView.builder(
       padding: const EdgeInsets.all(20),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -166,9 +249,9 @@ class FileBrowserPage extends StatelessWidget {
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
-      itemCount: provider.items.length,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        final item = provider.items[index];
+        final item = items[index];
         return FileCard(
           item: item,
           onTap: () => _onItemTap(context, item, provider),
@@ -178,12 +261,16 @@ class FileBrowserPage extends StatelessWidget {
   }
 
   // 构建列表视图
-  Widget _buildListView(BuildContext context, FileBrowserProvider provider) {
+  Widget _buildListView(
+    BuildContext context,
+    List<MediaFile> items,
+    FileBrowserProvider provider,
+  ) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      itemCount: provider.items.length,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        final item = provider.items[index];
+        final item = items[index];
         return FileListItem(
           item: item,
           onTap: () => _onItemTap(context, item, provider),
@@ -263,4 +350,68 @@ class FileBrowserPage extends StatelessWidget {
       ),
     );
   }
+}
+
+class _FileBrowserTopBarState {
+  final String currentPath;
+  final bool canGoBack;
+  final ViewMode viewMode;
+
+  const _FileBrowserTopBarState({
+    required this.currentPath,
+    required this.canGoBack,
+    required this.viewMode,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return other is _FileBrowserTopBarState &&
+        other.currentPath == currentPath &&
+        other.canGoBack == canGoBack &&
+        other.viewMode == viewMode;
+  }
+
+  @override
+  int get hashCode => Object.hash(currentPath, canGoBack, viewMode);
+}
+
+class _FileBrowserContentState {
+  final List<MediaFile> items;
+  final bool isLoading;
+  final bool hasLoaded;
+  final bool hasWebDavConfig;
+  final String? error;
+  final ViewMode viewMode;
+
+  const _FileBrowserContentState({
+    required this.items,
+    required this.isLoading,
+    required this.hasLoaded,
+    required this.hasWebDavConfig,
+    required this.error,
+    required this.viewMode,
+  });
+
+  bool get shouldLoadInitialPath => hasWebDavConfig && !hasLoaded && !isLoading;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _FileBrowserContentState &&
+        identical(other.items, items) &&
+        other.isLoading == isLoading &&
+        other.hasLoaded == hasLoaded &&
+        other.hasWebDavConfig == hasWebDavConfig &&
+        other.error == error &&
+        other.viewMode == viewMode;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    identityHashCode(items),
+    isLoading,
+    hasLoaded,
+    hasWebDavConfig,
+    error,
+    viewMode,
+  );
 }

@@ -25,6 +25,12 @@ class MediaLibraryProvider extends ChangeNotifier {
   List<entity.TVShowMetadataEntity> _tvShowMetadataEntities = [];
   List<entity.SeasonMetadataEntity> _seasonMetadataEntities = [];
   List<entity.EpisodeMetadataEntity> _episodeMetadataEntities = [];
+  int _mediaCatalogRevision = 0;
+  int _metadataRevision = 0;
+  int _watchProgressRevision = 0;
+  int _favoriteRevision = 0;
+  int _trendingRevision = 0;
+  int _continueWatchingCount = 0;
 
   bool _isLoading = false;
   bool _isScraping = false;
@@ -42,6 +48,39 @@ class MediaLibraryProvider extends ChangeNotifier {
   List<TrendingItem> _trendingTV = [];
   List<TrendingItem> _topRated = [];
   bool _isTrendingLoading = false;
+
+  void _markMediaCatalogChanged() {
+    _mediaCatalogRevision++;
+  }
+
+  void _markMetadataChanged() {
+    _metadataRevision++;
+  }
+
+  void _markWatchProgressChanged() {
+    _watchProgressRevision++;
+  }
+
+  void _markFavoriteChanged() {
+    _favoriteRevision++;
+  }
+
+  void _markTrendingChanged() {
+    _trendingRevision++;
+  }
+
+  void _markAllLibraryContentChanged() {
+    _markMediaCatalogChanged();
+    _markMetadataChanged();
+    _markWatchProgressChanged();
+    _markFavoriteChanged();
+  }
+
+  void _recountContinueWatching() {
+    _continueWatchingCount = _mediaFileEntities
+        .where((file) => file.watchStatus == entity.WatchStatus.watching)
+        .length;
+  }
 
   // ===== 公开 API (返回 Domain 模型) =====
 
@@ -84,6 +123,11 @@ class MediaLibraryProvider extends ChangeNotifier {
   bool get isScraping => _isScraping;
   bool get isInitialized => _isInitialized;
   String? get error => _error;
+  int get mediaCatalogRevision => _mediaCatalogRevision;
+  int get metadataRevision => _metadataRevision;
+  int get watchProgressRevision => _watchProgressRevision;
+  int get favoriteRevision => _favoriteRevision;
+  int get trendingRevision => _trendingRevision;
   int get scrapeCompleted => _scrapeCompleted;
   int get scrapeTotal => _scrapeTotal;
   double? get scrapeProgress {
@@ -110,6 +154,19 @@ class MediaLibraryProvider extends ChangeNotifier {
   }
 
   int get totalFiles => _mediaFileEntities.length;
+
+  bool get hasHomeContent {
+    if (_movieMetadataEntities.isNotEmpty ||
+        _tvShowMetadataEntities.isNotEmpty) {
+      return true;
+    }
+    if (_trendingMovies.isNotEmpty ||
+        _trendingTV.isNotEmpty ||
+        _topRated.isNotEmpty) {
+      return true;
+    }
+    return _continueWatchingCount > 0;
+  }
 
   /// 获取未分类的文件
   List<MediaFile> get uncategorized => _mediaFileEntities
@@ -322,8 +379,10 @@ class MediaLibraryProvider extends ChangeNotifier {
     _tvShowMetadataEntities = await _db.getAllTVShows();
     _seasonMetadataEntities = await _db.getAllSeasons();
     _episodeMetadataEntities = await _db.getAllEpisodes();
+    _recountContinueWatching();
 
     _isInitialized = true;
+    _markAllLibraryContentChanged();
     _logger.i(
       '✅ 加载完成: ${_mediaFileEntities.length} 个文件, ${_movieMetadataEntities.length} 部电影, ${_tvShowMetadataEntities.length} 部剧集, ${_seasonMetadataEntities.length} 季, ${_episodeMetadataEntities.length} 集',
     );
@@ -343,6 +402,7 @@ class MediaLibraryProvider extends ChangeNotifier {
         _trendingMovies = [];
         _trendingTV = [];
         _topRated = [];
+        _markTrendingChanged();
         return;
       }
 
@@ -355,6 +415,7 @@ class MediaLibraryProvider extends ChangeNotifier {
       _trendingMovies = results[0];
       _trendingTV = results[1];
       _topRated = results[2];
+      _markTrendingChanged();
       _logger.i(
         '✅ 加载热门趋势: 电影 ${_trendingMovies.length}, 剧集 ${_trendingTV.length}, 高分 ${_topRated.length}',
       );
@@ -432,15 +493,28 @@ class MediaLibraryProvider extends ChangeNotifier {
           _scrapeFailCount = progress.failCount;
           _scrapeCurrentTitle = progress.currentTitle;
 
+          var mediaCatalogChanged = false;
+          var metadataChanged = false;
           if (progress.movie != null) {
             _upsertMovieMetadata(progress.movie!);
+            mediaCatalogChanged = true;
+            metadataChanged = true;
           }
           if (progress.tvShow != null) {
             _upsertTVShowMetadata(progress.tvShow!);
+            mediaCatalogChanged = true;
+            metadataChanged = true;
           }
           if (progress.seasonsChanged) {
             _seasonMetadataEntities = await _db.getAllSeasons();
             _episodeMetadataEntities = await _db.getAllEpisodes();
+            metadataChanged = true;
+          }
+          if (mediaCatalogChanged) {
+            _markMediaCatalogChanged();
+          }
+          if (metadataChanged) {
+            _markMetadataChanged();
           }
 
           notifyListeners();
@@ -452,6 +526,10 @@ class MediaLibraryProvider extends ChangeNotifier {
       _tvShowMetadataEntities = await _db.getAllTVShows();
       _seasonMetadataEntities = await _db.getAllSeasons();
       _episodeMetadataEntities = await _db.getAllEpisodes();
+      if (result.successCount > 0) {
+        _markMetadataChanged();
+        _markMediaCatalogChanged();
+      }
 
       if (result.successCount > 0) {
         _logger.i(
@@ -482,6 +560,8 @@ class MediaLibraryProvider extends ChangeNotifier {
 
       _mediaFileEntities = await _db.getAllMediaFiles();
       _isInitialized = true;
+      _recountContinueWatching();
+      _markMediaCatalogChanged();
 
       _logger.i('重新刮削前按启动算法扫描 WebDAV 根目录...');
       final newCount = await _scanFilesFromWebDav(
@@ -506,6 +586,7 @@ class MediaLibraryProvider extends ChangeNotifier {
       _tvShowMetadataEntities.clear();
       _seasonMetadataEntities.clear();
       _episodeMetadataEntities.clear();
+      _markMetadataChanged();
 
       for (final file in _mediaFileEntities) {
         final parsed = FileNameParser.parse(
@@ -530,6 +611,7 @@ class MediaLibraryProvider extends ChangeNotifier {
             : null;
       }
       await _db.saveMediaFiles(_mediaFileEntities);
+      _markMediaCatalogChanged();
       notifyListeners();
 
       await _scrapeMetadata();
@@ -556,7 +638,18 @@ class MediaLibraryProvider extends ChangeNotifier {
       return;
     }
 
+    final wasWatching =
+        mediaFileEntity.watchStatus == entity.WatchStatus.watching;
     await _db.updateProgress(mediaFileEntity, position, duration: duration);
+    final isWatching =
+        mediaFileEntity.watchStatus == entity.WatchStatus.watching;
+    if (wasWatching != isWatching) {
+      _continueWatchingCount += isWatching ? 1 : -1;
+      if (_continueWatchingCount < 0) {
+        _continueWatchingCount = 0;
+      }
+    }
+    _markWatchProgressChanged();
     notifyListeners();
   }
 
@@ -594,6 +687,7 @@ class MediaLibraryProvider extends ChangeNotifier {
   Future<void> toggleFavorite(MediaFile file) async {
     final entity = _mediaFileEntities.firstWhere((e) => e.id == file.id);
     await _db.toggleFavorite(entity);
+    _markFavoriteChanged();
     notifyListeners();
   }
 
@@ -607,7 +701,10 @@ class MediaLibraryProvider extends ChangeNotifier {
     _tvShowMetadataEntities.clear();
     _seasonMetadataEntities.clear();
     _episodeMetadataEntities.clear();
+    _continueWatchingCount = 0;
     _error = null;
+    _markAllLibraryContentChanged();
+    _markTrendingChanged();
     notifyListeners();
   }
 
@@ -632,6 +729,7 @@ class MediaLibraryProvider extends ChangeNotifier {
       if (existing == null) {
         await _db.saveMediaFile(mediaFileEntity);
         _mediaFileEntities.add(mediaFileEntity);
+        _markMediaCatalogChanged();
         newCount++;
 
         if (newCount % 10 == 0) {

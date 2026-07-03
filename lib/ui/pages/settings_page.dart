@@ -61,9 +61,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final settingsProvider = context.watch<AppSettingsProvider>();
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: ListView(
@@ -81,7 +78,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 40),
-                  _buildThemeSettings(context, themeProvider),
+                  _buildThemeSettings(context),
                   const SizedBox(height: 36),
                   _buildWebDavSettings(context),
                   const SizedBox(height: 36),
@@ -91,14 +88,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 36),
                   _buildLibraryMaintenance(context),
                   const SizedBox(height: 32),
-                  _buildActions(context, settingsProvider),
-                  if (settingsProvider.error != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      settingsProvider.error!,
-                      style: const TextStyle(color: Colors.redAccent),
-                    ),
-                  ],
+                  _buildActions(context),
+                  _buildSettingsError(),
                 ],
               ),
             ),
@@ -108,35 +99,37 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildThemeSettings(
-    BuildContext context,
-    ThemeProvider themeProvider,
-  ) {
-    return _SettingsSection(
-      title: 'Appearance',
-      child: SegmentedButton<ThemeMode>(
-        segments: const [
-          ButtonSegment(
-            value: ThemeMode.light,
-            label: Text('Light'),
-            icon: Icon(Icons.light_mode_outlined),
+  Widget _buildThemeSettings(BuildContext context) {
+    return Selector<ThemeProvider, ThemeMode>(
+      selector: (context, provider) => provider.themeMode,
+      builder: (context, themeMode, child) {
+        return _SettingsSection(
+          title: 'Appearance',
+          child: SegmentedButton<ThemeMode>(
+            segments: const [
+              ButtonSegment(
+                value: ThemeMode.light,
+                label: Text('Light'),
+                icon: Icon(Icons.light_mode_outlined),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                label: Text('Dark'),
+                icon: Icon(Icons.dark_mode_outlined),
+              ),
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text('System'),
+                icon: Icon(Icons.computer_rounded),
+              ),
+            ],
+            selected: {themeMode},
+            onSelectionChanged: (selection) {
+              context.read<ThemeProvider>().setTheme(selection.first);
+            },
           ),
-          ButtonSegment(
-            value: ThemeMode.dark,
-            label: Text('Dark'),
-            icon: Icon(Icons.dark_mode_outlined),
-          ),
-          ButtonSegment(
-            value: ThemeMode.system,
-            label: Text('System'),
-            icon: Icon(Icons.computer_rounded),
-          ),
-        ],
-        selected: {themeProvider.themeMode},
-        onSelectionChanged: (selection) {
-          themeProvider.setTheme(selection.first);
-        },
-      ),
+        );
+      },
     );
   }
 
@@ -339,73 +332,89 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildActions(
-    BuildContext context,
-    AppSettingsProvider settingsProvider,
-  ) {
-    final isBusy = settingsProvider.isSaving;
+  Widget _buildActions(BuildContext context) {
+    return Selector<AppSettingsProvider, bool>(
+      selector: (context, provider) => provider.isSaving,
+      builder: (context, isBusy, child) {
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            FilledButton.icon(
+              onPressed: isBusy ? null : _saveSettings,
+              icon: isBusy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: Text(isBusy ? 'Saving' : 'Save'),
+            ),
+            OutlinedButton.icon(
+              onPressed: isBusy ? null : _testWebDavConnection,
+              icon: const Icon(Icons.wifi_tethering_rounded),
+              label: const Text('Test WebDAV'),
+            ),
+            OutlinedButton.icon(
+              onPressed: isBusy ? null : _testTmdbConnection,
+              icon: const Icon(Icons.public_rounded),
+              label: const Text('Test TMDB'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: [
-        FilledButton.icon(
-          onPressed: isBusy ? null : _saveSettings,
-          icon: isBusy
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.save_outlined),
-          label: Text(settingsProvider.isSaving ? 'Saving' : 'Save'),
-        ),
-        OutlinedButton.icon(
-          onPressed: isBusy ? null : _testWebDavConnection,
-          icon: const Icon(Icons.wifi_tethering_rounded),
-          label: const Text('Test WebDAV'),
-        ),
-        OutlinedButton.icon(
-          onPressed: isBusy ? null : _testTmdbConnection,
-          icon: const Icon(Icons.public_rounded),
-          label: const Text('Test TMDB'),
-        ),
-      ],
+  Widget _buildSettingsError() {
+    return Selector<AppSettingsProvider, String?>(
+      selector: (context, provider) => provider.error,
+      builder: (context, error, child) {
+        if (error == null) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Text(error, style: const TextStyle(color: Colors.redAccent)),
+        );
+      },
     );
   }
 
   Widget _buildLibraryMaintenance(BuildContext context) {
-    final mediaLibraryProvider = context.watch<MediaLibraryProvider>();
-    final isBusy = mediaLibraryProvider.isLoading;
-
-    return _SettingsSection(
-      title: 'Library',
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        children: [
-          OutlinedButton.icon(
-            onPressed: isBusy ? null : _confirmRescrapeLibrary,
-            icon: isBusy
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.manage_search_outlined),
-            label: Text(isBusy ? 'Rescraping' : 'Rescrape Library'),
+    return Selector<MediaLibraryProvider, bool>(
+      selector: (context, provider) => provider.isLoading,
+      builder: (context, isBusy, child) {
+        return _SettingsSection(
+          title: 'Library',
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              OutlinedButton.icon(
+                onPressed: isBusy ? null : _confirmRescrapeLibrary,
+                icon: isBusy
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.manage_search_outlined),
+                label: Text(isBusy ? 'Rescraping' : 'Rescrape Library'),
+              ),
+              OutlinedButton.icon(
+                onPressed: isBusy ? null : _confirmClearLibrary,
+                icon: const Icon(Icons.delete_sweep_outlined),
+                label: const Text('Clear Media Library'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  side: const BorderSide(color: Colors.redAccent),
+                ),
+              ),
+            ],
           ),
-          OutlinedButton.icon(
-            onPressed: isBusy ? null : _confirmClearLibrary,
-            icon: const Icon(Icons.delete_sweep_outlined),
-            label: const Text('Clear Media Library'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.redAccent,
-              side: const BorderSide(color: Colors.redAccent),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
