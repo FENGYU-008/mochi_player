@@ -11,6 +11,7 @@ class AppSettings {
   static const defaultAudioLanguagePriority = 'zh,chi,zho,jpn,ja,eng';
   static const defaultSubtitleLanguagePriority = 'zh,chi,zho,chs,cht,eng';
   static const defaultSubtitleFontSize = 24.0;
+  static const defaultTmdbProxyEnabled = true;
 
   final String webDavUrl;
   final String webDavUsername;
@@ -18,6 +19,7 @@ class AppSettings {
   final String tmdbApiKey;
   final String tmdbApiBaseUrl;
   final String tmdbProxyUrl;
+  final bool tmdbProxyEnabled;
   final int playbackCacheSizeMb;
   final int playbackReadaheadSeconds;
   final bool enableHardwareAcceleration;
@@ -32,6 +34,7 @@ class AppSettings {
     this.tmdbApiKey = '',
     this.tmdbApiBaseUrl = '',
     this.tmdbProxyUrl = '',
+    this.tmdbProxyEnabled = defaultTmdbProxyEnabled,
     this.playbackCacheSizeMb = defaultPlaybackCacheSizeMb,
     this.playbackReadaheadSeconds = defaultPlaybackReadaheadSeconds,
     this.enableHardwareAcceleration = defaultEnableHardwareAcceleration,
@@ -75,6 +78,7 @@ class AppSettings {
           ? tmdbApiBaseUrl
           : fallback.tmdbApiBaseUrl,
       tmdbProxyUrl: tmdbProxyUrl.trim(),
+      tmdbProxyEnabled: tmdbProxyEnabled,
       playbackCacheSizeMb: playbackCacheSizeMb
           .clamp(minPlaybackCacheSizeMb, maxPlaybackCacheSizeMb)
           .toInt(),
@@ -112,6 +116,7 @@ class AppSettingsService {
   static const _tmdbApiKeyKey = 'tmdb_api_key';
   static const _tmdbApiBaseUrlKey = 'tmdb_api_base_url';
   static const _tmdbProxyUrlKey = 'tmdb_proxy_url';
+  static const _tmdbProxyEnabledKey = 'tmdb_proxy_enabled';
   static const _playbackCacheSizeMbKey = 'playback_cache_size_mb';
   static const _playbackReadaheadSecondsKey = 'playback_readahead_seconds';
   static const _enableHardwareAccelerationKey = 'enable_hardware_acceleration';
@@ -143,6 +148,10 @@ class AppSettingsService {
       'TMDB_PROXY_URL',
       defaultValue: 'http://127.0.0.1:7890',
     ),
+    tmdbProxyEnabled: bool.fromEnvironment(
+      'TMDB_PROXY_ENABLED',
+      defaultValue: AppSettings.defaultTmdbProxyEnabled,
+    ),
   );
 
   static final AppSettingsService _instance = AppSettingsService._internal();
@@ -163,6 +172,8 @@ class AppSettingsService {
       tmdbProxyUrl: hasSavedProxyUrl
           ? prefs.getString(_tmdbProxyUrlKey) ?? ''
           : _testDefaults.tmdbProxyUrl,
+      tmdbProxyEnabled:
+          prefs.getBool(_tmdbProxyEnabledKey) ?? _testDefaults.tmdbProxyEnabled,
       playbackCacheSizeMb:
           prefs.getInt(_playbackCacheSizeMbKey) ??
           AppSettings.defaultPlaybackCacheSizeMb,
@@ -201,6 +212,7 @@ class AppSettingsService {
       settingsToSave.tmdbApiBaseUrl.trim(),
     );
     await prefs.setString(_tmdbProxyUrlKey, settings.tmdbProxyUrl.trim());
+    await prefs.setBool(_tmdbProxyEnabledKey, settingsToSave.tmdbProxyEnabled);
     await prefs.setInt(
       _playbackCacheSizeMbKey,
       settingsToSave.playbackCacheSizeMb,

@@ -30,6 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _controllersInitialized = false;
   bool _showWebDavPassword = false;
   bool _showTmdbApiKey = false;
+  bool _tmdbProxyEnabled = AppSettings.defaultTmdbProxyEnabled;
   bool _enableHardwareAcceleration =
       AppSettings.defaultEnableHardwareAcceleration;
   double _subtitleFontSize = AppSettings.defaultSubtitleFontSize;
@@ -222,8 +223,22 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 14),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Use TMDB Proxy'),
+            subtitle: const Text('Applies to TMDB API and image downloads'),
+            secondary: const Icon(Icons.route_rounded),
+            value: _tmdbProxyEnabled,
+            onChanged: (value) {
+              setState(() {
+                _tmdbProxyEnabled = value;
+              });
+            },
+          ),
+          const SizedBox(height: 14),
           TextField(
             controller: _tmdbProxyUrlController,
+            enabled: _tmdbProxyEnabled,
             keyboardType: TextInputType.url,
             decoration: _inputDecoration(
               context,
@@ -617,6 +632,7 @@ class _SettingsPageState extends State<SettingsPage> {
       tmdbApiKey: _tmdbApiKeyController.text,
       tmdbApiBaseUrl: _tmdbApiBaseUrlController.text,
       tmdbProxyUrl: _tmdbProxyUrlController.text,
+      tmdbProxyEnabled: _tmdbProxyEnabled,
       playbackCacheSizeMb: _parseIntField(
         _playbackCacheSizeMbController,
         AppSettings.defaultPlaybackCacheSizeMb,
@@ -652,6 +668,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _tmdbApiKeyController.text = settingsProvider.tmdbApiKey;
     _tmdbApiBaseUrlController.text = settingsProvider.tmdbApiBaseUrl;
     _tmdbProxyUrlController.text = settingsProvider.tmdbProxyUrl;
+    _tmdbProxyEnabled = settingsProvider.tmdbProxyEnabled;
     _playbackCacheSizeMbController.text = settingsProvider.playbackCacheSizeMb
         .toString();
     _playbackReadaheadSecondsController.text = settingsProvider

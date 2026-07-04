@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../models/domain/models.dart';
+import '../../../services/tmdb_image_cache_manager.dart';
 import '../../view_models/media_detail_view_model.dart';
 import '../horizontal_scroll_view.dart';
 
@@ -49,7 +50,7 @@ class _CastListState extends State<CastList> {
               controller: _scrollController,
               scrollDirection: Axis.horizontal,
               itemCount: widget.viewModel.cast.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 20),
+              separatorBuilder: (_, _) => const SizedBox(width: 20),
               itemBuilder: (context, index) =>
                   _buildCastItem(widget.viewModel.cast[index]),
             ),
@@ -62,22 +63,21 @@ class _CastListState extends State<CastList> {
   Widget _buildCastItem(Artist artist) {
     return Column(
       children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey[200],
-            image: artist.profileUrl != null
-                ? DecorationImage(
-                    image: CachedNetworkImageProvider(artist.profileUrl!),
+        ClipOval(
+          child: SizedBox(
+            width: 80,
+            height: 80,
+            child: artist.profileUrl != null
+                ? CachedNetworkImage(
+                    cacheManager: TmdbImageCacheManager.instance,
+                    imageUrl: artist.profileUrl!,
                     fit: BoxFit.cover,
+                    placeholder: (context, url) => _buildAvatarPlaceholder(),
+                    errorWidget: (context, url, error) =>
+                        _buildAvatarPlaceholder(),
                   )
-                : null,
+                : _buildAvatarPlaceholder(),
           ),
-          child: artist.profileUrl == null
-              ? const Icon(Icons.person, color: Colors.grey, size: 40)
-              : null,
         ),
         const SizedBox(height: 8),
         SizedBox(
@@ -109,6 +109,13 @@ class _CastListState extends State<CastList> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAvatarPlaceholder() {
+    return Container(
+      color: Colors.grey[200],
+      child: const Icon(Icons.person, color: Colors.grey, size: 40),
     );
   }
 }

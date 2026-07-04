@@ -5,6 +5,7 @@ import 'package:dio/io.dart';
 import 'package:logger/logger.dart';
 import '../models/entity/entities.dart';
 import '../models/domain/trending_item.dart';
+import '../utils/proxy_config.dart';
 
 /// TMDB API 服务
 /// 负责与 TMDB API 交互并返回解析后的 Entity 模型
@@ -17,13 +18,16 @@ class TmdbService {
   static const String _profileBaseUrl = 'https://image.tmdb.org/t/p/w185';
   static const String _logoBaseUrl = 'https://image.tmdb.org/t/p/w500';
   static const String _language = 'zh-CN';
-  static const Duration _requestTimeout = Duration(seconds: 30);
+  static const Duration _connectTimeout = Duration(seconds: 8);
+  static const Duration _sendTimeout = Duration(seconds: 8);
+  static const Duration _receiveTimeout = Duration(seconds: 12);
 
   final Dio _dio = Dio();
   final Logger _logger = Logger(printer: PrettyPrinter(methodCount: 0));
   String _apiKey = _defaultApiKey;
   String _apiBaseUrl = _defaultApiBaseUrl;
   String _proxyUrl = '';
+  bool _proxyEnabled = true;
 
   // 单例模式
   static final TmdbService _instance = TmdbService._internal();
@@ -36,9 +40,9 @@ class TmdbService {
   }
 
   TmdbService._internal() {
-    _dio.options.connectTimeout = _requestTimeout;
-    _dio.options.receiveTimeout = _requestTimeout;
-    _dio.options.sendTimeout = _requestTimeout;
+    _dio.options.connectTimeout = _connectTimeout;
+    _dio.options.receiveTimeout = _receiveTimeout;
+    _dio.options.sendTimeout = _sendTimeout;
     _configureHttpClient();
   }
 
@@ -48,7 +52,12 @@ class TmdbService {
     configure(apiKey: apiKey);
   }
 
-  void configure({String? apiKey, String? apiBaseUrl, String? proxyUrl}) {
+  void configure({
+    String? apiKey,
+    String? apiBaseUrl,
+    String? proxyUrl,
+    bool? proxyEnabled,
+  }) {
     final trimmedApiKey = apiKey?.trim();
     if (trimmedApiKey != null) {
       _apiKey = trimmedApiKey.isNotEmpty ? trimmedApiKey : _defaultApiKey;
@@ -64,6 +73,10 @@ class TmdbService {
     final trimmedProxyUrl = proxyUrl?.trim();
     if (trimmedProxyUrl != null) {
       _proxyUrl = trimmedProxyUrl;
+    }
+
+    if (proxyEnabled != null) {
+      _proxyEnabled = proxyEnabled;
     }
 
     _configureHttpClient();
@@ -513,13 +526,13 @@ class TmdbService {
   }
 
   void _configureHttpClient() {
-    final proxyConfig = _buildProxyConfig(_proxyUrl);
+    final proxyConfig = _proxyEnabled ? _buildProxyConfig(_proxyUrl) : null;
     _dio.httpClientAdapter = IOHttpClientAdapter(
       createHttpClient: () {
         final client = HttpClient();
         client.findProxy = (uri) {
           if (proxyConfig != null) return proxyConfig;
-          return HttpClient.findProxyFromEnvironment(uri);
+          return 'DIRECT';
         };
         return client;
       },
@@ -533,24 +546,23 @@ class TmdbService {
   String? _buildProxyConfig(String proxyUrl) {
     if (proxyUrl.trim().isEmpty) return null;
 
-    final uri = Uri.tryParse(proxyUrl.trim());
-    if (uri == null || uri.host.isEmpty || uri.port == 0) {
+    final proxyConfig = ProxyConfig.buildHttpProxy(proxyUrl);
+    if (proxyConfig == null) {
       _logger.w('⚠️ TMDB 代理地址无效，已改为直连: $proxyUrl');
-      return null;
     }
 
-    return 'PROXY ${uri.host}:${uri.port}';
+    return proxyConfig;
   }
 
   String _describeError(Object error) {
     if (error is DioException) {
       switch (error.type) {
         case DioExceptionType.connectionTimeout:
-          return '连接超时（${_requestTimeout.inSeconds} 秒），请检查网络或代理';
+          return '连接超时（${_connectTimeout.inSeconds} 秒），请检查网络或代理';
         case DioExceptionType.sendTimeout:
-          return '发送请求超时（${_requestTimeout.inSeconds} 秒）';
+          return '发送请求超时（${_sendTimeout.inSeconds} 秒）';
         case DioExceptionType.receiveTimeout:
-          return '等待响应超时（${_requestTimeout.inSeconds} 秒）';
+          return '等待响应超时（${_receiveTimeout.inSeconds} 秒）';
         case DioExceptionType.badResponse:
           return '服务器返回 ${error.response?.statusCode ?? '异常状态'}';
         case DioExceptionType.connectionError:

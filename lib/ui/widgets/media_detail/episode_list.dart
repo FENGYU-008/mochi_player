@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../models/domain/models.dart';
 import '../../../providers/media_library_provider.dart';
+import '../../../services/tmdb_image_cache_manager.dart';
 import 'playback_helper.dart';
 
 class EpisodeList extends StatefulWidget {
@@ -159,6 +160,7 @@ class _EpisodeListState extends State<EpisodeList> {
               height: 75,
               child: episode.stillUrl != null
                   ? CachedNetworkImage(
+                      cacheManager: TmdbImageCacheManager.instance,
                       imageUrl: episode.stillUrl!,
                       fit: BoxFit.cover,
                       placeholder: (context, url) =>

@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/media_library_provider.dart';
+import '../../../../services/tmdb_image_cache_manager.dart';
 import '../../view_models/media_detail_view_model.dart';
 import 'favorite_button.dart';
 import 'playback_helper.dart';
@@ -34,6 +35,7 @@ class MediaDetailHeader extends StatelessWidget {
 
   Widget _buildBackdrop() {
     return CachedNetworkImage(
+      cacheManager: TmdbImageCacheManager.instance,
       imageUrl: viewModel.backdropUrl.isNotEmpty
           ? viewModel.backdropUrl
           : viewModel.posterUrl,
@@ -82,6 +84,7 @@ class MediaDetailHeader extends StatelessWidget {
       child: Container(
         constraints: const BoxConstraints(maxWidth: 150, maxHeight: 60),
         child: CachedNetworkImage(
+          cacheManager: TmdbImageCacheManager.instance,
           imageUrl: viewModel.logoUrl!,
           fit: BoxFit.contain,
           alignment: Alignment.centerLeft,

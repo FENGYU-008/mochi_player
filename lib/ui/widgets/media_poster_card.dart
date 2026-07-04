@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../services/tmdb_image_cache_manager.dart';
 import '../theme/app_theme.dart';
 
 /// 卡片类型枚举
@@ -182,6 +183,7 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
   Widget _buildImage(ThemeData theme) {
     if (widget.posterUrl != null && widget.posterUrl!.isNotEmpty) {
       return CachedNetworkImage(
+        cacheManager: TmdbImageCacheManager.instance,
         imageUrl: widget.posterUrl!,
         fit: BoxFit.cover,
         placeholder: (context, url) => Container(

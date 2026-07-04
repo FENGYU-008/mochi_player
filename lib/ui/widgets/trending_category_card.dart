@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/domain/trending_item.dart';
+import '../../services/tmdb_image_cache_manager.dart';
 
 /// 趋势分类卡片配置
 class TrendingCardConfig {
@@ -264,6 +265,7 @@ class _TrendingListItemState extends State<_TrendingListItem> {
   Widget _buildPoster() {
     if (widget.item.posterUrl != null) {
       return CachedNetworkImage(
+        cacheManager: TmdbImageCacheManager.instance,
         imageUrl: widget.item.posterUrl!,
         fit: BoxFit.cover,
         placeholder: (context, url) => Container(color: Colors.grey[800]),

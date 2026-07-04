@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../models/domain/models.dart';
 import '../../providers/media_library_provider.dart';
+import '../../services/tmdb_image_cache_manager.dart';
 import '../../services/webdav_service.dart';
 import '../pages/media_detail_modals.dart';
 import '../pages/player_page.dart';
@@ -118,6 +119,7 @@ class HeroSection extends StatelessWidget {
     }
 
     return CachedNetworkImage(
+      cacheManager: TmdbImageCacheManager.instance,
       imageUrl: imageUrl,
       fit: BoxFit.cover,
       alignment: Alignment.topCenter,

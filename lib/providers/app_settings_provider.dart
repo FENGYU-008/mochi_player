@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/app_settings_service.dart';
+import '../services/tmdb_image_cache_manager.dart';
 import '../services/tmdb_service.dart';
 import '../services/webdav_service.dart';
 
@@ -26,6 +27,7 @@ class AppSettingsProvider extends ChangeNotifier {
   String get tmdbApiKey => _settings.tmdbApiKey;
   String get tmdbApiBaseUrl => _settings.tmdbApiBaseUrl;
   String get tmdbProxyUrl => _settings.tmdbProxyUrl;
+  bool get tmdbProxyEnabled => _settings.tmdbProxyEnabled;
   int get playbackCacheSizeMb => _settings.playbackCacheSizeMb;
   int get playbackReadaheadSeconds => _settings.playbackReadaheadSeconds;
   bool get enableHardwareAcceleration => _settings.enableHardwareAcceleration;
@@ -58,6 +60,7 @@ class AppSettingsProvider extends ChangeNotifier {
     required String tmdbApiKey,
     required String tmdbApiBaseUrl,
     required String tmdbProxyUrl,
+    required bool tmdbProxyEnabled,
     required int playbackCacheSizeMb,
     required int playbackReadaheadSeconds,
     required bool enableHardwareAcceleration,
@@ -77,6 +80,7 @@ class AppSettingsProvider extends ChangeNotifier {
         tmdbApiKey: tmdbApiKey.trim(),
         tmdbApiBaseUrl: tmdbApiBaseUrl.trim(),
         tmdbProxyUrl: tmdbProxyUrl.trim(),
+        tmdbProxyEnabled: tmdbProxyEnabled,
         playbackCacheSizeMb: playbackCacheSizeMb,
         playbackReadaheadSeconds: playbackReadaheadSeconds,
         enableHardwareAcceleration: enableHardwareAcceleration,
@@ -110,6 +114,11 @@ class AppSettingsProvider extends ChangeNotifier {
       apiKey: _settings.tmdbApiKey,
       apiBaseUrl: _settings.tmdbApiBaseUrl,
       proxyUrl: _settings.tmdbProxyUrl,
+      proxyEnabled: _settings.tmdbProxyEnabled,
+    );
+    TmdbImageCacheManager.configure(
+      proxyUrl: _settings.tmdbProxyUrl,
+      proxyEnabled: _settings.tmdbProxyEnabled,
     );
 
     if (_settings.hasWebDavConfig) {
