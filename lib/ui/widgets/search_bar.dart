@@ -19,25 +19,35 @@ class _AppSearchBarState extends State<AppSearchBar> {
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(() {
-      setState(() {
-        _hasFocus = _focusNode.hasFocus;
-      });
-    });
-    _controller.addListener(() {
-      setState(() {
-        _hasText = _controller.text.isNotEmpty;
-      });
-    });
+    _focusNode.addListener(_handleFocusChange);
+    _controller.addListener(_handleTextChange);
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
   }
 
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    _focusNode.removeListener(_handleFocusChange);
+    _controller.removeListener(_handleTextChange);
     _focusNode.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _handleFocusChange() {
+    final hasFocus = _focusNode.hasFocus;
+    if (_hasFocus == hasFocus) return;
+    setState(() {
+      _hasFocus = hasFocus;
+    });
+  }
+
+  void _handleTextChange() {
+    final hasText = _controller.text.isNotEmpty;
+    if (_hasText == hasText) return;
+    setState(() {
+      _hasText = hasText;
+    });
   }
 
   bool _handleKeyEvent(KeyEvent event) {
@@ -69,73 +79,87 @@ class _AppSearchBarState extends State<AppSearchBar> {
     final theme = Theme.of(context);
     final customTheme = theme.extension<AppThemeExtension>()!;
     final themeColor = theme.primaryColor;
+    final borderRadius = BorderRadius.circular(10);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: 240,
-      height: 35,
-      decoration: BoxDecoration(
-        color: customTheme.searchBarColor, // 使用自定义主题颜色
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: _hasFocus ? themeColor.withAlpha(204) : Colors.transparent,
-          width: 1.5,
-        ),
-        boxShadow: _hasFocus
-            ? [
-                BoxShadow(
-                  color: themeColor.withAlpha(64),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ]
-            : [],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            CupertinoIcons.search,
-            size: 18,
-            color: _hasFocus
-                ? theme.textTheme.bodyMedium?.color
-                : customTheme.searchBarIconColor,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focusNode,
-              decoration: InputDecoration(
-                hintText: "搜索...",
-                hintStyle: TextStyle(
-                  color: customTheme.searchBarHintColor,
-                  fontSize: 14,
-                ),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
+    return RepaintBoundary(
+      child: SizedBox(
+        width: 240,
+        height: 35,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: customTheme.searchBarColor,
+                borderRadius: borderRadius,
               ),
-              style: TextStyle(
-                fontSize: 14,
-                color: theme.textTheme.bodyMedium?.color,
-              ),
-              cursorColor: themeColor,
             ),
-          ),
-          const SizedBox(width: 4),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (child, animation) {
-              return FadeTransition(
-                opacity: animation,
-                child: ScaleTransition(scale: animation, child: child),
-              );
-            },
-            child: _hasText ? _buildClearButton() : _buildKeyCapHint(),
-          ),
-        ],
+            IgnorePointer(
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 140),
+                curve: Curves.easeOut,
+                opacity: _hasFocus ? 1 : 0,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: borderRadius,
+                    border: Border.all(
+                      color: themeColor.withAlpha(204),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.search,
+                    size: 18,
+                    color: _hasFocus
+                        ? theme.textTheme.bodyMedium?.color
+                        : customTheme.searchBarIconColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      decoration: InputDecoration(
+                        hintText: "搜索...",
+                        hintStyle: TextStyle(
+                          color: customTheme.searchBarHintColor,
+                          fontSize: 14,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.textTheme.bodyMedium?.color,
+                      ),
+                      cursorColor: themeColor,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: ScaleTransition(scale: animation, child: child),
+                      );
+                    },
+                    child: _hasText ? _buildClearButton() : _buildKeyCapHint(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

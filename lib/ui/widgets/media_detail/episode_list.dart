@@ -210,17 +210,6 @@ class _EpisodeListState extends State<EpisodeList> {
                     ),
                     const SizedBox(height: 9),
                     _EpisodeMetaRow(episode: episode, file: episodeFile),
-                    if (progress > 0 && progress < 0.95) ...[
-                      const SizedBox(height: 9),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 3,
-                          backgroundColor: theme.dividerColor.withAlpha(90),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),

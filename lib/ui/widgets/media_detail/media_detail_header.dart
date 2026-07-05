@@ -78,21 +78,43 @@ class MediaDetailHeader extends StatelessWidget {
   }
 
   Widget _buildGradientOverlay(Color cardColor) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black.withAlpha(20),
-            Colors.black.withAlpha(95),
-            Colors.black.withAlpha(135),
-            cardColor.withAlpha(236),
-            cardColor,
-          ],
-          stops: const [0.0, 0.44, 0.86, 0.99, 1.0],
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Colors.black.withAlpha(120),
+                Colors.black.withAlpha(76),
+                Colors.black.withAlpha(18),
+                Colors.transparent,
+              ],
+              stops: const [0.0, 0.34, 0.68, 1.0],
+            ),
+          ),
         ),
-      ),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withAlpha(10),
+                Colors.black.withAlpha(28),
+                Colors.black.withAlpha(78),
+                Colors.transparent,
+                cardColor.withAlpha(70),
+                cardColor.withAlpha(185),
+                cardColor,
+              ],
+              stops: const [0.0, 0.24, 0.52, 0.66, 0.78, 0.92, 1.0],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
