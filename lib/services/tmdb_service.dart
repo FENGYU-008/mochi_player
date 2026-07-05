@@ -628,7 +628,7 @@ class TmdbService {
     return SeasonMetadataEntity()
       ..seasonKey = seasonKey
       ..seasonNumber = seasonNumber
-      ..title = data['name'] ?? 'Season $seasonNumber'
+      ..title = data['name'] ?? '第 $seasonNumber 季'
       ..posterUrl = buildPosterUrl(data['poster_path'])
       ..overview = data['overview']
       ..numberOfEpisodes = episodesData.length;
@@ -676,7 +676,7 @@ class TmdbService {
     return castList.take(10).map((c) {
       return ArtistEmbedded()
         ..tmdbId = c['id']?.toString()
-        ..name = c['name'] ?? 'Unknown'
+        ..name = c['name'] ?? '未知'
         ..character = c['character']
         ..profileUrl = buildProfileUrl(c['profile_path']);
     }).toList();
@@ -711,7 +711,7 @@ class TmdbService {
     return guests.take(5).map((g) {
       return ArtistEmbedded()
         ..tmdbId = g['id']?.toString()
-        ..name = g['name'] ?? 'Unknown'
+        ..name = g['name'] ?? '未知'
         ..character = g['character']
         ..profileUrl = buildProfileUrl(g['profile_path']);
     }).toList();

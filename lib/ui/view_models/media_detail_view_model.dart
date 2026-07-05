@@ -24,7 +24,7 @@ class MediaDetailViewModel {
     String? s;
     if (isMovie) s = (_item as Movie).overview;
     if (isTVShow) s = (_item as TVShow).overview;
-    return s ?? "No overview available.";
+    return s ?? "暂无简介";
   }
 
   String get backdropUrl {

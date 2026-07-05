@@ -73,7 +73,7 @@ class _MainPageState extends State<MainPage> {
       case 5:
         return const SettingsPage(); // 设置页面
       default:
-        return const Center(child: Text("Coming Soon"));
+        return const Center(child: Text("即将推出"));
     }
   }
 
@@ -81,19 +81,19 @@ class _MainPageState extends State<MainPage> {
   String _getTitle(int index) {
     switch (index) {
       case 0:
-        return "Home";
+        return "首页";
       case 1:
-        return "Movies";
+        return "电影";
       case 2:
-        return "TV Shows";
+        return "剧集";
       case 3:
-        return "File Browser";
+        return "文件浏览";
       case 4:
-        return "Favorites";
+        return "收藏";
       case 5:
-        return "Settings";
+        return "设置";
       default:
-        return "Library";
+        return "媒体库";
     }
   }
 

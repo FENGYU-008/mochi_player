@@ -49,9 +49,7 @@ class _FavoriteButtonState extends State<FavoriteButton> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _isFavorite ? 'Added to Favorites' : 'Removed from Favorites',
-          ),
+          content: Text(_isFavorite ? '已加入收藏' : '已取消收藏'),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -81,7 +79,7 @@ class _FavoriteButtonState extends State<FavoriteButton> {
           size: 26,
         ),
         padding: EdgeInsets.zero,
-        tooltip: _isFavorite ? "Remove from Favorites" : "Add to Favorites",
+        tooltip: _isFavorite ? "取消收藏" : "加入收藏",
       ),
     );
   }

@@ -7,8 +7,9 @@ import '../horizontal_scroll_view.dart';
 
 class CastList extends StatefulWidget {
   final MediaDetailViewModel viewModel;
+  final double topPadding;
 
-  const CastList({super.key, required this.viewModel});
+  const CastList({super.key, required this.viewModel, this.topPadding = 32});
 
   @override
   State<CastList> createState() => _CastListState();
@@ -31,9 +32,9 @@ class _CastListState extends State<CastList> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 32), // Spacing before Cast title
+        SizedBox(height: widget.topPadding),
         Text(
-          "Cast",
+          "演员",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -71,6 +72,8 @@ class _CastListState extends State<CastList> {
                 ? CachedNetworkImage(
                     cacheManager: TmdbImageCacheManager.instance,
                     imageUrl: artist.profileUrl!,
+                    width: 80,
+                    height: 80,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => _buildAvatarPlaceholder(),
                     errorWidget: (context, url, error) =>

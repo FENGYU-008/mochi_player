@@ -24,7 +24,7 @@ class LibraryPage extends StatelessWidget {
         }
 
         if (snapshot.error != null) {
-          return Center(child: Text("Error: ${snapshot.error}"));
+          return Center(child: Text("错误：${snapshot.error}"));
         }
 
         final provider = context.read<MediaLibraryProvider>();
@@ -70,7 +70,7 @@ class LibraryPage extends StatelessWidget {
     final items = provider.movies;
 
     if (items.isEmpty) {
-      return _buildEmptyState('Movies');
+      return _buildEmptyState('电影');
     }
 
     return _buildGridView(
@@ -94,7 +94,7 @@ class LibraryPage extends StatelessWidget {
     final items = provider.tvShows;
 
     if (items.isEmpty) {
-      return _buildEmptyState('TV Shows');
+      return _buildEmptyState('剧集');
     }
 
     return _buildGridView(
@@ -105,8 +105,8 @@ class LibraryPage extends StatelessWidget {
         String? subtitle;
         if (show.numberOfSeasons != null && show.numberOfSeasons! > 0) {
           subtitle = show.numberOfSeasons == 1
-              ? '1 Season'
-              : '${show.numberOfSeasons} Seasons';
+              ? '1 季'
+              : '${show.numberOfSeasons} 季';
         } else if (show.releaseYear != null) {
           subtitle = show.releaseYear.toString();
         }
@@ -131,7 +131,7 @@ class LibraryPage extends StatelessWidget {
     final items = provider.favorites;
 
     if (items.isEmpty) {
-      return _buildEmptyState('Favorites');
+      return _buildEmptyState('收藏');
     }
 
     return _buildGridView(
@@ -159,8 +159,8 @@ class LibraryPage extends StatelessWidget {
             rating = meta.rating;
             if (meta.numberOfSeasons != null && meta.numberOfSeasons! > 0) {
               subtitle = meta.numberOfSeasons == 1
-                  ? '1 Season'
-                  : '${meta.numberOfSeasons} Seasons';
+                  ? '1 季'
+                  : '${meta.numberOfSeasons} 季';
             }
           }
         }
@@ -193,7 +193,7 @@ class LibraryPage extends StatelessWidget {
     final items = provider.uncategorized;
 
     if (items.isEmpty) {
-      return _buildEmptyState('Uncategorized');
+      return _buildEmptyState('未分类资源');
     }
 
     return _buildGridView(
@@ -249,12 +249,12 @@ class LibraryPage extends StatelessWidget {
           Icon(Icons.movie_outlined, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No $category found',
+            '没有找到$category',
             style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
-            'Start scanning to discover media',
+            '请先扫描媒体库以发现资源',
             style: TextStyle(fontSize: 14, color: Colors.grey[400]),
           ),
         ],

@@ -23,7 +23,7 @@ void showSectionModal(
   showGeneralDialog(
     context: context,
     barrierDismissible: true,
-    barrierLabel: "Dismiss",
+    barrierLabel: "关闭",
     barrierColor: Colors.transparent,
     transitionDuration: const Duration(milliseconds: 300),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -307,8 +307,8 @@ class _SectionModalContent extends StatelessWidget {
     String? subtitle;
     if (show.numberOfSeasons != null && show.numberOfSeasons! > 0) {
       subtitle = show.numberOfSeasons == 1
-          ? '1 Season'
-          : '${show.numberOfSeasons} Seasons';
+          ? '1 季'
+          : '${show.numberOfSeasons} 季';
     } else if (show.releaseYear != null) {
       subtitle = show.releaseYear.toString();
     }
@@ -361,7 +361,7 @@ class _SectionModalContent extends StatelessWidget {
         imageUrl = metadata.backdropUrl;
         rating = metadata.rating;
         if (subtitle == null && metadata.numberOfSeasons != null) {
-          subtitle = '${metadata.numberOfSeasons} Seasons';
+          subtitle = '${metadata.numberOfSeasons} 季';
         }
       }
     }
@@ -390,9 +390,7 @@ class _SectionModalContent extends StatelessWidget {
     final episode = file.parsedEpisode;
     if (season == null || episode == null) return null;
 
-    final seasonLabel = season.toString().padLeft(2, '0');
-    final episodeLabel = episode.toString().padLeft(2, '0');
-    return 'S${seasonLabel}E$episodeLabel';
+    return '第 $season 季 第 $episode 集';
   }
 }
 

@@ -79,7 +79,7 @@ class _HomeContentState extends State<HomeContent> {
               },
             ),
 
-            // Continue Watching
+            // 继续观看
             Selector<MediaLibraryProvider, _ContinueWatchingRevision>(
               selector: (context, provider) => _ContinueWatchingRevision(
                 mediaCatalogRevision: provider.mediaCatalogRevision,
@@ -97,10 +97,10 @@ class _HomeContentState extends State<HomeContent> {
                   slivers: [
                     _buildSectionHeaderSliver(
                       context,
-                      'Continue Watching',
+                      '继续观看',
                       onSeeAll: () => showContinueWatchingSection(
                         context,
-                        'Continue Watching',
+                        '继续观看',
                         context.read<MediaLibraryProvider>().continueWatching,
                       ),
                     ),
@@ -116,7 +116,7 @@ class _HomeContentState extends State<HomeContent> {
               },
             ),
 
-            // Recently Added
+            // 最近添加
             Selector<MediaLibraryProvider, _LibraryContentRevision>(
               selector: (context, provider) => _LibraryContentRevision(
                 mediaCatalogRevision: provider.mediaCatalogRevision,
@@ -136,11 +136,11 @@ class _HomeContentState extends State<HomeContent> {
                   slivers: [
                     _buildSectionHeaderSliver(
                       context,
-                      'Recently Added',
+                      '最近添加',
                       onSeeAll: () {
                         showRecentlyAddedSection(
                           context,
-                          'Recently Added',
+                          '最近添加',
                           context
                               .read<MediaLibraryProvider>()
                               .recentlyAddedContent,
@@ -174,7 +174,7 @@ class _HomeContentState extends State<HomeContent> {
 
                 return SliverMainAxisGroup(
                   slivers: [
-                    _buildSectionHeaderSliver(context, 'Trending on TMDB'),
+                    _buildSectionHeaderSliver(context, 'TMDB 趋势'),
                     SliverToBoxAdapter(child: _buildTrendingCards(provider)),
                     const SliverToBoxAdapter(child: SizedBox(height: 30)),
                   ],
@@ -198,12 +198,12 @@ class _HomeContentState extends State<HomeContent> {
           Icon(Icons.movie_outlined, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'Your library is empty',
+            '媒体库为空',
             style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
-            'Start scanning to discover media',
+            '请先扫描媒体库以发现资源',
             style: TextStyle(fontSize: 14, color: Colors.grey[400]),
           ),
         ],
@@ -238,7 +238,7 @@ class _HomeContentState extends State<HomeContent> {
                   child: Row(
                     children: [
                       Text(
-                        'See All',
+                        '查看全部',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -305,7 +305,7 @@ class _HomeContentState extends State<HomeContent> {
                 rating = metadata.rating;
                 // 显示当前观看的季和集
                 if (subtitle == null && metadata.numberOfSeasons != null) {
-                  subtitle = '${metadata.numberOfSeasons} Seasons';
+                  subtitle = '${metadata.numberOfSeasons} 季';
                 }
               }
             }
@@ -346,9 +346,7 @@ class _HomeContentState extends State<HomeContent> {
     final episode = file.parsedEpisode;
     if (season == null || episode == null) return null;
 
-    final seasonLabel = season.toString().padLeft(2, '0');
-    final episodeLabel = episode.toString().padLeft(2, '0');
-    return 'S${seasonLabel}E$episodeLabel';
+    return '第 $season 季 第 $episode 集';
   }
 
   Widget _buildRecentlyAddedList(List<dynamic> items) {
@@ -385,8 +383,8 @@ class _HomeContentState extends State<HomeContent> {
               final show = item as TVShow;
               if (show.numberOfSeasons != null && show.numberOfSeasons! > 0) {
                 subtitle = show.numberOfSeasons == 1
-                    ? '1 Season'
-                    : '${show.numberOfSeasons} Seasons';
+                    ? '1 季'
+                    : '${show.numberOfSeasons} 季';
               }
             }
 
@@ -424,8 +422,8 @@ class _HomeContentState extends State<HomeContent> {
               config: const TrendingCardConfig(
                 icon: Icons.local_fire_department_rounded,
                 iconColor: Color(0xFFFF6B35),
-                title: 'Trending Movies',
-                subtitle: 'GLOBAL TOP 3',
+                title: '热门电影',
+                subtitle: '全球前三',
               ),
               items: provider.trendingMovies,
               isLoading: provider.isTrendingLoading,
@@ -438,8 +436,8 @@ class _HomeContentState extends State<HomeContent> {
               config: const TrendingCardConfig(
                 icon: Icons.tv_rounded,
                 iconColor: Color(0xFF0A84FF),
-                title: 'Trending TV',
-                subtitle: 'MOST WATCHED',
+                title: '热门剧集',
+                subtitle: '最多观看',
               ),
               items: provider.trendingTV,
               isLoading: provider.isTrendingLoading,
@@ -452,8 +450,8 @@ class _HomeContentState extends State<HomeContent> {
               config: const TrendingCardConfig(
                 icon: Icons.star_rounded,
                 iconColor: Color(0xFFFFD60A),
-                title: 'Critical Acclaim',
-                subtitle: 'HIGHEST RATED',
+                title: '高分佳作',
+                subtitle: '评分最高',
               ),
               items: provider.topRated,
               isLoading: provider.isTrendingLoading,

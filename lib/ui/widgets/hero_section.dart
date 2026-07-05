@@ -232,7 +232,7 @@ class HeroSection extends StatelessWidget {
             size: 24,
           ),
           label: const Text(
-            'Play',
+            '播放',
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -256,7 +256,7 @@ class HeroSection extends StatelessWidget {
           onPressed: () => _handleMoreInfo(context),
           icon: const Icon(Icons.info_outline, color: Colors.white, size: 20),
           label: const Text(
-            'More Info',
+            '详情',
             style: TextStyle(
               color: Colors.white,
               fontSize: 15,
@@ -292,9 +292,7 @@ class HeroSection extends StatelessWidget {
     // 查找对应文件
     final files = provider.getVersions(tmdbId);
     if (files.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('No playable file found')),
-      );
+      messenger.showSnackBar(const SnackBar(content: Text('未找到可播放文件')));
       return;
     }
 
@@ -306,7 +304,7 @@ class HeroSection extends StatelessWidget {
           children: const [
             CircularProgressIndicator(strokeWidth: 2),
             SizedBox(width: 16),
-            Expanded(child: Text('Getting playback link...')),
+            Expanded(child: Text('正在获取播放链接...')),
           ],
         ),
         duration: const Duration(minutes: 1),
@@ -326,9 +324,7 @@ class HeroSection extends StatelessWidget {
         ),
       );
     } else {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Failed to get playback link')),
-      );
+      messenger.showSnackBar(const SnackBar(content: Text('获取播放链接失败')));
     }
   }
 

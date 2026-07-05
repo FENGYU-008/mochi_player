@@ -28,7 +28,7 @@ class _FileCardState extends State<FileCard> {
 
     String subtitle = "";
     if (isFolder) {
-      subtitle = "Folder";
+      subtitle = "文件夹";
     } else {
       String sizeText = widget.item.size > 0
           ? _formatSize(widget.item.size)

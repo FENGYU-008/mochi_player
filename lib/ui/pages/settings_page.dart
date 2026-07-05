@@ -75,7 +75,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Settings',
+                    '设置',
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 40),
@@ -105,22 +105,22 @@ class _SettingsPageState extends State<SettingsPage> {
       selector: (context, provider) => provider.themeMode,
       builder: (context, themeMode, child) {
         return _SettingsSection(
-          title: 'Appearance',
+          title: '外观',
           child: SegmentedButton<ThemeMode>(
             segments: const [
               ButtonSegment(
                 value: ThemeMode.light,
-                label: Text('Light'),
+                label: Text('浅色'),
                 icon: Icon(Icons.light_mode_outlined),
               ),
               ButtonSegment(
                 value: ThemeMode.dark,
-                label: Text('Dark'),
+                label: Text('深色'),
                 icon: Icon(Icons.dark_mode_outlined),
               ),
               ButtonSegment(
                 value: ThemeMode.system,
-                label: Text('System'),
+                label: Text('跟随系统'),
                 icon: Icon(Icons.computer_rounded),
               ),
             ],
@@ -144,7 +144,7 @@ class _SettingsPageState extends State<SettingsPage> {
             keyboardType: TextInputType.url,
             decoration: _inputDecoration(
               context,
-              label: 'Server URL',
+              label: '服务器地址',
               icon: Icons.link_rounded,
             ),
           ),
@@ -153,7 +153,7 @@ class _SettingsPageState extends State<SettingsPage> {
             controller: _webDavUsernameController,
             decoration: _inputDecoration(
               context,
-              label: 'Username',
+              label: '用户名',
               icon: Icons.person_outline_rounded,
             ),
           ),
@@ -163,10 +163,10 @@ class _SettingsPageState extends State<SettingsPage> {
             obscureText: !_showWebDavPassword,
             decoration: _inputDecoration(
               context,
-              label: 'Password',
+              label: '密码',
               icon: Icons.lock_outline_rounded,
               suffixIcon: IconButton(
-                tooltip: _showWebDavPassword ? 'Hide' : 'Show',
+                tooltip: _showWebDavPassword ? '隐藏' : '显示',
                 icon: Icon(
                   _showWebDavPassword
                       ? Icons.visibility_off_outlined
@@ -195,10 +195,10 @@ class _SettingsPageState extends State<SettingsPage> {
             obscureText: !_showTmdbApiKey,
             decoration: _inputDecoration(
               context,
-              label: 'API Key',
+              label: 'API 密钥',
               icon: Icons.key_rounded,
               suffixIcon: IconButton(
-                tooltip: _showTmdbApiKey ? 'Hide' : 'Show',
+                tooltip: _showTmdbApiKey ? '隐藏' : '显示',
                 icon: Icon(
                   _showTmdbApiKey
                       ? Icons.visibility_off_outlined
@@ -218,15 +218,15 @@ class _SettingsPageState extends State<SettingsPage> {
             keyboardType: TextInputType.url,
             decoration: _inputDecoration(
               context,
-              label: 'API Base URL',
+              label: 'API 地址',
               icon: Icons.travel_explore_rounded,
             ),
           ),
           const SizedBox(height: 14),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Use TMDB Proxy'),
-            subtitle: const Text('Applies to TMDB API and image downloads'),
+            title: const Text('使用 TMDB 代理'),
+            subtitle: const Text('用于 TMDB API 和图片下载'),
             secondary: const Icon(Icons.route_rounded),
             value: _tmdbProxyEnabled,
             onChanged: (value) {
@@ -242,7 +242,7 @@ class _SettingsPageState extends State<SettingsPage> {
             keyboardType: TextInputType.url,
             decoration: _inputDecoration(
               context,
-              label: 'HTTP Proxy',
+              label: 'HTTP 代理',
               icon: Icons.route_rounded,
             ),
           ),
@@ -253,12 +253,12 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildPlaybackSettings(BuildContext context) {
     return _SettingsSection(
-      title: 'Playback',
+      title: '播放',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SettingsRow(
-            label: 'Cache Size',
+            label: '缓存大小',
             child: TextField(
               controller: _playbackCacheSizeMbController,
               keyboardType: TextInputType.number,
@@ -271,13 +271,13 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 14),
           _SettingsRow(
-            label: 'Readahead',
+            label: '预读',
             child: TextField(
               controller: _playbackReadaheadSecondsController,
               keyboardType: TextInputType.number,
               decoration: _inputDecoration(
                 context,
-                label: 'Seconds',
+                label: '秒',
                 icon: Icons.cloud_download_rounded,
               ),
             ),
@@ -285,7 +285,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 14),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Hardware Decoding'),
+            title: const Text('硬件解码'),
             secondary: const Icon(Icons.memory_rounded),
             value: _enableHardwareAcceleration,
             onChanged: (value) {
@@ -299,7 +299,7 @@ class _SettingsPageState extends State<SettingsPage> {
             controller: _audioLanguagePriorityController,
             decoration: _inputDecoration(
               context,
-              label: 'Default Audio Languages',
+              label: '默认音轨语言',
               icon: Icons.graphic_eq_rounded,
             ),
           ),
@@ -308,13 +308,13 @@ class _SettingsPageState extends State<SettingsPage> {
             controller: _subtitleLanguagePriorityController,
             decoration: _inputDecoration(
               context,
-              label: 'Default Subtitle Languages',
+              label: '默认字幕语言',
               icon: Icons.subtitles_rounded,
             ),
           ),
           const SizedBox(height: 14),
           _SettingsRow(
-            label: 'Subtitle Size',
+            label: '字幕大小',
             child: Row(
               children: [
                 Expanded(
@@ -364,17 +364,17 @@ class _SettingsPageState extends State<SettingsPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save_outlined),
-              label: Text(isBusy ? 'Saving' : 'Save'),
+              label: Text(isBusy ? '保存中' : '保存'),
             ),
             OutlinedButton.icon(
               onPressed: isBusy ? null : _testWebDavConnection,
               icon: const Icon(Icons.wifi_tethering_rounded),
-              label: const Text('Test WebDAV'),
+              label: const Text('测试 WebDAV'),
             ),
             OutlinedButton.icon(
               onPressed: isBusy ? null : _testTmdbConnection,
               icon: const Icon(Icons.public_rounded),
-              label: const Text('Test TMDB'),
+              label: const Text('测试 TMDB'),
             ),
           ],
         );
@@ -401,7 +401,7 @@ class _SettingsPageState extends State<SettingsPage> {
       selector: (context, provider) => provider.isLoading,
       builder: (context, isBusy, child) {
         return _SettingsSection(
-          title: 'Library',
+          title: '媒体库',
           child: Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -415,12 +415,12 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.manage_search_outlined),
-                label: Text(isBusy ? 'Rescraping' : 'Rescrape Library'),
+                label: Text(isBusy ? '重新刮削中' : '重新刮削媒体库'),
               ),
               OutlinedButton.icon(
                 onPressed: isBusy ? null : _confirmClearLibrary,
                 icon: const Icon(Icons.delete_sweep_outlined),
-                label: const Text('Clear Media Library'),
+                label: const Text('清空媒体库'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.redAccent,
                   side: const BorderSide(color: Colors.redAccent),
@@ -467,7 +467,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final mediaLibraryProvider = context.read<MediaLibraryProvider>();
     final messenger = ScaffoldMessenger.of(context);
 
-    messenger.showSnackBar(const SnackBar(content: Text('Settings saved')));
+    messenger.showSnackBar(const SnackBar(content: Text('设置已保存')));
     unawaited(
       _refreshAfterSave(
         settingsProvider,
@@ -502,7 +502,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     messenger.showSnackBar(
       SnackBar(
-        content: Text(isConnected ? 'WebDAV connected' : 'WebDAV failed'),
+        content: Text(isConnected ? 'WebDAV 连接成功' : 'WebDAV 连接失败'),
         backgroundColor: isConnected ? null : Colors.redAccent,
       ),
     );
@@ -519,7 +519,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     messenger.showSnackBar(
       SnackBar(
-        content: Text(isConnected ? 'TMDB connected' : 'TMDB failed'),
+        content: Text(isConnected ? 'TMDB 连接成功' : 'TMDB 连接失败'),
         backgroundColor: isConnected ? null : Colors.redAccent,
       ),
     );
@@ -530,19 +530,18 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Rescrape media library?'),
+          title: const Text('重新刮削媒体库？'),
           content: const Text(
-            'This clears local metadata and TMDB matches, then scrapes the existing scanned files again. '
-            'Watch progress, favorites, and WebDAV files are kept.',
+            '这会清空本地元数据和 TMDB 匹配结果，然后重新刮削已经扫描到的文件。播放进度、收藏和 WebDAV 文件会保留。',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: const Text('取消'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Rescrape'),
+              child: const Text('重新刮削'),
             ),
           ],
         );
@@ -561,7 +560,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!settingsProvider.hasTmdbApiKey) {
       messenger.showSnackBar(
         const SnackBar(
-          content: Text('Set a TMDB API key before rescraping'),
+          content: Text('重新刮削前请先设置 TMDB API 密钥'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -574,7 +573,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final error = mediaLibraryProvider.error;
     messenger.showSnackBar(
       SnackBar(
-        content: Text(error ?? 'Media library rescraped from WebDAV root'),
+        content: Text(error ?? '已从 WebDAV 根目录重新刮削媒体库'),
         backgroundColor: error == null ? null : Colors.redAccent,
       ),
     );
@@ -585,15 +584,12 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Clear media library?'),
-          content: const Text(
-            'This clears local scanned files, metadata, watch progress, and favorites. '
-            'It will not delete files from WebDAV.',
-          ),
+          title: const Text('清空媒体库？'),
+          content: const Text('这会清空本地扫描文件、元数据、播放进度和收藏，不会删除 WebDAV 上的文件。'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: const Text('取消'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -601,7 +597,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 backgroundColor: Colors.redAccent,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Clear'),
+              child: const Text('清空'),
             ),
           ],
         );
@@ -616,9 +612,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await mediaLibraryProvider.clearLibrary();
     if (!mounted) return;
 
-    messenger.showSnackBar(
-      const SnackBar(content: Text('Media library cleared')),
-    );
+    messenger.showSnackBar(const SnackBar(content: Text('媒体库已清空')));
   }
 
   Future<bool> _persistSettings() async {

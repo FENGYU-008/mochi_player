@@ -6,7 +6,11 @@ class SideBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemSelected;
 
-  const SideBar({super.key, required this.selectedIndex, required this.onItemSelected});
+  const SideBar({
+    super.key,
+    required this.selectedIndex,
+    required this.onItemSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,22 +43,22 @@ class SideBar extends StatelessWidget {
             ),
           ),
 
-          _buildSectionTitle("LIBRARY", context),
+          _buildSectionTitle("媒体库", context),
           _buildGroup([
-            _ItemConfig(Icons.home_rounded, "Home", 0),
-            _ItemConfig(Icons.movie_outlined, "Movies", 1),
-            _ItemConfig(Icons.tv, "TV Shows", 2),
+            _ItemConfig(Icons.home_rounded, "首页", 0),
+            _ItemConfig(Icons.movie_outlined, "电影", 1),
+            _ItemConfig(Icons.tv, "剧集", 2),
           ]),
 
           const SizedBox(height: 24),
 
-          _buildSectionTitle("SOURCES", context),
-          _buildGroup([_ItemConfig(Icons.folder_open_outlined, "File Browser", 3)]),
+          _buildSectionTitle("来源", context),
+          _buildGroup([_ItemConfig(Icons.folder_open_outlined, "文件浏览", 3)]),
 
           const SizedBox(height: 24),
 
-          _buildSectionTitle("PLAYLISTS", context),
-          _buildGroup([_ItemConfig(Icons.favorite_border, "Favorites", 4)]),
+          _buildSectionTitle("列表", context),
+          _buildGroup([_ItemConfig(Icons.favorite_border, "收藏", 4)]),
 
           const Spacer(),
           Divider(height: 1, color: theme.dividerColor),
@@ -63,7 +67,7 @@ class SideBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: _SideBarItem(
               icon: Icons.settings_outlined,
-              title: "Settings",
+              title: "设置",
               index: 5,
               selectedIndex: selectedIndex,
               onTap: onItemSelected,
@@ -81,7 +85,9 @@ class SideBar extends StatelessWidget {
       child: Text(
         title,
         style: TextStyle(
-          color: Theme.of(context).textTheme.titleMedium?.color?.withAlpha((255 * 0.6).round()),
+          color: Theme.of(
+            context,
+          ).textTheme.titleMedium?.color?.withAlpha((255 * 0.6).round()),
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.2,
@@ -147,10 +153,14 @@ class _SideBarItemState extends State<_SideBarItem> {
     if (isSelected) {
       backgroundColor = theme.primaryColor;
     } else if (_isHovering) {
-      backgroundColor = theme.textTheme.bodyMedium!.color!.withAlpha((255 * 0.05).round());
+      backgroundColor = theme.textTheme.bodyMedium!.color!.withAlpha(
+        (255 * 0.05).round(),
+      );
     }
 
-    Color foregroundColor = isSelected ? Colors.white : theme.textTheme.titleMedium!.color!;
+    Color foregroundColor = isSelected
+        ? Colors.white
+        : theme.textTheme.titleMedium!.color!;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
@@ -163,7 +173,10 @@ class _SideBarItemState extends State<_SideBarItem> {
           curve: Curves.easeOut,
           height: 38,
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: Row(
             children: [
               Icon(widget.icon, size: 18, color: foregroundColor),

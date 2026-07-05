@@ -98,7 +98,7 @@ class FileBrowserProvider extends ChangeNotifier {
   /// 将 webdav.File 转换为 MediaFile
   MediaFile _mapWebDavFileToMediaFile(webdav.File file, String parentPath) {
     final isDir = file.isDir ?? false;
-    final name = file.name ?? 'Unknown';
+    final name = file.name ?? '未知文件';
     // 构造完整路径
     String fullPath = parentPath.endsWith('/')
         ? '$parentPath$name'

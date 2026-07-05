@@ -88,9 +88,12 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   String get _displayTitle {
     if (widget.contextTitle != null &&
         _currentItem.mediaType == MediaType.episode) {
-      final s = _currentItem.parsedSeason?.toString().padLeft(2, '0') ?? '??';
-      final e = _currentItem.parsedEpisode?.toString().padLeft(2, '0') ?? '??';
-      return '${widget.contextTitle} - S${s}E$e';
+      final season = _currentItem.parsedSeason;
+      final episode = _currentItem.parsedEpisode;
+      if (season != null && episode != null) {
+        return '${widget.contextTitle} - 第 $season 季 第 $episode 集';
+      }
+      return widget.contextTitle!;
     }
     return _currentItem.parsedTitle.isNotEmpty
         ? _currentItem.parsedTitle

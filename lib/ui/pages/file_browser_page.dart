@@ -175,7 +175,7 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  "Browse Files",
+                  "浏览文件",
                   style: TextStyle(
                     color: theme.textTheme.titleMedium?.color,
                     fontSize: 11,

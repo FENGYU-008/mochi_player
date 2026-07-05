@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../models/domain/models.dart';
 import '../../../../providers/media_library_provider.dart';
 import '../../../../services/tmdb_image_cache_manager.dart';
 import '../../view_models/media_detail_view_model.dart';
@@ -14,315 +16,533 @@ class MediaDetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use a fixed height similar to Hero Section (500-550)
-    // to accommodate Metadata -> Title -> Overview -> Actions stack
-    return SizedBox(
-      height: 550,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildBackdrop(),
-          _buildGradientOverlay(context),
+    final theme = Theme.of(context);
+    final cardColor = theme.brightness == Brightness.dark
+        ? const Color(0xFF1C1C1E)
+        : Colors.white;
 
-          // Logo (Top Left, Smaller)
-          _buildTopLogo(),
+    return RepaintBoundary(
+      child: SizedBox(
+        height: 320,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildBackdrop(context),
+            _buildGradientOverlay(cardColor),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(40, 30, 40, 28),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 760;
+                  if (compact) {
+                    return _HeaderContent(viewModel: viewModel, compact: true);
+                  }
 
-          _buildContentColumn(context),
-        ],
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (viewModel.posterUrl.isNotEmpty) ...[
+                        _PosterImage(posterUrl: viewModel.posterUrl),
+                        const SizedBox(width: 28),
+                      ],
+                      Expanded(child: _HeaderContent(viewModel: viewModel)),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBackdrop() {
+  Widget _buildBackdrop(BuildContext context) {
+    final imageUrl = viewModel.backdropUrl.isNotEmpty
+        ? viewModel.backdropUrl
+        : viewModel.posterUrl;
+    if (imageUrl.isEmpty) {
+      return const _FallbackBackdrop();
+    }
+
     return CachedNetworkImage(
       cacheManager: TmdbImageCacheManager.instance,
-      imageUrl: viewModel.backdropUrl.isNotEmpty
-          ? viewModel.backdropUrl
-          : viewModel.posterUrl,
+      imageUrl: imageUrl,
+      width: double.infinity,
+      height: 320,
       fit: BoxFit.cover,
       alignment: Alignment.topCenter,
-      placeholder: (context, url) => Container(color: Colors.grey[100]),
-      errorWidget: (context, url, error) => Container(color: Colors.grey[300]),
+      placeholder: (context, url) => const _FallbackBackdrop(),
+      errorWidget: (context, url, error) => const _FallbackBackdrop(),
     );
   }
 
-  Widget _buildGradientOverlay(BuildContext context) {
-    // Determine the card background color based on theme
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+  Widget _buildGradientOverlay(Color cardColor) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black.withAlpha(20),
+            Colors.black.withAlpha(95),
+            Colors.black.withAlpha(135),
+            cardColor.withAlpha(236),
+            cardColor,
+          ],
+          stops: const [0.0, 0.44, 0.86, 0.99, 1.0],
+        ),
+      ),
+    );
+  }
+}
 
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 350, // Matches Hero Section height/scale
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black.withAlpha(50), // Hero-style black tint
-              Colors.black.withAlpha(150),
-              cardColor.withAlpha(230), // Fade to card color
-              cardColor,
-            ],
-            stops: const [0.0, 0.3, 0.5, 0.8, 1.0],
+class _FallbackBackdrop extends StatelessWidget {
+  const _FallbackBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2A2D34), Color(0xFF111216)],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderContent extends StatelessWidget {
+  final MediaDetailViewModel viewModel;
+  final bool compact;
+
+  const _HeaderContent({required this.viewModel, this.compact = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLogo = viewModel.logoUrl?.isNotEmpty == true;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        if (hasLogo) ...[
+          _LogoImage(
+            logoUrl: viewModel.logoUrl!,
+            fallbackTitle: viewModel.title,
+            compact: compact,
+          ),
+          const SizedBox(height: 14),
+        ],
+        _MetadataStrip(viewModel: viewModel),
+        if (!hasLogo) ...[
+          const SizedBox(height: 12),
+          _TitleText(title: viewModel.title, compact: compact),
+        ],
+        const SizedBox(height: 12),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 650),
+          child: Text(
+            viewModel.overview,
+            maxLines: compact ? 2 : 3,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withAlpha(225),
+              fontSize: 14,
+              height: 1.45,
+              shadows: const [
+                Shadow(
+                  offset: Offset(0, 1),
+                  blurRadius: 4,
+                  color: Colors.black54,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        _PrimaryActionArea(viewModel: viewModel),
+      ],
+    );
+  }
+}
+
+class _PrimaryActionArea extends StatelessWidget {
+  final MediaDetailViewModel viewModel;
+
+  const _PrimaryActionArea({required this.viewModel});
+
+  @override
+  Widget build(BuildContext context) {
+    context.select<MediaLibraryProvider, int>(
+      (provider) => provider.watchProgressRevision,
+    );
+
+    return _ActionRow(
+      viewModel: viewModel,
+      action: _resolvePrimaryAction(context),
+    );
+  }
+
+  _PrimaryPlayAction _resolvePrimaryAction(BuildContext context) {
+    final provider = context.read<MediaLibraryProvider>();
+    final files = provider.getVersions(viewModel.tmdbId);
+    final resumeFile = _latestResumeFile(files);
+
+    if (resumeFile != null) {
+      return _PrimaryPlayAction(
+        label: viewModel.isTVShow
+            ? _episodeActionLabel(resumeFile, '继续')
+            : '继续播放',
+        detail: _resumeDetail(resumeFile),
+        onPressed: () => PlaybackHelper.playFile(
+          context,
+          resumeFile,
+          contextTitle: viewModel.isTVShow ? viewModel.title : null,
+        ),
+      );
+    }
+
+    if (viewModel.isMovie) {
+      return _PrimaryPlayAction(
+        label: '播放',
+        detail: files.isEmpty ? '未找到本地文件' : _versionCount(files),
+        enabled: files.isNotEmpty,
+        onPressed: files.isEmpty
+            ? null
+            : () => PlaybackHelper.playMovie(
+                context,
+                viewModel.originalItem as Movie,
+              ),
+      );
+    }
+
+    final firstFile = _firstPlayableEpisodeFile(files);
+    return _PrimaryPlayAction(
+      label: firstFile == null ? '不可播放' : _episodeActionLabel(firstFile, '播放'),
+      detail: firstFile == null ? '未找到可播放剧集' : _episodeCountDetail(files),
+      enabled: firstFile != null,
+      onPressed: firstFile == null
+          ? null
+          : () => PlaybackHelper.playFile(
+              context,
+              firstFile,
+              contextTitle: viewModel.title,
+            ),
+    );
+  }
+
+  MediaFile? _latestResumeFile(List<MediaFile> files) {
+    final candidates = files
+        .where(
+          (file) =>
+              file.position > 0 && file.progress > 0 && file.progress < 0.95,
+        )
+        .toList();
+    if (candidates.isEmpty) return null;
+    candidates.sort(
+      (a, b) => (b.lastWatchedAt ?? DateTime(0)).compareTo(
+        a.lastWatchedAt ?? DateTime(0),
+      ),
+    );
+    return candidates.first;
+  }
+
+  MediaFile? _firstPlayableEpisodeFile(List<MediaFile> files) {
+    final candidates = files
+        .where((file) => file.mediaType == MediaType.episode)
+        .toList();
+    if (candidates.isEmpty) return null;
+    candidates.sort((a, b) {
+      final season = (a.parsedSeason ?? 999999).compareTo(
+        b.parsedSeason ?? 999999,
+      );
+      if (season != 0) return season;
+      return (a.parsedEpisode ?? 999999).compareTo(b.parsedEpisode ?? 999999);
+    });
+    return candidates.first;
+  }
+
+  String _episodeActionLabel(MediaFile file, String verb) {
+    final episode = file.parsedEpisode;
+    if (episode != null) return '$verb第 $episode 集';
+
+    return '$verb第 ?? 集';
+  }
+
+  String _resumeDetail(MediaFile file) {
+    if (file.duration <= 0) return '从上次进度继续';
+    return '从 ${_formatDuration(Duration(milliseconds: file.position))} 继续';
+  }
+
+  String _versionCount(List<MediaFile> files) {
+    return files.length == 1 ? '1 个版本可播放' : '${files.length} 个版本可播放';
+  }
+
+  String _episodeCountDetail(List<MediaFile> files) {
+    final count = files
+        .where((file) => file.mediaType == MediaType.episode)
+        .length;
+    return count == 1 ? '1 集可播放' : '$count 集可播放';
+  }
+
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    if (hours > 0) return '$hours:$minutes:$seconds';
+    return '$minutes:$seconds';
+  }
+}
+
+class _MetadataStrip extends StatelessWidget {
+  final MediaDetailViewModel viewModel;
+
+  const _MetadataStrip({required this.viewModel});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <Widget>[];
+    if (viewModel.rating > 0) {
+      items.add(_RatingPill(rating: viewModel.rating));
+    }
+    if (viewModel.releaseYear != null) {
+      items.add(_TextPill('${viewModel.releaseYear}'));
+    }
+    if (viewModel.certification != null &&
+        viewModel.certification!.isNotEmpty) {
+      items.add(_TextPill(viewModel.certification!));
+    }
+    if (viewModel.isTVShow) {
+      final seasons = viewModel.seasons.length;
+      if (seasons > 0) {
+        items.add(_TextPill(seasons == 1 ? '1 季' : '$seasons 季'));
+      }
+    }
+    items.addAll(viewModel.genres.take(3).map(_TextPill.new));
+
+    return Wrap(spacing: 8, runSpacing: 8, children: items);
+  }
+}
+
+class _ActionRow extends StatelessWidget {
+  final MediaDetailViewModel viewModel;
+  final _PrimaryPlayAction action;
+
+  const _ActionRow({required this.viewModel, required this.action});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 10,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        FilledButton.icon(
+          onPressed: action.enabled ? action.onPressed : null,
+          icon: const Icon(Icons.play_arrow_rounded),
+          label: Text(action.label),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF007AFF),
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: Colors.white.withAlpha(35),
+            disabledForegroundColor: Colors.white54,
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        FavoriteButton(tmdbId: viewModel.tmdbId, overrideColor: Colors.white),
+        if (action.detail != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Text(
+              action.detail!,
+              style: TextStyle(
+                color: Colors.white.withAlpha(205),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PosterImage extends StatelessWidget {
+  final String posterUrl;
+
+  const _PosterImage({required this.posterUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: 150,
+        height: 225,
+        child: posterUrl.isNotEmpty
+            ? CachedNetworkImage(
+                cacheManager: TmdbImageCacheManager.instance,
+                imageUrl: posterUrl,
+                width: 150,
+                height: 225,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => _placeholder(),
+                errorWidget: (context, url, error) => _placeholder(),
+              )
+            : _placeholder(),
+      ),
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      color: Colors.white.withAlpha(24),
+      child: const Icon(Icons.movie_rounded, color: Colors.white54, size: 44),
+    );
+  }
+}
+
+class _LogoImage extends StatelessWidget {
+  final String logoUrl;
+  final String fallbackTitle;
+  final bool compact;
+
+  const _LogoImage({
+    required this.logoUrl,
+    required this.fallbackTitle,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 62,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: 260,
+          height: 62,
+          child: CachedNetworkImage(
+            cacheManager: TmdbImageCacheManager.instance,
+            imageUrl: logoUrl,
+            width: 260,
+            height: 62,
+            fit: BoxFit.contain,
+            alignment: Alignment.centerLeft,
+            fadeInDuration: Duration.zero,
+            fadeOutDuration: Duration.zero,
+            placeholder: (context, url) => const SizedBox.expand(),
+            errorWidget: (context, url, error) =>
+                _TitleText(title: fallbackTitle, compact: compact),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildTopLogo() {
-    if (viewModel.logoUrl == null) return const SizedBox.shrink();
-    return Positioned(
-      top: 40,
-      left: 40,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 150, maxHeight: 60),
-        child: CachedNetworkImage(
-          cacheManager: TmdbImageCacheManager.instance,
-          imageUrl: viewModel.logoUrl!,
-          fit: BoxFit.contain,
-          alignment: Alignment.centerLeft,
-          filterQuality: FilterQuality.high,
-        ),
-      ),
-    );
-  }
+class _TitleText extends StatelessWidget {
+  final String title;
+  final bool compact;
 
-  Widget _buildContentColumn(BuildContext context) {
-    return Positioned(
-      bottom: 24,
-      left: 40,
-      right: 40,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 1. Metadata Row (Rating, Year, Genres)
-          _buildMetadataRow(context),
+  const _TitleText({required this.title, required this.compact});
 
-          const SizedBox(height: 16),
-
-          // 2. Big Text Title (Always Text, matching Hero)
-          _buildTextTitle(),
-
-          const SizedBox(height: 16),
-
-          // 3. Overview (Max 3 lines, White text w/ shadow)
-          if (viewModel.overview.isNotEmpty)
-            Text(
-              viewModel.overview,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 16,
-                height: 1.5,
-                color: Colors.white, // Always white on dark gradient
-                shadows: [
-                  Shadow(
-                    offset: Offset(0, 1),
-                    blurRadius: 4,
-                    color: Colors.black54,
-                  ),
-                ],
-              ),
-            ),
-
-          const SizedBox(height: 24),
-
-          // 4. Action Buttons
-          _buildActions(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextTitle() {
+  @override
+  Widget build(BuildContext context) {
     return Text(
-      viewModel.title,
-      style: const TextStyle(
-        fontSize: 48, // Larger title like Hero
-        fontWeight: FontWeight.w900,
+      title,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
         color: Colors.white,
-        height: 1.1,
-        letterSpacing: -0.5,
-        shadows: [
+        fontSize: compact ? 30 : 36,
+        fontWeight: FontWeight.w800,
+        height: 1.08,
+        shadows: const [
           Shadow(offset: Offset(0, 2), blurRadius: 10, color: Colors.black54),
         ],
       ),
     );
   }
+}
 
-  Widget _buildMetadataRow(BuildContext context) {
-    // With the Hero-style black tinted gradient, we can safely use white text
-    // for metadata even in light mode.
+class _RatingPill extends StatelessWidget {
+  final double rating;
 
-    final List<Widget> items = [];
+  const _RatingPill({required this.rating});
 
-    // 1. Rating Badge (Always Amber)
-    if (viewModel.rating > 0) {
-      items.add(
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.amber,
-            borderRadius: BorderRadius.circular(6),
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.amber,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, color: Colors.black87, size: 15),
+          const SizedBox(width: 4),
+          Text(
+            rating.toStringAsFixed(1),
+            style: const TextStyle(
+              color: Colors.black87,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.star_rounded, color: Colors.black87, size: 16),
-              const SizedBox(width: 4),
-              Text(
-                viewModel.rating.toStringAsFixed(1),
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // 2. Year (White text)
-    if (viewModel.releaseYear != null) {
-      items.add(
-        Text(
-          '${viewModel.releaseYear}',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.white.withAlpha(200),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
-    }
-
-    // Technical Specs / Certification (Badge Style)
-    if (viewModel.certification != null &&
-        viewModel.certification!.isNotEmpty) {
-      items.add(_buildBadge(viewModel.certification!));
-    }
-
-    // Seasons Count (TV Only)
-    if (viewModel.isTVShow) {
-      items.add(
-        Text(
-          '${viewModel.seasons.length} Seasons',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.white.withAlpha(200),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
-    }
-
-    // 3. Genres (Badge Style)
-    items.addAll(viewModel.genres.map((g) => _buildBadge(g)));
-
-    // Technical Specs from File
-    final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
-    final files = provider.getVersions(viewModel.tmdbId);
-    final bestFile = files.isNotEmpty ? files.first : null;
-
-    if (bestFile != null) {
-      final quality = bestFile.quality;
-      if (quality.isNotEmpty) {
-        if (bestFile.isHdr) {
-          items.add(_buildBadge('$quality ${bestFile.hdrFormat ?? "HDR"}'));
-        } else {
-          items.add(_buildBadge(quality));
-        }
-      }
-      if (bestFile.audioChannels != null &&
-          bestFile.audioChannels!.isNotEmpty) {
-        items.add(_buildBadge(bestFile.audioChannels!));
-      }
-    }
-
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: items,
+        ],
+      ),
     );
   }
+}
 
-  // Consistent Badge Style (Hero Genre Style - White translucent)
-  Widget _buildBadge(String text) {
+class _TextPill extends StatelessWidget {
+  final String text;
+
+  const _TextPill(this.text);
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(30),
+        color: Colors.white.withAlpha(32),
         borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.white.withAlpha(22)),
       ),
       child: Text(
         text,
         style: TextStyle(
+          color: Colors.white.withAlpha(225),
           fontSize: 12,
-          color: Colors.white.withAlpha(220),
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
   }
+}
 
-  Widget _buildActions(BuildContext context) {
-    return Row(
-      children: [
-        // Play Button
-        ElevatedButton.icon(
-          onPressed: () => _handlePlay(context),
-          icon: const Icon(
-            Icons.play_arrow_rounded,
-            color: Colors.white,
-            size: 24,
-          ),
-          label: const Text(
-            'Play',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF007AFF),
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 0,
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Favorite Button (Always white-ish border/icon on dark overlay)
-        FavoriteButton(tmdbId: viewModel.tmdbId, overrideColor: Colors.white),
-      ],
-    );
-  }
+class _PrimaryPlayAction {
+  final String label;
+  final String? detail;
+  final VoidCallback? onPressed;
+  final bool enabled;
 
-  void _handlePlay(BuildContext context) {
-    if (viewModel.isMovie) {
-      PlaybackHelper.playMovie(context, viewModel.originalItem);
-    } else {
-      if (viewModel.seasons.isNotEmpty &&
-          viewModel.seasons.first.episodes.isNotEmpty) {
-        PlaybackHelper.playEpisode(
-          context,
-          viewModel.seasons.first.episodes.first,
-          showTitle: viewModel.title,
-        );
-      }
-    }
-  }
+  const _PrimaryPlayAction({
+    required this.label,
+    this.detail,
+    this.onPressed,
+    this.enabled = true,
+  });
 }

@@ -46,7 +46,8 @@ class _AppSearchBarState extends State<AppSearchBar> {
       if (!isCurrentRoute) return false;
 
       if (event.logicalKey == LogicalKeyboardKey.keyK &&
-          (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed)) {
+          (HardwareKeyboard.instance.isMetaPressed ||
+              HardwareKeyboard.instance.isControlPressed)) {
         if (!_focusNode.hasFocus) {
           _focusNode.requestFocus();
           return true;
@@ -76,9 +77,18 @@ class _AppSearchBarState extends State<AppSearchBar> {
       decoration: BoxDecoration(
         color: customTheme.searchBarColor, // 使用自定义主题颜色
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _hasFocus ? themeColor.withAlpha(204) : Colors.transparent, width: 1.5),
+        border: Border.all(
+          color: _hasFocus ? themeColor.withAlpha(204) : Colors.transparent,
+          width: 1.5,
+        ),
         boxShadow: _hasFocus
-            ? [BoxShadow(color: themeColor.withAlpha(64), blurRadius: 4, offset: const Offset(0, 1))]
+            ? [
+                BoxShadow(
+                  color: themeColor.withAlpha(64),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ]
             : [],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -88,7 +98,9 @@ class _AppSearchBarState extends State<AppSearchBar> {
           Icon(
             CupertinoIcons.search,
             size: 18,
-            color: _hasFocus ? theme.textTheme.bodyMedium?.color : customTheme.searchBarIconColor,
+            color: _hasFocus
+                ? theme.textTheme.bodyMedium?.color
+                : customTheme.searchBarIconColor,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -96,13 +108,19 @@ class _AppSearchBarState extends State<AppSearchBar> {
               controller: _controller,
               focusNode: _focusNode,
               decoration: InputDecoration(
-                hintText: "Search...",
-                hintStyle: TextStyle(color: customTheme.searchBarHintColor, fontSize: 14),
+                hintText: "搜索...",
+                hintStyle: TextStyle(
+                  color: customTheme.searchBarHintColor,
+                  fontSize: 14,
+                ),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
-              style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color),
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
               cursorColor: themeColor,
             ),
           ),
@@ -133,7 +151,10 @@ class _AppSearchBarState extends State<AppSearchBar> {
           key: const ValueKey('clear_button'),
           width: 18,
           height: 18,
-          decoration: BoxDecoration(color: Colors.grey[300]?.withAlpha((255 * 0.5).round()), shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: Colors.grey[300]?.withAlpha((255 * 0.5).round()),
+            shape: BoxShape.circle,
+          ),
           child: Icon(Icons.close, size: 12, color: Colors.grey[700]),
         ),
       ),
@@ -146,7 +167,11 @@ class _AppSearchBarState extends State<AppSearchBar> {
 
     return Row(
       key: const ValueKey('key_cap_hint'),
-      children: [_buildKeyCap(modifierKey), const SizedBox(width: 4), _buildKeyCap("K")],
+      children: [
+        _buildKeyCap(modifierKey),
+        const SizedBox(width: 4),
+        _buildKeyCap("K"),
+      ],
     );
   }
 
@@ -159,12 +184,22 @@ class _AppSearchBarState extends State<AppSearchBar> {
       decoration: BoxDecoration(
         color: customTheme.keyCapColor,
         borderRadius: BorderRadius.circular(5),
-        boxShadow: [BoxShadow(color: Colors.black.withAlpha(26), offset: const Offset(0, 1), blurRadius: 1)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(26),
+            offset: const Offset(0, 1),
+            blurRadius: 1,
+          ),
+        ],
         border: Border.all(color: Colors.black.withAlpha(13)),
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: customTheme.keyCapTextColor),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: customTheme.keyCapTextColor,
+        ),
       ),
     );
   }

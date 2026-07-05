@@ -20,7 +20,7 @@ class PlaybackHelper {
     final versions = provider.getVersions(movie.tmdbId);
 
     if (versions.isEmpty) {
-      _showError(context, "Cannot find media file for this movie.");
+      _showError(context, "未找到这部电影的本地文件");
       return;
     }
 
@@ -47,7 +47,7 @@ class PlaybackHelper {
     } catch (_) {}
 
     if (targetFile == null) {
-      _showError(context, "Cannot find media file for this episode.");
+      _showError(context, "未找到这一集的本地文件");
       return;
     }
 
@@ -67,7 +67,7 @@ class PlaybackHelper {
           children: [
             CircularProgressIndicator(strokeWidth: 2),
             SizedBox(width: 16),
-            Expanded(child: Text("Getting playback link...")),
+            Expanded(child: Text("正在获取播放链接...")),
           ],
         ),
         duration: Duration(minutes: 1),
@@ -89,10 +89,7 @@ class PlaybackHelper {
         ),
       );
     } else if (context.mounted) {
-      _showError(
-        context,
-        "Failed to get playback link. Check network or server.",
-      );
+      _showError(context, "获取播放链接失败，请检查网络或服务器");
     }
   }
 
@@ -134,7 +131,7 @@ class PlaybackHelper {
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Text(
-                  "Select Version",
+                  "选择版本",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

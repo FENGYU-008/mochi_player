@@ -143,7 +143,7 @@ class TrendingCategoryCard extends StatelessWidget {
       height: 200,
       child: Center(
         child: Text(
-          'No data available',
+          '暂无数据',
           style: TextStyle(
             color: theme.textTheme.bodySmall?.color?.withAlpha(128),
             fontSize: 13,

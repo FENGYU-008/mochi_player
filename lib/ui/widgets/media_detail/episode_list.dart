@@ -85,10 +85,7 @@ class _EpisodeListState extends State<EpisodeList> {
       return const SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.only(top: 32),
-          child: Text(
-            "No seasons available.",
-            style: TextStyle(color: Colors.grey),
-          ),
+          child: Text("暂无季信息", style: TextStyle(color: Colors.grey)),
         ),
       );
     }
@@ -124,6 +121,7 @@ class _EpisodeListState extends State<EpisodeList> {
             childCount: _sortedEpisodes.isEmpty
                 ? 0
                 : _sortedEpisodes.length * 2 - 1,
+            addAutomaticKeepAlives: false,
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 40)),
@@ -137,91 +135,234 @@ class _EpisodeListState extends State<EpisodeList> {
     MediaFile? episodeFile,
   ) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final available = episodeFile != null;
+    final progress = episodeFile?.progress.clamp(0.0, 1.0) ?? 0.0;
+    final completed =
+        episodeFile?.watchStatus == WatchStatus.completed || progress >= 0.95;
+    final showStatus = !available || completed;
 
-    final duration = episodeFile != null && episodeFile.duration > 0
-        ? '${(episodeFile.duration / 60).round()}m'
-        : null;
-
-    return InkWell(
-      onTap: () => PlaybackHelper.playEpisode(
-        context,
-        episode,
-        showTitle: widget.tvShow.title,
-      ),
+    return Material(
+      color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(5),
       borderRadius: BorderRadius.circular(8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Still Image
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: SizedBox(
-              width: 130,
-              height: 75,
-              child: episode.stillUrl != null
-                  ? CachedNetworkImage(
-                      cacheManager: TmdbImageCacheManager.instance,
-                      imageUrl: episode.stillUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                          Container(color: Colors.grey[300]),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.movie, color: Colors.grey),
-                      ),
-                    )
-                  : Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.movie, color: Colors.grey),
-                    ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Text Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+      child: InkWell(
+        onTap: available
+            ? () => PlaybackHelper.playEpisode(
+                context,
+                episode,
+                showTitle: widget.tvShow.title,
+              )
+            : null,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStill(episode, episodeFile, theme),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        '${episode.episodeNumber}. ${episode.title}',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${episode.episodeNumber}. ${episode.title}',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: available
+                                  ? theme.textTheme.bodyLarge?.color
+                                  : theme.textTheme.bodySmall?.color,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        if (showStatus) ...[
+                          const SizedBox(width: 10),
+                          _EpisodeStatusPill(
+                            available: available,
+                            completed: completed,
+                          ),
+                        ] else ...[
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.play_arrow_rounded,
+                            size: 20,
+                            color: theme.colorScheme.primary.withAlpha(190),
+                          ),
+                        ],
+                      ],
                     ),
-                    if (duration != null)
-                      Text(
-                        duration,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: theme.textTheme.bodySmall?.color,
+                    const SizedBox(height: 6),
+                    Text(
+                      episode.overview ?? '',
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 9),
+                    _EpisodeMetaRow(episode: episode, file: episodeFile),
+                    if (progress > 0 && progress < 0.95) ...[
+                      const SizedBox(height: 9),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 3,
+                          backgroundColor: theme.dividerColor.withAlpha(90),
                         ),
                       ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  episode.overview ?? '',
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.4,
-                    color: theme.textTheme.bodySmall?.color,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
+  }
+
+  Widget _buildStill(Episode episode, MediaFile? file, ThemeData theme) {
+    final progress = file?.progress.clamp(0.0, 1.0) ?? 0.0;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        width: 132,
+        height: 76,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            episode.stillUrl != null
+                ? CachedNetworkImage(
+                    cacheManager: TmdbImageCacheManager.instance,
+                    imageUrl: episode.stillUrl!,
+                    width: 132,
+                    height: 76,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) =>
+                        Container(color: Colors.grey[300]),
+                    errorWidget: (context, url, error) => _stillPlaceholder(),
+                  )
+                : _stillPlaceholder(),
+            if (file == null) Container(color: Colors.black.withAlpha(95)),
+            if (progress > 0 && progress < 0.95)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 3,
+                  backgroundColor: Colors.black.withAlpha(80),
+                  valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _stillPlaceholder() {
+    return Container(
+      color: Colors.grey[300],
+      child: const Icon(Icons.movie, color: Colors.grey),
+    );
+  }
+}
+
+class _EpisodeStatusPill extends StatelessWidget {
+  final bool available;
+  final bool completed;
+
+  const _EpisodeStatusPill({required this.available, required this.completed});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final label = !available
+        ? '缺失'
+        : completed
+        ? '已看'
+        : '';
+    if (label.isEmpty) return const SizedBox.shrink();
+
+    final color = !available
+        ? theme.textTheme.bodySmall?.color ?? Colors.grey
+        : completed
+        ? Colors.green
+        : theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withAlpha(28),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _EpisodeMetaRow extends StatelessWidget {
+  final Episode episode;
+  final MediaFile? file;
+
+  const _EpisodeMetaRow({required this.episode, required this.file});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final parts = <String>[];
+    if (episode.airDate != null) {
+      parts.add(_formatDate(episode.airDate!));
+    }
+    final mediaFile = file;
+    if (mediaFile != null && mediaFile.duration > 0) {
+      parts.add(_formatDuration(Duration(milliseconds: mediaFile.duration)));
+    }
+
+    if (parts.isEmpty) return const SizedBox.shrink();
+    return Text(
+      parts.join(' • '),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: 12,
+        color: theme.textTheme.bodySmall?.color,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDuration(Duration duration) {
+    if (duration.inHours > 0) {
+      final minutes = duration.inMinutes
+          .remainder(60)
+          .toString()
+          .padLeft(2, '0');
+      return '${duration.inHours}h ${minutes}m';
+    }
+    return '${duration.inMinutes}m';
   }
 }
 
@@ -245,12 +386,12 @@ class _EpisodeHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 40),
+        const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Episodes',
+              '剧集',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -283,7 +424,7 @@ class _EpisodeHeader extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              'Season ${season.seasonNumber}',
+                              '第 ${season.seasonNumber} 季',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: isSelected
@@ -308,8 +449,8 @@ class _EpisodeHeader extends StatelessWidget {
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                    horizontal: 14,
+                    vertical: 7,
                   ),
                   decoration: BoxDecoration(
                     color: isDark
@@ -326,8 +467,8 @@ class _EpisodeHeader extends StatelessWidget {
                     children: [
                       Text(
                         selectedSeason != null
-                            ? 'Season ${selectedSeason!.seasonNumber}'
-                            : 'Select Season',
+                            ? '第 ${selectedSeason!.seasonNumber} 季'
+                            : '选择季',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
