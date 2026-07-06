@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mochi_player/ui/theme/app_colors.dart';
 import 'package:mochi_player/ui/widgets/macos_traffic_lights.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -19,7 +20,7 @@ class SideBar extends StatelessWidget {
     return Container(
       width: 250,
       decoration: BoxDecoration(
-        color: theme.canvasColor, // 使用主题颜色
+        color: AppColors.sidebarBackground(context),
         border: Border(
           right: BorderSide(color: theme.dividerColor, width: 1), // 使用主题分割线颜色
         ),
@@ -81,7 +82,7 @@ class SideBar extends StatelessWidget {
 
   Widget _buildSectionTitle(String title, BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 7),
       child: Text(
         title,
         style: TextStyle(
@@ -90,7 +91,7 @@ class SideBar extends StatelessWidget {
           ).textTheme.titleMedium?.color?.withAlpha((255 * 0.6).round()),
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
+          letterSpacing: 0,
         ),
       ),
     );
@@ -151,14 +152,14 @@ class _SideBarItemState extends State<_SideBarItem> {
 
     Color backgroundColor = Colors.transparent;
     if (isSelected) {
-      backgroundColor = theme.primaryColor;
+      backgroundColor = AppColors.primary(context);
     } else if (_isHovering) {
       backgroundColor = theme.textTheme.bodyMedium!.color!.withAlpha(
         (255 * 0.05).round(),
       );
     }
 
-    Color foregroundColor = isSelected
+    final foregroundColor = isSelected
         ? Colors.white
         : theme.textTheme.titleMedium!.color!;
 
@@ -171,11 +172,11 @@ class _SideBarItemState extends State<_SideBarItem> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
-          height: 38,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
             children: [
@@ -185,7 +186,7 @@ class _SideBarItemState extends State<_SideBarItem> {
                 widget.title,
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: foregroundColor,
                 ),
               ),

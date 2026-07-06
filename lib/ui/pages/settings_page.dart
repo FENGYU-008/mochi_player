@@ -6,6 +6,7 @@ import 'package:mochi_player/providers/file_browser_provider.dart';
 import 'package:mochi_player/providers/media_library_provider.dart';
 import 'package:mochi_player/providers/theme_provider.dart';
 import 'package:mochi_player/services/app_settings_service.dart';
+import 'package:mochi_player/ui/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -106,28 +107,26 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (context, themeMode, child) {
         return _SettingsSection(
           title: '外观',
-          child: SegmentedButton<ThemeMode>(
+          child: _SettingsSegmentedControl<ThemeMode>(
+            value: themeMode,
             segments: const [
-              ButtonSegment(
+              _SettingsSegment(
                 value: ThemeMode.light,
-                label: Text('浅色'),
-                icon: Icon(Icons.light_mode_outlined),
+                label: '浅色',
+                icon: Icons.light_mode_outlined,
               ),
-              ButtonSegment(
+              _SettingsSegment(
                 value: ThemeMode.dark,
-                label: Text('深色'),
-                icon: Icon(Icons.dark_mode_outlined),
+                label: '深色',
+                icon: Icons.dark_mode_outlined,
               ),
-              ButtonSegment(
+              _SettingsSegment(
                 value: ThemeMode.system,
-                label: Text('跟随系统'),
-                icon: Icon(Icons.computer_rounded),
+                label: '跟随系统',
+                icon: Icons.computer_rounded,
               ),
             ],
-            selected: {themeMode},
-            onSelectionChanged: (selection) {
-              context.read<ThemeProvider>().setTheme(selection.first);
-            },
+            onChanged: context.read<ThemeProvider>().setTheme,
           ),
         );
       },
@@ -139,45 +138,31 @@ class _SettingsPageState extends State<SettingsPage> {
       title: 'WebDAV',
       child: Column(
         children: [
-          TextField(
+          _SettingsTextField(
             controller: _webDavUrlController,
             keyboardType: TextInputType.url,
-            decoration: _inputDecoration(
-              context,
-              label: '服务器地址',
-              icon: Icons.link_rounded,
-            ),
+            label: '服务器地址',
+            icon: Icons.link_rounded,
           ),
           const SizedBox(height: 14),
-          TextField(
+          _SettingsTextField(
             controller: _webDavUsernameController,
-            decoration: _inputDecoration(
-              context,
-              label: '用户名',
-              icon: Icons.person_outline_rounded,
-            ),
+            label: '用户名',
+            icon: Icons.person_outline_rounded,
           ),
           const SizedBox(height: 14),
-          TextField(
+          _SettingsTextField(
             controller: _webDavPasswordController,
             obscureText: !_showWebDavPassword,
-            decoration: _inputDecoration(
-              context,
-              label: '密码',
-              icon: Icons.lock_outline_rounded,
-              suffixIcon: IconButton(
-                tooltip: _showWebDavPassword ? '隐藏' : '显示',
-                icon: Icon(
-                  _showWebDavPassword
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _showWebDavPassword = !_showWebDavPassword;
-                  });
-                },
-              ),
+            label: '密码',
+            icon: Icons.lock_outline_rounded,
+            trailing: _VisibilityToggle(
+              visible: _showWebDavPassword,
+              onPressed: () {
+                setState(() {
+                  _showWebDavPassword = !_showWebDavPassword;
+                });
+              },
             ),
           ),
         ],
@@ -190,44 +175,32 @@ class _SettingsPageState extends State<SettingsPage> {
       title: 'TMDB',
       child: Column(
         children: [
-          TextField(
+          _SettingsTextField(
             controller: _tmdbApiKeyController,
             obscureText: !_showTmdbApiKey,
-            decoration: _inputDecoration(
-              context,
-              label: 'API 密钥',
-              icon: Icons.key_rounded,
-              suffixIcon: IconButton(
-                tooltip: _showTmdbApiKey ? '隐藏' : '显示',
-                icon: Icon(
-                  _showTmdbApiKey
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _showTmdbApiKey = !_showTmdbApiKey;
-                  });
-                },
-              ),
+            label: 'API 密钥',
+            icon: Icons.key_rounded,
+            trailing: _VisibilityToggle(
+              visible: _showTmdbApiKey,
+              onPressed: () {
+                setState(() {
+                  _showTmdbApiKey = !_showTmdbApiKey;
+                });
+              },
             ),
           ),
           const SizedBox(height: 14),
-          TextField(
+          _SettingsTextField(
             controller: _tmdbApiBaseUrlController,
             keyboardType: TextInputType.url,
-            decoration: _inputDecoration(
-              context,
-              label: 'API 地址',
-              icon: Icons.travel_explore_rounded,
-            ),
+            label: 'API 地址',
+            icon: Icons.travel_explore_rounded,
           ),
           const SizedBox(height: 14),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('使用 TMDB 代理'),
-            subtitle: const Text('用于 TMDB API 和图片下载'),
-            secondary: const Icon(Icons.route_rounded),
+          _SettingsSwitchRow(
+            title: '使用 TMDB 代理',
+            subtitle: '用于 TMDB API 和图片下载',
+            icon: Icons.route_rounded,
             value: _tmdbProxyEnabled,
             onChanged: (value) {
               setState(() {
@@ -236,15 +209,12 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           ),
           const SizedBox(height: 14),
-          TextField(
+          _SettingsTextField(
             controller: _tmdbProxyUrlController,
             enabled: _tmdbProxyEnabled,
             keyboardType: TextInputType.url,
-            decoration: _inputDecoration(
-              context,
-              label: 'HTTP 代理',
-              icon: Icons.route_rounded,
-            ),
+            label: 'HTTP 代理',
+            icon: Icons.route_rounded,
           ),
         ],
       ),
@@ -257,36 +227,28 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SettingsRow(
-            label: '缓存大小',
-            child: TextField(
-              controller: _playbackCacheSizeMbController,
-              keyboardType: TextInputType.number,
-              decoration: _inputDecoration(
-                context,
-                label: 'MB',
+          _SettingsFieldGrid(
+            children: [
+              _SettingsTextField(
+                controller: _playbackCacheSizeMbController,
+                keyboardType: TextInputType.number,
+                label: '缓存大小',
                 icon: Icons.storage_rounded,
+                suffixText: 'MB',
               ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          _SettingsRow(
-            label: '预读',
-            child: TextField(
-              controller: _playbackReadaheadSecondsController,
-              keyboardType: TextInputType.number,
-              decoration: _inputDecoration(
-                context,
-                label: '秒',
+              _SettingsTextField(
+                controller: _playbackReadaheadSecondsController,
+                keyboardType: TextInputType.number,
+                label: '预读',
                 icon: Icons.cloud_download_rounded,
+                suffixText: '秒',
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 14),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('硬件解码'),
-            secondary: const Icon(Icons.memory_rounded),
+          _SettingsSwitchRow(
+            title: '硬件解码',
+            icon: Icons.memory_rounded,
             value: _enableHardwareAcceleration,
             onChanged: (value) {
               setState(() {
@@ -295,52 +257,31 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           ),
           const SizedBox(height: 14),
-          TextField(
+          _SettingsTextField(
             controller: _audioLanguagePriorityController,
-            decoration: _inputDecoration(
-              context,
-              label: '默认音轨语言',
-              icon: Icons.graphic_eq_rounded,
-            ),
+            label: '默认音轨语言',
+            icon: Icons.graphic_eq_rounded,
           ),
           const SizedBox(height: 14),
-          TextField(
+          _SettingsTextField(
             controller: _subtitleLanguagePriorityController,
-            decoration: _inputDecoration(
-              context,
-              label: '默认字幕语言',
-              icon: Icons.subtitles_rounded,
-            ),
+            label: '默认字幕语言',
+            icon: Icons.subtitles_rounded,
           ),
           const SizedBox(height: 14),
-          _SettingsRow(
+          _SettingsSliderRow(
             label: '字幕大小',
-            child: Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _subtitleFontSize,
-                    min: 18,
-                    max: 40,
-                    divisions: 22,
-                    label: _subtitleFontSize.round().toString(),
-                    onChanged: (value) {
-                      setState(() {
-                        _subtitleFontSize = value;
-                      });
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    _subtitleFontSize.round().toString(),
-                    textAlign: TextAlign.end,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
+            icon: Icons.format_size_rounded,
+            value: _subtitleFontSize,
+            min: 18,
+            max: 40,
+            divisions: 22,
+            displayValue: _subtitleFontSize.round().toString(),
+            onChanged: (value) {
+              setState(() {
+                _subtitleFontSize = value;
+              });
+            },
           ),
         ],
       ),
@@ -355,26 +296,22 @@ class _SettingsPageState extends State<SettingsPage> {
           spacing: 12,
           runSpacing: 12,
           children: [
-            FilledButton.icon(
+            _SettingsActionButton(
               onPressed: isBusy ? null : _saveSettings,
-              icon: isBusy
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save_outlined),
-              label: Text(isBusy ? '保存中' : '保存'),
+              icon: Icons.save_outlined,
+              label: isBusy ? '保存中' : '保存',
+              primary: true,
+              busy: isBusy,
             ),
-            OutlinedButton.icon(
+            _SettingsActionButton(
               onPressed: isBusy ? null : _testWebDavConnection,
-              icon: const Icon(Icons.wifi_tethering_rounded),
-              label: const Text('测试 WebDAV'),
+              icon: Icons.wifi_tethering_rounded,
+              label: '测试 WebDAV',
             ),
-            OutlinedButton.icon(
+            _SettingsActionButton(
               onPressed: isBusy ? null : _testTmdbConnection,
-              icon: const Icon(Icons.public_rounded),
-              label: const Text('测试 TMDB'),
+              icon: Icons.public_rounded,
+              label: '测试 TMDB',
             ),
           ],
         );
@@ -406,55 +343,22 @@ class _SettingsPageState extends State<SettingsPage> {
             spacing: 12,
             runSpacing: 12,
             children: [
-              OutlinedButton.icon(
+              _SettingsActionButton(
                 onPressed: isBusy ? null : _confirmRescrapeLibrary,
-                icon: isBusy
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.manage_search_outlined),
-                label: Text(isBusy ? '刮削中' : '补全元数据'),
+                icon: Icons.manage_search_outlined,
+                label: isBusy ? '刮削中' : '补全元数据',
+                busy: isBusy,
               ),
-              OutlinedButton.icon(
+              _SettingsActionButton(
                 onPressed: isBusy ? null : _confirmClearLibrary,
-                icon: const Icon(Icons.delete_sweep_outlined),
-                label: const Text('清空媒体库'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.redAccent,
-                  side: const BorderSide(color: Colors.redAccent),
-                ),
+                icon: Icons.delete_sweep_outlined,
+                label: '清空媒体库',
+                destructive: true,
               ),
             ],
           ),
         );
       },
-    );
-  }
-
-  InputDecoration _inputDecoration(
-    BuildContext context, {
-    required String label,
-    required IconData icon,
-    Widget? suffixIcon,
-  }) {
-    final theme = Theme.of(context);
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon),
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: theme.canvasColor,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: theme.dividerColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
-      ),
     );
   }
 
@@ -681,40 +585,534 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
-class _SettingsRow extends StatelessWidget {
+class _SettingsSegment<T> {
+  final T value;
   final String label;
-  final Widget child;
+  final IconData icon;
 
-  const _SettingsRow({required this.label, required this.child});
+  const _SettingsSegment({
+    required this.value,
+    required this.label,
+    required this.icon,
+  });
+}
+
+class _SettingsSegmentedControl<T> extends StatelessWidget {
+  final T value;
+  final List<_SettingsSegment<T>> segments;
+  final ValueChanged<T> onChanged;
+
+  const _SettingsSegmentedControl({
+    required this.value,
+    required this.segments,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = AppColors.separator(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final controlWidth = constraints.maxWidth < 420
+            ? constraints.maxWidth
+            : 420.0;
+        return SizedBox(
+          width: controlWidth,
+          child: Container(
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppColors.elevatedSurface(context),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: borderColor),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Row(
+              children: [
+                for (var index = 0; index < segments.length; index++) ...[
+                  Expanded(
+                    child: _SettingsSegmentButton<T>(
+                      segment: segments[index],
+                      selected: segments[index].value == value,
+                      onPressed: () => onChanged(segments[index].value),
+                    ),
+                  ),
+                  if (index != segments.length - 1)
+                    SizedBox(
+                      height: 24,
+                      child: VerticalDivider(width: 1, color: borderColor),
+                    ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SettingsSegmentButton<T> extends StatefulWidget {
+  final _SettingsSegment<T> segment;
+  final bool selected;
+  final VoidCallback onPressed;
+
+  const _SettingsSegmentButton({
+    required this.segment,
+    required this.selected,
+    required this.onPressed,
+  });
+
+  @override
+  State<_SettingsSegmentButton<T>> createState() =>
+      _SettingsSegmentButtonState<T>();
+}
+
+class _SettingsSegmentButtonState<T> extends State<_SettingsSegmentButton<T>> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = AppColors.primary(context);
+    final selected = widget.selected;
+    final foreground = selected
+        ? Colors.white
+        : AppColors.textPrimary(context).withAlpha(220);
+    final background = selected
+        ? primary
+        : _hovering
+        ? AppColors.hoverSurface(context)
+        : Colors.transparent;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onPressed,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          height: double.infinity,
+          color: background,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(widget.segment.icon, size: 17, color: foreground),
+              const SizedBox(width: 7),
+              Text(
+                widget.segment.label,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 14,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                  height: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsFieldGrid extends StatelessWidget {
+  final List<Widget> children;
+
+  const _SettingsFieldGrid({required this.children});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxWidth < 560;
-        final labelWidget = Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-          ],
-        );
-
-        if (compact) {
+        if (constraints.maxWidth < 560) {
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [labelWidget, const SizedBox(height: 8), child],
+            children: [
+              for (var index = 0; index < children.length; index++) ...[
+                children[index],
+                if (index != children.length - 1) const SizedBox(height: 14),
+              ],
+            ],
           );
         }
 
         return Row(
           children: [
-            SizedBox(width: 180, child: labelWidget),
-            Expanded(child: child),
+            for (var index = 0; index < children.length; index++) ...[
+              Expanded(child: children[index]),
+              if (index != children.length - 1) const SizedBox(width: 14),
+            ],
           ],
         );
       },
     );
   }
+}
+
+class _SettingsTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final bool enabled;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final Widget? trailing;
+  final String? suffixText;
+
+  const _SettingsTextField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.enabled = true,
+    this.obscureText = false,
+    this.keyboardType,
+    this.trailing,
+    this.suffixText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = AppColors.primary(context);
+    final textColor = AppColors.textPrimary(context);
+    final secondaryColor = AppColors.textSecondary(context);
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 120),
+      opacity: enabled ? 1 : 0.5,
+      child: Container(
+        height: 58,
+        padding: const EdgeInsets.fromLTRB(13, 7, 10, 7),
+        decoration: _settingsFieldDecoration(context),
+        child: Row(
+          children: [
+            Icon(icon, size: 21, color: enabled ? secondaryColor : null),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: secondaryColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      enabled: enabled,
+                      obscureText: obscureText,
+                      keyboardType: keyboardType,
+                      cursorColor: primary,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        height: 1.2,
+                      ),
+                      decoration: const InputDecoration(
+                        isCollapsed: true,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (suffixText != null) ...[
+              const SizedBox(width: 8),
+              Text(
+                suffixText!,
+                style: TextStyle(
+                  color: secondaryColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+            if (trailing != null) ...[const SizedBox(width: 4), trailing!],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VisibilityToggle extends StatelessWidget {
+  final bool visible;
+  final VoidCallback onPressed;
+
+  const _VisibilityToggle({required this.visible, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: visible ? '隐藏' : '显示',
+      onPressed: onPressed,
+      color: AppColors.textSecondary(context),
+      iconSize: 20,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+      icon: Icon(
+        visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+      ),
+    );
+  }
+}
+
+class _SettingsSwitchRow extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final IconData icon;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SettingsSwitchRow({
+    required this.title,
+    required this.icon,
+    required this.value,
+    required this.onChanged,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 58),
+      padding: const EdgeInsets.fromLTRB(13, 9, 10, 9),
+      decoration: _settingsFieldDecoration(context),
+      child: Row(
+        children: [
+          Icon(icon, size: 21, color: AppColors.textSecondary(context)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: AppColors.textPrimary(context),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle!,
+                    style: TextStyle(
+                      color: AppColors.textSecondary(context),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: Colors.white,
+            activeTrackColor: AppColors.primary(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsSliderRow extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final double value;
+  final double min;
+  final double max;
+  final int divisions;
+  final String displayValue;
+  final ValueChanged<double> onChanged;
+
+  const _SettingsSliderRow({
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.displayValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.fromLTRB(13, 8, 12, 8),
+      decoration: _settingsFieldDecoration(context),
+      child: Row(
+        children: [
+          Icon(icon, size: 21, color: AppColors.textSecondary(context)),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 82,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: AppColors.textPrimary(context),
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Slider(
+              value: value,
+              min: min,
+              max: max,
+              divisions: divisions,
+              label: displayValue,
+              activeColor: AppColors.primary(context),
+              onChanged: onChanged,
+            ),
+          ),
+          SizedBox(
+            width: 36,
+            child: Text(
+              displayValue,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                color: AppColors.textPrimary(context),
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsActionButton extends StatefulWidget {
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String label;
+  final bool primary;
+  final bool destructive;
+  final bool busy;
+
+  const _SettingsActionButton({
+    required this.onPressed,
+    required this.icon,
+    required this.label,
+    this.primary = false,
+    this.destructive = false,
+    this.busy = false,
+  });
+
+  @override
+  State<_SettingsActionButton> createState() => _SettingsActionButtonState();
+}
+
+class _SettingsActionButtonState extends State<_SettingsActionButton> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onPressed != null;
+    final primary = AppColors.primary(context);
+    final danger = Colors.redAccent;
+    final background = widget.primary
+        ? primary
+        : widget.destructive
+        ? danger.withAlpha(_hovering ? 26 : 14)
+        : AppColors.elevatedSurface(context);
+    final foreground = widget.primary
+        ? Colors.white
+        : widget.destructive
+        ? danger
+        : AppColors.textPrimary(context).withAlpha(220);
+    final borderColor = widget.primary
+        ? Colors.transparent
+        : widget.destructive
+        ? danger.withAlpha(_hovering ? 190 : 128)
+        : AppColors.separator(context);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      child: GestureDetector(
+        onTap: widget.onPressed,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 120),
+          opacity: enabled ? 1 : 0.5,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOut,
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: borderColor),
+              boxShadow: widget.primary && enabled
+                  ? [
+                      BoxShadow(
+                        color: primary.withAlpha(_hovering ? 70 : 42),
+                        blurRadius: _hovering ? 14 : 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.busy)
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: foreground,
+                    ),
+                  )
+                else
+                  Icon(widget.icon, size: 18, color: foreground),
+                const SizedBox(width: 8),
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    color: foreground,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+BoxDecoration _settingsFieldDecoration(BuildContext context) {
+  return BoxDecoration(
+    color: AppColors.elevatedSurface(context),
+    borderRadius: BorderRadius.circular(8),
+    border: Border.all(color: AppColors.separator(context)),
+  );
 }
 
 class _SettingsSection extends StatelessWidget {

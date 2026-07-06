@@ -10,6 +10,7 @@ import '../widgets/media_detail/media_detail_header.dart';
 import '../widgets/media_detail/cast_list.dart';
 import '../widgets/media_detail/episode_list.dart';
 import '../widgets/media_detail/playback_helper.dart';
+import '../widgets/macos_controls.dart';
 
 void showMediaDetailModal(BuildContext context, dynamic item) {
   assert(item is Movie || item is TVShow, 'Item must be Movie or TVShow');
@@ -427,42 +428,20 @@ class _EmptyInfoBox extends StatelessWidget {
   }
 }
 
-class _CloseButton extends StatefulWidget {
+class _CloseButton extends StatelessWidget {
   const _CloseButton();
 
   @override
-  State<_CloseButton> createState() => _CloseButtonState();
-}
-
-class _CloseButtonState extends State<_CloseButton> {
-  bool _isHovering = false;
-
-  @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: _isHovering
-                ? Colors.black.withAlpha((255 * 0.5).round())
-                : Colors.black.withAlpha((255 * 0.3).round()),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: _isHovering
-                  ? Colors.white.withAlpha((255 * 0.2).round())
-                  : Colors.transparent,
-              width: 1,
-            ),
-          ),
-          child: const Icon(Icons.close, color: Colors.white, size: 18),
-        ),
-      ),
+    return MacosIconButton(
+      onPressed: () => Navigator.pop(context),
+      icon: Icons.close_rounded,
+      tooltip: '关闭',
+      tone: MacosControlTone.overlay,
+      foregroundColor: Colors.white,
+      backgroundColor: Colors.black.withAlpha(76),
+      size: 44,
+      iconSize: 20,
     );
   }
 }

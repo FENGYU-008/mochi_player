@@ -6,8 +6,11 @@ import '../../../../models/domain/models.dart';
 import '../../../../providers/media_library_provider.dart';
 import '../../../../services/tmdb_image_cache_manager.dart';
 import '../../view_models/media_detail_view_model.dart';
+import '../macos_controls.dart';
 import 'favorite_button.dart';
 import 'playback_helper.dart';
+
+const double _detailReadableWidth = 820;
 
 class MediaDetailHeader extends StatelessWidget {
   final MediaDetailViewModel viewModel;
@@ -164,7 +167,7 @@ class _HeaderContent extends StatelessWidget {
         ],
         const SizedBox(height: 12),
         ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 650),
+          constraints: const BoxConstraints(maxWidth: _detailReadableWidth),
           child: Text(
             viewModel.overview,
             maxLines: compact ? 2 : 3,
@@ -361,24 +364,12 @@ class _ActionRow extends StatelessWidget {
       runSpacing: 10,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        FilledButton.icon(
+        MacosActionButton(
           onPressed: action.enabled ? action.onPressed : null,
-          icon: const Icon(Icons.play_arrow_rounded),
-          label: Text(action.label),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF007AFF),
-            foregroundColor: Colors.white,
-            disabledBackgroundColor: Colors.white.withAlpha(35),
-            disabledForegroundColor: Colors.white54,
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          icon: Icons.play_arrow_rounded,
+          label: action.label,
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
         ),
         FavoriteButton(tmdbId: viewModel.tmdbId, overrideColor: Colors.white),
         if (action.detail != null)
@@ -504,27 +495,10 @@ class _RatingPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.amber,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.star_rounded, color: Colors.black87, size: 15),
-          const SizedBox(width: 4),
-          Text(
-            rating.toStringAsFixed(1),
-            style: const TextStyle(
-              color: Colors.black87,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
+    return MacosPill(
+      text: rating.toStringAsFixed(1),
+      icon: Icons.star_rounded,
+      rating: true,
     );
   }
 }
@@ -536,22 +510,7 @@ class _TextPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withAlpha(32),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.white.withAlpha(22)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: Colors.white.withAlpha(225),
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+    return MacosPill(text: text, tone: MacosControlTone.overlay);
   }
 }
 

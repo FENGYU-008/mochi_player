@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../providers/media_library_provider.dart';
+import '../../theme/app_colors.dart';
+import '../macos_controls.dart';
 
 class FavoriteButton extends StatefulWidget {
   final String tmdbId;
@@ -58,29 +60,26 @@ class _FavoriteButtonState extends State<FavoriteButton> {
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = widget.overrideColor ?? Colors.white;
-    // 圆形按钮样式
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: baseColor.withAlpha((255 * 0.15).round()),
-        border: Border.all(
-          color: baseColor.withAlpha((255 * 0.4).round()),
-          width: 1.5,
-        ),
-      ),
-      child: IconButton(
-        onPressed: _toggleFavorite,
-        icon: Icon(
-          _isFavorite ? Icons.favorite : Icons.favorite_border,
-          color: _isFavorite ? Colors.red : baseColor,
-          size: 26,
-        ),
-        padding: EdgeInsets.zero,
-        tooltip: _isFavorite ? "取消收藏" : "加入收藏",
-      ),
+    final overlayTone = widget.overrideColor != null;
+    final baseColor = widget.overrideColor ?? AppColors.textPrimary(context);
+    final backgroundColor = overlayTone
+        ? Colors.white.withAlpha(_isFavorite ? 54 : 34)
+        : _isFavorite
+        ? AppColors.favorite.withAlpha(24)
+        : AppColors.hoverSurface(context);
+    return MacosIconButton(
+      onPressed: _toggleFavorite,
+      icon: _isFavorite
+          ? Icons.favorite_rounded
+          : Icons.favorite_border_rounded,
+      tooltip: _isFavorite ? "取消收藏" : "加入收藏",
+      selected: _isFavorite,
+      tone: overlayTone ? MacosControlTone.overlay : MacosControlTone.adaptive,
+      selectedColor: AppColors.favorite,
+      foregroundColor: baseColor,
+      backgroundColor: backgroundColor,
+      size: 44,
+      iconSize: 22,
     );
   }
 }

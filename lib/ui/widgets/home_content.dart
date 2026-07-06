@@ -4,6 +4,7 @@ import '../../providers/media_library_provider.dart';
 import '../../models/domain/models.dart';
 import '../pages/section_view_page.dart';
 import '../pages/media_detail_modals.dart';
+import '../theme/app_colors.dart';
 import 'media_poster_card.dart';
 import 'horizontal_scroll_view.dart';
 import 'hero_section.dart';
@@ -223,11 +224,7 @@ class _HomeContentState extends State<HomeContent> {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const Spacer(),
             if (onSeeAll != null)
@@ -433,9 +430,9 @@ class _HomeContentState extends State<HomeContent> {
           // Trending TV
           Expanded(
             child: TrendingCategoryCard(
-              config: const TrendingCardConfig(
+              config: TrendingCardConfig(
                 icon: Icons.tv_rounded,
-                iconColor: Color(0xFF0A84FF),
+                iconColor: AppColors.primary(context),
                 title: '热门剧集',
                 subtitle: '最多观看',
               ),

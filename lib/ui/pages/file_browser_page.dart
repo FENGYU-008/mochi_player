@@ -8,7 +8,9 @@ import 'package:provider/provider.dart';
 import '../../providers/file_browser_provider.dart';
 import '../../models/domain/media_file.dart';
 import '../../models/domain/media_type.dart';
+import '../theme/app_colors.dart';
 import '../widgets/file_card.dart'; // 引入刚才写的方形卡片
+import '../widgets/macos_controls.dart';
 
 class FileBrowserPage extends StatefulWidget {
   const FileBrowserPage({super.key});
@@ -139,29 +141,21 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
           if (state.canGoBack)
             Padding(
               padding: const EdgeInsets.only(right: 12),
-              child: IconButton(
+              child: MacosIconButton(
                 onPressed: () => provider.navigateBack(),
-                icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-                style: IconButton.styleFrom(
-                  backgroundColor: theme.textTheme.bodyMedium!.color!.withAlpha(
-                    (255 * 0.05).round(),
-                  ), // 按钮背景
-                  hoverColor: theme.textTheme.bodyMedium!.color!.withAlpha(
-                    (255 * 0.1).round(),
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.all(8),
-                ),
+                icon: Icons.arrow_back_ios_new_rounded,
                 tooltip: "返回上一级",
+                foregroundColor: AppColors.textPrimary(context),
+                backgroundColor: AppColors.hoverSurface(context),
+                size: 36,
+                iconSize: 16,
               ),
             ),
 
           // B. 当前路径图标
           Icon(
             Icons.folder_open_rounded,
-            color: Colors.blueAccent.shade100,
+            color: AppColors.primary(context),
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -197,23 +191,28 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
           ),
 
           // D. 视图切换按钮
-          IconButton(
-            icon: Icon(
-              state.viewMode == ViewMode.grid
-                  ? Icons.view_list_rounded
-                  : Icons.grid_view_rounded,
-            ),
-            color: theme.textTheme.titleMedium?.color,
+          MacosIconButton(
             onPressed: () => provider.toggleViewMode(),
+            icon: state.viewMode == ViewMode.grid
+                ? Icons.view_list_rounded
+                : Icons.grid_view_rounded,
             tooltip: "切换视图",
+            foregroundColor: AppColors.textPrimary(context),
+            backgroundColor: AppColors.hoverSurface(context),
+            size: 36,
+            iconSize: 19,
           ),
+          const SizedBox(width: 8),
 
           // E. 刷新按钮
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            color: theme.textTheme.titleMedium?.color,
+          MacosIconButton(
             onPressed: () => provider.refresh(),
+            icon: Icons.refresh_rounded,
             tooltip: "刷新目录",
+            foregroundColor: AppColors.textPrimary(context),
+            backgroundColor: AppColors.hoverSurface(context),
+            size: 36,
+            iconSize: 20,
           ),
         ],
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app_colors.dart';
+
 // 1. 定义自定义主题扩展
 @immutable
 class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
@@ -45,8 +47,16 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     }
     return AppThemeExtension(
       searchBarColor: Color.lerp(searchBarColor, other.searchBarColor, t)!,
-      searchBarHintColor: Color.lerp(searchBarHintColor, other.searchBarHintColor, t)!,
-      searchBarIconColor: Color.lerp(searchBarIconColor, other.searchBarIconColor, t)!,
+      searchBarHintColor: Color.lerp(
+        searchBarHintColor,
+        other.searchBarHintColor,
+        t,
+      )!,
+      searchBarIconColor: Color.lerp(
+        searchBarIconColor,
+        other.searchBarIconColor,
+        t,
+      )!,
       keyCapColor: Color.lerp(keyCapColor, other.keyCapColor, t)!,
       keyCapTextColor: Color.lerp(keyCapTextColor, other.keyCapTextColor, t)!,
       cardShadowColor: Color.lerp(cardShadowColor, other.cardShadowColor, t)!,
@@ -59,7 +69,13 @@ class AppTheme {
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     useMaterial3: true,
-    primaryColor: const Color(0xFF007AFF),
+    primaryColor: AppColors.accent,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.accent,
+      brightness: Brightness.light,
+      primary: AppColors.accent,
+      secondary: AppColors.accent,
+    ),
     scaffoldBackgroundColor: Colors.white,
     canvasColor: const Color(0xFFF5F5F7),
     dividerColor: const Color(0xFFE5E5E5),
@@ -84,7 +100,13 @@ class AppTheme {
     brightness: Brightness.dark,
     useMaterial3: true,
     // 恢复为你喜欢的、更深的蓝色
-    primaryColor: const Color(0xFF0A84FF),
+    primaryColor: AppColors.accentDark,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.accentDark,
+      brightness: Brightness.dark,
+      primary: AppColors.accentDark,
+      secondary: AppColors.accentDark,
+    ),
     scaffoldBackgroundColor: const Color(0xFF1C1C1E),
     // 主背景
     canvasColor: const Color(0xFF2C2C2E),

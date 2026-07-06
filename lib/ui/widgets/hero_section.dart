@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/domain/models.dart';
 import '../../services/tmdb_image_cache_manager.dart';
 import '../pages/media_detail_modals.dart';
+import 'macos_controls.dart';
 import 'media_detail/playback_helper.dart';
 
 /// 首页 Hero Section
@@ -63,7 +64,6 @@ class HeroSection extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                     height: 1.1,
-                    letterSpacing: -1.0,
                     shadows: [
                       Shadow(
                         offset: Offset(0, 4),
@@ -79,18 +79,21 @@ class HeroSection extends StatelessWidget {
 
                 // 简介
                 if (overview != null && overview.isNotEmpty)
-                  Text(
-                    overview,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.white.withAlpha(200),
-                      height: 1.5,
-                      shadows: const [
-                        Shadow(blurRadius: 10, color: Colors.black54),
-                      ],
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 820),
+                    child: Text(
+                      overview,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.white.withAlpha(210),
+                        height: 1.5,
+                        shadows: const [
+                          Shadow(blurRadius: 10, color: Colors.black54),
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 const SizedBox(height: 24),
 
@@ -156,27 +159,10 @@ class HeroSection extends StatelessWidget {
       children: [
         // 评分
         if (rating > 0)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: Colors.amber,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.star_rounded, color: Colors.black87, size: 16),
-                const SizedBox(width: 4),
-                Text(
-                  rating.toStringAsFixed(1),
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
+          MacosPill(
+            text: rating.toStringAsFixed(1),
+            icon: Icons.star_rounded,
+            rating: true,
           ),
 
         // 年份
@@ -194,24 +180,7 @@ class HeroSection extends StatelessWidget {
         ...genres
             .take(3)
             .map(
-              (genre) => Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(30),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  genre,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withAlpha(220),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+              (genre) => MacosPill(text: genre, tone: MacosControlTone.overlay),
             ),
       ],
     );
@@ -220,54 +189,23 @@ class HeroSection extends StatelessWidget {
   Widget _buildActionButtons(BuildContext context) {
     return Row(
       children: [
-        // 播放按钮
-        ElevatedButton.icon(
+        MacosActionButton(
           onPressed: () => _handlePlay(context),
-          icon: const Icon(
-            Icons.play_arrow_rounded,
-            color: Colors.white,
-            size: 24,
-          ),
-          label: const Text(
-            '播放',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF007AFF),
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 8,
-            shadowColor: const Color(0xFF007AFF).withAlpha(100),
-          ),
+          icon: Icons.play_arrow_rounded,
+          label: '播放',
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
 
-        // 更多信息按钮
-        OutlinedButton.icon(
+        MacosActionButton(
           onPressed: () => _handleMoreInfo(context),
-          icon: const Icon(Icons.info_outline, color: Colors.white, size: 20),
-          label: const Text(
-            '详情',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.black.withAlpha(60),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            side: BorderSide(color: Colors.white.withAlpha(100), width: 1.5),
-          ),
+          icon: Icons.info_outline_rounded,
+          label: '详情',
+          style: MacosButtonStyle.secondary,
+          tone: MacosControlTone.overlay,
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 22),
         ),
       ],
     );

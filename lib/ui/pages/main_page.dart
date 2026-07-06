@@ -212,7 +212,6 @@ class _MainPageState extends State<MainPage> {
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
-                                          letterSpacing: -0.5,
                                           color:
                                               theme.textTheme.bodyMedium?.color,
                                         ),
