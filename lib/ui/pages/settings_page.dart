@@ -415,7 +415,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.manage_search_outlined),
-                label: Text(isBusy ? '重新刮削中' : '重新刮削媒体库'),
+                label: Text(isBusy ? '刮削中' : '补全元数据'),
               ),
               OutlinedButton.icon(
                 onPressed: isBusy ? null : _confirmClearLibrary,
@@ -530,9 +530,9 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('重新刮削媒体库？'),
+          title: const Text('补全媒体库元数据？'),
           content: const Text(
-            '这会清空本地元数据和 TMDB 匹配结果，然后重新刮削已经扫描到的文件。播放进度、收藏和 WebDAV 文件会保留。',
+            '这会先同步 WebDAV 根目录，移除已不存在的本地记录，然后只为缺少元数据的文件请求 TMDB。已有匹配结果、播放进度和收藏会保留。',
           ),
           actions: [
             TextButton(
@@ -541,7 +541,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('重新刮削'),
+              child: const Text('开始补全'),
             ),
           ],
         );
@@ -560,7 +560,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!settingsProvider.hasTmdbApiKey) {
       messenger.showSnackBar(
         const SnackBar(
-          content: Text('重新刮削前请先设置 TMDB API 密钥'),
+          content: Text('补全元数据前请先设置 TMDB API 密钥'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -573,7 +573,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final error = mediaLibraryProvider.error;
     messenger.showSnackBar(
       SnackBar(
-        content: Text(error ?? '已从 WebDAV 根目录重新刮削媒体库'),
+        content: Text(error ?? '已从 WebDAV 根目录补全媒体库元数据'),
         backgroundColor: error == null ? null : Colors.redAccent,
       ),
     );

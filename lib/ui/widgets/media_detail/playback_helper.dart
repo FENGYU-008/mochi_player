@@ -10,8 +10,32 @@ class PlaybackHelper {
     BuildContext context,
     MediaFile file, {
     String? contextTitle,
+    String? loadingMessage,
+    String? failureMessage,
+    List<MediaFile> playlist = const [],
   }) {
-    _openPlayer(context, file, contextTitle: contextTitle);
+    _openPlayer(
+      context,
+      file,
+      contextTitle: contextTitle,
+      loadingMessage: loadingMessage,
+      failureMessage: failureMessage,
+      playlist: playlist,
+    );
+  }
+
+  static void playLibraryItem(BuildContext context, Object item) {
+    if (item is Movie) {
+      playMovie(context, item);
+      return;
+    }
+
+    if (item is TVShow) {
+      playTVShow(context, item);
+      return;
+    }
+
+    _showError(context, "不支持播放此资源");
   }
 
   /// 播放电影：查找文件并播放（支持多版本选择）
@@ -29,6 +53,20 @@ class PlaybackHelper {
     } else {
       _openPlayer(context, versions.first);
     }
+  }
+
+  /// 播放剧集：选择第一集本地文件并播放。
+  static void playTVShow(BuildContext context, TVShow show) {
+    final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
+    final versions = provider.getVersions(show.tmdbId);
+    final targetFile = _firstPlayableEpisodeFile(versions);
+
+    if (targetFile == null) {
+      _showError(context, "未找到可播放剧集");
+      return;
+    }
+
+    _openPlayer(context, targetFile, contextTitle: show.title);
   }
 
   /// 播放剧集：查找对应 Episode 的文件并播放
@@ -59,25 +97,30 @@ class PlaybackHelper {
     BuildContext context,
     MediaFile file, {
     String? contextTitle,
+    String? loadingMessage,
+    String? failureMessage,
+    List<MediaFile> playlist = const [],
   }) async {
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Row(
           children: [
-            CircularProgressIndicator(strokeWidth: 2),
-            SizedBox(width: 16),
-            Expanded(child: Text("正在获取播放链接...")),
+            const CircularProgressIndicator(strokeWidth: 2),
+            const SizedBox(width: 16),
+            Expanded(child: Text(loadingMessage ?? "正在获取播放链接...")),
           ],
         ),
-        duration: Duration(minutes: 1),
+        duration: const Duration(minutes: 1),
       ),
     );
 
     final directLink = await WebDavService().getDirectLink(file.path);
+    if (!context.mounted) return;
+
     messenger.hideCurrentSnackBar();
 
-    if (directLink != null && context.mounted) {
+    if (directLink != null) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -85,11 +128,12 @@ class PlaybackHelper {
             videoItem: file,
             url: directLink,
             contextTitle: contextTitle,
+            playlist: playlist,
           ),
         ),
       );
-    } else if (context.mounted) {
-      _showError(context, "获取播放链接失败，请检查网络或服务器");
+    } else {
+      _showError(context, failureMessage ?? "获取播放链接失败，请检查网络或服务器");
     }
   }
 
@@ -199,5 +243,21 @@ class PlaybackHelper {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
     }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+  }
+
+  static MediaFile? _firstPlayableEpisodeFile(List<MediaFile> files) {
+    final candidates = files
+        .where((file) => file.mediaType == MediaType.episode)
+        .toList();
+    if (candidates.isEmpty) return files.isEmpty ? null : files.first;
+
+    candidates.sort((a, b) {
+      final season = (a.parsedSeason ?? 999999).compareTo(
+        b.parsedSeason ?? 999999,
+      );
+      if (season != 0) return season;
+      return (a.parsedEpisode ?? 999999).compareTo(b.parsedEpisode ?? 999999);
+    });
+    return candidates.first;
   }
 }

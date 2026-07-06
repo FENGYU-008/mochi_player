@@ -87,11 +87,21 @@ class MediaLibraryProvider extends ChangeNotifier {
   List<MediaFile> get mediaFiles =>
       _mediaFileEntities.map(ModelConverter.toMediaFile).toList();
 
-  List<Movie> get movies =>
-      _movieMetadataEntities.map(ModelConverter.toMovie).toList();
+  List<Movie> get movies {
+    final availableTmdbIds = _availableMovieTmdbIds;
+    return _movieMetadataEntities
+        .where((movie) => availableTmdbIds.contains(movie.tmdbId))
+        .map(ModelConverter.toMovie)
+        .toList();
+  }
 
-  List<TVShow> get tvShows =>
-      _tvShowMetadataEntities.map(_convertTVShowWithSeasons).toList();
+  List<TVShow> get tvShows {
+    final availableTmdbIds = _availableTVShowTmdbIds;
+    return _tvShowMetadataEntities
+        .where((show) => availableTmdbIds.contains(show.tmdbId))
+        .map(_convertTVShowWithSeasons)
+        .toList();
+  }
 
   /// 转换 TVShow 并填充 seasons/episodes
   TVShow _convertTVShowWithSeasons(entity.TVShowMetadataEntity show) {
@@ -156,8 +166,7 @@ class MediaLibraryProvider extends ChangeNotifier {
   int get totalFiles => _mediaFileEntities.length;
 
   bool get hasHomeContent {
-    if (_movieMetadataEntities.isNotEmpty ||
-        _tvShowMetadataEntities.isNotEmpty) {
+    if (_hasVisibleMetadata) {
       return true;
     }
     if (_trendingMovies.isNotEmpty ||
@@ -323,8 +332,12 @@ class MediaLibraryProvider extends ChangeNotifier {
   List<dynamic> get recentlyAddedContent {
     // 合并电影和剧集，按添加时间排序（使用相关 mediaFile 的 addedAt）
     final List<MapEntry<DateTime, dynamic>> items = [];
+    final availableMovieTmdbIds = _availableMovieTmdbIds;
+    final availableTVShowTmdbIds = _availableTVShowTmdbIds;
 
     for (final movie in _movieMetadataEntities) {
+      if (!availableMovieTmdbIds.contains(movie.tmdbId)) continue;
+
       // 找到该电影关联的 mediaFile 的最早添加时间
       final relatedFiles = _mediaFileEntities.where(
         (f) => f.tmdbId == movie.tmdbId,
@@ -338,8 +351,10 @@ class MediaLibraryProvider extends ChangeNotifier {
     }
 
     for (final show in _tvShowMetadataEntities) {
+      if (!availableTVShowTmdbIds.contains(show.tmdbId)) continue;
+
       final relatedFiles = _mediaFileEntities.where(
-        (f) => f.tmdbId != null && f.tmdbId!.startsWith(show.tmdbId),
+        (f) => _showKeyFromTmdbId(f.tmdbId) == show.tmdbId,
       );
       if (relatedFiles.isNotEmpty) {
         final earliestDate = relatedFiles
@@ -446,15 +461,23 @@ class MediaLibraryProvider extends ChangeNotifier {
       }
 
       final webDavService = WebDavService();
-      final newCount = await _scanFilesFromWebDav(
+      final scanResult = await _scanFilesFromWebDav(
         webDavService: webDavService,
         rootPath: rootPath,
+        removeMissingFiles: rootPath == '/',
       );
 
-      _logger.i('✅ 扫描完成，发现 $newCount 个新文件');
+      _logger.i(
+        '✅ 扫描完成，新增 ${scanResult.newCount} 个文件，移除 ${scanResult.removedCount} 个失效文件',
+      );
       notifyListeners();
 
       _isLoading = false;
+      if (scanResult.hadReadError) {
+        _error = 'WebDAV 扫描不完整，已跳过自动刮削，避免使用数据库旧文件';
+        notifyListeners();
+        return;
+      }
       notifyListeners();
 
       // 刮削元数据在后台执行，扫描结果可以先显示出来。
@@ -545,7 +568,7 @@ class MediaLibraryProvider extends ChangeNotifier {
     }
   }
 
-  /// 重新刮削元数据
+  /// 增量补全元数据
   Future<void> rescrapeLibrary() async {
     if (isLoading) return;
 
@@ -563,12 +586,20 @@ class MediaLibraryProvider extends ChangeNotifier {
       _recountContinueWatching();
       _markMediaCatalogChanged();
 
-      _logger.i('重新刮削前按启动算法扫描 WebDAV 根目录...');
-      final newCount = await _scanFilesFromWebDav(
+      _logger.i('增量刮削前按启动算法扫描 WebDAV 根目录...');
+      final scanResult = await _scanFilesFromWebDav(
         webDavService: WebDavService(),
         rootPath: '/',
+        removeMissingFiles: true,
       );
-      _logger.i('✅ 重新刮削前根目录扫描完成，发现 $newCount 个新文件');
+      _logger.i(
+        '✅ 增量刮削前根目录扫描完成，新增 ${scanResult.newCount} 个文件，移除 ${scanResult.removedCount} 个失效文件',
+      );
+
+      if (scanResult.hadReadError) {
+        _error = 'WebDAV 扫描不完整，已跳过增量刮削，避免使用数据库旧文件';
+        return;
+      }
 
       if (_mediaFileEntities.isEmpty) {
         _error = '已扫描 WebDAV 根目录，但没有发现可刮削视频文件';
@@ -577,28 +608,27 @@ class MediaLibraryProvider extends ChangeNotifier {
 
       final tmdb = TmdbService();
       if (!tmdb.isConfigured) {
-        _error = '未配置 TMDB API Key，无法重新刮削';
+        _error = '未配置 TMDB API Key，无法增量刮削';
         return;
       }
-
-      await _db.clearMetadata();
-      _movieMetadataEntities.clear();
-      _tvShowMetadataEntities.clear();
-      _seasonMetadataEntities.clear();
-      _episodeMetadataEntities.clear();
-      _markMetadataChanged();
 
       for (final file in _mediaFileEntities) {
         final parsed = FileNameParser.parse(
           fileName: file.fileName,
           filePath: file.path,
         );
+        final existingTmdbId = file.tmdbId?.trim();
+        final parsedTmdbId = parsed.tmdbId?.trim();
         file.parsedTitle = parsed.title;
         file.parsedYear = parsed.year;
         file.parsedSeason = parsed.season;
         file.parsedEpisode = parsed.episode;
         file.mediaType = _determineMediaType(parsed);
-        file.tmdbId = parsed.tmdbId;
+        file.tmdbId = parsedTmdbId != null && parsedTmdbId.isNotEmpty
+            ? parsedTmdbId
+            : existingTmdbId != null && existingTmdbId.isNotEmpty
+            ? existingTmdbId
+            : null;
         file.container = parsed.container;
         file.height = parsed.height;
         file.videoCodec = parsed.videoCodec;
@@ -616,8 +646,8 @@ class MediaLibraryProvider extends ChangeNotifier {
 
       await _scrapeMetadata();
     } catch (e, stackTrace) {
-      _logger.e('❌ 重新刮削失败: $e', error: e, stackTrace: stackTrace);
-      _error = '重新刮削失败: $e';
+      _logger.e('❌ 增量刮削失败: $e', error: e, stackTrace: stackTrace);
+      _error = '增量刮削失败: $e';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -716,14 +746,18 @@ class MediaLibraryProvider extends ChangeNotifier {
 
   // ===== 辅助方法 =====
 
-  Future<int> _scanFilesFromWebDav({
+  Future<_LibraryScanResult> _scanFilesFromWebDav({
     required WebDavService webDavService,
     required String rootPath,
+    bool removeMissingFiles = false,
   }) async {
     final scanner = LibraryScanner(webDavService);
     var newCount = 0;
+    var removedCount = 0;
+    final scannedPaths = <String>{};
 
     await for (final mediaFileEntity in scanner.scan(rootPath)) {
+      scannedPaths.add(mediaFileEntity.path);
       final existing = await _db.getMediaFileByPath(mediaFileEntity.path);
 
       if (existing == null) {
@@ -738,7 +772,37 @@ class MediaLibraryProvider extends ChangeNotifier {
       }
     }
 
-    return newCount;
+    if (removeMissingFiles && scanner.hadReadError) {
+      _logger.w('跳过失效文件清理，因为本次 WebDAV 扫描存在读取失败');
+    } else if (removeMissingFiles) {
+      removedCount = await _removeMissingMediaFiles(scannedPaths);
+    }
+
+    return _LibraryScanResult(
+      newCount: newCount,
+      removedCount: removedCount,
+      hadReadError: scanner.hadReadError,
+    );
+  }
+
+  Future<int> _removeMissingMediaFiles(Set<String> scannedPaths) async {
+    final staleFiles = _mediaFileEntities
+        .where((file) => !scannedPaths.contains(file.path))
+        .toList();
+    if (staleFiles.isEmpty) return 0;
+
+    final removedCount = await _db.deleteMediaFilesByIds(
+      staleFiles.map((file) => file.id).toList(),
+    );
+    if (removedCount == 0) return 0;
+
+    final stalePaths = staleFiles.map((file) => file.path).toSet();
+    _mediaFileEntities.removeWhere((file) => stalePaths.contains(file.path));
+    _recountContinueWatching();
+    _markAllLibraryContentChanged();
+    _logger.i('🧹 已移除 $removedCount 个 WebDAV 中不存在的媒体文件');
+
+    return removedCount;
   }
 
   void _upsertMovieMetadata(entity.MovieMetadataEntity movie) {
@@ -772,4 +836,54 @@ class MediaLibraryProvider extends ChangeNotifier {
     }
     return entity.MediaType.unknown;
   }
+
+  Set<String> get _availableMovieTmdbIds {
+    return _mediaFileEntities
+        .where(
+          (file) =>
+              file.mediaType == entity.MediaType.movie &&
+              file.tmdbId != null &&
+              file.tmdbId!.isNotEmpty,
+        )
+        .map((file) => file.tmdbId!)
+        .toSet();
+  }
+
+  Set<String> get _availableTVShowTmdbIds {
+    return _mediaFileEntities
+        .where(
+          (file) =>
+              file.mediaType == entity.MediaType.episode &&
+              file.tmdbId != null &&
+              file.tmdbId!.isNotEmpty,
+        )
+        .map((file) => _showKeyFromTmdbId(file.tmdbId))
+        .whereType<String>()
+        .toSet();
+  }
+
+  bool get _hasVisibleMetadata {
+    final availableMovieTmdbIds = _availableMovieTmdbIds;
+    final hasMovie = _movieMetadataEntities.any(
+      (movie) => availableMovieTmdbIds.contains(movie.tmdbId),
+    );
+    if (hasMovie) return true;
+
+    final availableTVShowTmdbIds = _availableTVShowTmdbIds;
+    return _tvShowMetadataEntities.any(
+      (show) => availableTVShowTmdbIds.contains(show.tmdbId),
+    );
+  }
+}
+
+class _LibraryScanResult {
+  final int newCount;
+  final int removedCount;
+  final bool hadReadError;
+
+  const _LibraryScanResult({
+    required this.newCount,
+    required this.removedCount,
+    required this.hadReadError,
+  });
 }

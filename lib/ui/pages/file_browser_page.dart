@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/providers/app_settings_provider.dart';
-import 'package:mochi_player/services/webdav_service.dart';
-import 'package:mochi_player/ui/pages/player_page.dart';
+import 'package:mochi_player/ui/widgets/media_detail/playback_helper.dart';
 import 'package:mochi_player/ui/widgets/file_list_item.dart';
 import 'package:provider/provider.dart';
 
-// 引入核心组件和数据
 // 引入核心组件和数据
 import '../../providers/file_browser_provider.dart';
 import '../../models/domain/media_file.dart';
@@ -293,41 +291,13 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
   }
 
   // 播放视频的逻辑
-  void _playVideo(BuildContext context, MediaFile item) async {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const CircularProgressIndicator(strokeWidth: 2),
-            const SizedBox(width: 16),
-            Expanded(child: Text("正在获取播放链接: ${item.fileName}")),
-          ],
-        ),
-        duration: const Duration(minutes: 1),
-      ),
+  void _playVideo(BuildContext context, MediaFile item) {
+    PlaybackHelper.playFile(
+      context,
+      item,
+      loadingMessage: "正在获取播放链接: ${item.fileName}",
+      failureMessage: "获取播放链接失败，请检查 Alist 配置或网络",
     );
-
-    final directLink = await WebDavService().getDirectLink(item.path);
-    if (!context.mounted) return;
-
-    messenger.hideCurrentSnackBar();
-
-    if (directLink != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PlayerPage(videoItem: item, url: directLink),
-        ),
-      );
-    } else {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text("获取播放链接失败，请检查 Alist 配置或网络"),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
   }
 
   // 构建空状态视图

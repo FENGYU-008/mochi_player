@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:provider/provider.dart';
 import '../../models/domain/models.dart';
-import '../../providers/media_library_provider.dart';
 import '../../services/tmdb_image_cache_manager.dart';
-import '../../services/webdav_service.dart';
 import '../pages/media_detail_modals.dart';
-import '../pages/player_page.dart';
+import 'media_detail/playback_helper.dart';
 
 /// 首页 Hero Section
 /// 展示随机选择的一部电影或剧集，带有背景图、标题和操作按钮
@@ -276,56 +273,8 @@ class HeroSection extends StatelessWidget {
     );
   }
 
-  void _handlePlay(BuildContext context) async {
-    final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
-    final messenger = ScaffoldMessenger.of(context);
-
-    String? tmdbId;
-    if (heroItem is Movie) {
-      tmdbId = (heroItem as Movie).tmdbId;
-    } else if (heroItem is TVShow) {
-      tmdbId = (heroItem as TVShow).tmdbId;
-    }
-
-    if (tmdbId == null) return;
-
-    // 查找对应文件
-    final files = provider.getVersions(tmdbId);
-    if (files.isEmpty) {
-      messenger.showSnackBar(const SnackBar(content: Text('未找到可播放文件')));
-      return;
-    }
-
-    final file = files.first;
-
-    messenger.showSnackBar(
-      SnackBar(
-        content: Row(
-          children: const [
-            CircularProgressIndicator(strokeWidth: 2),
-            SizedBox(width: 16),
-            Expanded(child: Text('正在获取播放链接...')),
-          ],
-        ),
-        duration: const Duration(minutes: 1),
-      ),
-    );
-
-    final directLink = await WebDavService().getDirectLink(file.path);
-    if (!context.mounted) return;
-
-    messenger.hideCurrentSnackBar();
-
-    if (directLink != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PlayerPage(videoItem: file, url: directLink),
-        ),
-      );
-    } else {
-      messenger.showSnackBar(const SnackBar(content: Text('获取播放链接失败')));
-    }
+  void _handlePlay(BuildContext context) {
+    PlaybackHelper.playLibraryItem(context, heroItem);
   }
 
   void _handleMoreInfo(BuildContext context) {

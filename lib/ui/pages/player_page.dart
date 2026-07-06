@@ -60,6 +60,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   bool _overrideEmbeddedSubtitleStyle = false;
   bool _windowWasFullScreenOnOpen = false;
   bool _playerUsedWindowFullScreen = false;
+  bool _isDisposed = false;
+  int _mediaOpenGeneration = 0;
   Future<void>? _initialWindowFullScreenCapture;
   Future<void>? _fullScreenTransition;
 
@@ -125,9 +127,10 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     );
 
     _bindPlayerStreams();
-    unawaited(_openMedia());
+    unawaited(_openMedia(_nextMediaOpenGeneration()));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isDisposed) return;
       FocusScope.of(context).requestFocus(_focusNode);
     });
 
@@ -167,10 +170,12 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   void _bindPlayerStreams() {
     _subscriptions.addAll([
       _player.stream.error.listen((error) {
+        if (_isDisposed) return;
         debugPrint('播放器错误: $error');
         _handlePlayerError(error);
       }),
       _player.stream.tracks.listen((tracks) {
+        if (_isDisposed) return;
         final audioTracks = _normalizeAudioTracks(tracks.audio);
         final subtitleTracks = _normalizeSubtitleTracks(tracks.subtitle);
         if (mounted) {
@@ -187,6 +192,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
         }
       }),
       _player.stream.track.listen((track) {
+        if (_isDisposed) return;
         if (mounted) {
           setState(() {
             _selectedAudioTrack = track.audio;
@@ -195,6 +201,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
         }
       }),
       _player.stream.buffering.listen((buffering) {
+        if (_isDisposed) return;
         if (mounted) {
           setState(() {
             _isBuffering = buffering;
@@ -202,14 +209,17 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
         }
       }),
       _player.stream.playing.listen((playing) {
+        if (_isDisposed) return;
         _startHideControlsTimer();
       }),
       _player.stream.completed.listen((completed) {
+        if (_isDisposed) return;
         if (completed) {
           unawaited(_handlePlaybackCompleted());
         }
       }),
       _player.stream.subtitle.listen((subtitle) {
+        if (_isDisposed) return;
         if (mounted) {
           setState(() {
             _subtitle = subtitle;
@@ -219,13 +229,29 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     ]);
   }
 
-  Future<void> _openMedia() async {
-    await _refreshCurrentItemFromLibrary();
+  int _nextMediaOpenGeneration() {
+    _mediaOpenGeneration += 1;
+    return _mediaOpenGeneration;
+  }
+
+  bool _canUsePlayer([int? generation]) {
+    return mounted &&
+        !_isDisposed &&
+        (generation == null || generation == _mediaOpenGeneration);
+  }
+
+  Future<void> _openMedia(int generation) async {
+    await _refreshCurrentItemFromLibrary(generation);
+    if (!_canUsePlayer(generation)) return;
+
     final resumePosition = _resumePosition();
 
     debugPrint('正在播放直链: $_currentUrl');
-    await _applyPlayerSettings();
-    await _applySubtitleStyleMode();
+    await _applyPlayerSettings(generation);
+    if (!_canUsePlayer(generation)) return;
+
+    await _applySubtitleStyleMode(generation);
+    if (!_canUsePlayer(generation)) return;
 
     final media = Media(
       _currentUrl,
@@ -235,13 +261,19 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
     try {
       await _player.open(media, play: true);
-      await _applySubtitleStyleMode();
-      await _restoreProgressIfNeeded(resumePosition);
+      if (!_canUsePlayer(generation)) return;
+
+      await _applySubtitleStyleMode(generation);
+      if (!_canUsePlayer(generation)) return;
+
+      await _restoreProgressIfNeeded(resumePosition, generation);
+      if (!_canUsePlayer(generation)) return;
+
       _startProgressSaveTimer();
       _startHideControlsTimer();
     } catch (error) {
       debugPrint('打开媒体失败: $error');
-      if (mounted) {
+      if (_canUsePlayer(generation)) {
         setState(() {
           _playerError = error.toString();
           _playerErrorIsAudioDecode = _isTrueHdDecoderError(error.toString());
@@ -250,8 +282,9 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     }
   }
 
-  Future<void> _refreshCurrentItemFromLibrary() async {
+  Future<void> _refreshCurrentItemFromLibrary(int generation) async {
     final latestItem = await _libraryProvider.getLatestMediaFile(_currentItem);
+    if (!_canUsePlayer(generation)) return;
     if (latestItem == null) return;
 
     _currentItem = latestItem;
@@ -263,7 +296,9 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     }
   }
 
-  Future<void> _applyPlayerSettings() async {
+  Future<void> _applyPlayerSettings([int? generation]) async {
+    if (!_canUsePlayer(generation)) return;
+
     final platform = _player.platform;
     if (platform is! NativePlayer) return;
 
@@ -284,6 +319,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     };
 
     for (final entry in properties.entries) {
+      if (!_canUsePlayer(generation)) return;
       try {
         await platform.setProperty(entry.key, entry.value);
       } catch (error) {
@@ -292,7 +328,9 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     }
   }
 
-  Future<void> _applySubtitleStyleMode() async {
+  Future<void> _applySubtitleStyleMode([int? generation]) async {
+    if (!_canUsePlayer(generation)) return;
+
     final platform = _player.platform;
     if (platform is! NativePlayer) return;
 
@@ -305,6 +343,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     };
 
     for (final entry in properties.entries) {
+      if (!_canUsePlayer(generation)) return;
       try {
         await platform.setProperty(entry.key, entry.value);
       } catch (error) {
@@ -314,6 +353,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _handlePlayerError(String error) {
+    if (_isDisposed) return;
+
     final isAudioDecodeError = _isTrueHdDecoderError(error);
     if (mounted) {
       setState(() {
@@ -328,6 +369,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _startProgressSaveTimer() {
+    if (_isDisposed) return;
+
     _progressSaveTimer?.cancel();
     _progressSaveTimer = Timer.periodic(_progressSaveInterval, (_) {
       unawaited(_saveProgress());
@@ -350,19 +393,23 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     return Duration(milliseconds: resumePositionMs);
   }
 
-  Future<void> _restoreProgressIfNeeded(Duration? resumePosition) async {
+  Future<void> _restoreProgressIfNeeded(
+    Duration? resumePosition,
+    int generation,
+  ) async {
     if (_hasRestoredPosition || resumePosition == null) return;
+    if (!_canUsePlayer(generation)) return;
 
     _hasRestoredPosition = true;
     await _player.seek(resumePosition);
     unawaited(
       Future<void>.delayed(const Duration(milliseconds: 500), () async {
-        if (!mounted) return;
+        if (!_canUsePlayer(generation)) return;
         final currentPosition = _player.state.position;
         final isStillNearStart =
             currentPosition.inMilliseconds <
             resumePosition.inMilliseconds - 2000;
-        if (isStillNearStart) {
+        if (isStillNearStart && _canUsePlayer(generation)) {
           await _player.seek(resumePosition);
         }
       }),
@@ -370,7 +417,12 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     _showResumePositionNotice(resumePosition);
   }
 
-  Future<void> _saveProgress({bool force = false}) async {
+  Future<void> _saveProgress({
+    bool force = false,
+    bool allowDisposed = false,
+  }) async {
+    if (_isDisposed && !allowDisposed) return;
+
     final positionMs = _player.state.position.inMilliseconds;
     final durationMs = _player.state.duration.inMilliseconds;
     if (positionMs <= 0 && durationMs <= 0) return;
@@ -391,22 +443,33 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   Future<void> _handlePlaybackCompleted() async {
+    if (_isDisposed) return;
+
     await _saveProgress(force: true);
+    if (_isDisposed) return;
+
     if (_hasNext) {
       await _playQueueOffset(1);
     }
   }
 
   Future<void> _playQueueOffset(int offset) async {
-    if (_isSwitchingQueueItem) return;
+    if (_isDisposed || _isSwitchingQueueItem) return;
+
     final targetIndex = _currentIndex + offset;
     if (targetIndex < 0 || targetIndex >= _playlist.length) return;
 
+    final generation = _nextMediaOpenGeneration();
     _isSwitchingQueueItem = true;
     await _saveProgress(force: true);
+    if (!_canUsePlayer(generation)) {
+      _isSwitchingQueueItem = false;
+      return;
+    }
+
     final targetItem = _playlist[targetIndex];
 
-    if (mounted) {
+    if (_canUsePlayer(generation)) {
       setState(() {
         _isBuffering = true;
         _playerError = null;
@@ -415,7 +478,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     }
 
     final directLink = await WebDavService().getDirectLink(targetItem.path);
-    if (!mounted) {
+    if (!_canUsePlayer(generation)) {
       _isSwitchingQueueItem = false;
       return;
     }
@@ -451,7 +514,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     });
 
     try {
-      await _openMedia();
+      await _openMedia(generation);
     } finally {
       _isSwitchingQueueItem = false;
     }
@@ -528,6 +591,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   Future<void> _setAudioTrack(AudioTrack track) async {
+    if (_isDisposed) return;
+
     if (mounted) {
       setState(() {
         _selectedAudioTrack = track;
@@ -538,11 +603,13 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     } catch (error) {
       debugPrint('切换音轨失败: $error');
     }
+    if (_isDisposed) return;
+
     _startHideControlsTimer();
   }
 
   Future<bool> _trySelectFallbackAudioTrack({bool fromError = false}) async {
-    if (_isTryingAudioFallback) return false;
+    if (_isDisposed || _isTryingAudioFallback) return false;
 
     final fallback = _findFallbackAudioTrack(_audioTracks);
     if (fallback == null) return false;
@@ -726,6 +793,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   Future<void> _setSubtitleTrack(SubtitleTrack track) async {
+    if (_isDisposed) return;
+
     _didAutoSelectSubtitle = true;
     if (mounted) {
       setState(() {
@@ -738,11 +807,15 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     } catch (error) {
       debugPrint('切换字幕失败: $error');
     }
+    if (_isDisposed) return;
+
     _startHideControlsTimer();
   }
 
   void _setSubtitleStyleOverride(bool value) {
+    if (_isDisposed) return;
     if (_overrideEmbeddedSubtitleStyle == value) return;
+
     setState(() {
       _overrideEmbeddedSubtitleStyle = value;
       _subtitle = [];
@@ -752,6 +825,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _showResumePositionNotice(Duration position) {
+    if (_isDisposed) return;
+
     _resumeNoticeTimer?.cancel();
     if (mounted) {
       setState(() {
@@ -776,7 +851,9 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _cycleSubtitleTrack() {
+    if (_isDisposed) return;
     if (_subtitleTracks.isEmpty) return;
+
     final currentIndex = _subtitleTracks.indexOf(_selectedSubtitleTrack);
     final nextIndex = currentIndex < 0
         ? 0
@@ -785,6 +862,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _cycleAudioTrack() {
+    if (_isDisposed) return;
+
     final tracks = _audioTracks
         .where((track) => !_isAudioTrackOff(track))
         .toList();
@@ -795,6 +874,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _adjustVolume(double delta) {
+    if (_isDisposed) return;
+
     final nextVolume = (_player.state.volume + delta).clamp(0.0, 100.0);
     _player.setVolume(nextVolume);
     if (nextVolume > 0) {
@@ -804,6 +885,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _toggleMute() {
+    if (_isDisposed) return;
+
     final currentVolume = _player.state.volume;
     if (currentVolume > 0) {
       _lastVolumeBeforeMute = currentVolume;
@@ -817,6 +900,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _startHideControlsTimer() {
+    if (_isDisposed) return;
+
     _hideControlsTimer?.cancel();
     _hideControlsTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
@@ -826,6 +911,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _onPointerHover(PointerEvent event) {
+    if (_isDisposed) return;
+
     if (!_isControlsVisible) {
       setState(() => _isControlsVisible = true);
     }
@@ -833,6 +920,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _onPointerExit(PointerEvent event) {
+    if (_isDisposed) return;
+
     _hideControlsTimer?.cancel();
     if (mounted) {
       setState(() => _isControlsVisible = false);
@@ -840,6 +929,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _handleKeyEvent(KeyEvent event) async {
+    if (_isDisposed) return;
+
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.space) {
         _player.playOrPause();
@@ -874,7 +965,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _toggleFullScreen() {
-    if (_fullScreenTransition != null) return;
+    if (_isDisposed || _fullScreenTransition != null) return;
+
     _fullScreenTransition = _togglePlayerFullScreen().whenComplete(() {
       _fullScreenTransition = null;
     });
@@ -883,6 +975,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
   Future<void> _togglePlayerFullScreen() async {
     await Future.delayed(const Duration(milliseconds: 120));
+    if (_isDisposed) return;
+
     if (_isFullScreen) {
       await _exitPlayerFullScreen();
     } else {
@@ -891,8 +985,13 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   Future<void> _enterPlayerFullScreen() async {
+    if (_isDisposed) return;
+
     await _ensureInitialWindowFullScreenCaptured();
+    if (_isDisposed) return;
+
     final windowIsFullScreen = await windowManager.isFullScreen();
+    if (_isDisposed) return;
 
     if (!windowIsFullScreen) {
       _playerUsedWindowFullScreen = true;
@@ -934,7 +1033,10 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
   @override
   void dispose() {
-    unawaited(_saveProgress(force: true));
+    _isDisposed = true;
+    _nextMediaOpenGeneration();
+
+    unawaited(_saveProgress(force: true, allowDisposed: true));
     unawaited(() async {
       await _fullScreenTransition;
       await _exitPlayerFullScreen(updateState: false);

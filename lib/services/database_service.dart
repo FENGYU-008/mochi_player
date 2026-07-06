@@ -63,6 +63,15 @@ class DatabaseService {
     return await _isar.mediaFileEntitys.where().findAll();
   }
 
+  /// 批量删除媒体文件
+  Future<int> deleteMediaFilesByIds(List<Id> ids) async {
+    if (ids.isEmpty) return 0;
+
+    return await _isar.writeTxn(() async {
+      return _isar.mediaFileEntitys.deleteAll(ids);
+    });
+  }
+
   /// 获取正在观看的媒体文件 (按最后观看时间排序)
   Future<List<MediaFileEntity>> getContinueWatching() async {
     return await _isar.mediaFileEntitys

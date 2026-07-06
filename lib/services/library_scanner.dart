@@ -14,11 +14,15 @@ import 'webdav_service.dart';
 class LibraryScanner {
   final WebDavService _webDavService;
   final _logger = Logger(printer: PrettyPrinter(methodCount: 0));
+  bool _hadReadError = false;
 
   LibraryScanner(this._webDavService);
 
+  bool get hadReadError => _hadReadError;
+
   /// 扫描媒体库，返回 `Stream<MediaFileEntity>`
   Stream<MediaFileEntity> scan(String rootPath) async* {
+    _hadReadError = false;
     _logger.i("🚀 开始扫描媒体库: $rootPath");
 
     int fileCount = 0;
@@ -102,6 +106,7 @@ class LibraryScanner {
         }
       }
     } catch (e) {
+      _hadReadError = true;
       _logger.w("⚠️ 扫描路径失败: $path - $e");
     }
   }
