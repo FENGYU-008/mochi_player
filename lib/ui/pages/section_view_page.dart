@@ -5,7 +5,7 @@ import '../../models/domain/models.dart';
 import '../../providers/media_library_provider.dart';
 import '../widgets/media_poster_card.dart';
 import '../widgets/media_detail/playback_helper.dart';
-import 'media_detail_modals.dart';
+import 'media_detail_page.dart';
 
 /// Section 类型
 enum SectionType { continueWatching, movies, tvShows, recentlyAdded }
@@ -299,7 +299,7 @@ class _SectionModalContent extends StatelessWidget {
       rating: movie.rating,
       tmdbId: movie.tmdbId,
       cardType: MediaCardType.poster,
-      onTap: () => showMediaDetailModal(context, movie),
+      onTap: () => _openDetailFromModal(context, movie),
     );
   }
 
@@ -320,7 +320,24 @@ class _SectionModalContent extends StatelessWidget {
       rating: show.rating,
       tmdbId: show.tmdbId,
       cardType: MediaCardType.poster,
-      onTap: () => showMediaDetailModal(context, show),
+      onTap: () => _openDetailFromModal(context, show),
+    );
+  }
+
+  void _openDetailFromModal(BuildContext context, dynamic item) {
+    final scope = MediaDetailNavigationScope.maybeOf(context);
+    final navigator = Navigator.of(context);
+    navigator.pop();
+
+    if (scope != null) {
+      scope.openMediaDetail(item);
+      return;
+    }
+
+    navigator.push(
+      MaterialPageRoute<void>(
+        builder: (context) => MediaDetailPage(item: item),
+      ),
     );
   }
 

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/media_library_provider.dart';
 import '../../models/domain/models.dart';
 import '../widgets/media_poster_card.dart';
-import 'media_detail_modals.dart';
+import 'media_detail_page.dart';
 
 class LibraryPage extends StatelessWidget {
   final String category;
@@ -84,7 +84,7 @@ class LibraryPage extends StatelessWidget {
           rating: movie.rating,
           tmdbId: movie.tmdbId,
           cardType: MediaCardType.poster,
-          onTap: () => showMediaDetailModal(context, movie),
+          onTap: () => openMediaDetailPage(context, movie),
         );
       },
     );
@@ -118,7 +118,7 @@ class LibraryPage extends StatelessWidget {
           rating: show.rating,
           tmdbId: show.tmdbId,
           cardType: MediaCardType.poster,
-          onTap: () => showMediaDetailModal(context, show),
+          onTap: () => openMediaDetailPage(context, show),
         );
       },
     );
@@ -175,10 +175,10 @@ class LibraryPage extends StatelessWidget {
           onTap: () {
             if (file.mediaType == MediaType.movie && file.tmdbId != null) {
               final movie = provider.getMovieMetadata(file.tmdbId!);
-              if (movie != null) showMediaDetailModal(context, movie);
+              if (movie != null) openMediaDetailPage(context, movie);
             } else if (file.tmdbId != null) {
               final show = provider.getTVShowMetadata(file.tmdbId!);
-              if (show != null) showMediaDetailModal(context, show);
+              if (show != null) openMediaDetailPage(context, show);
             }
           },
         );

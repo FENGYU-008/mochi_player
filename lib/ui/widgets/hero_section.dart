@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/domain/models.dart';
 import '../../services/tmdb_image_cache_manager.dart';
-import '../pages/media_detail_modals.dart';
+import '../pages/media_detail_page.dart';
 import 'macos_controls.dart';
 import 'media_detail/playback_helper.dart';
 
@@ -17,7 +17,7 @@ class HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (heroItem == null) {
-      return const SizedBox(height: 450);
+      return const SizedBox(height: 420);
     }
 
     final isMovie = heroItem is Movie;
@@ -33,7 +33,7 @@ class HeroSection extends StatelessWidget {
     final releaseYear = isMovie ? movie!.releaseYear : tvShow!.releaseYear;
 
     return SizedBox(
-      height: 500,
+      height: 420,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
@@ -46,7 +46,7 @@ class HeroSection extends StatelessWidget {
 
           // 内容
           Positioned(
-            bottom: 60,
+            bottom: 48,
             left: 40,
             right: 40,
             child: Column(
@@ -60,7 +60,7 @@ class HeroSection extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 48,
+                    fontSize: 44,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                     height: 1.1,
@@ -140,12 +140,12 @@ class HeroSection extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            Colors.black.withAlpha(50),
-            Colors.black.withAlpha(150),
-            bgColor.withAlpha(230),
+            Colors.black.withAlpha(44),
+            Colors.black.withAlpha(140),
+            bgColor.withAlpha(218),
             bgColor,
           ],
-          stops: const [0.0, 0.3, 0.5, 0.8, 1.0],
+          stops: const [0.0, 0.32, 0.56, 0.86, 1.0],
         ),
       ),
     );
@@ -216,6 +216,6 @@ class HeroSection extends StatelessWidget {
   }
 
   void _handleMoreInfo(BuildContext context) {
-    showMediaDetailModal(context, heroItem);
+    openMediaDetailPage(context, heroItem);
   }
 }

@@ -371,7 +371,11 @@ class _ActionRow extends StatelessWidget {
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 24),
         ),
-        FavoriteButton(tmdbId: viewModel.tmdbId, overrideColor: Colors.white),
+        FavoriteButton(
+          tmdbId: viewModel.tmdbId,
+          overrideColor: Colors.white,
+          showLabel: true,
+        ),
         if (action.detail != null)
           Padding(
             padding: const EdgeInsets.only(left: 2),

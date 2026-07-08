@@ -1,167 +1,153 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/domain/models.dart';
 import '../../providers/media_library_provider.dart';
+import '../theme/app_colors.dart';
 import '../view_models/media_detail_view_model.dart';
-import '../widgets/media_detail/media_detail_header.dart';
-
+import '../widgets/app_header.dart';
+import '../widgets/macos_controls.dart';
 import '../widgets/media_detail/cast_list.dart';
 import '../widgets/media_detail/episode_list.dart';
+import '../widgets/media_detail/media_detail_header.dart';
 import '../widgets/media_detail/playback_helper.dart';
-import '../widgets/macos_controls.dart';
 
-void showMediaDetailModal(BuildContext context, dynamic item) {
+typedef OpenMediaDetail = void Function(dynamic item);
+
+void openMediaDetailPage(BuildContext context, dynamic item) {
   assert(item is Movie || item is TVShow, 'Item must be Movie or TVShow');
-  showGeneralDialog(
-    context: context,
-    barrierDismissible: true,
-    barrierLabel: "关闭",
-    barrierColor: Colors.transparent,
-    transitionDuration: const Duration(milliseconds: 300),
-    transitionBuilder: (context, animation, secondaryAnimation, child) {
-      final curvedAnimation = CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeOutQuart,
-        reverseCurve: Curves.easeInCubic,
-      );
-      return Stack(
-        children: [
-          FadeTransition(
-            opacity: curvedAnimation,
-            child: _DialogBackdrop(onTap: () => Navigator.of(context).pop()),
-          ),
-          ScaleTransition(
-            scale: Tween<double>(
-              begin: 0.96,
-              end: 1.0,
-            ).animate(curvedAnimation),
-            child: FadeTransition(opacity: curvedAnimation, child: child),
-          ),
-        ],
-      );
-    },
-    pageBuilder: (context, animation, secondaryAnimation) {
-      final theme = Theme.of(context);
-      final isDark = theme.brightness == Brightness.dark;
-      return Center(
-        child: Material(
-          color: Colors.transparent,
-          child: GestureDetector(
-            onTap: () {},
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: 1060,
-                maxHeight: MediaQuery.of(context).size.height * 0.9,
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha((255 * 0.2).round()),
-                      blurRadius: 32,
-                      offset: const Offset(0, 22),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: RepaintBoundary(
-                    child: _MediaDetailCardContent(item: item),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    },
+  final scope = MediaDetailNavigationScope.maybeOf(context);
+  if (scope != null) {
+    scope.openMediaDetail(item);
+    return;
+  }
+
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(builder: (context) => MediaDetailPage(item: item)),
   );
 }
 
-class _DialogBackdrop extends StatelessWidget {
-  final VoidCallback onTap;
+class MediaDetailNavigationScope extends InheritedWidget {
+  final OpenMediaDetail openMediaDetail;
 
-  const _DialogBackdrop({required this.onTap});
+  const MediaDetailNavigationScope({
+    super.key,
+    required this.openMediaDetail,
+    required super.child,
+  });
+
+  static MediaDetailNavigationScope? maybeOf(BuildContext context) {
+    final widget = context
+        .getElementForInheritedWidgetOfExactType<MediaDetailNavigationScope>()
+        ?.widget;
+    return widget is MediaDetailNavigationScope ? widget : null;
+  }
+
+  @override
+  bool updateShouldNotify(MediaDetailNavigationScope oldWidget) {
+    return openMediaDetail != oldWidget.openMediaDetail;
+  }
+}
+
+class MediaDetailPage extends StatelessWidget {
+  final dynamic item;
+  final VoidCallback? onBack;
+
+  const MediaDetailPage({super.key, required this.item, this.onBack})
+    : assert(item is Movie || item is TVShow, 'Item must be Movie or TVShow');
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: SizedBox.expand(
-              child: ColoredBox(
-                color: Colors.black.withAlpha((255 * 0.22).round()),
-              ),
-            ),
+    final viewModel = MediaDetailViewModel(item);
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Column(
+        children: [
+          SizedBox(
+            height: AppHeader.height,
+            child: _DetailTopBar(viewModel: viewModel, onBack: onBack),
           ),
-        ),
+          Expanded(child: _MediaDetailContent(viewModel: viewModel)),
+        ],
       ),
     );
   }
 }
 
-class _MediaDetailCardContent extends StatelessWidget {
-  final dynamic item; // Movie or TVShow
+class _DetailTopBar extends StatelessWidget {
   final MediaDetailViewModel viewModel;
+  final VoidCallback? onBack;
 
-  _MediaDetailCardContent({required this.item})
-    : viewModel = MediaDetailViewModel(item);
+  const _DetailTopBar({required this.viewModel, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        CustomScrollView(
-          cacheExtent: 320,
-          slivers: [
-            SliverToBoxAdapter(child: MediaDetailHeader(viewModel: viewModel)),
+    return AppHeader(
+      title: viewModel.title,
+      leading: MacosIconButton(
+        onPressed: () => _goBack(context),
+        icon: Icons.arrow_back_rounded,
+        tooltip: '返回',
+        foregroundColor: AppColors.textPrimary(context),
+        backgroundColor: AppColors.hoverSurface(context),
+        size: 36,
+        iconSize: 20,
+      ),
+    );
+  }
 
-            if (viewModel.isTVShow) ...[
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(40, 0, 40, 24),
-                sliver: EpisodeList(tvShow: viewModel.originalItem as TVShow),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(40, 0, 40, 44),
-                sliver: SliverToBoxAdapter(
-                  child: CastList(viewModel: viewModel, topPadding: 8),
-                ),
-              ),
-            ] else ...[
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(40, 28, 40, 0),
-                sliver: SliverToBoxAdapter(
-                  child: _MovieMediaInfoSection(viewModel: viewModel),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(40, 28, 40, 0),
-                sliver: SliverToBoxAdapter(
-                  child: _OverviewSection(viewModel: viewModel),
-                ),
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(40, 0, 40, 44),
-                sliver: SliverToBoxAdapter(
-                  child: CastList(viewModel: viewModel, topPadding: 28),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const Positioned(
-          top: 24,
-          right: 24,
-          child: RepaintBoundary(child: _CloseButton()),
-        ),
+  void _goBack(BuildContext context) {
+    if (onBack != null) {
+      onBack!();
+      return;
+    }
+    Navigator.of(context).maybePop();
+  }
+}
+
+class _MediaDetailContent extends StatelessWidget {
+  final MediaDetailViewModel viewModel;
+
+  const _MediaDetailContent({required this.viewModel});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      cacheExtent: 320,
+      slivers: [
+        SliverToBoxAdapter(child: MediaDetailHeader(viewModel: viewModel)),
+
+        if (viewModel.isTVShow) ...[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(40, 0, 40, 24),
+            sliver: EpisodeList(tvShow: viewModel.originalItem as TVShow),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(40, 0, 40, 44),
+            sliver: SliverToBoxAdapter(
+              child: CastList(viewModel: viewModel, topPadding: 8),
+            ),
+          ),
+        ] else ...[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(40, 28, 40, 0),
+            sliver: SliverToBoxAdapter(
+              child: _MovieMediaInfoSection(viewModel: viewModel),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(40, 28, 40, 0),
+            sliver: SliverToBoxAdapter(
+              child: _OverviewSection(viewModel: viewModel),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(40, 0, 40, 44),
+            sliver: SliverToBoxAdapter(
+              child: CastList(viewModel: viewModel, topPadding: 28),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -424,24 +410,6 @@ class _EmptyInfoBox extends StatelessWidget {
         message,
         style: TextStyle(color: theme.textTheme.bodySmall?.color),
       ),
-    );
-  }
-}
-
-class _CloseButton extends StatelessWidget {
-  const _CloseButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return MacosIconButton(
-      onPressed: () => Navigator.pop(context),
-      icon: Icons.close_rounded,
-      tooltip: '关闭',
-      tone: MacosControlTone.overlay,
-      foregroundColor: Colors.white,
-      backgroundColor: Colors.black.withAlpha(76),
-      size: 44,
-      iconSize: 20,
     );
   }
 }

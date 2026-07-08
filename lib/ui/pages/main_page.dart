@@ -1,13 +1,13 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:mochi_player/models/domain/models.dart';
 import 'package:mochi_player/providers/app_settings_provider.dart';
 import 'package:mochi_player/providers/media_library_provider.dart';
 import 'package:mochi_player/ui/pages/file_browser_page.dart';
+import 'package:mochi_player/ui/pages/media_detail_page.dart';
 import 'package:mochi_player/ui/pages/settings_page.dart';
 import 'package:provider/provider.dart';
-import 'package:window_manager/window_manager.dart';
+import '../widgets/app_header.dart';
 import '../widgets/side_bar.dart';
-import '../widgets/search_bar.dart';
 
 // 引入拆分出去的子页面
 import '../widgets/home_content.dart';
@@ -22,6 +22,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0; // 默认选中 Home
+  dynamic _detailItem;
 
   // 用于接收首页滚动偏移量以控制 header 透明度
   double _homeScrollOffset = 0;
@@ -57,8 +58,37 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  void _openMediaDetail(dynamic item) {
+    setState(() {
+      _detailItem = item;
+      _homeScrollOffset = 0;
+    });
+  }
+
+  void _closeMediaDetail() {
+    setState(() {
+      _detailItem = null;
+    });
+  }
+
+  String _contentKeyValue() {
+    final item = _detailItem;
+    if (item == null) return 'main-content';
+    if (item is Movie) return 'detail:movie:${item.tmdbId}';
+    if (item is TVShow) return 'detail:tv:${item.tmdbId}';
+    return 'detail:${identityHashCode(item)}';
+  }
+
+  bool _isDetailContentKey(Key? key) {
+    return key is ValueKey<String> && key.value.startsWith('detail:');
+  }
+
   // === 核心修改：页面路由表 ===
   Widget _getPageContent(int index) {
+    if (_detailItem != null) {
+      return MediaDetailPage(item: _detailItem, onBack: _closeMediaDetail);
+    }
+
     switch (index) {
       case 0:
         return HomeContent(onScroll: _onHomeScroll); // 首页聚合
@@ -109,7 +139,8 @@ class _MainPageState extends State<MainPage> {
     }
 
     // 是否显示标准 header (非首页或首页滚动后)
-    final showHeader = _selectedIndex != 3 && _selectedIndex != 5;
+    final showHeader =
+        _detailItem == null && _selectedIndex != 3 && _selectedIndex != 5;
 
     return Scaffold(
       body: Row(
@@ -120,6 +151,7 @@ class _MainPageState extends State<MainPage> {
             onItemSelected: (index) {
               setState(() {
                 _selectedIndex = index;
+                _detailItem = null;
                 // 切换页面时重置滚动偏移
                 if (index != 0) _homeScrollOffset = 0;
               });
@@ -128,105 +160,113 @@ class _MainPageState extends State<MainPage> {
 
           // 右侧：内容容器
           Expanded(
-            child: Container(
-              color: theme.scaffoldBackgroundColor, // 使用主题背景色
-              child: Stack(
-                children: [
-                  // === 1. 底层内容 (动态切换) ===
-                  _getPageContent(_selectedIndex),
+            child: MediaDetailNavigationScope(
+              openMediaDetail: _openMediaDetail,
+              child: Container(
+                color: theme.scaffoldBackgroundColor, // 使用主题背景色
+                child: Stack(
+                  children: [
+                    // === 1. 底层内容 (动态切换) ===
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 320),
+                      reverseDuration: const Duration(milliseconds: 260),
+                      switchInCurve: Curves.linear,
+                      switchOutCurve: Curves.linear,
+                      layoutBuilder: (currentChild, previousChildren) {
+                        final stackChildren = <Widget>[];
+                        final currentIsDetail =
+                            currentChild != null &&
+                            _isDetailContentKey(currentChild.key);
 
-                  Selector<MediaLibraryProvider, _LibraryActivityState>(
-                    selector: (context, provider) => _LibraryActivityState(
-                      message: provider.libraryActivityMessage,
-                      progress: provider.scrapeProgress,
-                    ),
-                    builder: (context, activity, child) {
-                      if (activity.message == null) {
-                        return const SizedBox.shrink();
-                      }
+                        if (currentChild != null && !currentIsDetail) {
+                          stackChildren.add(
+                            Positioned.fill(child: currentChild),
+                          );
+                        }
 
-                      return Positioned(
-                        top: showHeader ? 70 : 16,
-                        left: 40,
-                        right: 40,
-                        child: _LibraryActivityBanner(
-                          message: activity.message!,
-                          progress: activity.progress,
-                        ),
-                      );
-                    },
-                  ),
-
-                  // === 2. 顶层毛玻璃 Header ===
-                  if (showHeader)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 60,
-                      child: IgnorePointer(
-                        // 当 header 透明时，允许点击穿透到下层内容
-                        ignoring: _selectedIndex == 0 && headerOpacity < 0.1,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 150),
-                          opacity: headerOpacity,
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.translucent,
-                            onPanStart: (details) {
-                              windowManager.startDragging();
-                            },
-                            child: ClipRect(
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(
-                                  sigmaX: 20,
-                                  sigmaY: 20,
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 40,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    // 根据主题调整毛玻璃颜色
-                                    color: theme.brightness == Brightness.light
-                                        ? Colors.white.withAlpha(
-                                            (255 * 0.85).round(),
-                                          )
-                                        : const Color(
-                                            0xFF2C2C2E,
-                                          ).withAlpha((255 * 0.85).round()),
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: theme.dividerColor.withAlpha(
-                                          (255 * headerOpacity).round(),
-                                        ),
-                                        width: 1,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        _getTitle(_selectedIndex),
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color:
-                                              theme.textTheme.bodyMedium?.color,
-                                        ),
-                                      ),
-                                      const AppSearchBar(),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
+                        stackChildren.addAll(
+                          previousChildren.map(
+                            (child) => Positioned.fill(child: child),
                           ),
-                        ),
+                        );
+
+                        if (currentChild != null && currentIsDetail) {
+                          stackChildren.add(
+                            Positioned.fill(child: currentChild),
+                          );
+                        }
+
+                        return Stack(children: stackChildren);
+                      },
+                      transitionBuilder: (child, animation) {
+                        final isDetail = _isDetailContentKey(child.key);
+                        final curved = CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutQuart,
+                          reverseCurve: Curves.easeInCubic,
+                        );
+                        final offset = Tween<Offset>(
+                          begin: isDetail
+                              ? const Offset(0.025, 0)
+                              : Offset.zero,
+                          end: Offset.zero,
+                        ).animate(curved);
+
+                        return FadeTransition(
+                          opacity: curved,
+                          child: SlideTransition(
+                            position: offset,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: KeyedSubtree(
+                        key: ValueKey(_contentKeyValue()),
+                        child: _getPageContent(_selectedIndex),
                       ),
                     ),
-                ],
+
+                    Selector<MediaLibraryProvider, _LibraryActivityState>(
+                      selector: (context, provider) => _LibraryActivityState(
+                        message: provider.libraryActivityMessage,
+                        progress: provider.scrapeProgress,
+                      ),
+                      builder: (context, activity, child) {
+                        if (activity.message == null) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return Positioned(
+                          top: _detailItem != null
+                              ? 76
+                              : showHeader
+                              ? 70
+                              : 16,
+                          left: 40,
+                          right: 40,
+                          child: _LibraryActivityBanner(
+                            message: activity.message!,
+                            progress: activity.progress,
+                          ),
+                        );
+                      },
+                    ),
+
+                    // === 2. 顶层毛玻璃 Header ===
+                    if (showHeader)
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: AppHeader.height,
+                        child: AppHeader(
+                          title: _getTitle(_selectedIndex),
+                          opacity: headerOpacity,
+                          ignoreWhenTransparent: _selectedIndex == 0,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

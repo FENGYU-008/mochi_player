@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/media_library_provider.dart';
 import '../../models/domain/models.dart';
 import '../pages/section_view_page.dart';
-import '../pages/media_detail_modals.dart';
+import '../pages/media_detail_page.dart';
 import '../theme/app_colors.dart';
 import 'media_poster_card.dart';
 import 'horizontal_scroll_view.dart';
@@ -396,7 +396,7 @@ class _HomeContentState extends State<HomeContent> {
                   rating: rating,
                   tmdbId: tmdbId,
                   cardType: MediaCardType.poster,
-                  onTap: () => showMediaDetailModal(context, item),
+                  onTap: () => openMediaDetailPage(context, item),
                 ),
               ),
             );
