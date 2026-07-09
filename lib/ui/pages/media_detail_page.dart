@@ -61,13 +61,16 @@ class MediaDetailPage extends StatelessWidget {
     final viewModel = MediaDetailViewModel(item);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Column(
+      body: Stack(
         children: [
-          SizedBox(
+          Positioned.fill(child: _MediaDetailContent(viewModel: viewModel)),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
             height: AppHeader.height,
             child: _DetailTopBar(viewModel: viewModel, onBack: onBack),
           ),
-          Expanded(child: _MediaDetailContent(viewModel: viewModel)),
         ],
       ),
     );
@@ -115,6 +118,7 @@ class _MediaDetailContent extends StatelessWidget {
     return CustomScrollView(
       cacheExtent: 320,
       slivers: [
+        const SliverToBoxAdapter(child: SizedBox(height: AppHeader.height)),
         SliverToBoxAdapter(child: MediaDetailHeader(viewModel: viewModel)),
 
         if (viewModel.isTVShow) ...[
@@ -125,7 +129,7 @@ class _MediaDetailContent extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(40, 0, 40, 44),
             sliver: SliverToBoxAdapter(
-              child: CastList(viewModel: viewModel, topPadding: 8),
+              child: CastList(viewModel: viewModel, topPadding: 0),
             ),
           ),
         ] else ...[
@@ -144,7 +148,7 @@ class _MediaDetailContent extends StatelessWidget {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(40, 0, 40, 44),
             sliver: SliverToBoxAdapter(
-              child: CastList(viewModel: viewModel, topPadding: 28),
+              child: CastList(viewModel: viewModel, topPadding: 20),
             ),
           ),
         ],

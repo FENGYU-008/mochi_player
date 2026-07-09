@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../models/domain/models.dart';
 import '../../../providers/media_library_provider.dart';
 import '../../../services/tmdb_image_cache_manager.dart';
+import '../macos_controls.dart';
 import 'playback_helper.dart';
 
 class EpisodeList extends StatefulWidget {
@@ -91,14 +92,12 @@ class _EpisodeListState extends State<EpisodeList> {
     }
 
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return SliverMainAxisGroup(
       slivers: [
         SliverToBoxAdapter(
           child: _EpisodeHeader(
             theme: theme,
-            isDark: isDark,
             sortedSeasons: _sortedSeasons,
             selectedSeason: _selectedSeason,
             onSeasonSelected: _selectSeason,
@@ -124,7 +123,7 @@ class _EpisodeListState extends State<EpisodeList> {
             addAutomaticKeepAlives: false,
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
       ],
     );
   }
@@ -357,14 +356,12 @@ class _EpisodeMetaRow extends StatelessWidget {
 
 class _EpisodeHeader extends StatelessWidget {
   final ThemeData theme;
-  final bool isDark;
   final List<Season> sortedSeasons;
   final Season? selectedSeason;
   final ValueChanged<Season> onSeasonSelected;
 
   const _EpisodeHeader({
     required this.theme,
-    required this.isDark,
     required this.sortedSeasons,
     required this.selectedSeason,
     required this.onSeasonSelected,
@@ -375,7 +372,7 @@ class _EpisodeHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -387,93 +384,18 @@ class _EpisodeHeader extends StatelessWidget {
                 color: theme.textTheme.bodyLarge?.color,
               ),
             ),
-            Theme(
-              data: Theme.of(context).copyWith(
-                splashColor: Colors.transparent,
-                highlightColor: Colors.transparent,
-                hoverColor: Colors.transparent,
-              ),
-              child: PopupMenuButton<Season>(
-                initialValue: selectedSeason,
-                offset: const Offset(0, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                color: isDark ? const Color(0xFF2C2C2E) : Colors.white,
-                elevation: 4,
-                tooltip: '',
-                onSelected: onSeasonSelected,
-                itemBuilder: (context) {
-                  return sortedSeasons.map((season) {
-                    final isSelected = season == selectedSeason;
-                    return PopupMenuItem<Season>(
-                      value: season,
-                      height: 40,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '第 ${season.seasonNumber} 季',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                color: isSelected
-                                    ? theme.colorScheme.primary
-                                    : theme.textTheme.bodyLarge?.color,
-                              ),
-                            ),
-                          ),
-                          if (isSelected)
-                            Icon(
-                              Icons.check_rounded,
-                              size: 16,
-                              color: theme.colorScheme.primary,
-                            ),
-                        ],
-                      ),
-                    );
-                  }).toList();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 7,
+            MacosSelect<Season>(
+              value: selectedSeason,
+              placeholder: '选择季',
+              width: 92,
+              options: [
+                for (final season in sortedSeasons)
+                  MacosSelectOption(
+                    value: season,
+                    label: '第 ${season.seasonNumber} 季',
                   ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withAlpha(20)
-                        : Colors.black.withAlpha(10),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? Colors.white24 : Colors.grey[300]!,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        selectedSeason != null
-                            ? '第 ${selectedSeason!.seasonNumber} 季'
-                            : '选择季',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: theme.textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 18,
-                        color: theme.textTheme.bodyLarge?.color,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              ],
+              onSelected: onSeasonSelected,
             ),
           ],
         ),

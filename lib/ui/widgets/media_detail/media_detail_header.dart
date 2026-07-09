@@ -42,7 +42,7 @@ class MediaDetailHeader extends StatelessWidget {
                   }
 
                   return Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       if (viewModel.posterUrl.isNotEmpty) ...[
                         _PosterImage(posterUrl: viewModel.posterUrl),
@@ -150,7 +150,7 @@ class _HeaderContent extends StatelessWidget {
     final hasLogo = viewModel.logoUrl?.isNotEmpty == true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (hasLogo) ...[
           _LogoImage(
