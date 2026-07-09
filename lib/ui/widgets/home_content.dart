@@ -14,31 +14,80 @@ import 'media_detail/playback_helper.dart';
 class HomeContent extends StatefulWidget {
   /// 回调函数，用于通知父组件滚动偏移量
   final void Function(double offset)? onScroll;
+  final double initialScrollOffset;
+  final double initialContinueWatchingOffset;
+  final double initialRecentlyAddedOffset;
+  final ValueChanged<double>? onScrollOffsetChanged;
+  final ValueChanged<double>? onContinueWatchingOffsetChanged;
+  final ValueChanged<double>? onRecentlyAddedOffsetChanged;
 
-  const HomeContent({super.key, this.onScroll});
+  const HomeContent({
+    super.key,
+    this.onScroll,
+    this.initialScrollOffset = 0,
+    this.initialContinueWatchingOffset = 0,
+    this.initialRecentlyAddedOffset = 0,
+    this.onScrollOffsetChanged,
+    this.onContinueWatchingOffsetChanged,
+    this.onRecentlyAddedOffsetChanged,
+  });
 
   @override
   State<HomeContent> createState() => _HomeContentState();
 }
 
 class _HomeContentState extends State<HomeContent> {
-  final ScrollController _mainScrollController = ScrollController();
-  final ScrollController _continueWatchingCtrl = ScrollController();
-  final ScrollController _recentlyAddedCtrl = ScrollController();
+  late final ScrollController _mainScrollController;
+  late final ScrollController _continueWatchingCtrl;
+  late final ScrollController _recentlyAddedCtrl;
 
   @override
   void initState() {
     super.initState();
+    _mainScrollController = ScrollController(
+      initialScrollOffset: widget.initialScrollOffset,
+    );
+    _continueWatchingCtrl = ScrollController(
+      initialScrollOffset: widget.initialContinueWatchingOffset,
+    );
+    _recentlyAddedCtrl = ScrollController(
+      initialScrollOffset: widget.initialRecentlyAddedOffset,
+    );
     _mainScrollController.addListener(_onScroll);
+    _continueWatchingCtrl.addListener(_onContinueWatchingScroll);
+    _recentlyAddedCtrl.addListener(_onRecentlyAddedScroll);
   }
 
   void _onScroll() {
-    widget.onScroll?.call(_mainScrollController.offset);
+    if (!_mainScrollController.hasClients) return;
+    final offset = _mainScrollController.offset;
+    widget.onScroll?.call(offset);
+    widget.onScrollOffsetChanged?.call(offset);
+  }
+
+  void _saveMainScrollOffset() {
+    if (!_mainScrollController.hasClients) return;
+    widget.onScrollOffsetChanged?.call(_mainScrollController.offset);
+  }
+
+  void _onContinueWatchingScroll() {
+    if (!_continueWatchingCtrl.hasClients) return;
+    widget.onContinueWatchingOffsetChanged?.call(_continueWatchingCtrl.offset);
+  }
+
+  void _onRecentlyAddedScroll() {
+    if (!_recentlyAddedCtrl.hasClients) return;
+    widget.onRecentlyAddedOffsetChanged?.call(_recentlyAddedCtrl.offset);
   }
 
   @override
   void dispose() {
+    _saveMainScrollOffset();
+    _onContinueWatchingScroll();
+    _onRecentlyAddedScroll();
     _mainScrollController.removeListener(_onScroll);
+    _continueWatchingCtrl.removeListener(_onContinueWatchingScroll);
+    _recentlyAddedCtrl.removeListener(_onRecentlyAddedScroll);
     _mainScrollController.dispose();
     _continueWatchingCtrl.dispose();
     _recentlyAddedCtrl.dispose();

@@ -167,14 +167,7 @@ class HeroSection extends StatelessWidget {
 
         // 年份
         if (year != null)
-          Text(
-            year.toString(),
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withAlpha(200),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          MacosPill(text: year.toString(), tone: MacosControlTone.overlay),
 
         // 类型标签
         ...genres

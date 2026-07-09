@@ -5,10 +5,46 @@ import '../../models/domain/models.dart';
 import '../widgets/media_poster_card.dart';
 import 'media_detail_page.dart';
 
-class LibraryPage extends StatelessWidget {
+class LibraryPage extends StatefulWidget {
   final String category;
+  final double initialScrollOffset;
+  final ValueChanged<double>? onScrollOffsetChanged;
 
-  const LibraryPage({super.key, required this.category});
+  const LibraryPage({
+    super.key,
+    required this.category,
+    this.initialScrollOffset = 0,
+    this.onScrollOffsetChanged,
+  });
+
+  @override
+  State<LibraryPage> createState() => _LibraryPageState();
+}
+
+class _LibraryPageState extends State<LibraryPage> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController(
+      initialScrollOffset: widget.initialScrollOffset,
+    );
+    _scrollController.addListener(_saveScrollOffset);
+  }
+
+  @override
+  void dispose() {
+    _saveScrollOffset();
+    _scrollController.removeListener(_saveScrollOffset);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _saveScrollOffset() {
+    if (!_scrollController.hasClients) return;
+    widget.onScrollOffsetChanged?.call(_scrollController.offset);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +67,7 @@ class LibraryPage extends StatelessWidget {
 
         // 根据 category 选择显示内容
         Widget content;
-        switch (category) {
+        switch (widget.category) {
           case 'Movies':
             content = _buildMovieGrid(context, provider);
             break;
@@ -51,7 +87,7 @@ class LibraryPage extends StatelessWidget {
   }
 
   int _contentRevisionFor(MediaLibraryProvider provider) {
-    switch (category) {
+    switch (widget.category) {
       case 'Movies':
       case 'TV Shows':
         return provider.metadataRevision;
@@ -227,6 +263,8 @@ class LibraryPage extends StatelessWidget {
         if (crossAxisCount < 3) crossAxisCount = 3;
 
         return GridView.builder(
+          key: PageStorageKey<String>('library-${widget.category}'),
+          controller: _scrollController,
           padding: const EdgeInsets.fromLTRB(40, 100, 40, 40),
           itemCount: itemCount,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

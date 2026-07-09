@@ -26,9 +26,12 @@ class _MainPageState extends State<MainPage> {
   dynamic _detailItem;
   SectionType? _sectionType;
   final Map<SectionType, double> _sectionScrollOffsets = {};
+  final Map<int, double> _libraryScrollOffsets = {};
 
   // 用于接收首页滚动偏移量以控制 header 透明度
   double _homeScrollOffset = 0;
+  double _homeContinueWatchingOffset = 0;
+  double _homeRecentlyAddedOffset = 0;
 
   @override
   void initState() {
@@ -61,10 +64,21 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  void _saveHomeScrollOffset(double offset) {
+    _homeScrollOffset = offset;
+  }
+
+  void _saveHomeContinueWatchingOffset(double offset) {
+    _homeContinueWatchingOffset = offset;
+  }
+
+  void _saveHomeRecentlyAddedOffset(double offset) {
+    _homeRecentlyAddedOffset = offset;
+  }
+
   void _openMediaDetail(dynamic item) {
     setState(() {
       _detailItem = item;
-      _homeScrollOffset = 0;
     });
   }
 
@@ -78,7 +92,6 @@ class _MainPageState extends State<MainPage> {
     setState(() {
       _sectionType = sectionType;
       _detailItem = null;
-      _homeScrollOffset = 0;
     });
   }
 
@@ -90,6 +103,10 @@ class _MainPageState extends State<MainPage> {
 
   void _saveSectionScrollOffset(SectionType sectionType, double offset) {
     _sectionScrollOffsets[sectionType] = offset;
+  }
+
+  void _saveLibraryScrollOffset(int index, double offset) {
+    _libraryScrollOffsets[index] = offset;
   }
 
   String _contentKeyValue() {
@@ -128,15 +145,41 @@ class _MainPageState extends State<MainPage> {
 
     switch (index) {
       case 0:
-        return HomeContent(onScroll: _onHomeScroll); // 首页聚合
+        return HomeContent(
+          onScroll: _onHomeScroll,
+          initialScrollOffset: _homeScrollOffset,
+          initialContinueWatchingOffset: _homeContinueWatchingOffset,
+          initialRecentlyAddedOffset: _homeRecentlyAddedOffset,
+          onScrollOffsetChanged: _saveHomeScrollOffset,
+          onContinueWatchingOffsetChanged: _saveHomeContinueWatchingOffset,
+          onRecentlyAddedOffsetChanged: _saveHomeRecentlyAddedOffset,
+        ); // 首页聚合
       case 1:
-        return const LibraryPage(category: 'Movies'); // 电影库
+        return LibraryPage(
+          key: const ValueKey('library-movies'),
+          category: 'Movies',
+          initialScrollOffset: _libraryScrollOffsets[index] ?? 0,
+          onScrollOffsetChanged: (offset) =>
+              _saveLibraryScrollOffset(index, offset),
+        ); // 电影库
       case 2:
-        return const LibraryPage(category: 'TV Shows'); // 剧集库
+        return LibraryPage(
+          key: const ValueKey('library-tv-shows'),
+          category: 'TV Shows',
+          initialScrollOffset: _libraryScrollOffsets[index] ?? 0,
+          onScrollOffsetChanged: (offset) =>
+              _saveLibraryScrollOffset(index, offset),
+        ); // 剧集库
       case 3:
         return const FileBrowserPage(); // 文件浏览器
       case 4:
-        return const LibraryPage(category: 'Favorites'); // 收藏
+        return LibraryPage(
+          key: const ValueKey('library-favorites'),
+          category: 'Favorites',
+          initialScrollOffset: _libraryScrollOffsets[index] ?? 0,
+          onScrollOffsetChanged: (offset) =>
+              _saveLibraryScrollOffset(index, offset),
+        ); // 收藏
       case 5:
         return const SettingsPage(); // 设置页面
       default:
@@ -193,8 +236,6 @@ class _MainPageState extends State<MainPage> {
                 _selectedIndex = index;
                 _detailItem = null;
                 _sectionType = null;
-                // 切换页面时重置滚动偏移
-                if (index != 0) _homeScrollOffset = 0;
               });
             },
           ),
