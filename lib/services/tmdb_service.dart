@@ -563,6 +563,8 @@ class TmdbService {
           return '发送请求超时（${_sendTimeout.inSeconds} 秒）';
         case DioExceptionType.receiveTimeout:
           return '等待响应超时（${_receiveTimeout.inSeconds} 秒）';
+        case DioExceptionType.transformTimeout:
+          return '处理响应超时';
         case DioExceptionType.badResponse:
           return '服务器返回 ${error.response?.statusCode ?? '异常状态'}';
         case DioExceptionType.connectionError:

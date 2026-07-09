@@ -99,10 +99,9 @@ class _HomeContentState extends State<HomeContent> {
                     _buildSectionHeaderSliver(
                       context,
                       '继续观看',
-                      onSeeAll: () => showContinueWatchingSection(
+                      onSeeAll: () => openSectionViewPage(
                         context,
-                        '继续观看',
-                        context.read<MediaLibraryProvider>().continueWatching,
+                        SectionType.continueWatching,
                       ),
                     ),
                     SliverToBoxAdapter(
@@ -138,15 +137,10 @@ class _HomeContentState extends State<HomeContent> {
                     _buildSectionHeaderSliver(
                       context,
                       '最近添加',
-                      onSeeAll: () {
-                        showRecentlyAddedSection(
-                          context,
-                          '最近添加',
-                          context
-                              .read<MediaLibraryProvider>()
-                              .recentlyAddedContent,
-                        );
-                      },
+                      onSeeAll: () => openSectionViewPage(
+                        context,
+                        SectionType.recentlyAdded,
+                      ),
                     ),
                     SliverToBoxAdapter(
                       child: _buildRecentlyAddedList(recentlyAddedItems),

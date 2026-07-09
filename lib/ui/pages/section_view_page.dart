@@ -1,16 +1,304 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/domain/models.dart';
 import '../../providers/media_library_provider.dart';
-import '../widgets/media_poster_card.dart';
+import '../theme/app_colors.dart';
+import '../widgets/app_header.dart';
+import '../widgets/app_modal.dart';
+import '../widgets/macos_controls.dart';
 import '../widgets/media_detail/playback_helper.dart';
+import '../widgets/media_poster_card.dart';
 import 'media_detail_page.dart';
 
 /// Section 类型
 enum SectionType { continueWatching, movies, tvShows, recentlyAdded }
 
-/// 显示 Section 详情模态窗口
+typedef OpenSectionView = void Function(SectionType sectionType);
+
+void openSectionViewPage(BuildContext context, SectionType sectionType) {
+  final scope = SectionViewNavigationScope.maybeOf(context);
+  if (scope != null) {
+    scope.openSectionView(sectionType);
+    return;
+  }
+
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (context) => SectionViewPage(sectionType: sectionType),
+    ),
+  );
+}
+
+class SectionViewNavigationScope extends InheritedWidget {
+  final OpenSectionView openSectionView;
+
+  const SectionViewNavigationScope({
+    super.key,
+    required this.openSectionView,
+    required super.child,
+  });
+
+  static SectionViewNavigationScope? maybeOf(BuildContext context) {
+    final widget = context
+        .getElementForInheritedWidgetOfExactType<SectionViewNavigationScope>()
+        ?.widget;
+    return widget is SectionViewNavigationScope ? widget : null;
+  }
+
+  @override
+  bool updateShouldNotify(SectionViewNavigationScope oldWidget) {
+    return openSectionView != oldWidget.openSectionView;
+  }
+}
+
+class SectionViewPage extends StatefulWidget {
+  final SectionType sectionType;
+  final VoidCallback? onBack;
+  final double initialScrollOffset;
+  final ValueChanged<double>? onScrollOffsetChanged;
+
+  const SectionViewPage({
+    super.key,
+    required this.sectionType,
+    this.onBack,
+    this.initialScrollOffset = 0,
+    this.onScrollOffsetChanged,
+  });
+
+  @override
+  State<SectionViewPage> createState() => _SectionViewPageState();
+}
+
+class _SectionViewPageState extends State<SectionViewPage> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController(
+      initialScrollOffset: widget.initialScrollOffset,
+    );
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _saveScrollOffset();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    _saveScrollOffset();
+  }
+
+  void _saveScrollOffset() {
+    if (!_scrollController.hasClients) return;
+    widget.onScrollOffsetChanged?.call(_scrollController.offset);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: _SectionPageContent(
+              sectionType: widget.sectionType,
+              scrollController: _scrollController,
+            ),
+          ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: AppHeader.height,
+            child: _SectionTopBar(
+              title: _sectionTitle(widget.sectionType),
+              onBack: widget.onBack,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTopBar extends StatelessWidget {
+  final String title;
+  final VoidCallback? onBack;
+
+  const _SectionTopBar({required this.title, required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppHeader(
+      title: title,
+      leading: MacosIconButton(
+        onPressed: () => _goBack(context),
+        icon: Icons.arrow_back_rounded,
+        tooltip: '返回',
+        foregroundColor: AppColors.textPrimary(context),
+        backgroundColor: AppColors.hoverSurface(context),
+        size: 36,
+        iconSize: 20,
+      ),
+    );
+  }
+
+  void _goBack(BuildContext context) {
+    if (onBack != null) {
+      onBack!();
+      return;
+    }
+    Navigator.of(context).maybePop();
+  }
+}
+
+class _SectionPageContent extends StatelessWidget {
+  final SectionType sectionType;
+  final ScrollController scrollController;
+
+  const _SectionPageContent({
+    required this.sectionType,
+    required this.scrollController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<MediaLibraryProvider, _SectionSnapshot>(
+      selector: (context, provider) => _SectionSnapshot(
+        showInitialLoading: provider.isLoading && provider.totalFiles == 0,
+        error: provider.error,
+        contentRevision: _contentRevisionFor(provider, sectionType),
+      ),
+      builder: (context, snapshot, child) {
+        if (snapshot.showInitialLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.error != null) {
+          return Center(child: Text('错误：${snapshot.error}'));
+        }
+
+        final provider = context.read<MediaLibraryProvider>();
+        final itemCount = _itemCount(provider, sectionType);
+        if (itemCount == 0) {
+          return _EmptySectionState(title: _sectionTitle(sectionType));
+        }
+
+        return _buildGrid(context, provider, itemCount);
+      },
+    );
+  }
+
+  int _contentRevisionFor(
+    MediaLibraryProvider provider,
+    SectionType sectionType,
+  ) {
+    switch (sectionType) {
+      case SectionType.continueWatching:
+        return Object.hash(
+          provider.mediaCatalogRevision,
+          provider.metadataRevision,
+          provider.watchProgressRevision,
+        );
+      case SectionType.recentlyAdded:
+        return Object.hash(
+          provider.mediaCatalogRevision,
+          provider.metadataRevision,
+        );
+      case SectionType.movies:
+      case SectionType.tvShows:
+        return provider.metadataRevision;
+    }
+  }
+
+  int _itemCount(MediaLibraryProvider provider, SectionType sectionType) {
+    switch (sectionType) {
+      case SectionType.continueWatching:
+        return provider.continueWatching.length;
+      case SectionType.recentlyAdded:
+        return provider.recentlyAddedContent.length;
+      case SectionType.movies:
+        return provider.movies.length;
+      case SectionType.tvShows:
+        return provider.tvShows.length;
+    }
+  }
+
+  Widget _buildGrid(
+    BuildContext context,
+    MediaLibraryProvider provider,
+    int itemCount,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isBackdrop = sectionType == SectionType.continueWatching;
+        final contentWidth = constraints.maxWidth - 80;
+        final crossAxisCount = isBackdrop
+            ? (contentWidth / 280).floor().clamp(2, 8).toInt()
+            : _libraryPosterColumnCount(contentWidth);
+
+        return GridView.builder(
+          key: PageStorageKey<String>('section-view-${sectionType.name}'),
+          controller: scrollController,
+          padding: EdgeInsets.fromLTRB(
+            40,
+            AppHeader.height + 40,
+            40,
+            isBackdrop ? 44 : 40,
+          ),
+          itemCount: itemCount,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: isBackdrop ? 1.35 : 0.57,
+            crossAxisSpacing: isBackdrop ? 20 : 24,
+            mainAxisSpacing: isBackdrop ? 24 : 32,
+          ),
+          itemBuilder: (context, index) {
+            return _buildCard(context, provider, index);
+          },
+        );
+      },
+    );
+  }
+
+  int _libraryPosterColumnCount(double contentWidth) {
+    const desiredItemWidth = 180.0;
+    final crossAxisCount = (contentWidth / desiredItemWidth).round();
+    return crossAxisCount < 3 ? 3 : crossAxisCount;
+  }
+
+  Widget _buildCard(
+    BuildContext context,
+    MediaLibraryProvider provider,
+    int index,
+  ) {
+    switch (sectionType) {
+      case SectionType.continueWatching:
+        return _buildContinueWatchingCard(
+          context,
+          provider.continueWatching[index],
+          provider,
+        );
+      case SectionType.recentlyAdded:
+        return _buildRecentlyAddedCard(
+          context,
+          provider.recentlyAddedContent[index],
+        );
+      case SectionType.movies:
+        return _buildMovieCard(context, provider.movies[index]);
+      case SectionType.tvShows:
+        return _buildTVShowCard(context, provider.tvShows[index]);
+    }
+  }
+}
+
+/// 备用：显示 Section 详情模态窗口。首页“查看全部”已改为 page。
 void showSectionModal(
   BuildContext context, {
   required String title,
@@ -20,67 +308,18 @@ void showSectionModal(
   List<MediaFile>? mediaFiles,
   List<dynamic>? recentItems,
 }) {
-  showGeneralDialog(
+  showAppModal<void>(
     context: context,
-    barrierDismissible: true,
-    barrierLabel: "关闭",
-    barrierColor: Colors.transparent,
-    transitionDuration: const Duration(milliseconds: 300),
-    transitionBuilder: (context, animation, secondaryAnimation, child) {
-      final curvedAnimation = CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeOutQuart,
-        reverseCurve: Curves.easeInCubic,
-      );
-      return Stack(
-        children: [
-          FadeTransition(
-            opacity: curvedAnimation,
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              behavior: HitTestBehavior.opaque,
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  color: Colors.black.withAlpha((255 * 0.2).round()),
-                ),
-              ),
-            ),
-          ),
-          ScaleTransition(
-            scale: Tween<double>(
-              begin: 0.92,
-              end: 1.0,
-            ).animate(curvedAnimation),
-            child: FadeTransition(opacity: curvedAnimation, child: child),
-          ),
-        ],
-      );
-    },
-    pageBuilder: (context, animation, secondaryAnimation) {
-      return Center(
-        child: Material(
-          color: Colors.transparent,
-          child: GestureDetector(
-            onTap: () {},
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: 1000,
-                maxHeight: MediaQuery.of(context).size.height * 0.85,
-              ),
-              child: _SectionModalContent(
-                title: title,
-                sectionType: sectionType,
-                movies: movies,
-                tvShows: tvShows,
-                mediaFiles: mediaFiles,
-                recentItems: recentItems,
-              ),
-            ),
-          ),
-        ),
-      );
-    },
+    child: AppModalScaffold(
+      title: title,
+      child: _SectionModalGrid(
+        sectionType: sectionType,
+        movies: movies,
+        tvShows: tvShows,
+        mediaFiles: mediaFiles,
+        recentItems: recentItems,
+      ),
+    ),
   );
 }
 
@@ -136,16 +375,14 @@ void showContinueWatchingSection(
   );
 }
 
-class _SectionModalContent extends StatelessWidget {
-  final String title;
+class _SectionModalGrid extends StatelessWidget {
   final SectionType sectionType;
   final List<Movie>? movies;
   final List<TVShow>? tvShows;
   final List<MediaFile>? mediaFiles;
   final List<dynamic>? recentItems;
 
-  const _SectionModalContent({
-    required this.title,
+  const _SectionModalGrid({
     required this.sectionType,
     this.movies,
     this.tvShows,
@@ -155,109 +392,35 @@ class _SectionModalContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final provider = context.read<MediaLibraryProvider>();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.brightness == Brightness.light
-            ? Colors.white
-            : const Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((255 * 0.2).round()),
-            blurRadius: 50,
-            offset: const Offset(0, 30),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          children: [
-            // Header
-            _buildHeader(context, theme),
-            // 分割线
-            Container(height: 1, color: theme.dividerColor),
-            // 内容区域
-            Expanded(child: _buildContent(context, provider, theme)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, ThemeData theme) {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          // 标题
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: theme.textTheme.bodyMedium?.color,
-            ),
-          ),
-          const Spacer(),
-          // 关闭按钮
-          _CloseButton(onTap: () => Navigator.pop(context)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContent(
-    BuildContext context,
-    MediaLibraryProvider provider,
-    ThemeData theme,
-  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        double width = constraints.maxWidth;
-        double contentWidth = width - 60; // 左右各 30 padding
-
-        // 根据类型选择不同的布局参数
-        final bool isBackdrop = sectionType == SectionType.continueWatching;
-
-        // 海报尺寸：更小的尺寸适合模态窗口
-        const double posterItemWidth = 140;
-        const double backdropItemWidth = 220;
-
-        final double desiredItemWidth = isBackdrop
-            ? backdropItemWidth
-            : posterItemWidth;
-        int crossAxisCount = (contentWidth / desiredItemWidth).floor();
+        final contentWidth = constraints.maxWidth - 60;
+        final isBackdrop = sectionType == SectionType.continueWatching;
+        final desiredItemWidth = isBackdrop ? 220.0 : 140.0;
+        var crossAxisCount = (contentWidth / desiredItemWidth).floor();
         if (crossAxisCount < 2) crossAxisCount = 2;
         if (!isBackdrop && crossAxisCount < 3) crossAxisCount = 3;
 
-        // 计算宽高比
-        // 竖版海报：宽高比约 0.55 (更紧凑)
-        // 横版背景：宽高比约 1.35 (16:9 图片 + 文字区域)
-        final double childAspectRatio = isBackdrop ? 1.35 : 0.55;
-
         return GridView.builder(
           padding: const EdgeInsets.all(24),
-          itemCount: _getItemCount(),
+          itemCount: _itemCount,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            childAspectRatio: childAspectRatio,
+            childAspectRatio: isBackdrop ? 1.35 : 0.55,
             crossAxisSpacing: 16,
             mainAxisSpacing: 20,
           ),
           itemBuilder: (context, index) {
-            return _buildCard(context, index, provider);
+            return _buildCard(context, provider, index);
           },
         );
       },
     );
   }
 
-  int _getItemCount() {
+  int get _itemCount {
     switch (sectionType) {
       case SectionType.movies:
         return movies?.length ?? 0;
@@ -272,14 +435,18 @@ class _SectionModalContent extends StatelessWidget {
 
   Widget _buildCard(
     BuildContext context,
-    int index,
     MediaLibraryProvider provider,
+    int index,
   ) {
     switch (sectionType) {
       case SectionType.movies:
-        return _buildMovieCard(context, movies![index]);
+        return _buildMovieCard(context, movies![index], closeModalFirst: true);
       case SectionType.tvShows:
-        return _buildTVShowCard(context, tvShows![index]);
+        return _buildTVShowCard(
+          context,
+          tvShows![index],
+          closeModalFirst: true,
+        );
       case SectionType.continueWatching:
         return _buildContinueWatchingCard(
           context,
@@ -287,164 +454,206 @@ class _SectionModalContent extends StatelessWidget {
           provider,
         );
       case SectionType.recentlyAdded:
-        return _buildRecentlyAddedCard(context, recentItems![index]);
-    }
-  }
-
-  Widget _buildMovieCard(BuildContext context, Movie movie) {
-    return MediaPosterCard(
-      title: movie.title,
-      subtitle: movie.releaseYear?.toString(),
-      posterUrl: movie.posterUrl,
-      rating: movie.rating,
-      tmdbId: movie.tmdbId,
-      cardType: MediaCardType.poster,
-      onTap: () => _openDetailFromModal(context, movie),
-    );
-  }
-
-  Widget _buildTVShowCard(BuildContext context, TVShow show) {
-    String? subtitle;
-    if (show.numberOfSeasons != null && show.numberOfSeasons! > 0) {
-      subtitle = show.numberOfSeasons == 1
-          ? '1 季'
-          : '${show.numberOfSeasons} 季';
-    } else if (show.releaseYear != null) {
-      subtitle = show.releaseYear.toString();
-    }
-
-    return MediaPosterCard(
-      title: show.title,
-      subtitle: subtitle,
-      posterUrl: show.posterUrl,
-      rating: show.rating,
-      tmdbId: show.tmdbId,
-      cardType: MediaCardType.poster,
-      onTap: () => _openDetailFromModal(context, show),
-    );
-  }
-
-  void _openDetailFromModal(BuildContext context, dynamic item) {
-    final scope = MediaDetailNavigationScope.maybeOf(context);
-    final navigator = Navigator.of(context);
-    navigator.pop();
-
-    if (scope != null) {
-      scope.openMediaDetail(item);
-      return;
-    }
-
-    navigator.push(
-      MaterialPageRoute<void>(
-        builder: (context) => MediaDetailPage(item: item),
-      ),
-    );
-  }
-
-  Widget _buildRecentlyAddedCard(BuildContext context, dynamic item) {
-    if (item is Movie) {
-      return _buildMovieCard(context, item);
-    }
-    if (item is TVShow) {
-      return _buildTVShowCard(context, item);
-    }
-    return const SizedBox.shrink();
-  }
-
-  Widget _buildContinueWatchingCard(
-    BuildContext context,
-    MediaFile file,
-    MediaLibraryProvider provider,
-  ) {
-    String title = file.parsedTitle;
-    String? subtitle;
-    String? imageUrl;
-    double rating = 0.0;
-    dynamic metadata;
-
-    if (file.mediaType == MediaType.movie) {
-      metadata = provider.getMovieMetadata(file.tmdbId ?? '');
-      if (metadata != null) {
-        title = metadata.title;
-        imageUrl = metadata.backdropUrl;
-        rating = metadata.rating;
-        subtitle = metadata.releaseYear?.toString();
-      }
-    } else {
-      subtitle = _episodeLabel(file);
-      metadata = provider.getTVShowMetadata(file.tmdbId ?? '');
-      if (metadata != null) {
-        title = metadata.title;
-        imageUrl = metadata.backdropUrl;
-        rating = metadata.rating;
-        if (subtitle == null && metadata.numberOfSeasons != null) {
-          subtitle = '${metadata.numberOfSeasons} 季';
-        }
-      }
-    }
-
-    return MediaPosterCard(
-      title: title,
-      subtitle: subtitle,
-      posterUrl: imageUrl,
-      rating: rating,
-      tmdbId: file.tmdbId,
-      cardType: MediaCardType.backdrop,
-      progress: file.progress,
-      showProgress: true,
-      onTap: () {
-        PlaybackHelper.playFile(
+        return _buildRecentlyAddedCard(
           context,
-          file,
-          contextTitle: file.mediaType == MediaType.episode ? title : null,
+          recentItems![index],
+          closeModalFirst: true,
         );
-      },
-    );
-  }
-
-  String? _episodeLabel(MediaFile file) {
-    final season = file.parsedSeason;
-    final episode = file.parsedEpisode;
-    if (season == null || episode == null) return null;
-
-    return '第 $season 季 第 $episode 集';
+    }
   }
 }
 
-/// 关闭按钮
-class _CloseButton extends StatefulWidget {
-  final VoidCallback onTap;
-
-  const _CloseButton({required this.onTap});
-
-  @override
-  State<_CloseButton> createState() => _CloseButtonState();
+Widget _buildMovieCard(
+  BuildContext context,
+  Movie movie, {
+  bool closeModalFirst = false,
+}) {
+  return MediaPosterCard(
+    title: movie.title,
+    subtitle: movie.releaseYear?.toString(),
+    posterUrl: movie.posterUrl,
+    rating: movie.rating,
+    tmdbId: movie.tmdbId,
+    cardType: MediaCardType.poster,
+    onTap: () => closeModalFirst
+        ? _openDetailFromModal(context, movie)
+        : openMediaDetailPage(context, movie),
+  );
 }
 
-class _CloseButtonState extends State<_CloseButton> {
-  bool _isHovering = false;
+Widget _buildTVShowCard(
+  BuildContext context,
+  TVShow show, {
+  bool closeModalFirst = false,
+}) {
+  String? subtitle;
+  if (show.numberOfSeasons != null && show.numberOfSeasons! > 0) {
+    subtitle = show.numberOfSeasons == 1 ? '1 季' : '${show.numberOfSeasons} 季';
+  } else if (show.releaseYear != null) {
+    subtitle = show.releaseYear.toString();
+  }
+
+  return MediaPosterCard(
+    title: show.title,
+    subtitle: subtitle,
+    posterUrl: show.posterUrl,
+    rating: show.rating,
+    tmdbId: show.tmdbId,
+    cardType: MediaCardType.poster,
+    onTap: () => closeModalFirst
+        ? _openDetailFromModal(context, show)
+        : openMediaDetailPage(context, show),
+  );
+}
+
+void _openDetailFromModal(BuildContext context, dynamic item) {
+  final scope = MediaDetailNavigationScope.maybeOf(context);
+  final navigator = Navigator.of(context);
+  navigator.pop();
+
+  if (scope != null) {
+    scope.openMediaDetail(item);
+    return;
+  }
+
+  navigator.push(
+    MaterialPageRoute<void>(builder: (context) => MediaDetailPage(item: item)),
+  );
+}
+
+Widget _buildRecentlyAddedCard(
+  BuildContext context,
+  dynamic item, {
+  bool closeModalFirst = false,
+}) {
+  if (item is Movie) {
+    return _buildMovieCard(context, item, closeModalFirst: closeModalFirst);
+  }
+  if (item is TVShow) {
+    return _buildTVShowCard(context, item, closeModalFirst: closeModalFirst);
+  }
+  return const SizedBox.shrink();
+}
+
+Widget _buildContinueWatchingCard(
+  BuildContext context,
+  MediaFile file,
+  MediaLibraryProvider provider,
+) {
+  var title = file.parsedTitle;
+  String? subtitle;
+  String? imageUrl;
+  var rating = 0.0;
+  dynamic metadata;
+
+  if (file.mediaType == MediaType.movie) {
+    metadata = provider.getMovieMetadata(file.tmdbId ?? '');
+    if (metadata != null) {
+      title = metadata.title;
+      imageUrl = metadata.backdropUrl;
+      rating = metadata.rating;
+      subtitle = metadata.releaseYear?.toString();
+    }
+  } else {
+    subtitle = _episodeLabel(file);
+    metadata = provider.getTVShowMetadata(file.tmdbId ?? '');
+    if (metadata != null) {
+      title = metadata.title;
+      imageUrl = metadata.backdropUrl;
+      rating = metadata.rating;
+      if (subtitle == null && metadata.numberOfSeasons != null) {
+        subtitle = '${metadata.numberOfSeasons} 季';
+      }
+    }
+  }
+
+  return MediaPosterCard(
+    title: title,
+    subtitle: subtitle,
+    posterUrl: imageUrl,
+    rating: rating,
+    tmdbId: file.tmdbId,
+    cardType: MediaCardType.backdrop,
+    progress: file.progress,
+    showProgress: true,
+    onTap: () {
+      PlaybackHelper.playFile(
+        context,
+        file,
+        contextTitle: file.mediaType == MediaType.episode ? title : null,
+      );
+    },
+  );
+}
+
+String? _episodeLabel(MediaFile file) {
+  final season = file.parsedSeason;
+  final episode = file.parsedEpisode;
+  if (season == null || episode == null) return null;
+
+  return '第 $season 季 第 $episode 集';
+}
+
+String _sectionTitle(SectionType sectionType) {
+  switch (sectionType) {
+    case SectionType.continueWatching:
+      return '继续观看';
+    case SectionType.recentlyAdded:
+      return '最近添加';
+    case SectionType.movies:
+      return '电影';
+    case SectionType.tvShows:
+      return '剧集';
+  }
+}
+
+class _EmptySectionState extends StatelessWidget {
+  final String title;
+
+  const _EmptySectionState({required this.title});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final iconColor = theme.textTheme.bodyMedium!.color!;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: _isHovering ? iconColor.withAlpha(25) : Colors.transparent,
-            shape: BoxShape.circle,
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.movie_outlined, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            '$title为空',
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
-          child: Icon(Icons.close, color: iconColor, size: 20),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            '请先扫描媒体库以发现资源',
+            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+          ),
+        ],
       ),
     );
   }
+}
+
+class _SectionSnapshot {
+  final bool showInitialLoading;
+  final String? error;
+  final int contentRevision;
+
+  const _SectionSnapshot({
+    required this.showInitialLoading,
+    required this.error,
+    required this.contentRevision,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return other is _SectionSnapshot &&
+        other.showInitialLoading == showInitialLoading &&
+        other.error == error &&
+        other.contentRevision == contentRevision;
+  }
+
+  @override
+  int get hashCode => Object.hash(showInitialLoading, error, contentRevision);
 }

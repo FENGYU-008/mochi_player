@@ -4,6 +4,7 @@ import 'package:mochi_player/providers/app_settings_provider.dart';
 import 'package:mochi_player/providers/media_library_provider.dart';
 import 'package:mochi_player/ui/pages/file_browser_page.dart';
 import 'package:mochi_player/ui/pages/media_detail_page.dart';
+import 'package:mochi_player/ui/pages/section_view_page.dart';
 import 'package:mochi_player/ui/pages/settings_page.dart';
 import 'package:provider/provider.dart';
 import '../widgets/app_header.dart';
@@ -23,6 +24,8 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0; // 默认选中 Home
   dynamic _detailItem;
+  SectionType? _sectionType;
+  final Map<SectionType, double> _sectionScrollOffsets = {};
 
   // 用于接收首页滚动偏移量以控制 header 透明度
   double _homeScrollOffset = 0;
@@ -71,22 +74,56 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  void _openSectionView(SectionType sectionType) {
+    setState(() {
+      _sectionType = sectionType;
+      _detailItem = null;
+      _homeScrollOffset = 0;
+    });
+  }
+
+  void _closeSectionView() {
+    setState(() {
+      _sectionType = null;
+    });
+  }
+
+  void _saveSectionScrollOffset(SectionType sectionType, double offset) {
+    _sectionScrollOffsets[sectionType] = offset;
+  }
+
   String _contentKeyValue() {
     final item = _detailItem;
-    if (item == null) return 'main-content';
+    if (item == null) {
+      final sectionType = _sectionType;
+      if (sectionType != null) return 'section:${sectionType.name}';
+      return 'main-content';
+    }
     if (item is Movie) return 'detail:movie:${item.tmdbId}';
     if (item is TVShow) return 'detail:tv:${item.tmdbId}';
     return 'detail:${identityHashCode(item)}';
   }
 
-  bool _isDetailContentKey(Key? key) {
-    return key is ValueKey<String> && key.value.startsWith('detail:');
+  bool _isSecondaryContentKey(Key? key) {
+    return key is ValueKey<String> &&
+        (key.value.startsWith('detail:') || key.value.startsWith('section:'));
   }
 
   // === 核心修改：页面路由表 ===
   Widget _getPageContent(int index) {
     if (_detailItem != null) {
       return MediaDetailPage(item: _detailItem, onBack: _closeMediaDetail);
+    }
+
+    final sectionType = _sectionType;
+    if (sectionType != null) {
+      return SectionViewPage(
+        sectionType: sectionType,
+        onBack: _closeSectionView,
+        initialScrollOffset: _sectionScrollOffsets[sectionType] ?? 0,
+        onScrollOffsetChanged: (offset) =>
+            _saveSectionScrollOffset(sectionType, offset),
+      );
     }
 
     switch (index) {
@@ -140,7 +177,10 @@ class _MainPageState extends State<MainPage> {
 
     // 是否显示标准 header (非首页或首页滚动后)
     final showHeader =
-        _detailItem == null && _selectedIndex != 3 && _selectedIndex != 5;
+        _detailItem == null &&
+        _sectionType == null &&
+        _selectedIndex != 3 &&
+        _selectedIndex != 5;
 
     return Scaffold(
       body: Row(
@@ -152,6 +192,7 @@ class _MainPageState extends State<MainPage> {
               setState(() {
                 _selectedIndex = index;
                 _detailItem = null;
+                _sectionType = null;
                 // 切换页面时重置滚动偏移
                 if (index != 0) _homeScrollOffset = 0;
               });
@@ -164,108 +205,113 @@ class _MainPageState extends State<MainPage> {
               openMediaDetail: _openMediaDetail,
               child: Container(
                 color: theme.scaffoldBackgroundColor, // 使用主题背景色
-                child: Stack(
-                  children: [
-                    // === 1. 底层内容 (动态切换) ===
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 320),
-                      reverseDuration: const Duration(milliseconds: 260),
-                      switchInCurve: Curves.linear,
-                      switchOutCurve: Curves.linear,
-                      layoutBuilder: (currentChild, previousChildren) {
-                        final stackChildren = <Widget>[];
-                        final currentIsDetail =
-                            currentChild != null &&
-                            _isDetailContentKey(currentChild.key);
+                child: SectionViewNavigationScope(
+                  openSectionView: _openSectionView,
+                  child: Stack(
+                    children: [
+                      // === 1. 底层内容 (动态切换) ===
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 320),
+                        reverseDuration: const Duration(milliseconds: 260),
+                        switchInCurve: Curves.linear,
+                        switchOutCurve: Curves.linear,
+                        layoutBuilder: (currentChild, previousChildren) {
+                          final stackChildren = <Widget>[];
+                          final currentIsSecondary =
+                              currentChild != null &&
+                              _isSecondaryContentKey(currentChild.key);
 
-                        if (currentChild != null && !currentIsDetail) {
-                          stackChildren.add(
-                            Positioned.fill(child: currentChild),
+                          if (currentChild != null && !currentIsSecondary) {
+                            stackChildren.add(
+                              Positioned.fill(child: currentChild),
+                            );
+                          }
+
+                          stackChildren.addAll(
+                            previousChildren.map(
+                              (child) => Positioned.fill(child: child),
+                            ),
                           );
-                        }
 
-                        stackChildren.addAll(
-                          previousChildren.map(
-                            (child) => Positioned.fill(child: child),
-                          ),
-                        );
+                          if (currentChild != null && currentIsSecondary) {
+                            stackChildren.add(
+                              Positioned.fill(child: currentChild),
+                            );
+                          }
 
-                        if (currentChild != null && currentIsDetail) {
-                          stackChildren.add(
-                            Positioned.fill(child: currentChild),
+                          return Stack(children: stackChildren);
+                        },
+                        transitionBuilder: (child, animation) {
+                          final isSecondary = _isSecondaryContentKey(child.key);
+                          final curved = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutQuart,
+                            reverseCurve: Curves.easeInCubic,
                           );
-                        }
+                          final offset = Tween<Offset>(
+                            begin: isSecondary
+                                ? const Offset(0.025, 0)
+                                : Offset.zero,
+                            end: Offset.zero,
+                          ).animate(curved);
 
-                        return Stack(children: stackChildren);
-                      },
-                      transitionBuilder: (child, animation) {
-                        final isDetail = _isDetailContentKey(child.key);
-                        final curved = CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutQuart,
-                          reverseCurve: Curves.easeInCubic,
-                        );
-                        final offset = Tween<Offset>(
-                          begin: isDetail
-                              ? const Offset(0.025, 0)
-                              : Offset.zero,
-                          end: Offset.zero,
-                        ).animate(curved);
-
-                        return FadeTransition(
-                          opacity: curved,
-                          child: SlideTransition(
-                            position: offset,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: KeyedSubtree(
-                        key: ValueKey(_contentKeyValue()),
-                        child: _getPageContent(_selectedIndex),
-                      ),
-                    ),
-
-                    Selector<MediaLibraryProvider, _LibraryActivityState>(
-                      selector: (context, provider) => _LibraryActivityState(
-                        message: provider.libraryActivityMessage,
-                        progress: provider.scrapeProgress,
-                      ),
-                      builder: (context, activity, child) {
-                        if (activity.message == null) {
-                          return const SizedBox.shrink();
-                        }
-
-                        return Positioned(
-                          top: _detailItem != null
-                              ? 76
-                              : showHeader
-                              ? 70
-                              : 16,
-                          left: 40,
-                          right: 40,
-                          child: _LibraryActivityBanner(
-                            message: activity.message!,
-                            progress: activity.progress,
-                          ),
-                        );
-                      },
-                    ),
-
-                    // === 2. 顶层毛玻璃 Header ===
-                    if (showHeader)
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: AppHeader.height,
-                        child: AppHeader(
-                          title: _getTitle(_selectedIndex),
-                          opacity: headerOpacity,
-                          ignoreWhenTransparent: _selectedIndex == 0,
+                          return FadeTransition(
+                            opacity: curved,
+                            child: SlideTransition(
+                              position: offset,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: KeyedSubtree(
+                          key: ValueKey(_contentKeyValue()),
+                          child: _getPageContent(_selectedIndex),
                         ),
                       ),
-                  ],
+
+                      Selector<MediaLibraryProvider, _LibraryActivityState>(
+                        selector: (context, provider) => _LibraryActivityState(
+                          message: provider.libraryActivityMessage,
+                          progress: provider.scrapeProgress,
+                        ),
+                        builder: (context, activity, child) {
+                          if (activity.message == null) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return Positioned(
+                            top: _detailItem != null
+                                ? 76
+                                : _sectionType != null
+                                ? 76
+                                : showHeader
+                                ? 70
+                                : 16,
+                            left: 40,
+                            right: 40,
+                            child: _LibraryActivityBanner(
+                              message: activity.message!,
+                              progress: activity.progress,
+                            ),
+                          );
+                        },
+                      ),
+
+                      // === 2. 顶层毛玻璃 Header ===
+                      if (showHeader)
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: AppHeader.height,
+                          child: AppHeader(
+                            title: _getTitle(_selectedIndex),
+                            opacity: headerOpacity,
+                            ignoreWhenTransparent: _selectedIndex == 0,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
