@@ -29,6 +29,7 @@ class WebDavService {
   String _username = '';
   String _password = '';
   String? _token;
+  Future<bool>? _tokenRefreshFuture;
   final _dio = Dio();
 
   /// 是否已初始化
@@ -42,6 +43,7 @@ class WebDavService {
     _username = username.trim();
     _password = password;
     _token = null;
+    _tokenRefreshFuture = null;
 
     _client = webdav.newClient(
       _baseUrl,
@@ -61,33 +63,45 @@ class WebDavService {
     _username = '';
     _password = '';
     _token = null;
+    _tokenRefreshFuture = null;
   }
 
-  Future<void> _login() async {
+  Future<bool> _login() async {
     try {
       final response = await _dio.post(
         '$_baseUrl/api/auth/login',
         data: {'username': _username, 'password': _password},
       );
       if (response.statusCode == 200 && response.data['code'] == 200) {
-        _token = response.data['data']['token'];
-        _logger.i("✅ Alist API 登录成功，获取 Token");
+        final token = response.data['data']['token'];
+        if (token is String && token.isNotEmpty) {
+          _token = token;
+          _logger.i("✅ Alist API 登录成功");
+          return true;
+        }
+        _logger.w("⚠️ Alist API 登录失败：响应中缺少 Token");
       } else {
         _logger.w("⚠️ Alist API 登录失败: ${response.data['message']}");
       }
+      return false;
     } catch (e) {
       _logger.e("❌ Alist API 登录异常: $e");
+      return false;
     }
+  }
+
+  Future<bool> _ensureToken() {
+    if (_token != null) return Future.value(true);
+    return _tokenRefreshFuture ??= _login().whenComplete(() {
+      _tokenRefreshFuture = null;
+    });
   }
 
   /// 获取文件的直链 (用于播放器)
   Future<String?> getDirectLink(String path) async {
-    if (_token == null) {
-      await _login();
-      if (_token == null) {
-        _logger.w("无法获取直链，因为未登录 Alist API");
-        return null;
-      }
+    if (!await _ensureToken()) {
+      _logger.w("无法获取直链，因为未登录 Alist API");
+      return null;
     }
 
     // 移除 WebDAV 路径中的 /dav 前缀，以适配 Alist API
@@ -99,23 +113,43 @@ class WebDavService {
 
     _logger.d("🔗 正在为 Alist API 请求路径: $apiPath");
 
+    var result = await _requestDirectLink(apiPath);
+    if (!result.tokenInvalid) return result.url;
+
+    // AList tokens may expire while the app remains open. Refresh once and
+    // retry the original request instead of requiring the user to reconnect.
+    _token = null;
+    if (!await _ensureToken()) return null;
+    result = await _requestDirectLink(apiPath);
+    return result.url;
+  }
+
+  Future<_DirectLinkResult> _requestDirectLink(String apiPath) async {
     try {
       final response = await _dio.post(
         '$_baseUrl/api/fs/get',
         data: {'path': apiPath},
         options: Options(headers: {'Authorization': _token}),
       );
-      if (response.statusCode == 200 && response.data['code'] == 200) {
-        final rawUrl = response.data['data']['raw_url'];
-        _logger.i("✅ 获取直链成功: $rawUrl");
-        return rawUrl;
-      } else {
-        _logger.w("⚠️ 获取直链失败: ${response.data['message']}");
-        return null;
+      final data = response.data;
+      final apiCode = data is Map ? data['code'] : null;
+      final tokenInvalid = response.statusCode == 401 || apiCode == 401;
+      if (response.statusCode == 200 && apiCode == 200) {
+        final rawUrl = data['data']['raw_url'];
+        if (rawUrl is String && rawUrl.isNotEmpty) {
+          _logger.i("✅ 获取直链成功");
+          return _DirectLinkResult(url: rawUrl);
+        }
       }
-    } catch (e) {
-      _logger.e("❌ 获取直链异常: $e");
-      return null;
+      _logger.w("⚠️ 获取直链失败: ${data is Map ? data['message'] : data}");
+      return _DirectLinkResult(tokenInvalid: tokenInvalid);
+    } on DioException catch (error) {
+      final tokenInvalid = error.response?.statusCode == 401;
+      _logger.e("❌ 获取直链异常: $error");
+      return _DirectLinkResult(tokenInvalid: tokenInvalid);
+    } catch (error) {
+      _logger.e("❌ 获取直链异常: $error");
+      return const _DirectLinkResult();
     }
   }
 
@@ -189,4 +223,11 @@ class WebDavService {
         : '';
     return videoExtensions.contains(extension);
   }
+}
+
+class _DirectLinkResult {
+  final String? url;
+  final bool tokenInvalid;
+
+  const _DirectLinkResult({this.url, this.tokenInvalid = false});
 }

@@ -9,7 +9,7 @@ import 'media_poster_card.dart';
 import 'horizontal_scroll_view.dart';
 import 'hero_section.dart';
 import 'trending_category_card.dart';
-import 'media_detail/playback_helper.dart';
+import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 
 class HomeContent extends StatefulWidget {
   /// 回调函数，用于通知父组件滚动偏移量
@@ -364,7 +364,7 @@ class _HomeContentState extends State<HomeContent> {
                   progress: file.progress,
                   showProgress: true,
                   onTap: () {
-                    PlaybackHelper.playFile(
+                    PlaybackLauncher.playFile(
                       context,
                       file,
                       contextTitle: file.mediaType == MediaType.episode

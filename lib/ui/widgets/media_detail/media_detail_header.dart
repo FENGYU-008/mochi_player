@@ -8,7 +8,7 @@ import '../../../../services/tmdb_image_cache_manager.dart';
 import '../../view_models/media_detail_view_model.dart';
 import '../macos_controls.dart';
 import 'favorite_button.dart';
-import 'playback_helper.dart';
+import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 
 const double _detailReadableWidth = 820;
 
@@ -221,7 +221,7 @@ class _PrimaryActionArea extends StatelessWidget {
             ? _episodeActionLabel(resumeFile, '继续')
             : '继续播放',
         detail: _resumeDetail(resumeFile),
-        onPressed: () => PlaybackHelper.playFile(
+        onPressed: () => PlaybackLauncher.playFile(
           context,
           resumeFile,
           contextTitle: viewModel.isTVShow ? viewModel.title : null,
@@ -236,7 +236,7 @@ class _PrimaryActionArea extends StatelessWidget {
         enabled: files.isNotEmpty,
         onPressed: files.isEmpty
             ? null
-            : () => PlaybackHelper.playMovie(
+            : () => PlaybackLauncher.playMovie(
                 context,
                 viewModel.originalItem as Movie,
               ),
@@ -250,7 +250,7 @@ class _PrimaryActionArea extends StatelessWidget {
       enabled: firstFile != null,
       onPressed: firstFile == null
           ? null
-          : () => PlaybackHelper.playFile(
+          : () => PlaybackLauncher.playFile(
               context,
               firstFile,
               contextTitle: viewModel.title,

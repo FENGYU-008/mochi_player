@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:mochi_player/models/domain/models.dart';
 import 'package:mochi_player/providers/media_library_provider.dart';
 import 'package:mochi_player/services/webdav_service.dart';
-import 'package:mochi_player/ui/pages/player_page.dart';
+import 'package:mochi_player/features/playback/presentation/pages/player_page.dart';
 
-class PlaybackHelper {
+class PlaybackLauncher {
   static void playFile(
     BuildContext context,
     MediaFile file, {
@@ -115,18 +115,22 @@ class PlaybackHelper {
       ),
     );
 
-    final directLink = await WebDavService().getDirectLink(file.path);
+    String? directLink;
+    try {
+      directLink = await WebDavService().getDirectLink(file.path);
+    } finally {
+      messenger.hideCurrentSnackBar();
+    }
     if (!context.mounted) return;
 
-    messenger.hideCurrentSnackBar();
-
-    if (directLink != null) {
+    final playerUrl = directLink;
+    if (playerUrl != null) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => PlayerPage(
             videoItem: file,
-            url: directLink,
+            url: playerUrl,
             contextTitle: contextTitle,
             playlist: playlist,
           ),

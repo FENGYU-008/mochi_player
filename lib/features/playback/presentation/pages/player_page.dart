@@ -7,11 +7,11 @@ import 'package:provider/provider.dart';
 
 import 'package:mochi_player/models/domain/media_file.dart';
 import 'package:mochi_player/models/domain/media_type.dart';
+import 'package:mochi_player/features/playback/application/playback_session_controller.dart';
 import 'package:mochi_player/providers/app_settings_provider.dart';
 import 'package:mochi_player/providers/media_library_provider.dart';
 import 'package:mochi_player/services/app_settings_service.dart';
-import 'package:mochi_player/services/webdav_service.dart';
-import 'package:mochi_player/ui/widgets/player_controls.dart';
+import 'package:mochi_player/features/playback/presentation/widgets/player_controls.dart';
 import 'package:window_manager/window_manager.dart';
 
 class PlayerPage extends StatefulWidget {
@@ -40,10 +40,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   late final VideoController _videoController;
   late final MediaLibraryProvider _libraryProvider;
   late final AppSettings _playbackSettings;
-  late List<MediaFile> _playlist;
-  late int _currentIndex;
-  late MediaFile _currentItem;
-  late String _currentUrl;
+  late final PlaybackSessionController _session;
 
   bool _isControlsVisible = true;
   Timer? _hideControlsTimer;
@@ -56,7 +53,6 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   bool _isTryingAudioFallback = false;
   bool _playerErrorIsAudioDecode = false;
   bool _showResumeNotice = false;
-  bool _isSwitchingQueueItem = false;
   bool _overrideEmbeddedSubtitleStyle = false;
   bool _windowWasFullScreenOnOpen = false;
   bool _playerUsedWindowFullScreen = false;
@@ -78,13 +74,13 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
   final FocusNode _focusNode = FocusNode();
   Timer? _resumeNoticeTimer;
-  int _lastSavedPositionMs = -1;
   double _lastVolumeBeforeMute = 100.0;
   String? _playerError;
   String? _resumePositionLabel;
 
-  bool get _hasPrevious => _currentIndex > 0;
-  bool get _hasNext => _currentIndex < _playlist.length - 1;
+  MediaFile get _currentItem => _session.currentItem;
+  bool get _hasPrevious => _session.hasPrevious;
+  bool get _hasNext => _session.hasNext;
 
   // 🟢 新增：组合标题的 Getter
   String get _displayTitle {
@@ -107,7 +103,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     super.initState();
     _libraryProvider = context.read<MediaLibraryProvider>();
     _playbackSettings = context.read<AppSettingsProvider>().settings;
-    _initializePlaylist();
+    _initializeSession();
     windowManager.addListener(this);
 
     _player = Player(
@@ -137,34 +133,16 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     unawaited(_ensureInitialWindowFullScreenCaptured());
   }
 
-  void _initializePlaylist() {
+  void _initializeSession() {
     final sourcePlaylist = widget.playlist.isNotEmpty
         ? widget.playlist
         : _libraryProvider.getPlaybackQueue(widget.videoItem);
-    _playlist = _deduplicatePlaylist(sourcePlaylist);
-
-    _currentIndex = _playlist.indexWhere(_isInitialFile);
-    if (_currentIndex < 0) {
-      _playlist = [widget.videoItem, ..._playlist];
-      _currentIndex = 0;
-    }
-
-    _currentItem = _playlist[_currentIndex];
-    _currentUrl = widget.url;
-  }
-
-  bool _isInitialFile(MediaFile file) =>
-      file.id == widget.videoItem.id || file.path == widget.videoItem.path;
-
-  List<MediaFile> _deduplicatePlaylist(List<MediaFile> playlist) {
-    final result = <MediaFile>[];
-    final seenPaths = <String>{};
-    for (final file in playlist) {
-      if (seenPaths.add(file.path)) {
-        result.add(file);
-      }
-    }
-    return result.isEmpty ? [widget.videoItem] : result;
+    _session = PlaybackSessionController(
+      libraryProvider: _libraryProvider,
+      initialItem: widget.videoItem,
+      queueItems: sourcePlaylist,
+      initialUrl: widget.url,
+    );
   }
 
   void _bindPlayerStreams() {
@@ -241,12 +219,12 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   Future<void> _openMedia(int generation) async {
-    await _refreshCurrentItemFromLibrary(generation);
+    await _session.refreshCurrentItem();
     if (!_canUsePlayer(generation)) return;
 
     final resumePosition = _resumePosition();
 
-    debugPrint('正在播放直链: $_currentUrl');
+    debugPrint('正在播放直链: ${_session.currentUrl}');
     await _applyPlayerSettings(generation);
     if (!_canUsePlayer(generation)) return;
 
@@ -254,7 +232,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     if (!_canUsePlayer(generation)) return;
 
     final media = Media(
-      _currentUrl,
+      _session.currentUrl,
       httpHeaders: {'User-Agent': 'MochiPlayer/1.0.0'},
       start: resumePosition,
     );
@@ -279,20 +257,6 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
           _playerErrorIsAudioDecode = _isTrueHdDecoderError(error.toString());
         });
       }
-    }
-  }
-
-  Future<void> _refreshCurrentItemFromLibrary(int generation) async {
-    final latestItem = await _libraryProvider.getLatestMediaFile(_currentItem);
-    if (!_canUsePlayer(generation)) return;
-    if (latestItem == null) return;
-
-    _currentItem = latestItem;
-    final index = _playlist.indexWhere(
-      (file) => file.id == latestItem.id || file.path == latestItem.path,
-    );
-    if (index >= 0) {
-      _playlist[index] = latestItem;
     }
   }
 
@@ -427,15 +391,11 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     final durationMs = _player.state.duration.inMilliseconds;
     if (positionMs <= 0 && durationMs <= 0) return;
 
-    final delta = (positionMs - _lastSavedPositionMs).abs();
-    if (!force && _lastSavedPositionMs >= 0 && delta < 5000) return;
-
-    _lastSavedPositionMs = positionMs;
     try {
-      await _libraryProvider.updateProgress(
-        _currentItem,
-        positionMs,
-        duration: durationMs > 0 ? durationMs : null,
+      await _session.saveProgress(
+        positionMs: positionMs,
+        durationMs: durationMs,
+        force: force,
       );
     } catch (error) {
       debugPrint('保存播放进度失败: $error');
@@ -454,20 +414,9 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   Future<void> _playQueueOffset(int offset) async {
-    if (_isDisposed || _isSwitchingQueueItem) return;
-
-    final targetIndex = _currentIndex + offset;
-    if (targetIndex < 0 || targetIndex >= _playlist.length) return;
+    if (_isDisposed || _session.isSwitching) return;
 
     final generation = _nextMediaOpenGeneration();
-    _isSwitchingQueueItem = true;
-    await _saveProgress(force: true);
-    if (!_canUsePlayer(generation)) {
-      _isSwitchingQueueItem = false;
-      return;
-    }
-
-    final targetItem = _playlist[targetIndex];
 
     if (_canUsePlayer(generation)) {
       setState(() {
@@ -477,26 +426,30 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
       });
     }
 
-    final directLink = await WebDavService().getDirectLink(targetItem.path);
+    final move = await _session.moveBy(
+      offset,
+      positionMs: _player.state.position.inMilliseconds,
+      durationMs: _player.state.duration.inMilliseconds,
+    );
     if (!_canUsePlayer(generation)) {
-      _isSwitchingQueueItem = false;
       return;
     }
 
-    if (directLink == null) {
+    if (move == null) {
+      if (mounted) setState(() => _isBuffering = false);
+      return;
+    }
+
+    if (!move.isReady) {
       setState(() {
         _isBuffering = false;
-        _playerError = '获取播放链接失败: ${targetItem.fileName}';
+        _playerError = '获取播放链接失败: ${move.item.fileName}';
       });
-      _isSwitchingQueueItem = false;
       return;
     }
 
     _resumeNoticeTimer?.cancel();
     setState(() {
-      _currentIndex = targetIndex;
-      _currentItem = targetItem;
-      _currentUrl = directLink;
       _isBuffering = false;
       _hasRestoredPosition = false;
       _didAutoSelectAudio = false;
@@ -510,14 +463,9 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
       _subtitleTracks = const [];
       _selectedAudioTrack = const AudioTrack('auto', null, null);
       _selectedSubtitleTrack = const SubtitleTrack('auto', null, null);
-      _lastSavedPositionMs = -1;
     });
 
-    try {
-      await _openMedia(generation);
-    } finally {
-      _isSwitchingQueueItem = false;
-    }
+    await _openMedia(generation);
   }
 
   Future<void> _ensureInitialWindowFullScreenCaptured() {
@@ -590,8 +538,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     }
   }
 
-  Future<void> _setAudioTrack(AudioTrack track) async {
-    if (_isDisposed) return;
+  Future<bool> _setAudioTrack(AudioTrack track) async {
+    if (_isDisposed) return false;
 
     if (mounted) {
       setState(() {
@@ -602,10 +550,12 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
       await _player.setAudioTrack(track);
     } catch (error) {
       debugPrint('切换音轨失败: $error');
+      return false;
     }
-    if (_isDisposed) return;
+    if (_isDisposed) return false;
 
     _startHideControlsTimer();
+    return true;
   }
 
   Future<bool> _trySelectFallbackAudioTrack({bool fromError = false}) async {
@@ -616,13 +566,14 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
     _isTryingAudioFallback = true;
     try {
-      await _setAudioTrack(fallback);
-      if (mounted && fromError) {
+      final didSwitch = await _setAudioTrack(fallback);
+      if (mounted && fromError && didSwitch) {
         setState(() {
-          _playerErrorIsAudioDecode = true;
+          _playerError = null;
+          _playerErrorIsAudioDecode = false;
         });
       }
-      return true;
+      return didSwitch;
     } finally {
       _isTryingAudioFallback = false;
     }
@@ -632,6 +583,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     final candidates = tracks
         .where((track) => !_isAudioTrackAuto(track) && !_isAudioTrackOff(track))
         .where((track) => !_isTrueHdAudioTrack(track))
+        .where((track) => track != _selectedAudioTrack)
         .toList();
     if (candidates.isEmpty) return null;
 

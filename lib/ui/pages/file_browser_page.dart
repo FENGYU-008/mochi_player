@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/providers/app_settings_provider.dart';
-import 'package:mochi_player/ui/widgets/media_detail/playback_helper.dart';
+import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/ui/widgets/file_list_item.dart';
 import 'package:provider/provider.dart';
 
@@ -291,7 +291,7 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
 
   // 播放视频的逻辑
   void _playVideo(BuildContext context, MediaFile item) {
-    PlaybackHelper.playFile(
+    PlaybackLauncher.playFile(
       context,
       item,
       loadingMessage: "正在获取播放链接: ${item.fileName}",

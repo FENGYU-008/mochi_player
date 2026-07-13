@@ -1,0 +1,115 @@
+import 'package:mochi_player/models/domain/media_file.dart';
+import 'package:mochi_player/features/playback/domain/playback_queue.dart';
+import 'package:mochi_player/providers/media_library_provider.dart';
+import 'package:mochi_player/features/playback/application/playback_progress_writer.dart';
+import 'package:mochi_player/services/webdav_service.dart';
+
+typedef DirectLinkResolver = Future<String?> Function(String path);
+
+/// Coordinates playback data for a single page session.
+///
+/// This controller deliberately has no dependency on Flutter widgets or the
+/// media backend. The page remains responsible for rendering and issuing the
+/// actual open/seek commands to media_kit.
+class PlaybackSessionController {
+  PlaybackSessionController({
+    required MediaLibraryProvider libraryProvider,
+    required MediaFile initialItem,
+    required List<MediaFile> queueItems,
+    required String initialUrl,
+    DirectLinkResolver? resolveDirectLink,
+  }) : _libraryProvider = libraryProvider,
+       _resolveDirectLink = resolveDirectLink ?? WebDavService().getDirectLink,
+       _queue = PlaybackQueue(initialItem: initialItem, items: queueItems),
+       _currentUrl = initialUrl,
+       _progressWriter = PlaybackProgressWriter(libraryProvider.updateProgress);
+
+  final MediaLibraryProvider _libraryProvider;
+  final DirectLinkResolver _resolveDirectLink;
+  final PlaybackQueue _queue;
+  final PlaybackProgressWriter _progressWriter;
+  String _currentUrl;
+  int _lastSavedPositionMs = -1;
+  bool _isSwitching = false;
+
+  MediaFile get currentItem => _queue.current;
+  String get currentUrl => _currentUrl;
+  bool get hasPrevious => _queue.hasPrevious;
+  bool get hasNext => _queue.hasNext;
+  bool get isSwitching => _isSwitching;
+
+  Future<void> refreshCurrentItem() async {
+    final itemAtRequest = currentItem;
+    final latestItem = await _libraryProvider.getLatestMediaFile(itemAtRequest);
+    if (latestItem != null && _isCurrent(itemAtRequest)) {
+      _queue.replaceCurrent(latestItem);
+    }
+  }
+
+  bool _isCurrent(MediaFile item) =>
+      currentItem.id == item.id || currentItem.path == item.path;
+
+  Future<void> saveProgress({
+    required int positionMs,
+    required int durationMs,
+    bool force = false,
+  }) async {
+    if (positionMs <= 0 && durationMs <= 0) return;
+    final delta = (positionMs - _lastSavedPositionMs).abs();
+    if (!force && _lastSavedPositionMs >= 0 && delta < 5000) return;
+
+    _lastSavedPositionMs = positionMs;
+    await _progressWriter.save(
+      currentItem,
+      positionMs,
+      duration: durationMs > 0 ? durationMs : null,
+    );
+  }
+
+  Future<PlaybackQueueMoveResult?> moveBy(
+    int offset, {
+    required int positionMs,
+    required int durationMs,
+  }) async {
+    if (_isSwitching) return null;
+    final targetItem = _queue.itemAtOffset(offset);
+    if (targetItem == null) return null;
+
+    _isSwitching = true;
+    try {
+      try {
+        await saveProgress(
+          positionMs: positionMs,
+          durationMs: durationMs,
+          force: true,
+        );
+      } catch (_) {
+        // Playback can continue even when persistence is temporarily down.
+      }
+      final directLink = await _resolveDirectLink(targetItem.path);
+      if (directLink == null) {
+        return PlaybackQueueMoveResult.failed(targetItem);
+      }
+
+      _queue.selectOffset(offset);
+      _currentUrl = directLink;
+      _lastSavedPositionMs = -1;
+      return PlaybackQueueMoveResult.ready(targetItem);
+    } finally {
+      _isSwitching = false;
+    }
+  }
+}
+
+class PlaybackQueueMoveResult {
+  const PlaybackQueueMoveResult._({required this.item, this.isReady = false});
+
+  factory PlaybackQueueMoveResult.ready(MediaFile item) =>
+      PlaybackQueueMoveResult._(item: item, isReady: true);
+
+  factory PlaybackQueueMoveResult.failed(MediaFile item) =>
+      PlaybackQueueMoveResult._(item: item);
+
+  final MediaFile item;
+  final bool isReady;
+}

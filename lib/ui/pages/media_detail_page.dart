@@ -10,7 +10,7 @@ import '../widgets/macos_controls.dart';
 import '../widgets/media_detail/cast_list.dart';
 import '../widgets/media_detail/episode_list.dart';
 import '../widgets/media_detail/media_detail_header.dart';
-import '../widgets/media_detail/playback_helper.dart';
+import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 
 typedef OpenMediaDetail = void Function(dynamic item);
 
@@ -190,7 +190,7 @@ class _MovieMediaInfoSection extends StatelessWidget {
                 _VersionRow(
                   file: files[index],
                   theme: theme,
-                  onTap: () => PlaybackHelper.playFile(context, files[index]),
+                  onTap: () => PlaybackLauncher.playFile(context, files[index]),
                 ),
                 if (index != files.length - 1) const SizedBox(height: 10),
               ],

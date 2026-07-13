@@ -4,7 +4,7 @@ import '../../models/domain/models.dart';
 import '../../services/tmdb_image_cache_manager.dart';
 import '../pages/media_detail_page.dart';
 import 'macos_controls.dart';
-import 'media_detail/playback_helper.dart';
+import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 
 /// 首页 Hero Section
 /// 展示随机选择的一部电影或剧集，带有背景图、标题和操作按钮
@@ -205,7 +205,7 @@ class HeroSection extends StatelessWidget {
   }
 
   void _handlePlay(BuildContext context) {
-    PlaybackHelper.playLibraryItem(context, heroItem);
+    PlaybackLauncher.playLibraryItem(context, heroItem);
   }
 
   void _handleMoreInfo(BuildContext context) {

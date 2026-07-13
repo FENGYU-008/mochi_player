@@ -7,7 +7,7 @@ import '../theme/app_colors.dart';
 import '../widgets/app_header.dart';
 import '../widgets/app_modal.dart';
 import '../widgets/macos_controls.dart';
-import '../widgets/media_detail/playback_helper.dart';
+import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import '../widgets/media_poster_card.dart';
 import 'media_detail_page.dart';
 
@@ -577,7 +577,7 @@ Widget _buildContinueWatchingCard(
     progress: file.progress,
     showProgress: true,
     onTap: () {
-      PlaybackHelper.playFile(
+      PlaybackLauncher.playFile(
         context,
         file,
         contextTitle: file.mediaType == MediaType.episode ? title : null,

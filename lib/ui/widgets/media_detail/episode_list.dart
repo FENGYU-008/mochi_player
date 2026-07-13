@@ -5,7 +5,7 @@ import '../../../models/domain/models.dart';
 import '../../../providers/media_library_provider.dart';
 import '../../../services/tmdb_image_cache_manager.dart';
 import '../macos_controls.dart';
-import 'playback_helper.dart';
+import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 
 class EpisodeList extends StatefulWidget {
   final TVShow tvShow;
@@ -146,7 +146,7 @@ class _EpisodeListState extends State<EpisodeList> {
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: available
-            ? () => PlaybackHelper.playEpisode(
+            ? () => PlaybackLauncher.playEpisode(
                 context,
                 episode,
                 showTitle: widget.tvShow.title,
