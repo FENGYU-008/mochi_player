@@ -39,11 +39,7 @@ const MovieMetadataEntitySchema = CollectionSchema(
       name: r'genres',
       type: IsarType.stringList,
     ),
-    r'logoUrl': PropertySchema(
-      id: 4,
-      name: r'logoUrl',
-      type: IsarType.string,
-    ),
+    r'logoUrl': PropertySchema(id: 4, name: r'logoUrl', type: IsarType.string),
     r'originalTitle': PropertySchema(
       id: 5,
       name: r'originalTitle',
@@ -59,11 +55,7 @@ const MovieMetadataEntitySchema = CollectionSchema(
       name: r'posterUrl',
       type: IsarType.string,
     ),
-    r'rating': PropertySchema(
-      id: 8,
-      name: r'rating',
-      type: IsarType.double,
-    ),
+    r'rating': PropertySchema(id: 8, name: r'rating', type: IsarType.double),
     r'releaseDate': PropertySchema(
       id: 9,
       name: r'releaseDate',
@@ -74,16 +66,8 @@ const MovieMetadataEntitySchema = CollectionSchema(
       name: r'releaseYear',
       type: IsarType.long,
     ),
-    r'title': PropertySchema(
-      id: 11,
-      name: r'title',
-      type: IsarType.string,
-    ),
-    r'tmdbId': PropertySchema(
-      id: 12,
-      name: r'tmdbId',
-      type: IsarType.string,
-    )
+    r'title': PropertySchema(id: 11, name: r'title', type: IsarType.string),
+    r'tmdbId': PropertySchema(id: 12, name: r'tmdbId', type: IsarType.string),
   },
   estimateSize: _movieMetadataEntityEstimateSize,
   serialize: _movieMetadataEntitySerialize,
@@ -101,9 +85,9 @@ const MovieMetadataEntitySchema = CollectionSchema(
           name: r'tmdbId',
           type: IndexType.hash,
           caseSensitive: true,
-        )
+        ),
       ],
-    )
+    ),
   },
   links: {},
   embeddedSchemas: {r'ArtistEmbedded': ArtistEmbeddedSchema},
@@ -130,8 +114,11 @@ int _movieMetadataEntityEstimateSize(
     final offsets = allOffsets[ArtistEmbedded]!;
     for (var i = 0; i < object.cast.length; i++) {
       final value = object.cast[i];
-      bytesCount +=
-          ArtistEmbeddedSchema.estimateSize(value, offsets, allOffsets);
+      bytesCount += ArtistEmbeddedSchema.estimateSize(
+        value,
+        offsets,
+        allOffsets,
+      );
     }
   }
   {
@@ -210,7 +197,8 @@ MovieMetadataEntity _movieMetadataEntityDeserialize(
 ) {
   final object = MovieMetadataEntity();
   object.backdropUrl = reader.readStringOrNull(offsets[0]);
-  object.cast = reader.readObjectList<ArtistEmbedded>(
+  object.cast =
+      reader.readObjectList<ArtistEmbedded>(
         offsets[1],
         ArtistEmbeddedSchema.deserialize,
         allOffsets,
@@ -243,12 +231,13 @@ P _movieMetadataEntityDeserializeProp<P>(
       return (reader.readStringOrNull(offset)) as P;
     case 1:
       return (reader.readObjectList<ArtistEmbedded>(
-            offset,
-            ArtistEmbeddedSchema.deserialize,
-            allOffsets,
-            ArtistEmbedded(),
-          ) ??
-          []) as P;
+                offset,
+                ArtistEmbeddedSchema.deserialize,
+                allOffsets,
+                ArtistEmbedded(),
+              ) ??
+              [])
+          as P;
     case 2:
       return (reader.readStringOrNull(offset)) as P;
     case 3:
@@ -281,12 +270,16 @@ Id _movieMetadataEntityGetId(MovieMetadataEntity object) {
 }
 
 List<IsarLinkBase<dynamic>> _movieMetadataEntityGetLinks(
-    MovieMetadataEntity object) {
+  MovieMetadataEntity object,
+) {
   return [];
 }
 
 void _movieMetadataEntityAttach(
-    IsarCollection<dynamic> col, Id id, MovieMetadataEntity object) {
+  IsarCollection<dynamic> col,
+  Id id,
+  MovieMetadataEntity object,
+) {
   object.id = id;
 }
 
@@ -339,8 +332,10 @@ extension MovieMetadataEntityByIndex on IsarCollection<MovieMetadataEntity> {
     return putAllByIndex(r'tmdbId', objects);
   }
 
-  List<Id> putAllByTmdbIdSync(List<MovieMetadataEntity> objects,
-      {bool saveLinks = true}) {
+  List<Id> putAllByTmdbIdSync(
+    List<MovieMetadataEntity> objects, {
+    bool saveLinks = true,
+  }) {
     return putAllByIndexSync(r'tmdbId', objects, saveLinks: saveLinks);
   }
 }
@@ -357,17 +352,14 @@ extension MovieMetadataEntityQueryWhereSort
 extension MovieMetadataEntityQueryWhere
     on QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QWhereClause> {
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterWhereClause>
-      idEqualTo(Id id) {
+  idEqualTo(Id id) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: id,
-        upper: id,
-      ));
+      return query.addWhereClause(IdWhereClause.between(lower: id, upper: id));
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterWhereClause>
-      idNotEqualTo(Id id) {
+  idNotEqualTo(Id id) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
@@ -390,7 +382,7 @@ extension MovieMetadataEntityQueryWhere
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterWhereClause>
-      idGreaterThan(Id id, {bool include = false}) {
+  idGreaterThan(Id id, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.greaterThan(lower: id, includeLower: include),
@@ -399,7 +391,7 @@ extension MovieMetadataEntityQueryWhere
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterWhereClause>
-      idLessThan(Id id, {bool include = false}) {
+  idLessThan(Id id, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.lessThan(upper: id, includeUpper: include),
@@ -408,136 +400,153 @@ extension MovieMetadataEntityQueryWhere
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterWhereClause>
-      idBetween(
+  idBetween(
     Id lowerId,
     Id upperId, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: lowerId,
-        includeLower: includeLower,
-        upper: upperId,
-        includeUpper: includeUpper,
-      ));
+      return query.addWhereClause(
+        IdWhereClause.between(
+          lower: lowerId,
+          includeLower: includeLower,
+          upper: upperId,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterWhereClause>
-      tmdbIdEqualTo(String tmdbId) {
+  tmdbIdEqualTo(String tmdbId) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'tmdbId',
-        value: [tmdbId],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'tmdbId', value: [tmdbId]),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterWhereClause>
-      tmdbIdNotEqualTo(String tmdbId) {
+  tmdbIdNotEqualTo(String tmdbId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'tmdbId',
-              lower: [],
-              upper: [tmdbId],
-              includeUpper: false,
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'tmdbId',
-              lower: [tmdbId],
-              includeLower: false,
-              upper: [],
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'tmdbId',
+                lower: [],
+                upper: [tmdbId],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'tmdbId',
+                lower: [tmdbId],
+                includeLower: false,
+                upper: [],
+              ),
+            );
       } else {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'tmdbId',
-              lower: [tmdbId],
-              includeLower: false,
-              upper: [],
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'tmdbId',
-              lower: [],
-              upper: [tmdbId],
-              includeUpper: false,
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'tmdbId',
+                lower: [tmdbId],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'tmdbId',
+                lower: [],
+                upper: [tmdbId],
+                includeUpper: false,
+              ),
+            );
       }
     });
   }
 }
 
-extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
-    MovieMetadataEntity, QFilterCondition> {
+extension MovieMetadataEntityQueryFilter
+    on
+        QueryBuilder<
+          MovieMetadataEntity,
+          MovieMetadataEntity,
+          QFilterCondition
+        > {
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlIsNull() {
+  backdropUrlIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'backdropUrl',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'backdropUrl'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlIsNotNull() {
+  backdropUrlIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'backdropUrl',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'backdropUrl'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  backdropUrlEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'backdropUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'backdropUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'backdropUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlLessThan(
+  backdropUrlGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'backdropUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'backdropUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlBetween(
+  backdropUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'backdropUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  backdropUrlBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -545,160 +554,126 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'backdropUrl',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'backdropUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'backdropUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'backdropUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'backdropUrl',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'backdropUrl',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      backdropUrlIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'backdropUrl',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      castLengthEqualTo(int length) {
-    return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'cast',
-        length,
-        true,
-        length,
-        true,
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'backdropUrl',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
       );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      castIsEmpty() {
+  backdropUrlStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'cast',
-        0,
-        true,
-        0,
-        true,
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'backdropUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
       );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      castIsNotEmpty() {
+  backdropUrlEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'cast',
-        0,
-        false,
-        999999,
-        true,
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'backdropUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
       );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      castLengthLessThan(
-    int length, {
-    bool include = false,
-  }) {
+  backdropUrlContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'cast',
-        0,
-        true,
-        length,
-        include,
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'backdropUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
       );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      castLengthGreaterThan(
-    int length, {
-    bool include = false,
-  }) {
+  backdropUrlMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'cast',
-        length,
-        include,
-        999999,
-        true,
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'backdropUrl',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
       );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      castLengthBetween(
+  backdropUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'backdropUrl', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  backdropUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'backdropUrl', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  castLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'cast', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  castIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'cast', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  castIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'cast', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  castLengthLessThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'cast', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  castLengthGreaterThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'cast', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  castLengthBetween(
     int lower,
     int upper, {
     bool includeLower = true,
@@ -716,71 +691,74 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationIsNull() {
+  certificationIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'certification',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'certification'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationIsNotNull() {
+  certificationIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'certification',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'certification'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  certificationEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'certification',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'certification',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'certification',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationLessThan(
+  certificationGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'certification',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'certification',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationBetween(
+  certificationLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'certification',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  certificationBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -788,135 +766,140 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'certification',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'certification',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  certificationStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'certification',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'certification',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  certificationEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'certification',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'certification',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationContains(String value, {bool caseSensitive = true}) {
+  certificationContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'certification',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'certification',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationMatches(String pattern, {bool caseSensitive = true}) {
+  certificationMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'certification',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'certification',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationIsEmpty() {
+  certificationIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'certification',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'certification', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      certificationIsNotEmpty() {
+  certificationIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'certification',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'certification', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresElementEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  genresElementEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'genres',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'genres',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresElementGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'genres',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresElementLessThan(
+  genresElementGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'genres',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'genres',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresElementBetween(
+  genresElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'genres',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  genresElementBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -924,160 +907,126 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'genres',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresElementStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'genres',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresElementEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'genres',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresElementContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'genres',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresElementMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'genres',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresElementIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'genres',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresElementIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'genres',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresLengthEqualTo(int length) {
-    return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'genres',
-        length,
-        true,
-        length,
-        true,
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'genres',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
       );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresIsEmpty() {
+  genresElementStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'genres',
-        0,
-        true,
-        0,
-        true,
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'genres',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
       );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresIsNotEmpty() {
+  genresElementEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'genres',
-        0,
-        false,
-        999999,
-        true,
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'genres',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
       );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresLengthLessThan(
-    int length, {
-    bool include = false,
-  }) {
+  genresElementContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'genres',
-        0,
-        true,
-        length,
-        include,
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'genres',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
       );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresLengthGreaterThan(
-    int length, {
-    bool include = false,
-  }) {
+  genresElementMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'genres',
-        length,
-        include,
-        999999,
-        true,
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'genres',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
       );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      genresLengthBetween(
+  genresElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'genres', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  genresElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'genres', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  genresLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'genres', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  genresIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'genres', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  genresIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'genres', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  genresLengthLessThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'genres', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  genresLengthGreaterThan(int length, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(r'genres', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  genresLengthBetween(
     int lower,
     int upper, {
     bool includeLower = true,
@@ -1095,127 +1044,129 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      idEqualTo(Id value) {
+  idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'id', value: value),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      idGreaterThan(
-    Id value, {
-    bool include = false,
-  }) {
+  idGreaterThan(Id value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      idLessThan(
-    Id value, {
-    bool include = false,
-  }) {
+  idLessThan(Id value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      idBetween(
+  idBetween(
     Id lower,
     Id upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'id',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'id',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlIsNull() {
+  logoUrlIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'logoUrl',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'logoUrl'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlIsNotNull() {
+  logoUrlIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'logoUrl',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'logoUrl'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  logoUrlEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'logoUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'logoUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'logoUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlLessThan(
+  logoUrlGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'logoUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'logoUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlBetween(
+  logoUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'logoUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  logoUrlBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -1223,153 +1174,158 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'logoUrl',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'logoUrl',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  logoUrlStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'logoUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'logoUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  logoUrlEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'logoUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'logoUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlContains(String value, {bool caseSensitive = true}) {
+  logoUrlContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'logoUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'logoUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlMatches(String pattern, {bool caseSensitive = true}) {
+  logoUrlMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'logoUrl',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'logoUrl',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlIsEmpty() {
+  logoUrlIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'logoUrl',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'logoUrl', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      logoUrlIsNotEmpty() {
+  logoUrlIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'logoUrl',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'logoUrl', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleIsNull() {
+  originalTitleIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'originalTitle',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'originalTitle'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleIsNotNull() {
+  originalTitleIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'originalTitle',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'originalTitle'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  originalTitleEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'originalTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'originalTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'originalTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleLessThan(
+  originalTitleGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'originalTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'originalTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleBetween(
+  originalTitleLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'originalTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  originalTitleBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -1377,153 +1333,158 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'originalTitle',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'originalTitle',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  originalTitleStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'originalTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'originalTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  originalTitleEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'originalTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'originalTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleContains(String value, {bool caseSensitive = true}) {
+  originalTitleContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'originalTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'originalTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleMatches(String pattern, {bool caseSensitive = true}) {
+  originalTitleMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'originalTitle',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'originalTitle',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleIsEmpty() {
+  originalTitleIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'originalTitle',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'originalTitle', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      originalTitleIsNotEmpty() {
+  originalTitleIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'originalTitle',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'originalTitle', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewIsNull() {
+  overviewIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'overview',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'overview'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewIsNotNull() {
+  overviewIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'overview',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'overview'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  overviewEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'overview',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'overview',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'overview',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewLessThan(
+  overviewGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'overview',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'overview',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewBetween(
+  overviewLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'overview',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  overviewBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -1531,153 +1492,158 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'overview',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'overview',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  overviewStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'overview',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'overview',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  overviewEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'overview',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'overview',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewContains(String value, {bool caseSensitive = true}) {
+  overviewContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'overview',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'overview',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewMatches(String pattern, {bool caseSensitive = true}) {
+  overviewMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'overview',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'overview',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewIsEmpty() {
+  overviewIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'overview',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'overview', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      overviewIsNotEmpty() {
+  overviewIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'overview',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'overview', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlIsNull() {
+  posterUrlIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'posterUrl',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'posterUrl'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlIsNotNull() {
+  posterUrlIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'posterUrl',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'posterUrl'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  posterUrlEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'posterUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'posterUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'posterUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlLessThan(
+  posterUrlGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'posterUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'posterUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlBetween(
+  posterUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'posterUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  posterUrlBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -1685,135 +1651,140 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'posterUrl',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'posterUrl',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  posterUrlStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'posterUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'posterUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  posterUrlEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'posterUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'posterUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlContains(String value, {bool caseSensitive = true}) {
+  posterUrlContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'posterUrl',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'posterUrl',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlMatches(String pattern, {bool caseSensitive = true}) {
+  posterUrlMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'posterUrl',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'posterUrl',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlIsEmpty() {
+  posterUrlIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'posterUrl',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'posterUrl', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      posterUrlIsNotEmpty() {
+  posterUrlIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'posterUrl',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'posterUrl', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      ratingEqualTo(
+  ratingEqualTo(double value, {double epsilon = Query.epsilon}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'rating',
+          value: value,
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  ratingGreaterThan(
     double value, {
+    bool include = false,
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'rating',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'rating',
+          value: value,
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      ratingGreaterThan(
+  ratingLessThan(
     double value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'rating',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'rating',
+          value: value,
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      ratingLessThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'rating',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      ratingBetween(
+  ratingBetween(
     double lower,
     double upper, {
     bool includeLower = true,
@@ -1821,213 +1792,216 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'rating',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'rating',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseDateIsNull() {
+  releaseDateIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'releaseDate',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'releaseDate'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseDateIsNotNull() {
+  releaseDateIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'releaseDate',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'releaseDate'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseDateEqualTo(DateTime? value) {
+  releaseDateEqualTo(DateTime? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'releaseDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'releaseDate', value: value),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseDateGreaterThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  releaseDateGreaterThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'releaseDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'releaseDate',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseDateLessThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  releaseDateLessThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'releaseDate',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'releaseDate',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseDateBetween(
+  releaseDateBetween(
     DateTime? lower,
     DateTime? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'releaseDate',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'releaseDate',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseYearIsNull() {
+  releaseYearIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'releaseYear',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'releaseYear'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseYearIsNotNull() {
+  releaseYearIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'releaseYear',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'releaseYear'),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseYearEqualTo(int? value) {
+  releaseYearEqualTo(int? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'releaseYear',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'releaseYear', value: value),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseYearGreaterThan(
-    int? value, {
-    bool include = false,
-  }) {
+  releaseYearGreaterThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'releaseYear',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'releaseYear',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseYearLessThan(
-    int? value, {
-    bool include = false,
-  }) {
+  releaseYearLessThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'releaseYear',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'releaseYear',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      releaseYearBetween(
+  releaseYearBetween(
     int? lower,
     int? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'releaseYear',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'releaseYear',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      titleEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  titleEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'title',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'title',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      titleGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'title',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      titleLessThan(
+  titleGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'title',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'title',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      titleBetween(
+  titleLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'title',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  titleBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -2035,135 +2009,140 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'title',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'title',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      titleStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  titleStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'title',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'title',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      titleEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  titleEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'title',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'title',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      titleContains(String value, {bool caseSensitive = true}) {
+  titleContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'title',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'title',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      titleMatches(String pattern, {bool caseSensitive = true}) {
+  titleMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'title',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'title',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      titleIsEmpty() {
+  titleIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'title',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'title', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      titleIsNotEmpty() {
+  titleIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'title',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'title', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      tmdbIdEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  tmdbIdEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      tmdbIdGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      tmdbIdLessThan(
+  tmdbIdGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      tmdbIdBetween(
+  tmdbIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
+  tmdbIdBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -2171,252 +2150,264 @@ extension MovieMetadataEntityQueryFilter on QueryBuilder<MovieMetadataEntity,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'tmdbId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'tmdbId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      tmdbIdStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  tmdbIdStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      tmdbIdEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  tmdbIdEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      tmdbIdContains(String value, {bool caseSensitive = true}) {
+  tmdbIdContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      tmdbIdMatches(String pattern, {bool caseSensitive = true}) {
+  tmdbIdMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'tmdbId',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'tmdbId',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      tmdbIdIsEmpty() {
+  tmdbIdIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'tmdbId',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'tmdbId', value: ''),
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      tmdbIdIsNotEmpty() {
+  tmdbIdIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'tmdbId',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'tmdbId', value: ''),
+      );
     });
   }
 }
 
-extension MovieMetadataEntityQueryObject on QueryBuilder<MovieMetadataEntity,
-    MovieMetadataEntity, QFilterCondition> {
+extension MovieMetadataEntityQueryObject
+    on
+        QueryBuilder<
+          MovieMetadataEntity,
+          MovieMetadataEntity,
+          QFilterCondition
+        > {
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterFilterCondition>
-      castElement(FilterQuery<ArtistEmbedded> q) {
+  castElement(FilterQuery<ArtistEmbedded> q) {
     return QueryBuilder.apply(this, (query) {
       return query.object(q, r'cast');
     });
   }
 }
 
-extension MovieMetadataEntityQueryLinks on QueryBuilder<MovieMetadataEntity,
-    MovieMetadataEntity, QFilterCondition> {}
+extension MovieMetadataEntityQueryLinks
+    on
+        QueryBuilder<
+          MovieMetadataEntity,
+          MovieMetadataEntity,
+          QFilterCondition
+        > {}
 
 extension MovieMetadataEntityQuerySortBy
     on QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QSortBy> {
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByBackdropUrl() {
+  sortByBackdropUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'backdropUrl', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByBackdropUrlDesc() {
+  sortByBackdropUrlDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'backdropUrl', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByCertification() {
+  sortByCertification() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'certification', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByCertificationDesc() {
+  sortByCertificationDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'certification', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByLogoUrl() {
+  sortByLogoUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'logoUrl', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByLogoUrlDesc() {
+  sortByLogoUrlDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'logoUrl', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByOriginalTitle() {
+  sortByOriginalTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'originalTitle', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByOriginalTitleDesc() {
+  sortByOriginalTitleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'originalTitle', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByOverview() {
+  sortByOverview() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'overview', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByOverviewDesc() {
+  sortByOverviewDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'overview', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByPosterUrl() {
+  sortByPosterUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'posterUrl', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByPosterUrlDesc() {
+  sortByPosterUrlDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'posterUrl', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByRating() {
+  sortByRating() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'rating', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByRatingDesc() {
+  sortByRatingDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'rating', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByReleaseDate() {
+  sortByReleaseDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'releaseDate', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByReleaseDateDesc() {
+  sortByReleaseDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'releaseDate', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByReleaseYear() {
+  sortByReleaseYear() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'releaseYear', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByReleaseYearDesc() {
+  sortByReleaseYearDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'releaseYear', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByTitle() {
+  sortByTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'title', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByTitleDesc() {
+  sortByTitleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'title', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByTmdbId() {
+  sortByTmdbId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'tmdbId', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      sortByTmdbIdDesc() {
+  sortByTmdbIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'tmdbId', Sort.desc);
     });
@@ -2426,168 +2417,168 @@ extension MovieMetadataEntityQuerySortBy
 extension MovieMetadataEntityQuerySortThenBy
     on QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QSortThenBy> {
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByBackdropUrl() {
+  thenByBackdropUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'backdropUrl', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByBackdropUrlDesc() {
+  thenByBackdropUrlDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'backdropUrl', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByCertification() {
+  thenByCertification() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'certification', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByCertificationDesc() {
+  thenByCertificationDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'certification', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenById() {
+  thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByIdDesc() {
+  thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByLogoUrl() {
+  thenByLogoUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'logoUrl', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByLogoUrlDesc() {
+  thenByLogoUrlDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'logoUrl', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByOriginalTitle() {
+  thenByOriginalTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'originalTitle', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByOriginalTitleDesc() {
+  thenByOriginalTitleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'originalTitle', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByOverview() {
+  thenByOverview() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'overview', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByOverviewDesc() {
+  thenByOverviewDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'overview', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByPosterUrl() {
+  thenByPosterUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'posterUrl', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByPosterUrlDesc() {
+  thenByPosterUrlDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'posterUrl', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByRating() {
+  thenByRating() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'rating', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByRatingDesc() {
+  thenByRatingDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'rating', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByReleaseDate() {
+  thenByReleaseDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'releaseDate', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByReleaseDateDesc() {
+  thenByReleaseDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'releaseDate', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByReleaseYear() {
+  thenByReleaseYear() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'releaseYear', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByReleaseYearDesc() {
+  thenByReleaseYearDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'releaseYear', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByTitle() {
+  thenByTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'title', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByTitleDesc() {
+  thenByTitleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'title', Sort.desc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByTmdbId() {
+  thenByTmdbId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'tmdbId', Sort.asc);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QAfterSortBy>
-      thenByTmdbIdDesc() {
+  thenByTmdbIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'tmdbId', Sort.desc);
     });
@@ -2597,86 +2588,90 @@ extension MovieMetadataEntityQuerySortThenBy
 extension MovieMetadataEntityQueryWhereDistinct
     on QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct> {
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByBackdropUrl({bool caseSensitive = true}) {
+  distinctByBackdropUrl({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'backdropUrl', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByCertification({bool caseSensitive = true}) {
+  distinctByCertification({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'certification',
-          caseSensitive: caseSensitive);
+      return query.addDistinctBy(
+        r'certification',
+        caseSensitive: caseSensitive,
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByGenres() {
+  distinctByGenres() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'genres');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByLogoUrl({bool caseSensitive = true}) {
+  distinctByLogoUrl({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'logoUrl', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByOriginalTitle({bool caseSensitive = true}) {
+  distinctByOriginalTitle({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'originalTitle',
-          caseSensitive: caseSensitive);
+      return query.addDistinctBy(
+        r'originalTitle',
+        caseSensitive: caseSensitive,
+      );
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByOverview({bool caseSensitive = true}) {
+  distinctByOverview({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'overview', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByPosterUrl({bool caseSensitive = true}) {
+  distinctByPosterUrl({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'posterUrl', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByRating() {
+  distinctByRating() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'rating');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByReleaseDate() {
+  distinctByReleaseDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'releaseDate');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByReleaseYear() {
+  distinctByReleaseYear() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'releaseYear');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByTitle({bool caseSensitive = true}) {
+  distinctByTitle({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'title', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MovieMetadataEntity, MovieMetadataEntity, QDistinct>
-      distinctByTmdbId({bool caseSensitive = true}) {
+  distinctByTmdbId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'tmdbId', caseSensitive: caseSensitive);
     });
@@ -2692,56 +2687,56 @@ extension MovieMetadataEntityQueryProperty
   }
 
   QueryBuilder<MovieMetadataEntity, String?, QQueryOperations>
-      backdropUrlProperty() {
+  backdropUrlProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'backdropUrl');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, List<ArtistEmbedded>, QQueryOperations>
-      castProperty() {
+  castProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'cast');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, String?, QQueryOperations>
-      certificationProperty() {
+  certificationProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'certification');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, List<String>, QQueryOperations>
-      genresProperty() {
+  genresProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'genres');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, String?, QQueryOperations>
-      logoUrlProperty() {
+  logoUrlProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'logoUrl');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, String?, QQueryOperations>
-      originalTitleProperty() {
+  originalTitleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'originalTitle');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, String?, QQueryOperations>
-      overviewProperty() {
+  overviewProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'overview');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, String?, QQueryOperations>
-      posterUrlProperty() {
+  posterUrlProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'posterUrl');
     });
@@ -2754,14 +2749,14 @@ extension MovieMetadataEntityQueryProperty
   }
 
   QueryBuilder<MovieMetadataEntity, DateTime?, QQueryOperations>
-      releaseDateProperty() {
+  releaseDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'releaseDate');
     });
   }
 
   QueryBuilder<MovieMetadataEntity, int?, QQueryOperations>
-      releaseYearProperty() {
+  releaseYearProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'releaseYear');
     });

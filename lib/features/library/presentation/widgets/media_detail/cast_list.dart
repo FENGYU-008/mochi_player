@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:mochi_player/features/library/presentation/view_models/media_detail_view_model.dart';
-import 'package:mochi_player/models/domain/models.dart';
-import 'package:mochi_player/services/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
+import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
 import 'package:mochi_player/core/ui/widgets/horizontal_scroll_view.dart';
 
 class CastList extends StatefulWidget {

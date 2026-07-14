@@ -1,4 +1,4 @@
-import 'package:mochi_player/utils/filename_parser.dart';
+import 'package:mochi_player/features/library/infrastructure/filename_parser.dart';
 
 void main() {
   _parsesCommonEpisodeFilenames();

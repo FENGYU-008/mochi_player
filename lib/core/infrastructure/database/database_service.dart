@@ -1,7 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:logger/logger.dart';
-import '../models/entity/entities.dart';
+import 'entities/entities.dart';
 
 /// 数据库服务 - 管理 Isar 数据库操作
 class DatabaseService {

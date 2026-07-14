@@ -1,4 +1,4 @@
-import 'package:mochi_player/models/domain/models.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
 
 class MediaDetailViewModel {
   final dynamic _item;

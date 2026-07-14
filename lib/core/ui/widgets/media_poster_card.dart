@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:mochi_player/services/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
 
 /// 卡片类型枚举

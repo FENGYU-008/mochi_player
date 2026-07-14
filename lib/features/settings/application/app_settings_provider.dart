@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:mochi_player/features/settings/infrastructure/app_settings_service.dart';
-import 'package:mochi_player/services/tmdb_image_cache_manager.dart';
-import 'package:mochi_player/services/tmdb_service.dart';
-import 'package:mochi_player/services/webdav_service.dart';
+import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
+import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 
 class AppSettingsProvider extends ChangeNotifier {
   final AppSettingsService _settingsService;

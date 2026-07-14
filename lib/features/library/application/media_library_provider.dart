@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:mochi_player/features/library/infrastructure/library_scanner.dart';
 import 'package:mochi_player/features/library/infrastructure/metadata_scraper.dart';
-import 'package:mochi_player/models/domain/models.dart';
-import 'package:mochi_player/models/entity/entities.dart' as entity;
-import 'package:mochi_player/models/model_converter.dart';
-import 'package:mochi_player/services/database_service.dart';
-import 'package:mochi_player/services/tmdb_service.dart';
-import 'package:mochi_player/services/webdav_service.dart';
-import 'package:mochi_player/utils/filename_parser.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
+import 'package:mochi_player/core/infrastructure/database/database_service.dart';
+import 'package:mochi_player/core/infrastructure/database/entities/entities.dart'
+    as entity;
+import 'package:mochi_player/core/infrastructure/database/model_converter.dart';
+import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
+import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
+import 'package:mochi_player/features/library/infrastructure/filename_parser.dart';
 
 /// 媒体库 Provider
 /// 管理媒体文件和元数据的状态

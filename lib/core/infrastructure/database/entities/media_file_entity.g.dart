@@ -37,11 +37,7 @@ const MediaFileEntitySchema = CollectionSchema(
       name: r'container',
       type: IsarType.string,
     ),
-    r'duration': PropertySchema(
-      id: 4,
-      name: r'duration',
-      type: IsarType.long,
-    ),
+    r'duration': PropertySchema(id: 4, name: r'duration', type: IsarType.long),
     r'fileName': PropertySchema(
       id: 5,
       name: r'fileName',
@@ -52,21 +48,13 @@ const MediaFileEntitySchema = CollectionSchema(
       name: r'hdrFormat',
       type: IsarType.string,
     ),
-    r'height': PropertySchema(
-      id: 7,
-      name: r'height',
-      type: IsarType.long,
-    ),
+    r'height': PropertySchema(id: 7, name: r'height', type: IsarType.long),
     r'isFavorite': PropertySchema(
       id: 8,
       name: r'isFavorite',
       type: IsarType.bool,
     ),
-    r'isHdr': PropertySchema(
-      id: 9,
-      name: r'isHdr',
-      type: IsarType.bool,
-    ),
+    r'isHdr': PropertySchema(id: 9, name: r'isHdr', type: IsarType.bool),
     r'lastWatchedAt': PropertySchema(
       id: 10,
       name: r'lastWatchedAt',
@@ -98,36 +86,16 @@ const MediaFileEntitySchema = CollectionSchema(
       name: r'parsedYear',
       type: IsarType.long,
     ),
-    r'path': PropertySchema(
-      id: 16,
-      name: r'path',
-      type: IsarType.string,
-    ),
-    r'position': PropertySchema(
-      id: 17,
-      name: r'position',
-      type: IsarType.long,
-    ),
+    r'path': PropertySchema(id: 16, name: r'path', type: IsarType.string),
+    r'position': PropertySchema(id: 17, name: r'position', type: IsarType.long),
     r'progress': PropertySchema(
       id: 18,
       name: r'progress',
       type: IsarType.double,
     ),
-    r'quality': PropertySchema(
-      id: 19,
-      name: r'quality',
-      type: IsarType.string,
-    ),
-    r'size': PropertySchema(
-      id: 20,
-      name: r'size',
-      type: IsarType.long,
-    ),
-    r'tmdbId': PropertySchema(
-      id: 21,
-      name: r'tmdbId',
-      type: IsarType.string,
-    ),
+    r'quality': PropertySchema(id: 19, name: r'quality', type: IsarType.string),
+    r'size': PropertySchema(id: 20, name: r'size', type: IsarType.long),
+    r'tmdbId': PropertySchema(id: 21, name: r'tmdbId', type: IsarType.string),
     r'versionLabel': PropertySchema(
       id: 22,
       name: r'versionLabel',
@@ -144,11 +112,7 @@ const MediaFileEntitySchema = CollectionSchema(
       type: IsarType.byte,
       enumMap: _MediaFileEntitywatchStatusEnumValueMap,
     ),
-    r'width': PropertySchema(
-      id: 25,
-      name: r'width',
-      type: IsarType.long,
-    )
+    r'width': PropertySchema(id: 25, name: r'width', type: IsarType.long),
   },
   estimateSize: _mediaFileEntityEstimateSize,
   serialize: _mediaFileEntitySerialize,
@@ -166,7 +130,7 @@ const MediaFileEntitySchema = CollectionSchema(
           name: r'path',
           type: IndexType.hash,
           caseSensitive: true,
-        )
+        ),
       ],
     ),
     r'tmdbId': IndexSchema(
@@ -179,7 +143,7 @@ const MediaFileEntitySchema = CollectionSchema(
           name: r'tmdbId',
           type: IndexType.hash,
           caseSensitive: true,
-        )
+        ),
       ],
     ),
     r'watchStatus': IndexSchema(
@@ -192,7 +156,7 @@ const MediaFileEntitySchema = CollectionSchema(
           name: r'watchStatus',
           type: IndexType.value,
           caseSensitive: false,
-        )
+        ),
       ],
     ),
     r'lastWatchedAt': IndexSchema(
@@ -205,7 +169,7 @@ const MediaFileEntitySchema = CollectionSchema(
           name: r'lastWatchedAt',
           type: IndexType.value,
           caseSensitive: false,
-        )
+        ),
       ],
     ),
     r'isFavorite': IndexSchema(
@@ -218,7 +182,7 @@ const MediaFileEntitySchema = CollectionSchema(
           name: r'isFavorite',
           type: IndexType.value,
           caseSensitive: false,
-        )
+        ),
       ],
     ),
     r'addedAt': IndexSchema(
@@ -231,9 +195,9 @@ const MediaFileEntitySchema = CollectionSchema(
           name: r'addedAt',
           type: IndexType.value,
           caseSensitive: false,
-        )
+        ),
       ],
-    )
+    ),
   },
   links: {},
   embeddedSchemas: {},
@@ -351,8 +315,10 @@ MediaFileEntity _mediaFileEntityDeserialize(
   object.isFavorite = reader.readBool(offsets[8]);
   object.isHdr = reader.readBool(offsets[9]);
   object.lastWatchedAt = reader.readDateTimeOrNull(offsets[10]);
-  object.mediaType = _MediaFileEntitymediaTypeValueEnumMap[
-          reader.readByteOrNull(offsets[11])] ??
+  object.mediaType =
+      _MediaFileEntitymediaTypeValueEnumMap[reader.readByteOrNull(
+        offsets[11],
+      )] ??
       MediaType.movie;
   object.parsedEpisode = reader.readLongOrNull(offsets[12]);
   object.parsedSeason = reader.readLongOrNull(offsets[13]);
@@ -364,8 +330,10 @@ MediaFileEntity _mediaFileEntityDeserialize(
   object.tmdbId = reader.readStringOrNull(offsets[21]);
   object.versionLabel = reader.readStringOrNull(offsets[22]);
   object.videoCodec = reader.readStringOrNull(offsets[23]);
-  object.watchStatus = _MediaFileEntitywatchStatusValueEnumMap[
-          reader.readByteOrNull(offsets[24])] ??
+  object.watchStatus =
+      _MediaFileEntitywatchStatusValueEnumMap[reader.readByteOrNull(
+        offsets[24],
+      )] ??
       WatchStatus.notStarted;
   object.width = reader.readLongOrNull(offsets[25]);
   return object;
@@ -401,9 +369,11 @@ P _mediaFileEntityDeserializeProp<P>(
     case 10:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 11:
-      return (_MediaFileEntitymediaTypeValueEnumMap[
-              reader.readByteOrNull(offset)] ??
-          MediaType.movie) as P;
+      return (_MediaFileEntitymediaTypeValueEnumMap[reader.readByteOrNull(
+                offset,
+              )] ??
+              MediaType.movie)
+          as P;
     case 12:
       return (reader.readLongOrNull(offset)) as P;
     case 13:
@@ -429,9 +399,11 @@ P _mediaFileEntityDeserializeProp<P>(
     case 23:
       return (reader.readStringOrNull(offset)) as P;
     case 24:
-      return (_MediaFileEntitywatchStatusValueEnumMap[
-              reader.readByteOrNull(offset)] ??
-          WatchStatus.notStarted) as P;
+      return (_MediaFileEntitywatchStatusValueEnumMap[reader.readByteOrNull(
+                offset,
+              )] ??
+              WatchStatus.notStarted)
+          as P;
     case 25:
       return (reader.readLongOrNull(offset)) as P;
     default:
@@ -469,7 +441,10 @@ List<IsarLinkBase<dynamic>> _mediaFileEntityGetLinks(MediaFileEntity object) {
 }
 
 void _mediaFileEntityAttach(
-    IsarCollection<dynamic> col, Id id, MediaFileEntity object) {
+  IsarCollection<dynamic> col,
+  Id id,
+  MediaFileEntity object,
+) {
   object.id = id;
 }
 
@@ -522,8 +497,10 @@ extension MediaFileEntityByIndex on IsarCollection<MediaFileEntity> {
     return putAllByIndex(r'path', objects);
   }
 
-  List<Id> putAllByPathSync(List<MediaFileEntity> objects,
-      {bool saveLinks = true}) {
+  List<Id> putAllByPathSync(
+    List<MediaFileEntity> objects, {
+    bool saveLinks = true,
+  }) {
     return putAllByIndexSync(r'path', objects, saveLinks: saveLinks);
   }
 }
@@ -545,7 +522,7 @@ extension MediaFileEntityQueryWhereSort
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhere>
-      anyLastWatchedAt() {
+  anyLastWatchedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         const IndexWhereClause.any(indexName: r'lastWatchedAt'),
@@ -573,17 +550,15 @@ extension MediaFileEntityQueryWhereSort
 extension MediaFileEntityQueryWhere
     on QueryBuilder<MediaFileEntity, MediaFileEntity, QWhereClause> {
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause> idEqualTo(
-      Id id) {
+    Id id,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: id,
-        upper: id,
-      ));
+      return query.addWhereClause(IdWhereClause.between(lower: id, upper: id));
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      idNotEqualTo(Id id) {
+  idNotEqualTo(Id id) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
@@ -606,7 +581,7 @@ extension MediaFileEntityQueryWhere
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      idGreaterThan(Id id, {bool include = false}) {
+  idGreaterThan(Id id, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.greaterThan(lower: id, includeLower: include),
@@ -615,8 +590,9 @@ extension MediaFileEntityQueryWhere
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause> idLessThan(
-      Id id,
-      {bool include = false}) {
+    Id id, {
+    bool include = false,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IdWhereClause.lessThan(upper: id, includeUpper: include),
@@ -631,470 +607,523 @@ extension MediaFileEntityQueryWhere
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IdWhereClause.between(
-        lower: lowerId,
-        includeLower: includeLower,
-        upper: upperId,
-        includeUpper: includeUpper,
-      ));
+      return query.addWhereClause(
+        IdWhereClause.between(
+          lower: lowerId,
+          includeLower: includeLower,
+          upper: upperId,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause> pathEqualTo(
-      String path) {
+    String path,
+  ) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'path',
-        value: [path],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'path', value: [path]),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      pathNotEqualTo(String path) {
+  pathNotEqualTo(String path) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'path',
-              lower: [],
-              upper: [path],
-              includeUpper: false,
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'path',
-              lower: [path],
-              includeLower: false,
-              upper: [],
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'path',
+                lower: [],
+                upper: [path],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'path',
+                lower: [path],
+                includeLower: false,
+                upper: [],
+              ),
+            );
       } else {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'path',
-              lower: [path],
-              includeLower: false,
-              upper: [],
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'path',
-              lower: [],
-              upper: [path],
-              includeUpper: false,
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'path',
+                lower: [path],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'path',
+                lower: [],
+                upper: [path],
+                includeUpper: false,
+              ),
+            );
       }
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      tmdbIdIsNull() {
+  tmdbIdIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'tmdbId',
-        value: [null],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'tmdbId', value: [null]),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      tmdbIdIsNotNull() {
+  tmdbIdIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'tmdbId',
-        lower: [null],
-        includeLower: false,
-        upper: [],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'tmdbId',
+          lower: [null],
+          includeLower: false,
+          upper: [],
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      tmdbIdEqualTo(String? tmdbId) {
+  tmdbIdEqualTo(String? tmdbId) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'tmdbId',
-        value: [tmdbId],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'tmdbId', value: [tmdbId]),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      tmdbIdNotEqualTo(String? tmdbId) {
+  tmdbIdNotEqualTo(String? tmdbId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'tmdbId',
-              lower: [],
-              upper: [tmdbId],
-              includeUpper: false,
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'tmdbId',
-              lower: [tmdbId],
-              includeLower: false,
-              upper: [],
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'tmdbId',
+                lower: [],
+                upper: [tmdbId],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'tmdbId',
+                lower: [tmdbId],
+                includeLower: false,
+                upper: [],
+              ),
+            );
       } else {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'tmdbId',
-              lower: [tmdbId],
-              includeLower: false,
-              upper: [],
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'tmdbId',
-              lower: [],
-              upper: [tmdbId],
-              includeUpper: false,
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'tmdbId',
+                lower: [tmdbId],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'tmdbId',
+                lower: [],
+                upper: [tmdbId],
+                includeUpper: false,
+              ),
+            );
       }
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      watchStatusEqualTo(WatchStatus watchStatus) {
+  watchStatusEqualTo(WatchStatus watchStatus) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'watchStatus',
-        value: [watchStatus],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(
+          indexName: r'watchStatus',
+          value: [watchStatus],
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      watchStatusNotEqualTo(WatchStatus watchStatus) {
+  watchStatusNotEqualTo(WatchStatus watchStatus) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'watchStatus',
-              lower: [],
-              upper: [watchStatus],
-              includeUpper: false,
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'watchStatus',
-              lower: [watchStatus],
-              includeLower: false,
-              upper: [],
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'watchStatus',
+                lower: [],
+                upper: [watchStatus],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'watchStatus',
+                lower: [watchStatus],
+                includeLower: false,
+                upper: [],
+              ),
+            );
       } else {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'watchStatus',
-              lower: [watchStatus],
-              includeLower: false,
-              upper: [],
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'watchStatus',
-              lower: [],
-              upper: [watchStatus],
-              includeUpper: false,
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'watchStatus',
+                lower: [watchStatus],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'watchStatus',
+                lower: [],
+                upper: [watchStatus],
+                includeUpper: false,
+              ),
+            );
       }
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      watchStatusGreaterThan(
-    WatchStatus watchStatus, {
-    bool include = false,
-  }) {
+  watchStatusGreaterThan(WatchStatus watchStatus, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'watchStatus',
-        lower: [watchStatus],
-        includeLower: include,
-        upper: [],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'watchStatus',
+          lower: [watchStatus],
+          includeLower: include,
+          upper: [],
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      watchStatusLessThan(
-    WatchStatus watchStatus, {
-    bool include = false,
-  }) {
+  watchStatusLessThan(WatchStatus watchStatus, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'watchStatus',
-        lower: [],
-        upper: [watchStatus],
-        includeUpper: include,
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'watchStatus',
+          lower: [],
+          upper: [watchStatus],
+          includeUpper: include,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      watchStatusBetween(
+  watchStatusBetween(
     WatchStatus lowerWatchStatus,
     WatchStatus upperWatchStatus, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'watchStatus',
-        lower: [lowerWatchStatus],
-        includeLower: includeLower,
-        upper: [upperWatchStatus],
-        includeUpper: includeUpper,
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'watchStatus',
+          lower: [lowerWatchStatus],
+          includeLower: includeLower,
+          upper: [upperWatchStatus],
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      lastWatchedAtIsNull() {
+  lastWatchedAtIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'lastWatchedAt',
-        value: [null],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'lastWatchedAt', value: [null]),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      lastWatchedAtIsNotNull() {
+  lastWatchedAtIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'lastWatchedAt',
-        lower: [null],
-        includeLower: false,
-        upper: [],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'lastWatchedAt',
+          lower: [null],
+          includeLower: false,
+          upper: [],
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      lastWatchedAtEqualTo(DateTime? lastWatchedAt) {
+  lastWatchedAtEqualTo(DateTime? lastWatchedAt) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'lastWatchedAt',
-        value: [lastWatchedAt],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(
+          indexName: r'lastWatchedAt',
+          value: [lastWatchedAt],
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      lastWatchedAtNotEqualTo(DateTime? lastWatchedAt) {
+  lastWatchedAtNotEqualTo(DateTime? lastWatchedAt) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'lastWatchedAt',
-              lower: [],
-              upper: [lastWatchedAt],
-              includeUpper: false,
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'lastWatchedAt',
-              lower: [lastWatchedAt],
-              includeLower: false,
-              upper: [],
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'lastWatchedAt',
+                lower: [],
+                upper: [lastWatchedAt],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'lastWatchedAt',
+                lower: [lastWatchedAt],
+                includeLower: false,
+                upper: [],
+              ),
+            );
       } else {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'lastWatchedAt',
-              lower: [lastWatchedAt],
-              includeLower: false,
-              upper: [],
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'lastWatchedAt',
-              lower: [],
-              upper: [lastWatchedAt],
-              includeUpper: false,
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'lastWatchedAt',
+                lower: [lastWatchedAt],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'lastWatchedAt',
+                lower: [],
+                upper: [lastWatchedAt],
+                includeUpper: false,
+              ),
+            );
       }
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      lastWatchedAtGreaterThan(
-    DateTime? lastWatchedAt, {
-    bool include = false,
-  }) {
+  lastWatchedAtGreaterThan(DateTime? lastWatchedAt, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'lastWatchedAt',
-        lower: [lastWatchedAt],
-        includeLower: include,
-        upper: [],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'lastWatchedAt',
+          lower: [lastWatchedAt],
+          includeLower: include,
+          upper: [],
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      lastWatchedAtLessThan(
-    DateTime? lastWatchedAt, {
-    bool include = false,
-  }) {
+  lastWatchedAtLessThan(DateTime? lastWatchedAt, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'lastWatchedAt',
-        lower: [],
-        upper: [lastWatchedAt],
-        includeUpper: include,
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'lastWatchedAt',
+          lower: [],
+          upper: [lastWatchedAt],
+          includeUpper: include,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      lastWatchedAtBetween(
+  lastWatchedAtBetween(
     DateTime? lowerLastWatchedAt,
     DateTime? upperLastWatchedAt, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'lastWatchedAt',
-        lower: [lowerLastWatchedAt],
-        includeLower: includeLower,
-        upper: [upperLastWatchedAt],
-        includeUpper: includeUpper,
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'lastWatchedAt',
+          lower: [lowerLastWatchedAt],
+          includeLower: includeLower,
+          upper: [upperLastWatchedAt],
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      isFavoriteEqualTo(bool isFavorite) {
+  isFavoriteEqualTo(bool isFavorite) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'isFavorite',
-        value: [isFavorite],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'isFavorite', value: [isFavorite]),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      isFavoriteNotEqualTo(bool isFavorite) {
+  isFavoriteNotEqualTo(bool isFavorite) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'isFavorite',
-              lower: [],
-              upper: [isFavorite],
-              includeUpper: false,
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'isFavorite',
-              lower: [isFavorite],
-              includeLower: false,
-              upper: [],
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isFavorite',
+                lower: [],
+                upper: [isFavorite],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isFavorite',
+                lower: [isFavorite],
+                includeLower: false,
+                upper: [],
+              ),
+            );
       } else {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'isFavorite',
-              lower: [isFavorite],
-              includeLower: false,
-              upper: [],
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'isFavorite',
-              lower: [],
-              upper: [isFavorite],
-              includeUpper: false,
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isFavorite',
+                lower: [isFavorite],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'isFavorite',
+                lower: [],
+                upper: [isFavorite],
+                includeUpper: false,
+              ),
+            );
       }
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      addedAtEqualTo(DateTime addedAt) {
+  addedAtEqualTo(DateTime addedAt) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'addedAt',
-        value: [addedAt],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.equalTo(indexName: r'addedAt', value: [addedAt]),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      addedAtNotEqualTo(DateTime addedAt) {
+  addedAtNotEqualTo(DateTime addedAt) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'addedAt',
-              lower: [],
-              upper: [addedAt],
-              includeUpper: false,
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'addedAt',
-              lower: [addedAt],
-              includeLower: false,
-              upper: [],
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'addedAt',
+                lower: [],
+                upper: [addedAt],
+                includeUpper: false,
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'addedAt',
+                lower: [addedAt],
+                includeLower: false,
+                upper: [],
+              ),
+            );
       } else {
         return query
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'addedAt',
-              lower: [addedAt],
-              includeLower: false,
-              upper: [],
-            ))
-            .addWhereClause(IndexWhereClause.between(
-              indexName: r'addedAt',
-              lower: [],
-              upper: [addedAt],
-              includeUpper: false,
-            ));
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'addedAt',
+                lower: [addedAt],
+                includeLower: false,
+                upper: [],
+              ),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(
+                indexName: r'addedAt',
+                lower: [],
+                upper: [addedAt],
+                includeUpper: false,
+              ),
+            );
       }
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      addedAtGreaterThan(
-    DateTime addedAt, {
-    bool include = false,
-  }) {
+  addedAtGreaterThan(DateTime addedAt, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'addedAt',
-        lower: [addedAt],
-        includeLower: include,
-        upper: [],
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'addedAt',
+          lower: [addedAt],
+          includeLower: include,
+          upper: [],
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      addedAtLessThan(
-    DateTime addedAt, {
-    bool include = false,
-  }) {
+  addedAtLessThan(DateTime addedAt, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'addedAt',
-        lower: [],
-        upper: [addedAt],
-        includeUpper: include,
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'addedAt',
+          lower: [],
+          upper: [addedAt],
+          includeUpper: include,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-      addedAtBetween(
+  addedAtBetween(
     DateTime lowerAddedAt,
     DateTime upperAddedAt, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'addedAt',
-        lower: [lowerAddedAt],
-        includeLower: includeLower,
-        upper: [upperAddedAt],
-        includeUpper: includeUpper,
-      ));
+      return query.addWhereClause(
+        IndexWhereClause.between(
+          indexName: r'addedAt',
+          lower: [lowerAddedAt],
+          includeLower: includeLower,
+          upper: [upperAddedAt],
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 }
@@ -1102,127 +1131,129 @@ extension MediaFileEntityQueryWhere
 extension MediaFileEntityQueryFilter
     on QueryBuilder<MediaFileEntity, MediaFileEntity, QFilterCondition> {
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      addedAtEqualTo(DateTime value) {
+  addedAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'addedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'addedAt', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      addedAtGreaterThan(
-    DateTime value, {
-    bool include = false,
-  }) {
+  addedAtGreaterThan(DateTime value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'addedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'addedAt',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      addedAtLessThan(
-    DateTime value, {
-    bool include = false,
-  }) {
+  addedAtLessThan(DateTime value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'addedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'addedAt',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      addedAtBetween(
+  addedAtBetween(
     DateTime lower,
     DateTime upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'addedAt',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'addedAt',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsIsNull() {
+  audioChannelsIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'audioChannels',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'audioChannels'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsIsNotNull() {
+  audioChannelsIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'audioChannels',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'audioChannels'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  audioChannelsEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'audioChannels',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'audioChannels',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'audioChannels',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsLessThan(
+  audioChannelsGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'audioChannels',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'audioChannels',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsBetween(
+  audioChannelsLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'audioChannels',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  audioChannelsBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -1230,153 +1261,158 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'audioChannels',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'audioChannels',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  audioChannelsStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'audioChannels',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'audioChannels',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  audioChannelsEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'audioChannels',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'audioChannels',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsContains(String value, {bool caseSensitive = true}) {
+  audioChannelsContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'audioChannels',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'audioChannels',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsMatches(String pattern, {bool caseSensitive = true}) {
+  audioChannelsMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'audioChannels',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'audioChannels',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsIsEmpty() {
+  audioChannelsIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'audioChannels',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'audioChannels', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioChannelsIsNotEmpty() {
+  audioChannelsIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'audioChannels',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'audioChannels', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecIsNull() {
+  audioCodecIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'audioCodec',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'audioCodec'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecIsNotNull() {
+  audioCodecIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'audioCodec',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'audioCodec'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  audioCodecEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'audioCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'audioCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'audioCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecLessThan(
+  audioCodecGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'audioCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'audioCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecBetween(
+  audioCodecLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'audioCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  audioCodecBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -1384,153 +1420,158 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'audioCodec',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'audioCodec',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  audioCodecStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'audioCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'audioCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  audioCodecEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'audioCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'audioCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecContains(String value, {bool caseSensitive = true}) {
+  audioCodecContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'audioCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'audioCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecMatches(String pattern, {bool caseSensitive = true}) {
+  audioCodecMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'audioCodec',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'audioCodec',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecIsEmpty() {
+  audioCodecIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'audioCodec',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'audioCodec', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      audioCodecIsNotEmpty() {
+  audioCodecIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'audioCodec',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'audioCodec', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerIsNull() {
+  containerIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'container',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'container'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerIsNotNull() {
+  containerIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'container',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'container'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  containerEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'container',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'container',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'container',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerLessThan(
+  containerGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'container',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'container',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerBetween(
+  containerLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'container',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  containerBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -1538,191 +1579,195 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'container',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'container',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  containerStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'container',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'container',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  containerEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'container',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'container',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerContains(String value, {bool caseSensitive = true}) {
+  containerContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'container',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'container',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerMatches(String pattern, {bool caseSensitive = true}) {
+  containerMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'container',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'container',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerIsEmpty() {
+  containerIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'container',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'container', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      containerIsNotEmpty() {
+  containerIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'container',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'container', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      durationEqualTo(int value) {
+  durationEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'duration',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'duration', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      durationGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
+  durationGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'duration',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'duration',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      durationLessThan(
-    int value, {
-    bool include = false,
-  }) {
+  durationLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'duration',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'duration',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      durationBetween(
+  durationBetween(
     int lower,
     int upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'duration',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'duration',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      fileNameEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  fileNameEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'fileName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'fileName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      fileNameGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'fileName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      fileNameLessThan(
+  fileNameGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'fileName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'fileName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      fileNameBetween(
+  fileNameLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'fileName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  fileNameBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -1730,153 +1775,158 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'fileName',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'fileName',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      fileNameStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  fileNameStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'fileName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'fileName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      fileNameEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  fileNameEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'fileName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'fileName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      fileNameContains(String value, {bool caseSensitive = true}) {
+  fileNameContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'fileName',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'fileName',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      fileNameMatches(String pattern, {bool caseSensitive = true}) {
+  fileNameMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'fileName',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'fileName',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      fileNameIsEmpty() {
+  fileNameIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'fileName',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'fileName', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      fileNameIsNotEmpty() {
+  fileNameIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'fileName',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'fileName', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatIsNull() {
+  hdrFormatIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'hdrFormat',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'hdrFormat'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatIsNotNull() {
+  hdrFormatIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'hdrFormat',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'hdrFormat'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  hdrFormatEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'hdrFormat',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'hdrFormat',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'hdrFormat',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatLessThan(
+  hdrFormatGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'hdrFormat',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'hdrFormat',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatBetween(
+  hdrFormatLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'hdrFormat',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  hdrFormatBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -1884,563 +1934,560 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'hdrFormat',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'hdrFormat',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  hdrFormatStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'hdrFormat',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'hdrFormat',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  hdrFormatEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'hdrFormat',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'hdrFormat',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatContains(String value, {bool caseSensitive = true}) {
+  hdrFormatContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'hdrFormat',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'hdrFormat',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatMatches(String pattern, {bool caseSensitive = true}) {
+  hdrFormatMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'hdrFormat',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'hdrFormat',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatIsEmpty() {
+  hdrFormatIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'hdrFormat',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'hdrFormat', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      hdrFormatIsNotEmpty() {
+  hdrFormatIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'hdrFormat',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'hdrFormat', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      heightIsNull() {
+  heightIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'height',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'height'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      heightIsNotNull() {
+  heightIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'height',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'height'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      heightEqualTo(int? value) {
+  heightEqualTo(int? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'height',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'height', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      heightGreaterThan(
-    int? value, {
-    bool include = false,
-  }) {
+  heightGreaterThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'height',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'height',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      heightLessThan(
-    int? value, {
-    bool include = false,
-  }) {
+  heightLessThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'height',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'height',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      heightBetween(
+  heightBetween(
     int? lower,
     int? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'height',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'height',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      idEqualTo(Id value) {
+  idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'id', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      idGreaterThan(
-    Id value, {
-    bool include = false,
-  }) {
+  idGreaterThan(Id value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      idLessThan(
-    Id value, {
-    bool include = false,
-  }) {
+  idLessThan(Id value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'id',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'id',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      idBetween(
+  idBetween(
     Id lower,
     Id upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'id',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'id',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      isFavoriteEqualTo(bool value) {
+  isFavoriteEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'isFavorite',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'isFavorite', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      isHdrEqualTo(bool value) {
+  isHdrEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'isHdr',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'isHdr', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      lastWatchedAtIsNull() {
+  lastWatchedAtIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'lastWatchedAt',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'lastWatchedAt'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      lastWatchedAtIsNotNull() {
+  lastWatchedAtIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'lastWatchedAt',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'lastWatchedAt'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      lastWatchedAtEqualTo(DateTime? value) {
+  lastWatchedAtEqualTo(DateTime? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'lastWatchedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'lastWatchedAt', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      lastWatchedAtGreaterThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  lastWatchedAtGreaterThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'lastWatchedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'lastWatchedAt',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      lastWatchedAtLessThan(
-    DateTime? value, {
-    bool include = false,
-  }) {
+  lastWatchedAtLessThan(DateTime? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'lastWatchedAt',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'lastWatchedAt',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      lastWatchedAtBetween(
+  lastWatchedAtBetween(
     DateTime? lower,
     DateTime? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'lastWatchedAt',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'lastWatchedAt',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      mediaTypeEqualTo(MediaType value) {
+  mediaTypeEqualTo(MediaType value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'mediaType',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'mediaType', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      mediaTypeGreaterThan(
-    MediaType value, {
-    bool include = false,
-  }) {
+  mediaTypeGreaterThan(MediaType value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'mediaType',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'mediaType',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      mediaTypeLessThan(
-    MediaType value, {
-    bool include = false,
-  }) {
+  mediaTypeLessThan(MediaType value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'mediaType',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'mediaType',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      mediaTypeBetween(
+  mediaTypeBetween(
     MediaType lower,
     MediaType upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'mediaType',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'mediaType',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedEpisodeIsNull() {
+  parsedEpisodeIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'parsedEpisode',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'parsedEpisode'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedEpisodeIsNotNull() {
+  parsedEpisodeIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'parsedEpisode',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'parsedEpisode'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedEpisodeEqualTo(int? value) {
+  parsedEpisodeEqualTo(int? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'parsedEpisode',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'parsedEpisode', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedEpisodeGreaterThan(
-    int? value, {
-    bool include = false,
-  }) {
+  parsedEpisodeGreaterThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'parsedEpisode',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'parsedEpisode',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedEpisodeLessThan(
-    int? value, {
-    bool include = false,
-  }) {
+  parsedEpisodeLessThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'parsedEpisode',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'parsedEpisode',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedEpisodeBetween(
+  parsedEpisodeBetween(
     int? lower,
     int? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'parsedEpisode',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'parsedEpisode',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedSeasonIsNull() {
+  parsedSeasonIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'parsedSeason',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'parsedSeason'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedSeasonIsNotNull() {
+  parsedSeasonIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'parsedSeason',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'parsedSeason'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedSeasonEqualTo(int? value) {
+  parsedSeasonEqualTo(int? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'parsedSeason',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'parsedSeason', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedSeasonGreaterThan(
-    int? value, {
-    bool include = false,
-  }) {
+  parsedSeasonGreaterThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'parsedSeason',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'parsedSeason',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedSeasonLessThan(
-    int? value, {
-    bool include = false,
-  }) {
+  parsedSeasonLessThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'parsedSeason',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'parsedSeason',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedSeasonBetween(
+  parsedSeasonBetween(
     int? lower,
     int? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'parsedSeason',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'parsedSeason',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedTitleEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  parsedTitleEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'parsedTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'parsedTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedTitleGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'parsedTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedTitleLessThan(
+  parsedTitleGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'parsedTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'parsedTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedTitleBetween(
+  parsedTitleLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'parsedTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  parsedTitleBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -2448,209 +2495,213 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'parsedTitle',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'parsedTitle',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedTitleStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  parsedTitleStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'parsedTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'parsedTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedTitleEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  parsedTitleEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'parsedTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'parsedTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedTitleContains(String value, {bool caseSensitive = true}) {
+  parsedTitleContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'parsedTitle',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'parsedTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedTitleMatches(String pattern, {bool caseSensitive = true}) {
+  parsedTitleMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'parsedTitle',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'parsedTitle',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedTitleIsEmpty() {
+  parsedTitleIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'parsedTitle',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'parsedTitle', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedTitleIsNotEmpty() {
+  parsedTitleIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'parsedTitle',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'parsedTitle', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedYearIsNull() {
+  parsedYearIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'parsedYear',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'parsedYear'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedYearIsNotNull() {
+  parsedYearIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'parsedYear',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'parsedYear'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedYearEqualTo(int? value) {
+  parsedYearEqualTo(int? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'parsedYear',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'parsedYear', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedYearGreaterThan(
-    int? value, {
-    bool include = false,
-  }) {
+  parsedYearGreaterThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'parsedYear',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'parsedYear',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedYearLessThan(
-    int? value, {
-    bool include = false,
-  }) {
+  parsedYearLessThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'parsedYear',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'parsedYear',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      parsedYearBetween(
+  parsedYearBetween(
     int? lower,
     int? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'parsedYear',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'parsedYear',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      pathEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  pathEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'path',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'path',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      pathGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'path',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      pathLessThan(
+  pathGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'path',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'path',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      pathBetween(
+  pathLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'path',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  pathBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -2658,191 +2709,195 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'path',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'path',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      pathStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  pathStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'path',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'path',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      pathEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  pathEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'path',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'path',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      pathContains(String value, {bool caseSensitive = true}) {
+  pathContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'path',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'path',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      pathMatches(String pattern, {bool caseSensitive = true}) {
+  pathMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'path',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'path',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      pathIsEmpty() {
+  pathIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'path',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'path', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      pathIsNotEmpty() {
+  pathIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'path',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'path', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      positionEqualTo(int value) {
+  positionEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'position',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'position', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      positionGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
+  positionGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'position',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'position',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      positionLessThan(
-    int value, {
-    bool include = false,
-  }) {
+  positionLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'position',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'position',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      positionBetween(
+  positionBetween(
     int lower,
     int upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'position',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'position',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      progressEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
+  progressEqualTo(double value, {double epsilon = Query.epsilon}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'progress',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'progress',
+          value: value,
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      progressGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'progress',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      progressLessThan(
+  progressGreaterThan(
     double value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'progress',
-        value: value,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'progress',
+          value: value,
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      progressBetween(
+  progressLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'progress',
+          value: value,
+          epsilon: epsilon,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  progressBetween(
     double lower,
     double upper, {
     bool includeLower = true,
@@ -2850,65 +2905,70 @@ extension MediaFileEntityQueryFilter
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'progress',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'progress',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          epsilon: epsilon,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      qualityEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  qualityEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'quality',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'quality',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      qualityGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'quality',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      qualityLessThan(
+  qualityGreaterThan(
     String value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'quality',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'quality',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      qualityBetween(
+  qualityLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'quality',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  qualityBetween(
     String lower,
     String upper, {
     bool includeLower = true,
@@ -2916,209 +2976,213 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'quality',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'quality',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      qualityStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  qualityStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'quality',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'quality',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      qualityEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  qualityEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'quality',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'quality',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      qualityContains(String value, {bool caseSensitive = true}) {
+  qualityContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'quality',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'quality',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      qualityMatches(String pattern, {bool caseSensitive = true}) {
+  qualityMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'quality',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'quality',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      qualityIsEmpty() {
+  qualityIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'quality',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'quality', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      qualityIsNotEmpty() {
+  qualityIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'quality',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'quality', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      sizeEqualTo(int value) {
+  sizeEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'size',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'size', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      sizeGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
+  sizeGreaterThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'size',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'size',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      sizeLessThan(
-    int value, {
-    bool include = false,
-  }) {
+  sizeLessThan(int value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'size',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'size',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      sizeBetween(
+  sizeBetween(
     int lower,
     int upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'size',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'size',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdIsNull() {
+  tmdbIdIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'tmdbId',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'tmdbId'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdIsNotNull() {
+  tmdbIdIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'tmdbId',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'tmdbId'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  tmdbIdEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdLessThan(
+  tmdbIdGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdBetween(
+  tmdbIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  tmdbIdBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -3126,153 +3190,158 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'tmdbId',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'tmdbId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  tmdbIdStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  tmdbIdEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdContains(String value, {bool caseSensitive = true}) {
+  tmdbIdContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'tmdbId',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'tmdbId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdMatches(String pattern, {bool caseSensitive = true}) {
+  tmdbIdMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'tmdbId',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'tmdbId',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdIsEmpty() {
+  tmdbIdIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'tmdbId',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'tmdbId', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      tmdbIdIsNotEmpty() {
+  tmdbIdIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'tmdbId',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'tmdbId', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelIsNull() {
+  versionLabelIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'versionLabel',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'versionLabel'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelIsNotNull() {
+  versionLabelIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'versionLabel',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'versionLabel'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  versionLabelEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'versionLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'versionLabel',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'versionLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelLessThan(
+  versionLabelGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'versionLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'versionLabel',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelBetween(
+  versionLabelLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'versionLabel',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  versionLabelBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -3280,153 +3349,158 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'versionLabel',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'versionLabel',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  versionLabelStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'versionLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'versionLabel',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  versionLabelEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'versionLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'versionLabel',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelContains(String value, {bool caseSensitive = true}) {
+  versionLabelContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'versionLabel',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'versionLabel',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelMatches(String pattern, {bool caseSensitive = true}) {
+  versionLabelMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'versionLabel',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'versionLabel',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelIsEmpty() {
+  versionLabelIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'versionLabel',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'versionLabel', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      versionLabelIsNotEmpty() {
+  versionLabelIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'versionLabel',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'versionLabel', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecIsNull() {
+  videoCodecIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'videoCodec',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'videoCodec'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecIsNotNull() {
+  videoCodecIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'videoCodec',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'videoCodec'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
+  videoCodecEqualTo(String? value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'videoCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'videoCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'videoCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecLessThan(
+  videoCodecGreaterThan(
     String? value, {
     bool include = false,
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'videoCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'videoCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecBetween(
+  videoCodecLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'videoCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
+  videoCodecBetween(
     String? lower,
     String? upper, {
     bool includeLower = true,
@@ -3434,214 +3508,214 @@ extension MediaFileEntityQueryFilter
     bool caseSensitive = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'videoCodec',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'videoCodec',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  videoCodecStartsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'videoCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'videoCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
+  videoCodecEndsWith(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'videoCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'videoCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecContains(String value, {bool caseSensitive = true}) {
+  videoCodecContains(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'videoCodec',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'videoCodec',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecMatches(String pattern, {bool caseSensitive = true}) {
+  videoCodecMatches(String pattern, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'videoCodec',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'videoCodec',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecIsEmpty() {
+  videoCodecIsEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'videoCodec',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'videoCodec', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      videoCodecIsNotEmpty() {
+  videoCodecIsNotEmpty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'videoCodec',
-        value: '',
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'videoCodec', value: ''),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      watchStatusEqualTo(WatchStatus value) {
+  watchStatusEqualTo(WatchStatus value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'watchStatus',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'watchStatus', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      watchStatusGreaterThan(
-    WatchStatus value, {
-    bool include = false,
-  }) {
+  watchStatusGreaterThan(WatchStatus value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'watchStatus',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'watchStatus',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      watchStatusLessThan(
-    WatchStatus value, {
-    bool include = false,
-  }) {
+  watchStatusLessThan(WatchStatus value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'watchStatus',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'watchStatus',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      watchStatusBetween(
+  watchStatusBetween(
     WatchStatus lower,
     WatchStatus upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'watchStatus',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'watchStatus',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      widthIsNull() {
+  widthIsNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'width',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'width'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      widthIsNotNull() {
+  widthIsNotNull() {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'width',
-      ));
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'width'),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      widthEqualTo(int? value) {
+  widthEqualTo(int? value) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'width',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'width', value: value),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      widthGreaterThan(
-    int? value, {
-    bool include = false,
-  }) {
+  widthGreaterThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'width',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'width',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      widthLessThan(
-    int? value, {
-    bool include = false,
-  }) {
+  widthLessThan(int? value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'width',
-        value: value,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'width',
+          value: value,
+        ),
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-      widthBetween(
+  widthBetween(
     int? lower,
     int? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
     return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'width',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'width',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
     });
   }
 }
@@ -3661,91 +3735,91 @@ extension MediaFileEntityQuerySortBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByAddedAtDesc() {
+  sortByAddedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'addedAt', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByAudioChannels() {
+  sortByAudioChannels() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'audioChannels', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByAudioChannelsDesc() {
+  sortByAudioChannelsDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'audioChannels', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByAudioCodec() {
+  sortByAudioCodec() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'audioCodec', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByAudioCodecDesc() {
+  sortByAudioCodecDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'audioCodec', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByContainer() {
+  sortByContainer() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'container', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByContainerDesc() {
+  sortByContainerDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'container', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByDuration() {
+  sortByDuration() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'duration', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByDurationDesc() {
+  sortByDurationDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'duration', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByFileName() {
+  sortByFileName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'fileName', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByFileNameDesc() {
+  sortByFileNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'fileName', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByHdrFormat() {
+  sortByHdrFormat() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'hdrFormat', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByHdrFormatDesc() {
+  sortByHdrFormatDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'hdrFormat', Sort.desc);
     });
@@ -3758,21 +3832,21 @@ extension MediaFileEntityQuerySortBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByHeightDesc() {
+  sortByHeightDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'height', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByIsFavorite() {
+  sortByIsFavorite() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isFavorite', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByIsFavoriteDesc() {
+  sortByIsFavoriteDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isFavorite', Sort.desc);
     });
@@ -3785,91 +3859,91 @@ extension MediaFileEntityQuerySortBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByIsHdrDesc() {
+  sortByIsHdrDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isHdr', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByLastWatchedAt() {
+  sortByLastWatchedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastWatchedAt', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByLastWatchedAtDesc() {
+  sortByLastWatchedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastWatchedAt', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByMediaType() {
+  sortByMediaType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'mediaType', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByMediaTypeDesc() {
+  sortByMediaTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'mediaType', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByParsedEpisode() {
+  sortByParsedEpisode() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedEpisode', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByParsedEpisodeDesc() {
+  sortByParsedEpisodeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedEpisode', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByParsedSeason() {
+  sortByParsedSeason() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedSeason', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByParsedSeasonDesc() {
+  sortByParsedSeasonDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedSeason', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByParsedTitle() {
+  sortByParsedTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedTitle', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByParsedTitleDesc() {
+  sortByParsedTitleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedTitle', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByParsedYear() {
+  sortByParsedYear() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedYear', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByParsedYearDesc() {
+  sortByParsedYearDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedYear', Sort.desc);
     });
@@ -3882,35 +3956,35 @@ extension MediaFileEntityQuerySortBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByPathDesc() {
+  sortByPathDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'path', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByPosition() {
+  sortByPosition() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'position', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByPositionDesc() {
+  sortByPositionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'position', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByProgress() {
+  sortByProgress() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'progress', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByProgressDesc() {
+  sortByProgressDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'progress', Sort.desc);
     });
@@ -3923,7 +3997,7 @@ extension MediaFileEntityQuerySortBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByQualityDesc() {
+  sortByQualityDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'quality', Sort.desc);
     });
@@ -3936,7 +4010,7 @@ extension MediaFileEntityQuerySortBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortBySizeDesc() {
+  sortBySizeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'size', Sort.desc);
     });
@@ -3949,49 +4023,49 @@ extension MediaFileEntityQuerySortBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByTmdbIdDesc() {
+  sortByTmdbIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'tmdbId', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByVersionLabel() {
+  sortByVersionLabel() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'versionLabel', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByVersionLabelDesc() {
+  sortByVersionLabelDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'versionLabel', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByVideoCodec() {
+  sortByVideoCodec() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'videoCodec', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByVideoCodecDesc() {
+  sortByVideoCodecDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'videoCodec', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByWatchStatus() {
+  sortByWatchStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'watchStatus', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByWatchStatusDesc() {
+  sortByWatchStatusDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'watchStatus', Sort.desc);
     });
@@ -4004,7 +4078,7 @@ extension MediaFileEntityQuerySortBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      sortByWidthDesc() {
+  sortByWidthDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'width', Sort.desc);
     });
@@ -4020,91 +4094,91 @@ extension MediaFileEntityQuerySortThenBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByAddedAtDesc() {
+  thenByAddedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'addedAt', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByAudioChannels() {
+  thenByAudioChannels() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'audioChannels', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByAudioChannelsDesc() {
+  thenByAudioChannelsDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'audioChannels', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByAudioCodec() {
+  thenByAudioCodec() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'audioCodec', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByAudioCodecDesc() {
+  thenByAudioCodecDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'audioCodec', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByContainer() {
+  thenByContainer() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'container', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByContainerDesc() {
+  thenByContainerDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'container', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByDuration() {
+  thenByDuration() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'duration', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByDurationDesc() {
+  thenByDurationDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'duration', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByFileName() {
+  thenByFileName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'fileName', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByFileNameDesc() {
+  thenByFileNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'fileName', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByHdrFormat() {
+  thenByHdrFormat() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'hdrFormat', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByHdrFormatDesc() {
+  thenByHdrFormatDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'hdrFormat', Sort.desc);
     });
@@ -4117,7 +4191,7 @@ extension MediaFileEntityQuerySortThenBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByHeightDesc() {
+  thenByHeightDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'height', Sort.desc);
     });
@@ -4136,14 +4210,14 @@ extension MediaFileEntityQuerySortThenBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByIsFavorite() {
+  thenByIsFavorite() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isFavorite', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByIsFavoriteDesc() {
+  thenByIsFavoriteDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isFavorite', Sort.desc);
     });
@@ -4156,91 +4230,91 @@ extension MediaFileEntityQuerySortThenBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByIsHdrDesc() {
+  thenByIsHdrDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isHdr', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByLastWatchedAt() {
+  thenByLastWatchedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastWatchedAt', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByLastWatchedAtDesc() {
+  thenByLastWatchedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastWatchedAt', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByMediaType() {
+  thenByMediaType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'mediaType', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByMediaTypeDesc() {
+  thenByMediaTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'mediaType', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByParsedEpisode() {
+  thenByParsedEpisode() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedEpisode', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByParsedEpisodeDesc() {
+  thenByParsedEpisodeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedEpisode', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByParsedSeason() {
+  thenByParsedSeason() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedSeason', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByParsedSeasonDesc() {
+  thenByParsedSeasonDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedSeason', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByParsedTitle() {
+  thenByParsedTitle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedTitle', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByParsedTitleDesc() {
+  thenByParsedTitleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedTitle', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByParsedYear() {
+  thenByParsedYear() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedYear', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByParsedYearDesc() {
+  thenByParsedYearDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parsedYear', Sort.desc);
     });
@@ -4253,35 +4327,35 @@ extension MediaFileEntityQuerySortThenBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByPathDesc() {
+  thenByPathDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'path', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByPosition() {
+  thenByPosition() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'position', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByPositionDesc() {
+  thenByPositionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'position', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByProgress() {
+  thenByProgress() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'progress', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByProgressDesc() {
+  thenByProgressDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'progress', Sort.desc);
     });
@@ -4294,7 +4368,7 @@ extension MediaFileEntityQuerySortThenBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByQualityDesc() {
+  thenByQualityDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'quality', Sort.desc);
     });
@@ -4307,7 +4381,7 @@ extension MediaFileEntityQuerySortThenBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenBySizeDesc() {
+  thenBySizeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'size', Sort.desc);
     });
@@ -4320,49 +4394,49 @@ extension MediaFileEntityQuerySortThenBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByTmdbIdDesc() {
+  thenByTmdbIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'tmdbId', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByVersionLabel() {
+  thenByVersionLabel() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'versionLabel', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByVersionLabelDesc() {
+  thenByVersionLabelDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'versionLabel', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByVideoCodec() {
+  thenByVideoCodec() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'videoCodec', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByVideoCodecDesc() {
+  thenByVideoCodecDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'videoCodec', Sort.desc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByWatchStatus() {
+  thenByWatchStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'watchStatus', Sort.asc);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByWatchStatusDesc() {
+  thenByWatchStatusDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'watchStatus', Sort.desc);
     });
@@ -4375,7 +4449,7 @@ extension MediaFileEntityQuerySortThenBy
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy>
-      thenByWidthDesc() {
+  thenByWidthDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'width', Sort.desc);
     });
@@ -4385,50 +4459,53 @@ extension MediaFileEntityQuerySortThenBy
 extension MediaFileEntityQueryWhereDistinct
     on QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> {
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByAddedAt() {
+  distinctByAddedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'addedAt');
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByAudioChannels({bool caseSensitive = true}) {
+  distinctByAudioChannels({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'audioChannels',
-          caseSensitive: caseSensitive);
+      return query.addDistinctBy(
+        r'audioChannels',
+        caseSensitive: caseSensitive,
+      );
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByAudioCodec({bool caseSensitive = true}) {
+  distinctByAudioCodec({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'audioCodec', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByContainer(
-      {bool caseSensitive = true}) {
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
+  distinctByContainer({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'container', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByDuration() {
+  distinctByDuration() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'duration');
     });
   }
 
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByFileName(
-      {bool caseSensitive = true}) {
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByFileName({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'fileName', caseSensitive: caseSensitive);
     });
   }
 
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByHdrFormat(
-      {bool caseSensitive = true}) {
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
+  distinctByHdrFormat({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'hdrFormat', caseSensitive: caseSensitive);
     });
@@ -4441,7 +4518,7 @@ extension MediaFileEntityQueryWhereDistinct
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByIsFavorite() {
+  distinctByIsFavorite() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isFavorite');
     });
@@ -4454,70 +4531,72 @@ extension MediaFileEntityQueryWhereDistinct
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByLastWatchedAt() {
+  distinctByLastWatchedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastWatchedAt');
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByMediaType() {
+  distinctByMediaType() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'mediaType');
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByParsedEpisode() {
+  distinctByParsedEpisode() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'parsedEpisode');
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByParsedSeason() {
+  distinctByParsedSeason() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'parsedSeason');
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByParsedTitle({bool caseSensitive = true}) {
+  distinctByParsedTitle({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'parsedTitle', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByParsedYear() {
+  distinctByParsedYear() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'parsedYear');
     });
   }
 
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByPath(
-      {bool caseSensitive = true}) {
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByPath({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'path', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByPosition() {
+  distinctByPosition() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'position');
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByProgress() {
+  distinctByProgress() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'progress');
     });
   }
 
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByQuality(
-      {bool caseSensitive = true}) {
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByQuality({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'quality', caseSensitive: caseSensitive);
     });
@@ -4529,29 +4608,30 @@ extension MediaFileEntityQueryWhereDistinct
     });
   }
 
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByTmdbId(
-      {bool caseSensitive = true}) {
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByTmdbId({
+    bool caseSensitive = true,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'tmdbId', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByVersionLabel({bool caseSensitive = true}) {
+  distinctByVersionLabel({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'versionLabel', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByVideoCodec({bool caseSensitive = true}) {
+  distinctByVideoCodec({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'videoCodec', caseSensitive: caseSensitive);
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct>
-      distinctByWatchStatus() {
+  distinctByWatchStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'watchStatus');
     });
@@ -4579,14 +4659,14 @@ extension MediaFileEntityQueryProperty
   }
 
   QueryBuilder<MediaFileEntity, String?, QQueryOperations>
-      audioChannelsProperty() {
+  audioChannelsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'audioChannels');
     });
   }
 
   QueryBuilder<MediaFileEntity, String?, QQueryOperations>
-      audioCodecProperty() {
+  audioCodecProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'audioCodec');
     });
@@ -4635,21 +4715,21 @@ extension MediaFileEntityQueryProperty
   }
 
   QueryBuilder<MediaFileEntity, DateTime?, QQueryOperations>
-      lastWatchedAtProperty() {
+  lastWatchedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastWatchedAt');
     });
   }
 
   QueryBuilder<MediaFileEntity, MediaType, QQueryOperations>
-      mediaTypeProperty() {
+  mediaTypeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'mediaType');
     });
   }
 
   QueryBuilder<MediaFileEntity, int?, QQueryOperations>
-      parsedEpisodeProperty() {
+  parsedEpisodeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'parsedEpisode');
     });
@@ -4662,7 +4742,7 @@ extension MediaFileEntityQueryProperty
   }
 
   QueryBuilder<MediaFileEntity, String, QQueryOperations>
-      parsedTitleProperty() {
+  parsedTitleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'parsedTitle');
     });
@@ -4711,21 +4791,21 @@ extension MediaFileEntityQueryProperty
   }
 
   QueryBuilder<MediaFileEntity, String?, QQueryOperations>
-      versionLabelProperty() {
+  versionLabelProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'versionLabel');
     });
   }
 
   QueryBuilder<MediaFileEntity, String?, QQueryOperations>
-      videoCodecProperty() {
+  videoCodecProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'videoCodec');
     });
   }
 
   QueryBuilder<MediaFileEntity, WatchStatus, QQueryOperations>
-      watchStatusProperty() {
+  watchStatusProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'watchStatus');
     });

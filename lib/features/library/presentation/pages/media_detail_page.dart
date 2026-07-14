@@ -7,7 +7,7 @@ import 'package:mochi_player/features/library/presentation/widgets/media_detail/
 import 'package:mochi_player/features/library/presentation/widgets/media_detail/episode_list.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_detail/media_detail_header.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
-import 'package:mochi_player/models/domain/models.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/widgets/app_header.dart';
 import 'package:mochi_player/core/ui/widgets/macos_controls.dart';

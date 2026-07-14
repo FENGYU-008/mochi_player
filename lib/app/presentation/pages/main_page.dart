@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/widgets/app_header.dart';
 import 'package:mochi_player/features/home/presentation/widgets/home_content.dart';
-import 'package:mochi_player/models/domain/models.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/pages/file_browser_page.dart';

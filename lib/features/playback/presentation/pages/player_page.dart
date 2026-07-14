@@ -5,8 +5,8 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:provider/provider.dart';
 
-import 'package:mochi_player/models/domain/media_file.dart';
-import 'package:mochi_player/models/domain/media_type.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_type.dart';
 import 'package:mochi_player/features/playback/application/playback_session_controller.dart';
 import 'package:mochi_player/features/playback/domain/playback_resume_policy.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';

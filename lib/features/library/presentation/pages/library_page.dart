@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/core/ui/widgets/media_poster_card.dart';
-import 'package:mochi_player/models/domain/models.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
 
 class LibraryPage extends StatefulWidget {
   final String category;

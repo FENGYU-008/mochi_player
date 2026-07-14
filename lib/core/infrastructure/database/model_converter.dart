@@ -1,5 +1,5 @@
-import 'entity/entities.dart' as entity;
-import 'domain/models.dart';
+import 'entities/entities.dart' as entity;
+import 'package:mochi_player/core/domain/media/models.dart';
 
 /// Entity ↔ Domain 模型转换器
 class ModelConverter {

@@ -4,7 +4,7 @@ import 'package:mochi_player/features/settings/application/app_settings_provider
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/settings/application/theme_provider.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
-import 'package:mochi_player/services/database_service.dart';
+import 'package:mochi_player/core/infrastructure/database/database_service.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'features/library/application/file_browser_provider.dart';

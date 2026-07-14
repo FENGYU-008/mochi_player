@@ -4,8 +4,8 @@ import 'package:mochi_player/features/library/presentation/widgets/file_card.dar
 import 'package:mochi_player/features/library/presentation/widgets/file_list_item.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
-import 'package:mochi_player/models/domain/media_file.dart';
-import 'package:mochi_player/models/domain/media_type.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_type.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
 import 'package:provider/provider.dart';

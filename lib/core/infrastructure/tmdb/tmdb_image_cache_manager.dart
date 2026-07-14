@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
-import '../utils/proxy_config.dart';
+import 'proxy_config.dart';
 
 class TmdbImageCacheManager {
   TmdbImageCacheManager._();

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mochi_player/models/domain/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/features/playback/domain/playback_queue.dart';
 
 MediaFile _file(int id, String path) => MediaFile(

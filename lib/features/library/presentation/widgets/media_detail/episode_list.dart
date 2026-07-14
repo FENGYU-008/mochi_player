@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
-import 'package:mochi_player/models/domain/models.dart';
-import 'package:mochi_player/services/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
+import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
 import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
 
 class EpisodeList extends StatefulWidget {

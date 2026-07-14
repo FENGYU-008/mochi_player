@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mochi_player/models/domain/media_file.dart';
-import 'package:mochi_player/models/domain/media_type.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_type.dart';
 
 class FileListItem extends StatefulWidget {
   final MediaFile item;

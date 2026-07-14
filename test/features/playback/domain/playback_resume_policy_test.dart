@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mochi_player/features/playback/domain/playback_resume_policy.dart';
-import 'package:mochi_player/models/domain/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
 
 MediaFile _file({int position = 0, int duration = 0}) => MediaFile(
   id: 1,

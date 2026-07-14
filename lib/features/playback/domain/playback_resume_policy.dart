@@ -1,4 +1,4 @@
-import 'package:mochi_player/models/domain/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
 
 /// Decides whether playback should resume and where it should start.
 class PlaybackResumePolicy {

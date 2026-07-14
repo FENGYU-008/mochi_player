@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mochi_player/models/domain/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/features/playback/application/playback_progress_writer.dart';
 
 void main() {

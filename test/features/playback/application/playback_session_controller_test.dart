@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mochi_player/models/domain/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/features/playback/application/playback_session_controller.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 

@@ -6,7 +6,7 @@ import 'package:mochi_player/features/library/application/media_library_provider
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/features/library/presentation/pages/section_view_page.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
-import 'package:mochi_player/models/domain/models.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:provider/provider.dart';
 
 import 'hero_section.dart';

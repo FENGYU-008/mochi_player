@@ -5,10 +5,9 @@ import 'package:mochi_player/features/library/application/media_library_provider
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/core/ui/widgets/media_poster_card.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
-import 'package:mochi_player/models/domain/models.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/widgets/app_header.dart';
-import 'package:mochi_player/core/ui/widgets/app_modal.dart';
 import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
 
 /// Section 类型
@@ -298,176 +297,7 @@ class _SectionPageContent extends StatelessWidget {
   }
 }
 
-/// 备用：显示 Section 详情模态窗口。首页“查看全部”已改为 page。
-void showSectionModal(
-  BuildContext context, {
-  required String title,
-  required SectionType sectionType,
-  List<Movie>? movies,
-  List<TVShow>? tvShows,
-  List<MediaFile>? mediaFiles,
-  List<dynamic>? recentItems,
-}) {
-  showAppModal<void>(
-    context: context,
-    child: AppModalScaffold(
-      title: title,
-      child: _SectionModalGrid(
-        sectionType: sectionType,
-        movies: movies,
-        tvShows: tvShows,
-        mediaFiles: mediaFiles,
-        recentItems: recentItems,
-      ),
-    ),
-  );
-}
-
-/// 便捷方法：显示最近添加列表
-void showRecentlyAddedSection(
-  BuildContext context,
-  String title,
-  List<dynamic> items,
-) {
-  showSectionModal(
-    context,
-    title: title,
-    sectionType: SectionType.recentlyAdded,
-    recentItems: items,
-  );
-}
-
-/// 便捷方法：显示电影列表
-void showMoviesSection(BuildContext context, String title, List<Movie> items) {
-  showSectionModal(
-    context,
-    title: title,
-    sectionType: SectionType.movies,
-    movies: items,
-  );
-}
-
-/// 便捷方法：显示剧集列表
-void showTVShowsSection(
-  BuildContext context,
-  String title,
-  List<TVShow> items,
-) {
-  showSectionModal(
-    context,
-    title: title,
-    sectionType: SectionType.tvShows,
-    tvShows: items,
-  );
-}
-
-/// 便捷方法：显示继续观看列表
-void showContinueWatchingSection(
-  BuildContext context,
-  String title,
-  List<MediaFile> items,
-) {
-  showSectionModal(
-    context,
-    title: title,
-    sectionType: SectionType.continueWatching,
-    mediaFiles: items,
-  );
-}
-
-class _SectionModalGrid extends StatelessWidget {
-  final SectionType sectionType;
-  final List<Movie>? movies;
-  final List<TVShow>? tvShows;
-  final List<MediaFile>? mediaFiles;
-  final List<dynamic>? recentItems;
-
-  const _SectionModalGrid({
-    required this.sectionType,
-    this.movies,
-    this.tvShows,
-    this.mediaFiles,
-    this.recentItems,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.read<MediaLibraryProvider>();
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final contentWidth = constraints.maxWidth - 60;
-        final isBackdrop = sectionType == SectionType.continueWatching;
-        final desiredItemWidth = isBackdrop ? 220.0 : 140.0;
-        var crossAxisCount = (contentWidth / desiredItemWidth).floor();
-        if (crossAxisCount < 2) crossAxisCount = 2;
-        if (!isBackdrop && crossAxisCount < 3) crossAxisCount = 3;
-
-        return GridView.builder(
-          padding: const EdgeInsets.all(24),
-          itemCount: _itemCount,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            childAspectRatio: isBackdrop ? 1.35 : 0.55,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 20,
-          ),
-          itemBuilder: (context, index) {
-            return _buildCard(context, provider, index);
-          },
-        );
-      },
-    );
-  }
-
-  int get _itemCount {
-    switch (sectionType) {
-      case SectionType.movies:
-        return movies?.length ?? 0;
-      case SectionType.tvShows:
-        return tvShows?.length ?? 0;
-      case SectionType.continueWatching:
-        return mediaFiles?.length ?? 0;
-      case SectionType.recentlyAdded:
-        return recentItems?.length ?? 0;
-    }
-  }
-
-  Widget _buildCard(
-    BuildContext context,
-    MediaLibraryProvider provider,
-    int index,
-  ) {
-    switch (sectionType) {
-      case SectionType.movies:
-        return _buildMovieCard(context, movies![index], closeModalFirst: true);
-      case SectionType.tvShows:
-        return _buildTVShowCard(
-          context,
-          tvShows![index],
-          closeModalFirst: true,
-        );
-      case SectionType.continueWatching:
-        return _buildContinueWatchingCard(
-          context,
-          mediaFiles![index],
-          provider,
-        );
-      case SectionType.recentlyAdded:
-        return _buildRecentlyAddedCard(
-          context,
-          recentItems![index],
-          closeModalFirst: true,
-        );
-    }
-  }
-}
-
-Widget _buildMovieCard(
-  BuildContext context,
-  Movie movie, {
-  bool closeModalFirst = false,
-}) {
+Widget _buildMovieCard(BuildContext context, Movie movie) {
   return MediaPosterCard(
     title: movie.title,
     subtitle: movie.releaseYear?.toString(),
@@ -475,17 +305,11 @@ Widget _buildMovieCard(
     rating: movie.rating,
     tmdbId: movie.tmdbId,
     cardType: MediaCardType.poster,
-    onTap: () => closeModalFirst
-        ? _openDetailFromModal(context, movie)
-        : openMediaDetailPage(context, movie),
+    onTap: () => openMediaDetailPage(context, movie),
   );
 }
 
-Widget _buildTVShowCard(
-  BuildContext context,
-  TVShow show, {
-  bool closeModalFirst = false,
-}) {
+Widget _buildTVShowCard(BuildContext context, TVShow show) {
   String? subtitle;
   if (show.numberOfSeasons != null && show.numberOfSeasons! > 0) {
     subtitle = show.numberOfSeasons == 1 ? '1 季' : '${show.numberOfSeasons} 季';
@@ -500,37 +324,16 @@ Widget _buildTVShowCard(
     rating: show.rating,
     tmdbId: show.tmdbId,
     cardType: MediaCardType.poster,
-    onTap: () => closeModalFirst
-        ? _openDetailFromModal(context, show)
-        : openMediaDetailPage(context, show),
+    onTap: () => openMediaDetailPage(context, show),
   );
 }
 
-void _openDetailFromModal(BuildContext context, dynamic item) {
-  final scope = MediaDetailNavigationScope.maybeOf(context);
-  final navigator = Navigator.of(context);
-  navigator.pop();
-
-  if (scope != null) {
-    scope.openMediaDetail(item);
-    return;
-  }
-
-  navigator.push(
-    MaterialPageRoute<void>(builder: (context) => MediaDetailPage(item: item)),
-  );
-}
-
-Widget _buildRecentlyAddedCard(
-  BuildContext context,
-  dynamic item, {
-  bool closeModalFirst = false,
-}) {
+Widget _buildRecentlyAddedCard(BuildContext context, dynamic item) {
   if (item is Movie) {
-    return _buildMovieCard(context, item, closeModalFirst: closeModalFirst);
+    return _buildMovieCard(context, item);
   }
   if (item is TVShow) {
-    return _buildTVShowCard(context, item, closeModalFirst: closeModalFirst);
+    return _buildTVShowCard(context, item);
   }
   return const SizedBox.shrink();
 }

@@ -1,4 +1,4 @@
-import 'package:mochi_player/models/domain/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
 
 /// Owns the ordered media items for one playback session.
 ///
