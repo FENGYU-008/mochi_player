@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/models/domain/models.dart';
 import 'package:mochi_player/providers/app_settings_provider.dart';
-import 'package:mochi_player/providers/media_library_provider.dart';
-import 'package:mochi_player/ui/pages/file_browser_page.dart';
-import 'package:mochi_player/ui/pages/media_detail_page.dart';
-import 'package:mochi_player/ui/pages/section_view_page.dart';
+import 'package:mochi_player/features/library/application/media_library_provider.dart';
+import 'package:mochi_player/features/library/presentation/pages/file_browser_page.dart';
+import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
+import 'package:mochi_player/features/library/presentation/pages/section_view_page.dart';
 import 'package:mochi_player/ui/pages/settings_page.dart';
 import 'package:provider/provider.dart';
 import '../widgets/app_header.dart';
@@ -12,7 +12,7 @@ import '../widgets/side_bar.dart';
 
 // 引入拆分出去的子页面
 import '../widgets/home_content.dart';
-import 'library_page.dart';
+import 'package:mochi_player/features/library/presentation/pages/library_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});

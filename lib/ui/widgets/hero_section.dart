@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/domain/models.dart';
 import '../../services/tmdb_image_cache_manager.dart';
-import '../pages/media_detail_page.dart';
+import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'macos_controls.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 

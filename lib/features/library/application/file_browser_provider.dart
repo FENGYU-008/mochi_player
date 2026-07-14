@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 
-import '../services/webdav_service.dart';
-import '../models/domain/media_file.dart';
-import '../models/domain/media_type.dart';
+import 'package:mochi_player/models/domain/media_file.dart';
+import 'package:mochi_player/models/domain/media_type.dart';
+import 'package:mochi_player/services/webdav_service.dart';
 
 enum ViewMode { grid, list }
 

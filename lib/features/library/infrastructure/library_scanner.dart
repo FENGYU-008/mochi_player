@@ -1,9 +1,9 @@
 import 'package:logger/logger.dart';
 import 'package:webdav_client/webdav_client.dart' as webdav;
 
-import '../models/entity/entities.dart';
-import '../utils/filename_parser.dart';
-import 'webdav_service.dart';
+import 'package:mochi_player/models/entity/entities.dart';
+import 'package:mochi_player/services/webdav_service.dart';
+import 'package:mochi_player/utils/filename_parser.dart';
 
 /// 媒体库扫描器
 ///

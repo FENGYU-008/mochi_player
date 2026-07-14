@@ -1,6 +1,6 @@
 import 'package:mochi_player/models/domain/media_file.dart';
 import 'package:mochi_player/features/playback/domain/playback_queue.dart';
-import 'package:mochi_player/providers/media_library_provider.dart';
+import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/playback/application/playback_progress_writer.dart';
 import 'package:mochi_player/services/webdav_service.dart';
 

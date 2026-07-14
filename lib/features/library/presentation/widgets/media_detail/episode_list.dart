@@ -1,11 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../models/domain/models.dart';
-import '../../../providers/media_library_provider.dart';
-import '../../../services/tmdb_image_cache_manager.dart';
-import '../macos_controls.dart';
+import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
+import 'package:mochi_player/models/domain/models.dart';
+import 'package:mochi_player/services/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/ui/widgets/macos_controls.dart';
 
 class EpisodeList extends StatefulWidget {
   final TVShow tvShow;

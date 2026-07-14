@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:mochi_player/features/library/application/file_browser_provider.dart';
+import 'package:mochi_player/features/library/presentation/widgets/file_card.dart';
+import 'package:mochi_player/features/library/presentation/widgets/file_list_item.dart';
 import 'package:mochi_player/providers/app_settings_provider.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
-import 'package:mochi_player/ui/widgets/file_list_item.dart';
+import 'package:mochi_player/models/domain/media_file.dart';
+import 'package:mochi_player/models/domain/media_type.dart';
+import 'package:mochi_player/ui/theme/app_colors.dart';
+import 'package:mochi_player/ui/widgets/macos_controls.dart';
 import 'package:provider/provider.dart';
-
-// 引入核心组件和数据
-import '../../providers/file_browser_provider.dart';
-import '../../models/domain/media_file.dart';
-import '../../models/domain/media_type.dart';
-import '../theme/app_colors.dart';
-import '../widgets/file_card.dart'; // 引入刚才写的方形卡片
-import '../widgets/macos_controls.dart';
 
 class FileBrowserPage extends StatefulWidget {
   const FileBrowserPage({super.key});

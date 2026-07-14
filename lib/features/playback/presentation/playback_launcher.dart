@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mochi_player/models/domain/models.dart';
-import 'package:mochi_player/providers/media_library_provider.dart';
+import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/services/webdav_service.dart';
 import 'package:mochi_player/features/playback/presentation/pages/player_page.dart';
 

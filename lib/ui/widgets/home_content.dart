@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/media_library_provider.dart';
+import 'package:mochi_player/features/library/application/media_library_provider.dart';
+import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import '../../models/domain/models.dart';
-import '../pages/section_view_page.dart';
-import '../pages/media_detail_page.dart';
+import 'package:mochi_player/features/library/presentation/pages/section_view_page.dart';
+import 'package:mochi_player/core/ui/widgets/media_poster_card.dart';
 import '../theme/app_colors.dart';
-import 'media_poster_card.dart';
 import 'horizontal_scroll_view.dart';
 import 'hero_section.dart';
 import 'trending_category_card.dart';

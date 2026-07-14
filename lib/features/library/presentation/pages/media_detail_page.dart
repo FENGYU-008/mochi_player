@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/domain/models.dart';
-import '../../providers/media_library_provider.dart';
-import '../theme/app_colors.dart';
-import '../view_models/media_detail_view_model.dart';
-import '../widgets/app_header.dart';
-import '../widgets/macos_controls.dart';
-import '../widgets/media_detail/cast_list.dart';
-import '../widgets/media_detail/episode_list.dart';
-import '../widgets/media_detail/media_detail_header.dart';
+import 'package:mochi_player/features/library/application/media_library_provider.dart';
+import 'package:mochi_player/features/library/presentation/view_models/media_detail_view_model.dart';
+import 'package:mochi_player/features/library/presentation/widgets/media_detail/cast_list.dart';
+import 'package:mochi_player/features/library/presentation/widgets/media_detail/episode_list.dart';
+import 'package:mochi_player/features/library/presentation/widgets/media_detail/media_detail_header.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
+import 'package:mochi_player/models/domain/models.dart';
+import 'package:mochi_player/ui/theme/app_colors.dart';
+import 'package:mochi_player/ui/widgets/app_header.dart';
+import 'package:mochi_player/ui/widgets/macos_controls.dart';
 
 typedef OpenMediaDetail = void Function(dynamic item);
 

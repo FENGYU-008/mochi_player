@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../providers/media_library_provider.dart';
-import '../../theme/app_colors.dart';
-import '../macos_controls.dart';
+import 'package:mochi_player/features/library/application/media_library_provider.dart';
+import 'package:mochi_player/ui/theme/app_colors.dart';
+import 'package:mochi_player/ui/widgets/macos_controls.dart';
 
 class FavoriteButton extends StatefulWidget {
   final String tmdbId;

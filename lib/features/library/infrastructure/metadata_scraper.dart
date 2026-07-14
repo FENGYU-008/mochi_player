@@ -1,7 +1,7 @@
 import 'package:logger/logger.dart';
-import '../models/entity/entities.dart';
-import 'tmdb_service.dart';
-import 'database_service.dart';
+import 'package:mochi_player/models/entity/entities.dart';
+import 'package:mochi_player/services/database_service.dart';
+import 'package:mochi_player/services/tmdb_service.dart';
 
 /// 元数据刮削服务
 /// 负责协调 TMDB 搜索和数据库存储

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../services/tmdb_image_cache_manager.dart';
-import '../theme/app_theme.dart';
+import 'package:mochi_player/services/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/ui/theme/app_theme.dart';
 
 /// 卡片类型枚举
 enum MediaCardType {
