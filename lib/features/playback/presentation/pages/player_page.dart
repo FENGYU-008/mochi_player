@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:mochi_player/models/domain/media_file.dart';
 import 'package:mochi_player/models/domain/media_type.dart';
 import 'package:mochi_player/features/playback/application/playback_session_controller.dart';
+import 'package:mochi_player/features/playback/domain/playback_resume_policy.dart';
 import 'package:mochi_player/providers/app_settings_provider.dart';
 import 'package:mochi_player/providers/media_library_provider.dart';
 import 'package:mochi_player/services/app_settings_service.dart';
@@ -34,7 +35,6 @@ class PlayerPage extends StatefulWidget {
 
 class _PlayerPageState extends State<PlayerPage> with WindowListener {
   static const Duration _progressSaveInterval = Duration(seconds: 10);
-  static const Duration _resumeBackoff = Duration(seconds: 5);
 
   late final Player _player;
   late final VideoController _videoController;
@@ -342,19 +342,10 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   Duration? _resumePosition() {
-    if (_hasRestoredPosition || _currentItem.position <= 0) return null;
-
-    final savedPositionMs = _currentItem.position;
-    final savedDurationMs = _currentItem.duration;
-    if (savedDurationMs > 0 && savedPositionMs >= savedDurationMs * 0.95) {
-      return null;
-    }
-
-    final resumePositionMs = (savedPositionMs - _resumeBackoff.inMilliseconds)
-        .clamp(0, savedPositionMs)
-        .toInt();
-    if (resumePositionMs <= 0) return null;
-    return Duration(milliseconds: resumePositionMs);
+    return PlaybackResumePolicy.positionFor(
+      _currentItem,
+      hasRestoredPosition: _hasRestoredPosition,
+    );
   }
 
   Future<void> _restoreProgressIfNeeded(
