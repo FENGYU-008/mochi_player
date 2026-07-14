@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 import 'package:mochi_player/features/library/presentation/widgets/file_card.dart';
 import 'package:mochi_player/features/library/presentation/widgets/file_list_item.dart';
-import 'package:mochi_player/providers/app_settings_provider.dart';
+import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/models/domain/media_file.dart';
 import 'package:mochi_player/models/domain/media_type.dart';
-import 'package:mochi_player/ui/theme/app_colors.dart';
-import 'package:mochi_player/ui/widgets/macos_controls.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
 import 'package:provider/provider.dart';
 
 class FileBrowserPage extends StatefulWidget {

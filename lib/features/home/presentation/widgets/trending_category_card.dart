@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../models/domain/trending_item.dart';
-import '../../services/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/models/domain/trending_item.dart';
+import 'package:mochi_player/services/tmdb_image_cache_manager.dart';
 
 /// 趋势分类卡片配置
 class TrendingCardConfig {

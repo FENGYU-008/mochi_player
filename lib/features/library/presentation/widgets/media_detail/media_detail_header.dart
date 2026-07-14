@@ -8,7 +8,7 @@ import 'package:mochi_player/features/library/presentation/widgets/media_detail/
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/models/domain/models.dart';
 import 'package:mochi_player/services/tmdb_image_cache_manager.dart';
-import 'package:mochi_player/ui/widgets/macos_controls.dart';
+import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
 
 const double _detailReadableWidth = 820;
 

@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:mochi_player/providers/app_settings_provider.dart';
+import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
+import 'package:mochi_player/features/settings/application/theme_provider.dart';
+import 'package:mochi_player/features/settings/infrastructure/app_settings_service.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
-import 'package:mochi_player/providers/theme_provider.dart';
-import 'package:mochi_player/services/app_settings_service.dart';
-import 'package:mochi_player/ui/theme/app_colors.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {

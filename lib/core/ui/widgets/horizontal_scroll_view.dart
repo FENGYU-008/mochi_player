@@ -6,7 +6,12 @@ class HorizontalScrollView extends StatefulWidget {
   final ScrollController controller;
   final double bottomPadding;
 
-  const HorizontalScrollView({super.key, required this.child, required this.controller, this.bottomPadding = 0});
+  const HorizontalScrollView({
+    super.key,
+    required this.child,
+    required this.controller,
+    this.bottomPadding = 0,
+  });
 
   @override
   State<HorizontalScrollView> createState() => _HorizontalScrollViewState();
@@ -42,7 +47,8 @@ class _HorizontalScrollViewState extends State<HorizontalScrollView> {
     final bool canScrollLeft = position.pixels > 5;
     final bool canScrollRight = position.pixels < position.maxScrollExtent - 5;
 
-    if (_showLeftButton != canScrollLeft || _showRightButton != canScrollRight) {
+    if (_showLeftButton != canScrollLeft ||
+        _showRightButton != canScrollRight) {
       setState(() {
         _showLeftButton = canScrollLeft;
         _showRightButton = canScrollRight;
@@ -109,7 +115,11 @@ class _GlassScrollButton extends StatefulWidget {
   final bool isVisible;
   final VoidCallback onTap;
 
-  const _GlassScrollButton({required this.icon, required this.isVisible, required this.onTap});
+  const _GlassScrollButton({
+    required this.icon,
+    required this.isVisible,
+    required this.onTap,
+  });
 
   @override
   State<_GlassScrollButton> createState() => _GlassScrollButtonState();
@@ -142,10 +152,14 @@ class _GlassScrollButtonState extends State<_GlassScrollButton> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Colors.black.withAlpha((255 * (_isHoveringButton ? 0.6 : 0.4)).round()), // 半透明黑底
+                    color: Colors.black.withAlpha(
+                      (255 * (_isHoveringButton ? 0.6 : 0.4)).round(),
+                    ), // 半透明黑底
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white.withAlpha((255 * 0.1).round()), // 极细的微光边框
+                      color: Colors.white.withAlpha(
+                        (255 * 0.1).round(),
+                      ), // 极细的微光边框
                       width: 1,
                     ),
                     boxShadow: [
@@ -156,7 +170,11 @@ class _GlassScrollButtonState extends State<_GlassScrollButton> {
                       ),
                     ],
                   ),
-                  child: Icon(widget.icon, color: Colors.white.withAlpha((255 * 0.9).round()), size: 20),
+                  child: Icon(
+                    widget.icon,
+                    color: Colors.white.withAlpha((255 * 0.9).round()),
+                    size: 20,
+                  ),
                 ),
               ),
             ),

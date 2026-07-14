@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/ui/theme/app_colors.dart';
-import 'package:mochi_player/ui/widgets/macos_traffic_lights.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:mochi_player/app/presentation/widgets/macos_traffic_lights.dart';
 import 'package:window_manager/window_manager.dart';
 
 class SideBar extends StatelessWidget {

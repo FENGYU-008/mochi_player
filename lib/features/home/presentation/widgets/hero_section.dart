@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../models/domain/models.dart';
-import '../../services/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
-import 'macos_controls.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
+import 'package:mochi_player/models/domain/models.dart';
+import 'package:mochi_player/services/tmdb_image_cache_manager.dart';
 
 /// 首页 Hero Section
 /// 展示随机选择的一部电影或剧集，带有背景图、标题和操作按钮

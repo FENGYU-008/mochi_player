@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:mochi_player/providers/app_settings_provider.dart';
+import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
-import 'package:mochi_player/providers/theme_provider.dart';
-import 'package:mochi_player/ui/theme/app_theme.dart';
+import 'package:mochi_player/features/settings/application/theme_provider.dart';
+import 'package:mochi_player/core/ui/theme/app_theme.dart';
 import 'package:mochi_player/services/database_service.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'features/library/application/file_browser_provider.dart';
-import 'ui/pages/main_page.dart';
+import 'app/presentation/pages/main_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
