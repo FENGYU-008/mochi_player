@@ -3,7 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/core/ui/widgets/media_poster_card.dart';
+import 'package:mochi_player/core/ui/widgets/app_empty_state.dart';
+import 'package:mochi_player/core/ui/widgets/app_error_state.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 class LibraryPage extends StatefulWidget {
   final String category;
@@ -60,7 +63,7 @@ class _LibraryPageState extends State<LibraryPage> {
         }
 
         if (snapshot.error != null) {
-          return Center(child: Text("错误：${snapshot.error}"));
+          return AppErrorState(message: '错误：${snapshot.error}');
         }
 
         final provider = context.read<MediaLibraryProvider>();
@@ -265,7 +268,12 @@ class _LibraryPageState extends State<LibraryPage> {
         return GridView.builder(
           key: PageStorageKey<String>('library-${widget.category}'),
           controller: _scrollController,
-          padding: const EdgeInsets.fromLTRB(40, 100, 40, 40),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.page,
+            100,
+            AppSpacing.page,
+            AppSpacing.page,
+          ),
           itemCount: itemCount,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
@@ -280,24 +288,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Widget _buildEmptyState(String category) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.movie_outlined, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            '没有找到$category',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '请先扫描媒体库以发现资源',
-            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-          ),
-        ],
-      ),
-    );
+    return AppEmptyState(title: '没有找到$category', description: '请先扫描媒体库以发现资源');
   }
 }
 

@@ -3,10 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/settings/application/theme_provider.dart';
-import 'package:mochi_player/features/settings/infrastructure/app_settings_service.dart';
+import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
+import 'package:mochi_player/core/ui/widgets/app_button.dart';
+import 'package:mochi_player/core/ui/widgets/app_surface.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -66,7 +70,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: ListView(
-        padding: const EdgeInsets.all(40.0),
+        padding: const EdgeInsets.all(AppSpacing.page),
         children: [
           Align(
             alignment: Alignment.topLeft,
@@ -296,22 +300,33 @@ class _SettingsPageState extends State<SettingsPage> {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _SettingsActionButton(
+            AppActionButton(
               onPressed: isBusy ? null : _saveSettings,
               icon: Icons.save_outlined,
               label: isBusy ? '保存中' : '保存',
-              primary: true,
+              variant: AppButtonVariant.primary,
               busy: isBusy,
+              height: 40,
+              borderRadius: AppRadii.control,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             ),
-            _SettingsActionButton(
+            AppActionButton(
               onPressed: isBusy ? null : _testWebDavConnection,
               icon: Icons.wifi_tethering_rounded,
               label: '测试 WebDAV',
+              variant: AppButtonVariant.secondary,
+              height: 40,
+              borderRadius: AppRadii.control,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             ),
-            _SettingsActionButton(
+            AppActionButton(
               onPressed: isBusy ? null : _testTmdbConnection,
               icon: Icons.public_rounded,
               label: '测试 TMDB',
+              variant: AppButtonVariant.secondary,
+              height: 40,
+              borderRadius: AppRadii.control,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
             ),
           ],
         );
@@ -326,7 +341,7 @@ class _SettingsPageState extends State<SettingsPage> {
         if (error == null) return const SizedBox.shrink();
 
         return Padding(
-          padding: const EdgeInsets.only(top: 16),
+          padding: const EdgeInsets.only(top: AppSpacing.lg),
           child: Text(error, style: const TextStyle(color: Colors.redAccent)),
         );
       },
@@ -343,17 +358,25 @@ class _SettingsPageState extends State<SettingsPage> {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _SettingsActionButton(
+              AppActionButton(
                 onPressed: isBusy ? null : _confirmRescrapeLibrary,
                 icon: Icons.manage_search_outlined,
                 label: isBusy ? '刮削中' : '补全元数据',
                 busy: isBusy,
+                variant: AppButtonVariant.secondary,
+                height: 40,
+                borderRadius: AppRadii.control,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               ),
-              _SettingsActionButton(
+              AppActionButton(
                 onPressed: isBusy ? null : _confirmClearLibrary,
                 icon: Icons.delete_sweep_outlined,
                 label: '清空媒体库',
                 destructive: true,
+                variant: AppButtonVariant.secondary,
+                height: 40,
+                borderRadius: AppRadii.control,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               ),
             ],
           ),
@@ -618,31 +641,31 @@ class _SettingsSegmentedControl<T> extends StatelessWidget {
             : 420.0;
         return SizedBox(
           width: controlWidth,
-          child: Container(
+          child: SizedBox(
             height: 42,
-            decoration: BoxDecoration(
-              color: AppColors.elevatedSurface(context),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: borderColor),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Row(
-              children: [
-                for (var index = 0; index < segments.length; index++) ...[
-                  Expanded(
-                    child: _SettingsSegmentButton<T>(
-                      segment: segments[index],
-                      selected: segments[index].value == value,
-                      onPressed: () => onChanged(segments[index].value),
+            child: AppSurface(
+              tone: AppSurfaceTone.elevated,
+              showBorder: true,
+              borderRadius: BorderRadius.circular(AppRadii.control),
+              clipBehavior: Clip.antiAlias,
+              child: Row(
+                children: [
+                  for (var index = 0; index < segments.length; index++) ...[
+                    Expanded(
+                      child: _SettingsSegmentButton<T>(
+                        segment: segments[index],
+                        selected: segments[index].value == value,
+                        onPressed: () => onChanged(segments[index].value),
+                      ),
                     ),
-                  ),
-                  if (index != segments.length - 1)
-                    SizedBox(
-                      height: 24,
-                      child: VerticalDivider(width: 1, color: borderColor),
-                    ),
+                    if (index != segments.length - 1)
+                      SizedBox(
+                        height: 24,
+                        child: VerticalDivider(width: 1, color: borderColor),
+                      ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         );
@@ -1001,116 +1024,10 @@ class _SettingsSliderRow extends StatelessWidget {
   }
 }
 
-class _SettingsActionButton extends StatefulWidget {
-  final VoidCallback? onPressed;
-  final IconData icon;
-  final String label;
-  final bool primary;
-  final bool destructive;
-  final bool busy;
-
-  const _SettingsActionButton({
-    required this.onPressed,
-    required this.icon,
-    required this.label,
-    this.primary = false,
-    this.destructive = false,
-    this.busy = false,
-  });
-
-  @override
-  State<_SettingsActionButton> createState() => _SettingsActionButtonState();
-}
-
-class _SettingsActionButtonState extends State<_SettingsActionButton> {
-  bool _hovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = widget.onPressed != null;
-    final primary = AppColors.primary(context);
-    final danger = Colors.redAccent;
-    final background = widget.primary
-        ? primary
-        : widget.destructive
-        ? danger.withAlpha(_hovering ? 26 : 14)
-        : AppColors.elevatedSurface(context);
-    final foreground = widget.primary
-        ? Colors.white
-        : widget.destructive
-        ? danger
-        : AppColors.textPrimary(context).withAlpha(220);
-    final borderColor = widget.primary
-        ? Colors.transparent
-        : widget.destructive
-        ? danger.withAlpha(_hovering ? 190 : 128)
-        : AppColors.separator(context);
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      child: GestureDetector(
-        onTap: widget.onPressed,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 120),
-          opacity: enabled ? 1 : 0.5,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            curve: Curves.easeOut,
-            height: 40,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: borderColor),
-              boxShadow: widget.primary && enabled
-                  ? [
-                      BoxShadow(
-                        color: primary.withAlpha(_hovering ? 70 : 42),
-                        blurRadius: _hovering ? 14 : 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.busy)
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: foreground,
-                    ),
-                  )
-                else
-                  Icon(widget.icon, size: 18, color: foreground),
-                const SizedBox(width: 8),
-                Text(
-                  widget.label,
-                  style: TextStyle(
-                    color: foreground,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    height: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 BoxDecoration _settingsFieldDecoration(BuildContext context) {
   return BoxDecoration(
     color: AppColors.elevatedSurface(context),
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(AppRadii.control),
     border: Border.all(color: AppColors.separator(context)),
   );
 }

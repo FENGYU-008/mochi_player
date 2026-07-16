@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/settings/infrastructure/app_settings_service.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';

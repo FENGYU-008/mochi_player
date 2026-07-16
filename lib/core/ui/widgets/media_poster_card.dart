@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
 
 /// 卡片类型枚举
@@ -90,7 +92,7 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
                   ),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadii.card),
                   boxShadow: _isHovering
                       ? [
                           BoxShadow(
@@ -108,7 +110,7 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
                         ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadii.card),
                   child: Stack(
                     children: [
                       // 图片
@@ -143,7 +145,7 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.compact),
             // 标题
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
@@ -162,7 +164,7 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
             ),
             // 副标题
             if (widget.subtitle != null) ...[
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.xxs),
               Text(
                 widget.subtitle!,
                 style: TextStyle(
@@ -232,7 +234,7 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
         color: Colors.black.withAlpha(179),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadii.small),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

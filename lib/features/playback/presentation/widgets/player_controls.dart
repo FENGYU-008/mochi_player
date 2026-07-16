@@ -1,9 +1,13 @@
 import 'dart:async';
-import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
+import 'package:mochi_player/core/ui/widgets/glass_surface.dart';
 
 class PlayerControls extends StatefulWidget {
   final Player player;
@@ -134,7 +138,15 @@ class _PlayerControlsState extends State<PlayerControls> {
                 bottom: false,
                 child: Padding(
                   padding: const EdgeInsets.only(top: 12),
-                  child: _GlassBox(
+                  child: GlassSurface(
+                    borderRadius: BorderRadius.circular(AppRadii.overlay),
+                    color: Colors.black.withAlpha((255 * 0.5).round()),
+                    borderColor: Colors.white.withAlpha((255 * 0.1).round()),
+                    blur: 16,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.compact,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -198,10 +210,14 @@ class _PlayerControlsState extends State<PlayerControls> {
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                  child: _GlassBox(
+                  child: GlassSurface(
+                    borderRadius: BorderRadius.circular(AppRadii.overlay),
+                    color: Colors.black.withAlpha((255 * 0.5).round()),
+                    borderColor: Colors.white.withAlpha((255 * 0.1).round()),
+                    blur: 16,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
+                      horizontal: AppSpacing.xl,
+                      vertical: AppSpacing.md,
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -764,36 +780,6 @@ class _PopupControlButtonState extends State<_PopupControlButton> {
           borderRadius: BorderRadius.circular(20),
         ),
         child: widget.child,
-      ),
-    );
-  }
-}
-
-// ================== 自适应毛玻璃 ==================
-class _GlassBox extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry? padding;
-
-  const _GlassBox({required this.child, this.padding});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.black.withAlpha((255 * 0.5).round()),
-            border: Border.all(
-              color: Colors.white.withAlpha((255 * 0.1).round()),
-            ),
-          ),
-          padding:
-              padding ??
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: child,
-        ),
       ),
     );
   }

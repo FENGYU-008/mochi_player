@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/media/media_type.dart';
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 class FileCard extends StatefulWidget {
   final MediaFile item;
@@ -45,7 +47,7 @@ class _FileCardState extends State<FileCard> {
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
         hoverColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadii.control),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
@@ -53,7 +55,7 @@ class _FileCardState extends State<FileCard> {
             color: _isHovering
                 ? theme.primaryColor.withAlpha(25)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadii.control),
             border: Border.all(
               color: _isHovering
                   ? theme.primaryColor.withAlpha(77)
@@ -61,7 +63,7 @@ class _FileCardState extends State<FileCard> {
               width: 1,
             ),
           ),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../theme/app_spacing.dart';
 import 'search_bar.dart';
 
 class AppHeader extends StatelessWidget {
@@ -44,7 +45,9 @@ class AppHeader extends StatelessWidget {
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
                 height: height,
-                padding: const EdgeInsets.symmetric(horizontal: 40),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.page,
+                ),
                 decoration: BoxDecoration(
                   color: backgroundColor,
                   border: Border(

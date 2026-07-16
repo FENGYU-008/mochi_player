@@ -10,8 +10,8 @@ import 'package:mochi_player/core/domain/media/media_type.dart';
 import 'package:mochi_player/features/playback/application/playback_session_controller.dart';
 import 'package:mochi_player/features/playback/domain/playback_resume_policy.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
+import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
-import 'package:mochi_player/features/settings/infrastructure/app_settings_service.dart';
 import 'package:mochi_player/features/playback/presentation/widgets/player_controls.dart';
 import 'package:window_manager/window_manager.dart';
 

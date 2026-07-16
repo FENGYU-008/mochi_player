@@ -8,7 +8,9 @@ import 'package:mochi_player/features/playback/presentation/playback_launcher.da
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/widgets/app_header.dart';
-import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
+import 'package:mochi_player/core/ui/widgets/app_icon_button.dart';
+import 'package:mochi_player/core/ui/widgets/app_empty_state.dart';
+import 'package:mochi_player/core/ui/widgets/app_error_state.dart';
 
 /// Section 类型
 enum SectionType { continueWatching, movies, tvShows, recentlyAdded }
@@ -136,7 +138,7 @@ class _SectionTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppHeader(
       title: title,
-      leading: MacosIconButton(
+      leading: AppIconButton(
         onPressed: () => _goBack(context),
         icon: Icons.arrow_back_rounded,
         tooltip: '返回',
@@ -180,7 +182,7 @@ class _SectionPageContent extends StatelessWidget {
         }
 
         if (snapshot.error != null) {
-          return Center(child: Text('错误：${snapshot.error}'));
+          return AppErrorState(message: '错误：${snapshot.error}');
         }
 
         final provider = context.read<MediaLibraryProvider>();
@@ -417,24 +419,7 @@ class _EmptySectionState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.movie_outlined, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            '$title为空',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '请先扫描媒体库以发现资源',
-            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-          ),
-        ],
-      ),
-    );
+    return AppEmptyState(title: '$title为空', description: '请先扫描媒体库以发现资源');
   }
 }
 

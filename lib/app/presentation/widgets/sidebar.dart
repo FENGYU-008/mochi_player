@@ -3,11 +3,11 @@ import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/app/presentation/widgets/macos_traffic_lights.dart';
 import 'package:window_manager/window_manager.dart';
 
-class SideBar extends StatelessWidget {
+class Sidebar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemSelected;
 
-  const SideBar({
+  const Sidebar({
     super.key,
     required this.selectedIndex,
     required this.onItemSelected,
@@ -66,7 +66,7 @@ class SideBar extends StatelessWidget {
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _SideBarItem(
+            child: _SidebarItem(
               icon: Icons.settings_outlined,
               title: "设置",
               index: 5,
@@ -102,7 +102,7 @@ class SideBar extends StatelessWidget {
       children: items.map((item) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-          child: _SideBarItem(
+          child: _SidebarItem(
             icon: item.icon,
             title: item.title,
             index: item.index,
@@ -123,14 +123,14 @@ class _ItemConfig {
   _ItemConfig(this.icon, this.title, this.index);
 }
 
-class _SideBarItem extends StatefulWidget {
+class _SidebarItem extends StatefulWidget {
   final IconData icon;
   final String title;
   final int index;
   final int selectedIndex;
   final Function(int) onTap;
 
-  const _SideBarItem({
+  const _SidebarItem({
     required this.icon,
     required this.title,
     required this.index,
@@ -139,10 +139,10 @@ class _SideBarItem extends StatefulWidget {
   });
 
   @override
-  State<_SideBarItem> createState() => _SideBarItemState();
+  State<_SidebarItem> createState() => _SidebarItemState();
 }
 
-class _SideBarItemState extends State<_SideBarItem> {
+class _SidebarItemState extends State<_SidebarItem> {
   bool _isHovering = false;
 
   @override

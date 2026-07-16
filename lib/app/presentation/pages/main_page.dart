@@ -9,7 +9,7 @@ import 'package:mochi_player/features/library/presentation/pages/media_detail_pa
 import 'package:mochi_player/features/library/presentation/pages/section_view_page.dart';
 import 'package:mochi_player/features/settings/presentation/pages/settings_page.dart';
 import 'package:provider/provider.dart';
-import 'package:mochi_player/app/presentation/widgets/side_bar.dart';
+import 'package:mochi_player/app/presentation/widgets/sidebar.dart';
 import 'package:mochi_player/features/library/presentation/pages/library_page.dart';
 
 class MainPage extends StatefulWidget {
@@ -227,7 +227,7 @@ class _MainPageState extends State<MainPage> {
       body: Row(
         children: [
           // 左侧：侧边栏
-          SideBar(
+          Sidebar(
             selectedIndex: _selectedIndex,
             onItemSelected: (index) {
               setState(() {

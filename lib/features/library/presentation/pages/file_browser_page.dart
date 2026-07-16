@@ -7,7 +7,8 @@ import 'package:mochi_player/features/playback/presentation/playback_launcher.da
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/media/media_type.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
+import 'package:mochi_player/core/ui/widgets/app_icon_button.dart';
+import 'package:mochi_player/core/ui/widgets/app_empty_state.dart';
 import 'package:provider/provider.dart';
 
 class FileBrowserPage extends StatefulWidget {
@@ -139,7 +140,7 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
           if (state.canGoBack)
             Padding(
               padding: const EdgeInsets.only(right: 12),
-              child: MacosIconButton(
+              child: AppIconButton(
                 onPressed: () => provider.navigateBack(),
                 icon: Icons.arrow_back_ios_new_rounded,
                 tooltip: "返回上一级",
@@ -189,7 +190,7 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
           ),
 
           // D. 视图切换按钮
-          MacosIconButton(
+          AppIconButton(
             onPressed: () => provider.toggleViewMode(),
             icon: state.viewMode == ViewMode.grid
                 ? Icons.view_list_rounded
@@ -203,7 +204,7 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
           const SizedBox(width: 8),
 
           // E. 刷新按钮
-          MacosIconButton(
+          AppIconButton(
             onPressed: () => provider.refresh(),
             icon: Icons.refresh_rounded,
             tooltip: "刷新目录",
@@ -299,22 +300,9 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
 
   // 构建空状态视图
   Widget _buildEmptyState(String? error) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            error == null ? Icons.folder_off_outlined : Icons.settings_outlined,
-            size: 64,
-            color: Colors.grey.shade300,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            error ?? "此文件夹为空",
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
-          ),
-        ],
-      ),
+    return AppEmptyState(
+      title: error ?? '此文件夹为空',
+      icon: error == null ? Icons.folder_off_outlined : Icons.settings_outlined,
     );
   }
 }

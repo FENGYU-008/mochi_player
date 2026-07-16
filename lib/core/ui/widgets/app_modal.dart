@@ -3,7 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
-import 'macos_controls.dart';
+import '../theme/app_radii.dart';
+import '../theme/app_spacing.dart';
+import 'app_icon_button.dart';
 
 Future<T?> showAppModal<T>({
   required BuildContext context,
@@ -77,7 +79,7 @@ class AppModalScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final borderRadius = BorderRadius.circular(20);
+    final borderRadius = BorderRadius.circular(AppRadii.large);
 
     return Container(
       decoration: BoxDecoration(
@@ -100,7 +102,7 @@ class AppModalScaffold extends StatelessWidget {
             SizedBox(
               height: 56,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
                 child: Row(
                   children: [
                     Expanded(
@@ -116,7 +118,7 @@ class AppModalScaffold extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    MacosIconButton(
+                    AppIconButton(
                       onPressed: () => Navigator.of(context).pop(),
                       icon: Icons.close_rounded,
                       tooltip: '关闭',

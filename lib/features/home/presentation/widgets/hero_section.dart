@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
+import 'package:mochi_player/core/ui/widgets/app_button.dart';
+import 'package:mochi_player/core/ui/widgets/app_pill.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
@@ -159,7 +160,7 @@ class HeroSection extends StatelessWidget {
       children: [
         // 评分
         if (rating > 0)
-          MacosPill(
+          AppPill(
             text: rating.toStringAsFixed(1),
             icon: Icons.star_rounded,
             rating: true,
@@ -167,14 +168,12 @@ class HeroSection extends StatelessWidget {
 
         // 年份
         if (year != null)
-          MacosPill(text: year.toString(), tone: MacosControlTone.overlay),
+          AppPill(text: year.toString(), tone: AppControlTone.overlay),
 
         // 类型标签
         ...genres
             .take(3)
-            .map(
-              (genre) => MacosPill(text: genre, tone: MacosControlTone.overlay),
-            ),
+            .map((genre) => AppPill(text: genre, tone: AppControlTone.overlay)),
       ],
     );
   }
@@ -182,7 +181,7 @@ class HeroSection extends StatelessWidget {
   Widget _buildActionButtons(BuildContext context) {
     return Row(
       children: [
-        MacosActionButton(
+        AppActionButton(
           onPressed: () => _handlePlay(context),
           icon: Icons.play_arrow_rounded,
           label: '播放',
@@ -191,12 +190,12 @@ class HeroSection extends StatelessWidget {
         ),
         const SizedBox(width: 12),
 
-        MacosActionButton(
+        AppActionButton(
           onPressed: () => _handleMoreInfo(context),
           icon: Icons.info_outline_rounded,
           label: '详情',
-          style: MacosButtonStyle.secondary,
-          tone: MacosControlTone.overlay,
+          variant: AppButtonVariant.secondary,
+          tone: AppControlTone.overlay,
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 22),
         ),

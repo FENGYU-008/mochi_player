@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 import 'package:mochi_player/core/ui/widgets/horizontal_scroll_view.dart';
 import 'package:mochi_player/core/ui/widgets/media_poster_card.dart';
+import 'package:mochi_player/core/ui/widgets/app_empty_state.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/features/library/presentation/pages/section_view_page.dart';
@@ -236,24 +238,7 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.movie_outlined, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            '媒体库为空',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '请先扫描媒体库以发现资源',
-            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
-          ),
-        ],
-      ),
-    );
+    return const AppEmptyState(title: '媒体库为空', description: '请先扫描媒体库以发现资源');
   }
 
   SliverToBoxAdapter _buildSectionHeaderSliver(
@@ -263,7 +248,12 @@ class _HomeContentState extends State<HomeContent> {
   }) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(40, 0, 40, 15),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.page,
+          0,
+          AppSpacing.page,
+          15,
+        ),
         child: Row(
           children: [
             Text(
@@ -318,7 +308,7 @@ class _HomeContentState extends State<HomeContent> {
         bottomPadding: textSectionHeight,
         child: ListView.builder(
           controller: _continueWatchingCtrl,
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
           scrollDirection: Axis.horizontal,
           itemCount: items.length,
           itemBuilder: (context, index) {
@@ -354,7 +344,7 @@ class _HomeContentState extends State<HomeContent> {
             return SizedBox(
               width: wideImageWidth,
               child: Padding(
-                padding: const EdgeInsets.only(right: 20),
+                padding: const EdgeInsets.only(right: AppSpacing.xl),
                 child: MediaPosterCard(
                   title: title,
                   subtitle: subtitle,
@@ -403,7 +393,7 @@ class _HomeContentState extends State<HomeContent> {
         bottomPadding: textSectionHeight,
         child: ListView.builder(
           controller: _recentlyAddedCtrl,
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
           scrollDirection: Axis.horizontal,
           itemCount: items.length,
           itemBuilder: (context, index) {
@@ -432,7 +422,7 @@ class _HomeContentState extends State<HomeContent> {
             return SizedBox(
               width: posterWidth,
               child: Padding(
-                padding: const EdgeInsets.only(right: 20),
+                padding: const EdgeInsets.only(right: AppSpacing.xl),
                 child: MediaPosterCard(
                   title: title,
                   subtitle: subtitle,
@@ -453,7 +443,7 @@ class _HomeContentState extends State<HomeContent> {
   /// 构建趋势三卡片布局
   Widget _buildTrendingCards(MediaLibraryProvider provider) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -5,7 +5,10 @@ import 'package:mochi_player/features/library/application/media_library_provider
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
-import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
+import 'package:mochi_player/core/ui/widgets/app_select.dart';
+import 'package:mochi_player/core/ui/widgets/app_surface.dart';
 
 class EpisodeList extends StatefulWidget {
   final TVShow tvShow;
@@ -134,87 +137,79 @@ class _EpisodeListState extends State<EpisodeList> {
     MediaFile? episodeFile,
   ) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final available = episodeFile != null;
     final progress = episodeFile?.progress.clamp(0.0, 1.0) ?? 0.0;
     final completed =
         episodeFile?.watchStatus == WatchStatus.completed || progress >= 0.95;
     final showStatus = !available || completed;
 
-    return Material(
-      color: isDark ? Colors.white.withAlpha(10) : Colors.black.withAlpha(5),
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: available
-            ? () => PlaybackLauncher.playEpisode(
-                context,
-                episode,
-                showTitle: widget.tvShow.title,
-              )
-            : null,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStill(episode, episodeFile, theme),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return AppSurface(
+      onTap: available
+          ? () => PlaybackLauncher.playEpisode(
+              context,
+              episode,
+              showTitle: widget.tvShow.title,
+            )
+          : null,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildStill(episode, episodeFile, theme),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${episode.episodeNumber}. ${episode.title}',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: available
-                                  ? theme.textTheme.bodyLarge?.color
-                                  : theme.textTheme.bodySmall?.color,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    Expanded(
+                      child: Text(
+                        '${episode.episodeNumber}. ${episode.title}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: available
+                              ? theme.textTheme.bodyLarge?.color
+                              : theme.textTheme.bodySmall?.color,
                         ),
-                        if (showStatus) ...[
-                          const SizedBox(width: 10),
-                          _EpisodeStatusPill(
-                            available: available,
-                            completed: completed,
-                          ),
-                        ] else ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.play_arrow_rounded,
-                            size: 20,
-                            color: theme.colorScheme.primary.withAlpha(190),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      episode.overview ?? '',
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.4,
-                        color: theme.textTheme.bodySmall?.color,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 9),
-                    _EpisodeMetaRow(episode: episode, file: episodeFile),
+                    if (showStatus) ...[
+                      const SizedBox(width: 10),
+                      _EpisodeStatusPill(
+                        available: available,
+                        completed: completed,
+                      ),
+                    ] else ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.play_arrow_rounded,
+                        size: 20,
+                        color: theme.colorScheme.primary.withAlpha(190),
+                      ),
+                    ],
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 6),
+                Text(
+                  episode.overview ?? '',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 9),
+                _EpisodeMetaRow(episode: episode, file: episodeFile),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -290,10 +285,13 @@ class _EpisodeStatusPill extends StatelessWidget {
         ? Colors.green
         : theme.colorScheme.primary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withAlpha(28),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppRadii.small),
       ),
       child: Text(
         label,
@@ -384,13 +382,13 @@ class _EpisodeHeader extends StatelessWidget {
                 color: theme.textTheme.bodyLarge?.color,
               ),
             ),
-            MacosSelect<Season>(
+            AppSelect<Season>(
               value: selectedSeason,
               placeholder: '选择季',
               width: 92,
               options: [
                 for (final season in sortedSeasons)
-                  MacosSelectOption(
+                  AppSelectOption(
                     value: season,
                     label: '第 ${season.seasonNumber} 季',
                   ),

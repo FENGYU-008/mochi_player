@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 class AppSearchBar extends StatefulWidget {
   const AppSearchBar({super.key});
@@ -79,7 +81,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
     final theme = Theme.of(context);
     final customTheme = theme.extension<AppThemeExtension>()!;
     final themeColor = theme.primaryColor;
-    final borderRadius = BorderRadius.circular(10);
+    final borderRadius = BorderRadius.circular(AppRadii.surface);
 
     return RepaintBoundary(
       child: SizedBox(
@@ -111,7 +113,9 @@ class _AppSearchBarState extends State<AppSearchBar> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.compact,
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [

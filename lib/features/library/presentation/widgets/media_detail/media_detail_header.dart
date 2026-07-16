@@ -8,7 +8,8 @@ import 'package:mochi_player/features/library/presentation/widgets/media_detail/
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
-import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
+import 'package:mochi_player/core/ui/widgets/app_button.dart';
+import 'package:mochi_player/core/ui/widgets/app_pill.dart';
 
 const double _detailReadableWidth = 820;
 
@@ -364,7 +365,7 @@ class _ActionRow extends StatelessWidget {
       runSpacing: 10,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        MacosActionButton(
+        AppActionButton(
           onPressed: action.enabled ? action.onPressed : null,
           icon: Icons.play_arrow_rounded,
           label: action.label,
@@ -499,7 +500,7 @@ class _RatingPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MacosPill(
+    return AppPill(
       text: rating.toStringAsFixed(1),
       icon: Icons.star_rounded,
       rating: true,
@@ -514,7 +515,7 @@ class _TextPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MacosPill(text: text, tone: MacosControlTone.overlay);
+    return AppPill(text: text, tone: AppControlTone.overlay);
   }
 }
 

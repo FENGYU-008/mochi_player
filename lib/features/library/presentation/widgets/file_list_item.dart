@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/media/media_type.dart';
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 class FileListItem extends StatefulWidget {
   final MediaFile item;
@@ -51,14 +53,17 @@ class _FileListItemState extends State<FileListItem> {
             color: _isHovering
                 ? theme.primaryColor.withAlpha(25)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(AppRadii.small),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
           child: Row(
             children: [
               // Icon
               Icon(iconData, color: iconColor, size: 24),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               // Title
               Expanded(
                 flex: 5, // Give more space to title
@@ -73,7 +78,7 @@ class _FileListItemState extends State<FileListItem> {
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.lg),
               // Date Modified
               Expanded(
                 flex: 2,

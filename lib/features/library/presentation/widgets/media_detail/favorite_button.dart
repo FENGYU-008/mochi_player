@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
+import 'package:mochi_player/core/ui/widgets/app_button.dart';
+import 'package:mochi_player/core/ui/widgets/app_icon_button.dart';
 
 class FavoriteButton extends StatefulWidget {
   final String tmdbId;
@@ -87,12 +88,12 @@ class _FavoriteButtonState extends State<FavoriteButton> {
         : _isFavorite
         ? AppColors.favorite.withAlpha(24)
         : AppColors.hoverSurface(context);
-    return MacosIconButton(
+    return AppIconButton(
       onPressed: _toggleFavorite,
       icon: icon,
       tooltip: _isFavorite ? "取消收藏" : "加入收藏",
       selected: _isFavorite,
-      tone: overlayTone ? MacosControlTone.overlay : MacosControlTone.adaptive,
+      tone: overlayTone ? AppControlTone.overlay : AppControlTone.adaptive,
       selectedColor: AppColors.favorite,
       foregroundColor: baseColor,
       backgroundColor: backgroundColor,

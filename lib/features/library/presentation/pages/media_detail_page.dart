@@ -9,8 +9,11 @@ import 'package:mochi_player/features/library/presentation/widgets/media_detail/
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 import 'package:mochi_player/core/ui/widgets/app_header.dart';
-import 'package:mochi_player/core/ui/widgets/macos_controls.dart';
+import 'package:mochi_player/core/ui/widgets/app_icon_button.dart';
+import 'package:mochi_player/core/ui/widgets/app_surface.dart';
 
 typedef OpenMediaDetail = void Function(dynamic item);
 
@@ -87,7 +90,7 @@ class _DetailTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppHeader(
       title: viewModel.title,
-      leading: MacosIconButton(
+      leading: AppIconButton(
         onPressed: () => _goBack(context),
         icon: Icons.arrow_back_rounded,
         tooltip: '返回',
@@ -123,30 +126,55 @@ class _MediaDetailContent extends StatelessWidget {
 
         if (viewModel.isTVShow) ...[
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(40, 0, 40, 24),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.page,
+              0,
+              AppSpacing.page,
+              AppSpacing.xxl,
+            ),
             sliver: EpisodeList(tvShow: viewModel.originalItem as TVShow),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(40, 0, 40, 44),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.page,
+              0,
+              AppSpacing.page,
+              44,
+            ),
             sliver: SliverToBoxAdapter(
               child: CastList(viewModel: viewModel, topPadding: 0),
             ),
           ),
         ] else ...[
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(40, 28, 40, 0),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.page,
+              28,
+              AppSpacing.page,
+              0,
+            ),
             sliver: SliverToBoxAdapter(
               child: _MovieMediaInfoSection(viewModel: viewModel),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(40, 28, 40, 0),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.page,
+              28,
+              AppSpacing.page,
+              0,
+            ),
             sliver: SliverToBoxAdapter(
               child: _OverviewSection(viewModel: viewModel),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(40, 0, 40, 44),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.page,
+              0,
+              AppSpacing.page,
+              44,
+            ),
             sliver: SliverToBoxAdapter(
               child: CastList(viewModel: viewModel, topPadding: 20),
             ),
@@ -281,66 +309,55 @@ class _VersionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = theme.brightness == Brightness.dark;
     final progress = file.progress.clamp(0.0, 1.0);
 
-    return Material(
-      color: isDark ? Colors.white.withAlpha(12) : Colors.black.withAlpha(6),
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Icon(
-                Icons.movie_creation_outlined,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _versionTitle(file),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      _versionSubtitle(file),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: theme.textTheme.bodySmall?.color,
-                      ),
-                    ),
-                    if (progress > 0 && progress < 0.95) ...[
-                      const SizedBox(height: 9),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 3,
-                          backgroundColor: theme.dividerColor.withAlpha(80),
-                        ),
-                      ),
-                    ],
-                  ],
+    return AppSurface(
+      onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        children: [
+          Icon(Icons.movie_creation_outlined, color: theme.colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _versionTitle(file),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Icon(Icons.play_arrow_rounded, color: theme.colorScheme.primary),
-            ],
+                const SizedBox(height: 5),
+                Text(
+                  _versionSubtitle(file),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
+                ),
+                if (progress > 0 && progress < 0.95) ...[
+                  const SizedBox(height: 9),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadii.full),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 3,
+                      backgroundColor: theme.dividerColor.withAlpha(80),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Icon(Icons.play_arrow_rounded, color: theme.colorScheme.primary),
+        ],
       ),
     );
   }
@@ -401,18 +418,14 @@ class _EmptyInfoBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.brightness == Brightness.dark
-            ? Colors.white.withAlpha(12)
-            : Colors.black.withAlpha(6),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        message,
-        style: TextStyle(color: theme.textTheme.bodySmall?.color),
+      child: AppSurface(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Text(
+          message,
+          style: TextStyle(color: theme.textTheme.bodySmall?.color),
+        ),
       ),
     );
   }
