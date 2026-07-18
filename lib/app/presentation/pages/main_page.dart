@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mochi_player/core/ui/widgets/app_activity_banner.dart';
 import 'package:mochi_player/core/ui/widgets/app_header.dart';
 import 'package:mochi_player/features/home/presentation/widgets/home_content.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
@@ -319,18 +320,19 @@ class _MainPageState extends State<MainPage> {
                           }
 
                           return Positioned(
-                            top: _detailItem != null
-                                ? 76
-                                : _sectionType != null
-                                ? 76
-                                : showHeader
+                            top:
+                                _detailItem != null ||
+                                    _sectionType != null ||
+                                    showHeader ||
+                                    _selectedIndex == 5
                                 ? 70
                                 : 16,
                             left: 40,
                             right: 40,
-                            child: _LibraryActivityBanner(
+                            child: AppActivityBanner(
                               message: activity.message!,
                               progress: activity.progress,
+                              tone: AppActivityBannerTone.progress,
                             ),
                           );
                         },
@@ -376,82 +378,4 @@ class _LibraryActivityState {
 
   @override
   int get hashCode => Object.hash(message, progress);
-}
-
-class _LibraryActivityBanner extends StatelessWidget {
-  final String message;
-  final double? progress;
-
-  const _LibraryActivityBanner({required this.message, this.progress});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final surfaceColor = theme.brightness == Brightness.light
-        ? Colors.white.withAlpha((255 * 0.92).round())
-        : const Color(0xFF1F1F22).withAlpha((255 * 0.92).round());
-
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 620),
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: theme.dividerColor),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((255 * 0.12).round()),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    value: progress,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    message,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: theme.textTheme.bodyMedium?.color,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (progress != null) ...[
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: LinearProgressIndicator(
-                  minHeight: 3,
-                  value: progress,
-                  backgroundColor: theme.dividerColor.withAlpha(
-                    (255 * 0.45).round(),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 }

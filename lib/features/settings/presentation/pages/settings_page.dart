@@ -1,17 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/settings/application/theme_provider.dart';
 import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
-import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/theme/app_radii.dart';
-import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-import 'package:mochi_player/core/ui/widgets/app_button.dart';
-import 'package:mochi_player/core/ui/widgets/app_surface.dart';
 import 'package:provider/provider.dart';
+import 'package:mochi_player/features/settings/presentation/widgets/settings_section.dart';
+import 'package:mochi_player/features/settings/presentation/widgets/settings_test_button.dart';
+
+const _settingsControlHeight = 36.0;
+const _settingsFieldGap = 6.0;
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -33,12 +34,33 @@ class _SettingsPageState extends State<SettingsPage> {
   final _subtitleLanguagePriorityController = TextEditingController();
 
   bool _controllersInitialized = false;
+  bool _isSyncingControllers = false;
   bool _showWebDavPassword = false;
   bool _showTmdbApiKey = false;
   bool _tmdbProxyEnabled = AppSettings.defaultTmdbProxyEnabled;
   bool _enableHardwareAcceleration =
       AppSettings.defaultEnableHardwareAcceleration;
   double _subtitleFontSize = AppSettings.defaultSubtitleFontSize;
+  Timer? _saveDebounce;
+  Timer? _feedbackTimer;
+  bool _autoSaveInFlight = false;
+  bool _autoSavePending = false;
+  AppSettings? _lastPersistedSettings;
+  String? _feedbackMessage;
+  AppActivityBannerTone? _feedbackTone;
+
+  List<TextEditingController> get _settingsControllers => [
+    _webDavUrlController,
+    _webDavUsernameController,
+    _webDavPasswordController,
+    _tmdbApiKeyController,
+    _tmdbApiBaseUrlController,
+    _tmdbProxyUrlController,
+    _playbackCacheSizeMbController,
+    _playbackReadaheadSecondsController,
+    _audioLanguagePriorityController,
+    _subtitleLanguagePriorityController,
+  ];
 
   @override
   void didChangeDependencies() {
@@ -47,11 +69,20 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final settings = context.read<AppSettingsProvider>();
     _syncControllers(settings);
+    _lastPersistedSettings = settings.settings;
+    for (final controller in _settingsControllers) {
+      controller.addListener(_scheduleAutoSave);
+    }
     _controllersInitialized = true;
   }
 
   @override
   void dispose() {
+    _saveDebounce?.cancel();
+    _feedbackTimer?.cancel();
+    for (final controller in _settingsControllers) {
+      controller.removeListener(_scheduleAutoSave);
+    }
     _webDavUrlController.dispose();
     _webDavUsernameController.dispose();
     _webDavPasswordController.dispose();
@@ -69,34 +100,78 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.page),
+      body: Stack(
         children: [
-          Align(
-            alignment: Alignment.topLeft,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '设置',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          Positioned.fill(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.page,
+                AppHeader.height + AppSpacing.xxl,
+                AppSpacing.page,
+                AppSpacing.page,
+              ),
+              children: [
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildThemeSettings(context),
+                        const SizedBox(height: 28),
+                        _buildWebDavSettings(context),
+                        const SizedBox(height: 28),
+                        _buildTmdbSettings(context),
+                        const SizedBox(height: 28),
+                        _buildPlaybackSettings(context),
+                        const SizedBox(height: 28),
+                        _buildLibraryMaintenance(context),
+                        const SizedBox(height: AppSpacing.xxl),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 40),
-                  _buildThemeSettings(context),
-                  const SizedBox(height: 36),
-                  _buildWebDavSettings(context),
-                  const SizedBox(height: 36),
-                  _buildTmdbSettings(context),
-                  const SizedBox(height: 36),
-                  _buildPlaybackSettings(context),
-                  const SizedBox(height: 36),
-                  _buildLibraryMaintenance(context),
-                  const SizedBox(height: 32),
-                  _buildActions(context),
-                  _buildSettingsError(),
-                ],
+                ),
+              ],
+            ),
+          ),
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: AppHeader.height,
+            child: AppHeader(title: '设置', showSearch: false),
+          ),
+          Positioned(
+            left: AppSpacing.page,
+            right: AppSpacing.page,
+            top: AppHeader.height + AppSpacing.sm,
+            child: IgnorePointer(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                transitionBuilder: (child, animation) {
+                  final offset =
+                      Tween<Offset>(
+                        begin: const Offset(0, 0.16),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                        ),
+                      );
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(position: offset, child: child),
+                  );
+                },
+                child: _feedbackMessage == null
+                    ? const SizedBox.shrink(key: ValueKey('no-feedback'))
+                    : AppActivityBanner(
+                        key: ValueKey(_feedbackMessage),
+                        message: _feedbackMessage!,
+                        tone: _feedbackTone ?? AppActivityBannerTone.info,
+                      ),
               ),
             ),
           ),
@@ -109,22 +184,22 @@ class _SettingsPageState extends State<SettingsPage> {
     return Selector<ThemeProvider, ThemeMode>(
       selector: (context, provider) => provider.themeMode,
       builder: (context, themeMode, child) {
-        return _SettingsSection(
+        return SettingsSection(
           title: '外观',
-          child: _SettingsSegmentedControl<ThemeMode>(
+          child: AppSegmentedControl<ThemeMode>(
             value: themeMode,
             segments: const [
-              _SettingsSegment(
+              AppSegment(
                 value: ThemeMode.light,
                 label: '浅色',
                 icon: Icons.light_mode_outlined,
               ),
-              _SettingsSegment(
+              AppSegment(
                 value: ThemeMode.dark,
                 label: '深色',
                 icon: Icons.dark_mode_outlined,
               ),
-              _SettingsSegment(
+              AppSegment(
                 value: ThemeMode.system,
                 label: '跟随系统',
                 icon: Icons.computer_rounded,
@@ -138,119 +213,129 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildWebDavSettings(BuildContext context) {
-    return _SettingsSection(
-      title: 'WebDAV',
-      child: Column(
-        children: [
-          _SettingsTextField(
-            controller: _webDavUrlController,
-            keyboardType: TextInputType.url,
-            label: '服务器地址',
-            icon: Icons.link_rounded,
+    return Selector<AppSettingsProvider, bool>(
+      selector: (context, provider) => provider.isSaving,
+      builder: (context, isBusy, child) {
+        return SettingsSection(
+          title: 'WebDAV',
+          trailing: SettingsTestButton(
+            onPressed: isBusy ? null : _testWebDavConnection,
           ),
-          const SizedBox(height: 14),
-          _SettingsTextField(
-            controller: _webDavUsernameController,
-            label: '用户名',
-            icon: Icons.person_outline_rounded,
+          child: AppFormGroup(
+            children: [
+              AppFormTextField(
+                controller: _webDavUrlController,
+                keyboardType: TextInputType.url,
+                label: '服务器地址',
+                icon: Icons.link_rounded,
+              ),
+              AppFormTextField(
+                controller: _webDavUsernameController,
+                label: '用户名',
+                icon: Icons.person_outline_rounded,
+                maxWidth: 240,
+              ),
+              AppFormTextField(
+                controller: _webDavPasswordController,
+                obscureText: !_showWebDavPassword,
+                label: '密码',
+                icon: Icons.lock_outline_rounded,
+                maxWidth: 300,
+                trailing: _VisibilityToggle(
+                  visible: _showWebDavPassword,
+                  onPressed: () {
+                    setState(() {
+                      _showWebDavPassword = !_showWebDavPassword;
+                    });
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          _SettingsTextField(
-            controller: _webDavPasswordController,
-            obscureText: !_showWebDavPassword,
-            label: '密码',
-            icon: Icons.lock_outline_rounded,
-            trailing: _VisibilityToggle(
-              visible: _showWebDavPassword,
-              onPressed: () {
-                setState(() {
-                  _showWebDavPassword = !_showWebDavPassword;
-                });
-              },
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildTmdbSettings(BuildContext context) {
-    return _SettingsSection(
-      title: 'TMDB',
-      child: Column(
-        children: [
-          _SettingsTextField(
-            controller: _tmdbApiKeyController,
-            obscureText: !_showTmdbApiKey,
-            label: 'API 密钥',
-            icon: Icons.key_rounded,
-            trailing: _VisibilityToggle(
-              visible: _showTmdbApiKey,
-              onPressed: () {
-                setState(() {
-                  _showTmdbApiKey = !_showTmdbApiKey;
-                });
-              },
-            ),
+    return Selector<AppSettingsProvider, bool>(
+      selector: (context, provider) => provider.isSaving,
+      builder: (context, isBusy, child) {
+        return SettingsSection(
+          title: 'TMDB',
+          trailing: SettingsTestButton(
+            onPressed: isBusy ? null : _testTmdbConnection,
           ),
-          const SizedBox(height: 14),
-          _SettingsTextField(
-            controller: _tmdbApiBaseUrlController,
-            keyboardType: TextInputType.url,
-            label: 'API 地址',
-            icon: Icons.travel_explore_rounded,
+          child: AppFormGroup(
+            children: [
+              AppFormTextField(
+                controller: _tmdbApiKeyController,
+                obscureText: !_showTmdbApiKey,
+                label: 'API 密钥',
+                icon: Icons.key_rounded,
+                trailing: _VisibilityToggle(
+                  visible: _showTmdbApiKey,
+                  onPressed: () {
+                    setState(() {
+                      _showTmdbApiKey = !_showTmdbApiKey;
+                    });
+                  },
+                ),
+              ),
+              AppFormTextField(
+                controller: _tmdbApiBaseUrlController,
+                keyboardType: TextInputType.url,
+                label: 'API 地址',
+                icon: Icons.travel_explore_rounded,
+              ),
+              AppFormSwitchRow(
+                title: '使用 TMDB 代理',
+                subtitle: '用于 TMDB API 和图片下载',
+                icon: Icons.route_rounded,
+                value: _tmdbProxyEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    _tmdbProxyEnabled = value;
+                  });
+                  _scheduleAutoSave();
+                },
+              ),
+              AppFormTextField(
+                controller: _tmdbProxyUrlController,
+                enabled: _tmdbProxyEnabled,
+                keyboardType: TextInputType.url,
+                label: 'HTTP 代理',
+                icon: Icons.route_rounded,
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
-          _SettingsSwitchRow(
-            title: '使用 TMDB 代理',
-            subtitle: '用于 TMDB API 和图片下载',
-            icon: Icons.route_rounded,
-            value: _tmdbProxyEnabled,
-            onChanged: (value) {
-              setState(() {
-                _tmdbProxyEnabled = value;
-              });
-            },
-          ),
-          const SizedBox(height: 14),
-          _SettingsTextField(
-            controller: _tmdbProxyUrlController,
-            enabled: _tmdbProxyEnabled,
-            keyboardType: TextInputType.url,
-            label: 'HTTP 代理',
-            icon: Icons.route_rounded,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildPlaybackSettings(BuildContext context) {
-    return _SettingsSection(
+    return SettingsSection(
       title: '播放',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: AppFormGroup(
         children: [
-          _SettingsFieldGrid(
-            children: [
-              _SettingsTextField(
-                controller: _playbackCacheSizeMbController,
-                keyboardType: TextInputType.number,
-                label: '缓存大小',
-                icon: Icons.storage_rounded,
-                suffixText: 'MB',
-              ),
-              _SettingsTextField(
-                controller: _playbackReadaheadSecondsController,
-                keyboardType: TextInputType.number,
-                label: '预读',
-                icon: Icons.cloud_download_rounded,
-                suffixText: '秒',
-              ),
-            ],
+          AppFormTextField(
+            controller: _playbackCacheSizeMbController,
+            keyboardType: TextInputType.number,
+            label: '缓存大小',
+            icon: Icons.storage_rounded,
+            suffixText: 'MB',
+            maxWidth: 120,
           ),
-          const SizedBox(height: 14),
-          _SettingsSwitchRow(
+          AppFormTextField(
+            controller: _playbackReadaheadSecondsController,
+            keyboardType: TextInputType.number,
+            label: '预读',
+            icon: Icons.cloud_download_rounded,
+            suffixText: '秒',
+            maxWidth: 120,
+          ),
+          AppFormSwitchRow(
             title: '硬件解码',
             icon: Icons.memory_rounded,
             value: _enableHardwareAcceleration,
@@ -258,22 +343,20 @@ class _SettingsPageState extends State<SettingsPage> {
               setState(() {
                 _enableHardwareAcceleration = value;
               });
+              _scheduleAutoSave();
             },
           ),
-          const SizedBox(height: 14),
-          _SettingsTextField(
+          AppFormTextField(
             controller: _audioLanguagePriorityController,
             label: '默认音轨语言',
             icon: Icons.graphic_eq_rounded,
           ),
-          const SizedBox(height: 14),
-          _SettingsTextField(
+          AppFormTextField(
             controller: _subtitleLanguagePriorityController,
             label: '默认字幕语言',
             icon: Icons.subtitles_rounded,
           ),
-          const SizedBox(height: 14),
-          _SettingsSliderRow(
+          AppFormSliderRow(
             label: '字幕大小',
             icon: Icons.format_size_rounded,
             value: _subtitleFontSize,
@@ -285,6 +368,7 @@ class _SettingsPageState extends State<SettingsPage> {
               setState(() {
                 _subtitleFontSize = value;
               });
+              _scheduleAutoSave();
             },
           ),
         ],
@@ -292,91 +376,46 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildActions(BuildContext context) {
-    return Selector<AppSettingsProvider, bool>(
-      selector: (context, provider) => provider.isSaving,
-      builder: (context, isBusy, child) {
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            AppActionButton(
-              onPressed: isBusy ? null : _saveSettings,
-              icon: Icons.save_outlined,
-              label: isBusy ? '保存中' : '保存',
-              variant: AppButtonVariant.primary,
-              busy: isBusy,
-              height: 40,
-              borderRadius: AppRadii.control,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            ),
-            AppActionButton(
-              onPressed: isBusy ? null : _testWebDavConnection,
-              icon: Icons.wifi_tethering_rounded,
-              label: '测试 WebDAV',
-              variant: AppButtonVariant.secondary,
-              height: 40,
-              borderRadius: AppRadii.control,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            ),
-            AppActionButton(
-              onPressed: isBusy ? null : _testTmdbConnection,
-              icon: Icons.public_rounded,
-              label: '测试 TMDB',
-              variant: AppButtonVariant.secondary,
-              height: 40,
-              borderRadius: AppRadii.control,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildSettingsError() {
-    return Selector<AppSettingsProvider, String?>(
-      selector: (context, provider) => provider.error,
-      builder: (context, error, child) {
-        if (error == null) return const SizedBox.shrink();
-
-        return Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.lg),
-          child: Text(error, style: const TextStyle(color: Colors.redAccent)),
-        );
-      },
-    );
-  }
-
   Widget _buildLibraryMaintenance(BuildContext context) {
     return Selector<MediaLibraryProvider, bool>(
       selector: (context, provider) => provider.isLoading,
       builder: (context, isBusy, child) {
-        return _SettingsSection(
+        return SettingsSection(
           title: '媒体库',
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
+          child: AppFormGroup(
             children: [
-              AppActionButton(
-                onPressed: isBusy ? null : _confirmRescrapeLibrary,
-                icon: Icons.manage_search_outlined,
-                label: isBusy ? '刮削中' : '补全元数据',
-                busy: isBusy,
-                variant: AppButtonVariant.secondary,
-                height: 40,
-                borderRadius: AppRadii.control,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              ),
-              AppActionButton(
-                onPressed: isBusy ? null : _confirmClearLibrary,
-                icon: Icons.delete_sweep_outlined,
-                label: '清空媒体库',
-                destructive: true,
-                variant: AppButtonVariant.secondary,
-                height: 40,
-                borderRadius: AppRadii.control,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              Padding(
+                padding: const EdgeInsets.all(AppSpacing.compact),
+                child: Wrap(
+                  spacing: _settingsFieldGap,
+                  runSpacing: _settingsFieldGap,
+                  children: [
+                    AppActionButton(
+                      onPressed: isBusy ? null : _confirmRescrapeLibrary,
+                      icon: Icons.manage_search_outlined,
+                      label: isBusy ? '刮削中' : '补全元数据',
+                      busy: isBusy,
+                      variant: AppButtonVariant.secondary,
+                      height: _settingsControlHeight,
+                      borderRadius: AppRadii.control,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
+                    ),
+                    AppActionButton(
+                      onPressed: isBusy ? null : _confirmClearLibrary,
+                      icon: Icons.delete_sweep_outlined,
+                      label: '清空媒体库',
+                      destructive: true,
+                      variant: AppButtonVariant.secondary,
+                      height: _settingsControlHeight,
+                      borderRadius: AppRadii.control,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -385,37 +424,61 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Future<void> _saveSettings() async {
-    final didSave = await _persistSettings();
-    if (!didSave || !mounted) return;
+  void _scheduleAutoSave() {
+    if (!_controllersInitialized || _isSyncingControllers) return;
 
-    final settingsProvider = context.read<AppSettingsProvider>();
-    final fileBrowserProvider = context.read<FileBrowserProvider>();
-    final mediaLibraryProvider = context.read<MediaLibraryProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-
-    messenger.showSnackBar(const SnackBar(content: Text('设置已保存')));
-    unawaited(
-      _refreshAfterSave(
-        settingsProvider,
-        fileBrowserProvider,
-        mediaLibraryProvider,
-      ),
-    );
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(const Duration(milliseconds: 450), () {
+      unawaited(_autoSaveSettings());
+    });
   }
 
-  Future<void> _refreshAfterSave(
-    AppSettingsProvider settingsProvider,
-    FileBrowserProvider fileBrowserProvider,
-    MediaLibraryProvider mediaLibraryProvider,
-  ) async {
-    if (settingsProvider.hasWebDavConfig) {
-      await fileBrowserProvider.fetchFiles('/');
+  Future<void> _autoSaveSettings() async {
+    if (!mounted) return;
+    if (_autoSaveInFlight) {
+      _autoSavePending = true;
+      return;
     }
 
-    if (settingsProvider.hasTmdbApiKey) {
-      await mediaLibraryProvider.fetchTrending();
+    _autoSaveInFlight = true;
+    try {
+      final settingsProvider = context.read<AppSettingsProvider>();
+      final previousSettings =
+          _lastPersistedSettings ?? settingsProvider.settings;
+      await _persistSettings();
+      if (mounted && settingsProvider.error == null) {
+        final currentSettings = settingsProvider.settings;
+        _lastPersistedSettings = currentSettings;
+        unawaited(_refreshAfterAutoSave(previousSettings, currentSettings));
+      }
+    } finally {
+      _autoSaveInFlight = false;
+      if (_autoSavePending && mounted) {
+        _autoSavePending = false;
+        _scheduleAutoSave();
+      }
     }
+  }
+
+  void _showFeedback(
+    String message,
+    AppActivityBannerTone tone, {
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    if (!mounted) return;
+
+    _feedbackTimer?.cancel();
+    setState(() {
+      _feedbackMessage = message;
+      _feedbackTone = tone;
+    });
+    _feedbackTimer = Timer(duration, () {
+      if (!mounted) return;
+      setState(() {
+        _feedbackMessage = null;
+        _feedbackTone = null;
+      });
+    });
   }
 
   Future<void> _testWebDavConnection() async {
@@ -423,15 +486,12 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!didSave || !mounted) return;
 
     final settingsProvider = context.read<AppSettingsProvider>();
-    final messenger = ScaffoldMessenger.of(context);
     final isConnected = await settingsProvider.testWebDavConnection();
     if (!mounted) return;
 
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(isConnected ? 'WebDAV 连接成功' : 'WebDAV 连接失败'),
-        backgroundColor: isConnected ? null : Colors.redAccent,
-      ),
+    _showFeedback(
+      isConnected ? 'WebDAV 连接成功' : 'WebDAV 连接失败',
+      isConnected ? AppActivityBannerTone.success : AppActivityBannerTone.error,
     );
   }
 
@@ -440,15 +500,12 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!didSave || !mounted) return;
 
     final settingsProvider = context.read<AppSettingsProvider>();
-    final messenger = ScaffoldMessenger.of(context);
     final isConnected = await settingsProvider.testTmdbConnection();
     if (!mounted) return;
 
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(isConnected ? 'TMDB 连接成功' : 'TMDB 连接失败'),
-        backgroundColor: isConnected ? null : Colors.redAccent,
-      ),
+    _showFeedback(
+      isConnected ? 'TMDB 连接成功' : 'TMDB 连接失败',
+      isConnected ? AppActivityBannerTone.success : AppActivityBannerTone.error,
     );
   }
 
@@ -482,15 +539,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final settingsProvider = context.read<AppSettingsProvider>();
     final mediaLibraryProvider = context.read<MediaLibraryProvider>();
-    final messenger = ScaffoldMessenger.of(context);
 
     if (!settingsProvider.hasTmdbApiKey) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text('补全元数据前请先设置 TMDB API 密钥'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      _showFeedback('补全元数据前请先设置 TMDB API 密钥', AppActivityBannerTone.error);
       return;
     }
 
@@ -498,11 +549,11 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
 
     final error = mediaLibraryProvider.error;
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(error ?? '已从 WebDAV 根目录补全媒体库元数据'),
-        backgroundColor: error == null ? null : Colors.redAccent,
-      ),
+    _showFeedback(
+      error ?? '已从 WebDAV 根目录补全媒体库元数据',
+      error == null
+          ? AppActivityBannerTone.success
+          : AppActivityBannerTone.error,
     );
   }
 
@@ -534,17 +585,15 @@ class _SettingsPageState extends State<SettingsPage> {
     if (confirmed != true || !mounted) return;
 
     final mediaLibraryProvider = context.read<MediaLibraryProvider>();
-    final messenger = ScaffoldMessenger.of(context);
 
     await mediaLibraryProvider.clearLibrary();
     if (!mounted) return;
 
-    messenger.showSnackBar(const SnackBar(content: Text('媒体库已清空')));
+    _showFeedback('媒体库已清空', AppActivityBannerTone.success);
   }
 
   Future<bool> _persistSettings() async {
     final settingsProvider = context.read<AppSettingsProvider>();
-    final messenger = ScaffoldMessenger.of(context);
 
     await settingsProvider.saveSettings(
       webDavUrl: _webDavUrlController.text,
@@ -571,297 +620,99 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final error = settingsProvider.error;
     if (error != null) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.redAccent),
-      );
+      _showFeedback(error, AppActivityBannerTone.error);
       return false;
     }
 
     _syncControllers(settingsProvider);
-    setState(() {});
+    _lastPersistedSettings = settingsProvider.settings;
+    if (mounted) setState(() {});
     return true;
   }
 
+  Future<void> _refreshAfterAutoSave(
+    AppSettings previousSettings,
+    AppSettings currentSettings,
+  ) async {
+    final webDavChanged =
+        previousSettings.webDavUrl != currentSettings.webDavUrl ||
+        previousSettings.webDavUsername != currentSettings.webDavUsername ||
+        previousSettings.webDavPassword != currentSettings.webDavPassword;
+    final tmdbChanged =
+        previousSettings.tmdbApiKey != currentSettings.tmdbApiKey ||
+        previousSettings.tmdbApiBaseUrl != currentSettings.tmdbApiBaseUrl ||
+        previousSettings.tmdbProxyUrl != currentSettings.tmdbProxyUrl ||
+        previousSettings.tmdbProxyEnabled != currentSettings.tmdbProxyEnabled;
+
+    if (!mounted) return;
+
+    if (webDavChanged &&
+        (previousSettings.hasWebDavConfig || currentSettings.hasWebDavConfig)) {
+      await context.read<FileBrowserProvider>().fetchFiles('/');
+    }
+    if (tmdbChanged &&
+        mounted &&
+        (previousSettings.hasTmdbApiKey || currentSettings.hasTmdbApiKey)) {
+      await context.read<MediaLibraryProvider>().fetchTrending();
+    }
+  }
+
   void _syncControllers(AppSettingsProvider settingsProvider) {
-    _webDavUrlController.text = settingsProvider.webDavUrl;
-    _webDavUsernameController.text = settingsProvider.webDavUsername;
-    _webDavPasswordController.text = settingsProvider.webDavPassword;
-    _tmdbApiKeyController.text = settingsProvider.tmdbApiKey;
-    _tmdbApiBaseUrlController.text = settingsProvider.tmdbApiBaseUrl;
-    _tmdbProxyUrlController.text = settingsProvider.tmdbProxyUrl;
-    _tmdbProxyEnabled = settingsProvider.tmdbProxyEnabled;
-    _playbackCacheSizeMbController.text = settingsProvider.playbackCacheSizeMb
-        .toString();
-    _playbackReadaheadSecondsController.text = settingsProvider
-        .playbackReadaheadSeconds
-        .toString();
-    _enableHardwareAcceleration = settingsProvider.enableHardwareAcceleration;
-    _audioLanguagePriorityController.text =
-        settingsProvider.audioLanguagePriority;
-    _subtitleLanguagePriorityController.text =
-        settingsProvider.subtitleLanguagePriority;
-    _subtitleFontSize = settingsProvider.subtitleFontSize;
+    _isSyncingControllers = true;
+    try {
+      _setControllerText(_webDavUrlController, settingsProvider.webDavUrl);
+      _setControllerText(
+        _webDavUsernameController,
+        settingsProvider.webDavUsername,
+      );
+      _setControllerText(
+        _webDavPasswordController,
+        settingsProvider.webDavPassword,
+      );
+      _setControllerText(_tmdbApiKeyController, settingsProvider.tmdbApiKey);
+      _setControllerText(
+        _tmdbApiBaseUrlController,
+        settingsProvider.tmdbApiBaseUrl,
+      );
+      _setControllerText(
+        _tmdbProxyUrlController,
+        settingsProvider.tmdbProxyUrl,
+      );
+      _tmdbProxyEnabled = settingsProvider.tmdbProxyEnabled;
+      _setControllerText(
+        _playbackCacheSizeMbController,
+        settingsProvider.playbackCacheSizeMb.toString(),
+      );
+      _setControllerText(
+        _playbackReadaheadSecondsController,
+        settingsProvider.playbackReadaheadSeconds.toString(),
+      );
+      _enableHardwareAcceleration = settingsProvider.enableHardwareAcceleration;
+      _setControllerText(
+        _audioLanguagePriorityController,
+        settingsProvider.audioLanguagePriority,
+      );
+      _setControllerText(
+        _subtitleLanguagePriorityController,
+        settingsProvider.subtitleLanguagePriority,
+      );
+      _subtitleFontSize = settingsProvider.subtitleFontSize;
+    } finally {
+      _isSyncingControllers = false;
+    }
+  }
+
+  void _setControllerText(TextEditingController controller, String text) {
+    if (controller.text == text) return;
+
+    controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
   }
 
   int _parseIntField(TextEditingController controller, int fallback) {
     return int.tryParse(controller.text.trim()) ?? fallback;
-  }
-}
-
-class _SettingsSegment<T> {
-  final T value;
-  final String label;
-  final IconData icon;
-
-  const _SettingsSegment({
-    required this.value,
-    required this.label,
-    required this.icon,
-  });
-}
-
-class _SettingsSegmentedControl<T> extends StatelessWidget {
-  final T value;
-  final List<_SettingsSegment<T>> segments;
-  final ValueChanged<T> onChanged;
-
-  const _SettingsSegmentedControl({
-    required this.value,
-    required this.segments,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = AppColors.separator(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final controlWidth = constraints.maxWidth < 420
-            ? constraints.maxWidth
-            : 420.0;
-        return SizedBox(
-          width: controlWidth,
-          child: SizedBox(
-            height: 42,
-            child: AppSurface(
-              tone: AppSurfaceTone.elevated,
-              showBorder: true,
-              borderRadius: BorderRadius.circular(AppRadii.control),
-              clipBehavior: Clip.antiAlias,
-              child: Row(
-                children: [
-                  for (var index = 0; index < segments.length; index++) ...[
-                    Expanded(
-                      child: _SettingsSegmentButton<T>(
-                        segment: segments[index],
-                        selected: segments[index].value == value,
-                        onPressed: () => onChanged(segments[index].value),
-                      ),
-                    ),
-                    if (index != segments.length - 1)
-                      SizedBox(
-                        height: 24,
-                        child: VerticalDivider(width: 1, color: borderColor),
-                      ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _SettingsSegmentButton<T> extends StatefulWidget {
-  final _SettingsSegment<T> segment;
-  final bool selected;
-  final VoidCallback onPressed;
-
-  const _SettingsSegmentButton({
-    required this.segment,
-    required this.selected,
-    required this.onPressed,
-  });
-
-  @override
-  State<_SettingsSegmentButton<T>> createState() =>
-      _SettingsSegmentButtonState<T>();
-}
-
-class _SettingsSegmentButtonState<T> extends State<_SettingsSegmentButton<T>> {
-  bool _hovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = AppColors.primary(context);
-    final selected = widget.selected;
-    final foreground = selected
-        ? Colors.white
-        : AppColors.textPrimary(context).withAlpha(220);
-    final background = selected
-        ? primary
-        : _hovering
-        ? AppColors.hoverSurface(context)
-        : Colors.transparent;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onPressed,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
-          height: double.infinity,
-          color: background,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(widget.segment.icon, size: 17, color: foreground),
-              const SizedBox(width: 7),
-              Text(
-                widget.segment.label,
-                style: TextStyle(
-                  color: foreground,
-                  fontSize: 14,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SettingsFieldGrid extends StatelessWidget {
-  final List<Widget> children;
-
-  const _SettingsFieldGrid({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 560) {
-          return Column(
-            children: [
-              for (var index = 0; index < children.length; index++) ...[
-                children[index],
-                if (index != children.length - 1) const SizedBox(height: 14),
-              ],
-            ],
-          );
-        }
-
-        return Row(
-          children: [
-            for (var index = 0; index < children.length; index++) ...[
-              Expanded(child: children[index]),
-              if (index != children.length - 1) const SizedBox(width: 14),
-            ],
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _SettingsTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final bool enabled;
-  final bool obscureText;
-  final TextInputType? keyboardType;
-  final Widget? trailing;
-  final String? suffixText;
-
-  const _SettingsTextField({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.enabled = true,
-    this.obscureText = false,
-    this.keyboardType,
-    this.trailing,
-    this.suffixText,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = AppColors.primary(context);
-    final textColor = AppColors.textPrimary(context);
-    final secondaryColor = AppColors.textSecondary(context);
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 120),
-      opacity: enabled ? 1 : 0.5,
-      child: Container(
-        height: 58,
-        padding: const EdgeInsets.fromLTRB(13, 7, 10, 7),
-        decoration: _settingsFieldDecoration(context),
-        child: Row(
-          children: [
-            Icon(icon, size: 21, color: enabled ? secondaryColor : null),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: secondaryColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      enabled: enabled,
-                      obscureText: obscureText,
-                      keyboardType: keyboardType,
-                      cursorColor: primary,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        height: 1.2,
-                      ),
-                      decoration: const InputDecoration(
-                        isCollapsed: true,
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (suffixText != null) ...[
-              const SizedBox(width: 8),
-              Text(
-                suffixText!,
-                style: TextStyle(
-                  color: secondaryColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-            if (trailing != null) ...[const SizedBox(width: 4), trailing!],
-          ],
-        ),
-      ),
-    );
   }
 }
 
@@ -877,183 +728,12 @@ class _VisibilityToggle extends StatelessWidget {
       tooltip: visible ? '隐藏' : '显示',
       onPressed: onPressed,
       color: AppColors.textSecondary(context),
-      iconSize: 20,
+      iconSize: 18,
       padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+      constraints: const BoxConstraints.tightFor(width: 28, height: 28),
       icon: Icon(
         visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
       ),
-    );
-  }
-}
-
-class _SettingsSwitchRow extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final IconData icon;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _SettingsSwitchRow({
-    required this.title,
-    required this.icon,
-    required this.value,
-    required this.onChanged,
-    this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 58),
-      padding: const EdgeInsets.fromLTRB(13, 9, 10, 9),
-      decoration: _settingsFieldDecoration(context),
-      child: Row(
-        children: [
-          Icon(icon, size: 21, color: AppColors.textSecondary(context)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: AppColors.textPrimary(context),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle!,
-                    style: TextStyle(
-                      color: AppColors.textSecondary(context),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: Colors.white,
-            activeTrackColor: AppColors.primary(context),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SettingsSliderRow extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final double value;
-  final double min;
-  final double max;
-  final int divisions;
-  final String displayValue;
-  final ValueChanged<double> onChanged;
-
-  const _SettingsSliderRow({
-    required this.label,
-    required this.icon,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.divisions,
-    required this.displayValue,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.fromLTRB(13, 8, 12, 8),
-      decoration: _settingsFieldDecoration(context),
-      child: Row(
-        children: [
-          Icon(icon, size: 21, color: AppColors.textSecondary(context)),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 82,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: AppColors.textPrimary(context),
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              divisions: divisions,
-              label: displayValue,
-              activeColor: AppColors.primary(context),
-              onChanged: onChanged,
-            ),
-          ),
-          SizedBox(
-            width: 36,
-            child: Text(
-              displayValue,
-              textAlign: TextAlign.end,
-              style: TextStyle(
-                color: AppColors.textPrimary(context),
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-BoxDecoration _settingsFieldDecoration(BuildContext context) {
-  return BoxDecoration(
-    color: AppColors.elevatedSurface(context),
-    borderRadius: BorderRadius.circular(AppRadii.control),
-    border: Border.all(color: AppColors.separator(context)),
-  );
-}
-
-class _SettingsSection extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const _SettingsSection({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).textTheme.bodyMedium?.color,
-          ),
-        ),
-        const SizedBox(height: 16),
-        child,
-      ],
     );
   }
 }
