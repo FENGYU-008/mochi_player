@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 abstract final class AppTypography {
   static const TextStyle formLabel = TextStyle(
     fontSize: 13,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w600,
     height: 1.2,
   );
 

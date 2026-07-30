@@ -9,10 +9,6 @@ import 'package:mochi_player/features/library/application/file_browser_provider.
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_section.dart';
-import 'package:mochi_player/features/settings/presentation/widgets/settings_test_button.dart';
-
-const _settingsControlHeight = 36.0;
-const _settingsFieldGap = 6.0;
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -114,18 +110,18 @@ class _SettingsPageState extends State<SettingsPage> {
                 Align(
                   alignment: Alignment.topLeft,
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 760),
+                    constraints: const BoxConstraints(maxWidth: 700),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildThemeSettings(context),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: AppSpacing.xxl),
                         _buildWebDavSettings(context),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: AppSpacing.xxl),
                         _buildTmdbSettings(context),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: AppSpacing.xxl),
                         _buildPlaybackSettings(context),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: AppSpacing.xxl),
                         _buildLibraryMaintenance(context),
                         const SizedBox(height: AppSpacing.xxl),
                       ],
@@ -186,26 +182,36 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (context, themeMode, child) {
         return SettingsSection(
           title: '外观',
-          child: AppSegmentedControl<ThemeMode>(
-            value: themeMode,
-            segments: const [
-              AppSegment(
-                value: ThemeMode.light,
-                label: '浅色',
-                icon: Icons.light_mode_outlined,
-              ),
-              AppSegment(
-                value: ThemeMode.dark,
-                label: '深色',
-                icon: Icons.dark_mode_outlined,
-              ),
-              AppSegment(
-                value: ThemeMode.system,
-                label: '跟随系统',
-                icon: Icons.computer_rounded,
+          child: AppFormGroup(
+            children: [
+              AppFormRow(
+                label: '界面主题',
+                subtitle: '选择应用使用的明暗外观',
+                labelWidth: null,
+                control: AppSegmentedControl<ThemeMode>(
+                  value: themeMode,
+                  maxWidth: 300,
+                  segments: const [
+                    AppSegment(
+                      value: ThemeMode.light,
+                      label: '浅色',
+                      icon: Icons.light_mode_outlined,
+                    ),
+                    AppSegment(
+                      value: ThemeMode.dark,
+                      label: '深色',
+                      icon: Icons.dark_mode_outlined,
+                    ),
+                    AppSegment(
+                      value: ThemeMode.system,
+                      label: '跟随系统',
+                      icon: Icons.computer_rounded,
+                    ),
+                  ],
+                  onChanged: context.read<ThemeProvider>().setTheme,
+                ),
               ),
             ],
-            onChanged: context.read<ThemeProvider>().setTheme,
           ),
         );
       },
@@ -218,29 +224,21 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (context, isBusy, child) {
         return SettingsSection(
           title: 'WebDAV',
-          trailing: SettingsTestButton(
-            onPressed: isBusy ? null : _testWebDavConnection,
-          ),
           child: AppFormGroup(
             children: [
               AppFormTextField(
                 controller: _webDavUrlController,
                 keyboardType: TextInputType.url,
                 label: '服务器地址',
-                icon: Icons.link_rounded,
               ),
               AppFormTextField(
                 controller: _webDavUsernameController,
                 label: '用户名',
-                icon: Icons.person_outline_rounded,
-                maxWidth: 240,
               ),
               AppFormTextField(
                 controller: _webDavPasswordController,
                 obscureText: !_showWebDavPassword,
                 label: '密码',
-                icon: Icons.lock_outline_rounded,
-                maxWidth: 300,
                 trailing: _VisibilityToggle(
                   visible: _showWebDavPassword,
                   onPressed: () {
@@ -248,6 +246,16 @@ class _SettingsPageState extends State<SettingsPage> {
                       _showWebDavPassword = !_showWebDavPassword;
                     });
                   },
+                ),
+              ),
+              AppFormRow(
+                label: '连接状态',
+                subtitle: '检查当前 WebDAV 配置是否可用',
+                labelWidth: null,
+                expandControl: false,
+                control: _SettingsActionButton(
+                  onPressed: isBusy ? null : _testWebDavConnection,
+                  label: '测试连接',
                 ),
               ),
             ],
@@ -263,16 +271,12 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (context, isBusy, child) {
         return SettingsSection(
           title: 'TMDB',
-          trailing: SettingsTestButton(
-            onPressed: isBusy ? null : _testTmdbConnection,
-          ),
           child: AppFormGroup(
             children: [
               AppFormTextField(
                 controller: _tmdbApiKeyController,
                 obscureText: !_showTmdbApiKey,
                 label: 'API 密钥',
-                icon: Icons.key_rounded,
                 trailing: _VisibilityToggle(
                   visible: _showTmdbApiKey,
                   onPressed: () {
@@ -286,12 +290,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 controller: _tmdbApiBaseUrlController,
                 keyboardType: TextInputType.url,
                 label: 'API 地址',
-                icon: Icons.travel_explore_rounded,
               ),
               AppFormSwitchRow(
                 title: '使用 TMDB 代理',
                 subtitle: '用于 TMDB API 和图片下载',
-                icon: Icons.route_rounded,
                 value: _tmdbProxyEnabled,
                 onChanged: (value) {
                   setState(() {
@@ -305,7 +307,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 enabled: _tmdbProxyEnabled,
                 keyboardType: TextInputType.url,
                 label: 'HTTP 代理',
-                icon: Icons.route_rounded,
+              ),
+              AppFormRow(
+                label: '连接状态',
+                subtitle: '检查当前 TMDB 配置是否可用',
+                labelWidth: null,
+                expandControl: false,
+                control: _SettingsActionButton(
+                  onPressed: isBusy ? null : _testTmdbConnection,
+                  label: '测试连接',
+                ),
               ),
             ],
           ),
@@ -323,7 +334,6 @@ class _SettingsPageState extends State<SettingsPage> {
             controller: _playbackCacheSizeMbController,
             keyboardType: TextInputType.number,
             label: '缓存大小',
-            icon: Icons.storage_rounded,
             suffixText: 'MB',
             maxWidth: 120,
           ),
@@ -331,13 +341,11 @@ class _SettingsPageState extends State<SettingsPage> {
             controller: _playbackReadaheadSecondsController,
             keyboardType: TextInputType.number,
             label: '预读',
-            icon: Icons.cloud_download_rounded,
             suffixText: '秒',
             maxWidth: 120,
           ),
           AppFormSwitchRow(
             title: '硬件解码',
-            icon: Icons.memory_rounded,
             value: _enableHardwareAcceleration,
             onChanged: (value) {
               setState(() {
@@ -349,16 +357,13 @@ class _SettingsPageState extends State<SettingsPage> {
           AppFormTextField(
             controller: _audioLanguagePriorityController,
             label: '默认音轨语言',
-            icon: Icons.graphic_eq_rounded,
           ),
           AppFormTextField(
             controller: _subtitleLanguagePriorityController,
             label: '默认字幕语言',
-            icon: Icons.subtitles_rounded,
           ),
           AppFormSliderRow(
             label: '字幕大小',
-            icon: Icons.format_size_rounded,
             value: _subtitleFontSize,
             min: 18,
             max: 40,
@@ -384,37 +389,28 @@ class _SettingsPageState extends State<SettingsPage> {
           title: '媒体库',
           child: AppFormGroup(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.compact),
-                child: Wrap(
-                  spacing: _settingsFieldGap,
-                  runSpacing: _settingsFieldGap,
-                  children: [
-                    AppActionButton(
-                      onPressed: isBusy ? null : _confirmRescrapeLibrary,
-                      icon: Icons.manage_search_outlined,
-                      label: isBusy ? '刮削中' : '补全元数据',
-                      busy: isBusy,
-                      variant: AppButtonVariant.secondary,
-                      height: _settingsControlHeight,
-                      borderRadius: AppRadii.control,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                      ),
-                    ),
-                    AppActionButton(
-                      onPressed: isBusy ? null : _confirmClearLibrary,
-                      icon: Icons.delete_sweep_outlined,
-                      label: '清空媒体库',
-                      destructive: true,
-                      variant: AppButtonVariant.secondary,
-                      height: _settingsControlHeight,
-                      borderRadius: AppRadii.control,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                      ),
-                    ),
-                  ],
+              AppFormRow(
+                label: '补全元数据',
+                subtitle: '同步 WebDAV，并为缺少信息的媒体重新匹配',
+                labelWidth: null,
+                expandControl: false,
+                control: _SettingsActionButton(
+                  onPressed: isBusy ? null : _confirmRescrapeLibrary,
+                  icon: Icons.manage_search_outlined,
+                  label: isBusy ? '刮削中' : '开始补全',
+                  busy: isBusy,
+                ),
+              ),
+              AppFormRow(
+                label: '清空媒体库',
+                subtitle: '删除本地索引、元数据、播放进度和收藏',
+                labelWidth: null,
+                expandControl: false,
+                control: _SettingsActionButton(
+                  onPressed: isBusy ? null : _confirmClearLibrary,
+                  icon: Icons.delete_sweep_outlined,
+                  label: '清空',
+                  destructive: true,
                 ),
               ),
             ],
@@ -696,16 +692,48 @@ class _VisibilityToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
+    return AppIconButton(
       tooltip: visible ? '隐藏' : '显示',
       onPressed: onPressed,
-      color: AppColors.textSecondary(context),
+      foregroundColor: AppColors.textSecondary(context),
+      backgroundColor: Colors.transparent,
+      hoverBackgroundColor: AppColors.hoverSurface(context),
+      borderColor: Colors.transparent,
       iconSize: 18,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(width: 28, height: 28),
-      icon: Icon(
-        visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-      ),
+      size: 28,
+      icon: visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+    );
+  }
+}
+
+class _SettingsActionButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final String label;
+  final IconData? icon;
+  final bool destructive;
+  final bool busy;
+
+  const _SettingsActionButton({
+    required this.onPressed,
+    required this.label,
+    this.icon,
+    this.destructive = false,
+    this.busy = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppActionButton(
+      onPressed: onPressed,
+      icon: icon,
+      label: label,
+      destructive: destructive,
+      busy: busy,
+      variant: AppButtonVariant.secondary,
+      height: AppControlMetrics.compactButtonHeight,
+      borderRadius: AppRadii.control,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      textStyle: AppTypography.controlLabel,
     );
   }
 }

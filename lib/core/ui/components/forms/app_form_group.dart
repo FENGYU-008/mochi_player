@@ -10,13 +10,17 @@ class AppFormGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final separator = AppColors.separator(context).withAlpha(145);
+    final separator = AppColors.separator(context).withAlpha(105);
+    final background = Color.alphaBlend(
+      AppColors.subtleSurface(context),
+      Theme.of(context).scaffoldBackgroundColor,
+    );
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.elevatedSurface(context),
+        color: background,
         borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.separator(context)),
+        border: Border.all(color: AppColors.separator(context).withAlpha(105)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

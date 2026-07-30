@@ -41,7 +41,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
             : maxWidth;
         return SizedBox(
           width: controlWidth,
-          height: AppControlMetrics.rowHeight,
+          height: AppControlMetrics.segmentedHeight,
           child: AppSurface(
             tone: AppSurfaceTone.elevated,
             showBorder: true,
@@ -117,7 +117,7 @@ class _SegmentButtonState<T> extends State<_SegmentButton<T>> {
               children: [
                 ColoredBox(
                   color: Color.lerp(
-                    Colors.transparent,
+                    primary.withAlpha(0),
                     primary,
                     selectionProgress,
                   )!,

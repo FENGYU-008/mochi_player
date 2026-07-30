@@ -5,7 +5,7 @@ import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
 class AppFormRow extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final String label;
   final String? subtitle;
   final Widget control;
@@ -16,7 +16,7 @@ class AppFormRow extends StatelessWidget {
 
   const AppFormRow({
     super.key,
-    required this.icon,
+    this.icon,
     required this.label,
     required this.control,
     this.subtitle,
@@ -51,12 +51,16 @@ class AppFormRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.compact),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: AppControlMetrics.iconSize,
-                color: enabled ? secondaryColor : secondaryColor.withAlpha(100),
-              ),
-              const SizedBox(width: AppControlMetrics.iconLabelGap),
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: AppControlMetrics.iconSize,
+                  color: enabled
+                      ? secondaryColor
+                      : secondaryColor.withAlpha(100),
+                ),
+                const SizedBox(width: AppControlMetrics.iconLabelGap),
+              ],
               if (labelWidth == null)
                 Expanded(child: labelContent)
               else

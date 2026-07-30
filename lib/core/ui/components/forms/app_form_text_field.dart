@@ -9,7 +9,7 @@ import 'package:mochi_player/core/ui/theme/app_typography.dart';
 class AppFormTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
-  final IconData icon;
+  final IconData? icon;
   final bool enabled;
   final bool obscureText;
   final TextInputType? keyboardType;
@@ -21,7 +21,7 @@ class AppFormTextField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.label,
-    required this.icon,
+    this.icon,
     this.enabled = true,
     this.obscureText = false,
     this.keyboardType,
@@ -37,30 +37,41 @@ class AppFormTextField extends StatelessWidget {
       icon: icon,
       label: label,
       enabled: enabled,
-      control: Row(
-        children: [
-          Expanded(
-            child: AppTextField(
-              controller: controller,
-              enabled: enabled,
-              obscureText: obscureText,
-              keyboardType: keyboardType,
-              textAlign: suffixText == null ? TextAlign.start : TextAlign.end,
-              maxWidth: maxWidth,
-            ),
+      control: Align(
+        alignment: Alignment.centerRight,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: AppTextField(
+                  controller: controller,
+                  enabled: enabled,
+                  obscureText: obscureText,
+                  keyboardType: keyboardType,
+                  textAlign: suffixText == null
+                      ? TextAlign.start
+                      : TextAlign.end,
+                  maxWidth: double.infinity,
+                ),
+              ),
+              if (suffixText != null) ...[
+                const SizedBox(width: AppControlMetrics.iconLabelGap),
+                Text(
+                  suffixText!,
+                  style: AppTypography.formSuffix.copyWith(
+                    color: secondaryColor,
+                  ),
+                ),
+              ],
+              if (trailing != null) ...[
+                const SizedBox(width: AppSpacing.xs),
+                trailing!,
+              ],
+            ],
           ),
-          if (suffixText != null) ...[
-            const SizedBox(width: AppControlMetrics.iconLabelGap),
-            Text(
-              suffixText!,
-              style: AppTypography.formSuffix.copyWith(color: secondaryColor),
-            ),
-          ],
-          if (trailing != null) ...[
-            const SizedBox(width: AppSpacing.xs),
-            trailing!,
-          ],
-        ],
+        ),
       ),
     );
   }

@@ -7,7 +7,7 @@ import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
 class AppFormSliderRow extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final IconData? icon;
   final double value;
   final double min;
   final double max;
@@ -19,7 +19,7 @@ class AppFormSliderRow extends StatelessWidget {
   const AppFormSliderRow({
     super.key,
     required this.label,
-    required this.icon,
+    this.icon,
     required this.value,
     required this.min,
     required this.max,

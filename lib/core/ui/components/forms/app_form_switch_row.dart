@@ -5,7 +5,7 @@ import 'package:mochi_player/core/ui/components/forms/app_switch.dart';
 class AppFormSwitchRow extends StatelessWidget {
   final String title;
   final String? subtitle;
-  final IconData icon;
+  final IconData? icon;
   final bool value;
   final bool enabled;
   final ValueChanged<bool> onChanged;
@@ -13,7 +13,7 @@ class AppFormSwitchRow extends StatelessWidget {
   const AppFormSwitchRow({
     super.key,
     required this.title,
-    required this.icon,
+    this.icon,
     required this.value,
     required this.onChanged,
     this.subtitle,

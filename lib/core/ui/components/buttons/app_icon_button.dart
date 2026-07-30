@@ -12,6 +12,7 @@ class AppIconButton extends StatefulWidget {
   final Color? selectedColor;
   final Color? foregroundColor;
   final Color? backgroundColor;
+  final Color? hoverBackgroundColor;
   final Color? borderColor;
   final double size;
   final double iconSize;
@@ -26,6 +27,7 @@ class AppIconButton extends StatefulWidget {
     this.selectedColor,
     this.foregroundColor,
     this.backgroundColor,
+    this.hoverBackgroundColor,
     this.borderColor,
     this.size = 40,
     this.iconSize = 20,
@@ -55,12 +57,16 @@ class _AppIconButtonState extends State<AppIconButton> {
             ? Colors.white.withAlpha(34)
             : AppColors.hoverSurface(context));
     final hoverBackground =
+        widget.hoverBackgroundColor ??
         widget.backgroundColor ??
         (widget.selected
-            ? selectedColor.withAlpha(22)
+            ? selectedColor.withAlpha(34)
             : overlayTone
             ? Colors.white.withAlpha(50)
-            : AppColors.hoverSurface(context));
+            : Color.alphaBlend(
+                AppColors.hoverSurface(context),
+                restingBackground,
+              ));
     final borderColor =
         widget.borderColor ??
         (widget.selected

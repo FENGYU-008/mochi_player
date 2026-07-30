@@ -80,33 +80,48 @@ class _AppTextFieldState extends State<AppTextField> {
     final primary = AppColors.primary(context);
     final textColor = AppColors.textPrimary(context);
     final inputBackground = AppColors.inputBackground(context);
-    final restingBorder = AppColors.separator(context).withAlpha(150);
     final focusedBorder = primary.withAlpha(215);
+    final restingBorder = widget.enabled
+        ? focusedBorder.withAlpha(0)
+        : AppColors.separator(context).withAlpha(90);
+    final restingBackground = widget.enabled
+        ? inputBackground.withAlpha(0)
+        : inputBackground.withAlpha(85);
+    final borderRadius = BorderRadius.circular(AppRadii.small);
 
     return Align(
       alignment: Alignment.centerRight,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: widget.maxWidth),
         child: TweenAnimationBuilder<double>(
-          tween: Tween(end: _focusNode.hasFocus ? 1 : 0),
+          tween: Tween(end: widget.enabled && _focusNode.hasFocus ? 1 : 0),
           duration: AppControlMetrics.stateAnimationDuration,
           curve: Curves.easeOut,
           builder: (context, focusProgress, child) {
-            return Container(
+            return SizedBox(
               height: AppControlMetrics.inputHeight,
-              decoration: BoxDecoration(
-                color: inputBackground,
-                borderRadius: BorderRadius.circular(AppRadii.small),
-                border: Border.all(
-                  color: Color.lerp(
-                    restingBorder,
-                    focusedBorder,
-                    focusProgress,
-                  )!,
-                  width: 1 + (0.2 * focusProgress),
+              child: ClipRRect(
+                borderRadius: borderRadius,
+                clipBehavior: Clip.antiAlias,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Color.lerp(
+                      restingBackground,
+                      inputBackground,
+                      focusProgress,
+                    ),
+                    borderRadius: borderRadius,
+                    border: Border.all(
+                      color: Color.lerp(
+                        restingBorder,
+                        focusedBorder,
+                        focusProgress,
+                      )!,
+                    ),
+                  ),
+                  child: child,
                 ),
               ),
-              child: child,
             );
           },
           child: CupertinoTextField(
