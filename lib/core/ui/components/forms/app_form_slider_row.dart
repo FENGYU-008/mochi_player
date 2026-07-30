@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:mochi_player/core/ui/components/forms/app_form_row.dart';
+import 'package:mochi_player/core/ui/components/forms/app_slider.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-
-const _controlHeight = 36.0;
-const _labelWidth = 104.0;
-const _fieldGap = 6.0;
+import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
+import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
 class AppFormSliderRow extends StatelessWidget {
   final String label;
@@ -14,6 +13,7 @@ class AppFormSliderRow extends StatelessWidget {
   final double max;
   final int divisions;
   final String displayValue;
+  final bool enabled;
   final ValueChanged<double> onChanged;
 
   const AppFormSliderRow({
@@ -26,62 +26,33 @@ class AppFormSliderRow extends StatelessWidget {
     required this.divisions,
     required this.displayValue,
     required this.onChanged,
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: _controlHeight,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.compact),
-      child: Row(
+    return AppFormRow(
+      icon: icon,
+      label: label,
+      enabled: enabled,
+      control: Row(
         children: [
-          Icon(icon, size: 17, color: AppColors.textSecondary(context)),
-          const SizedBox(width: _fieldGap),
-          SizedBox(
-            width: _labelWidth,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: AppColors.textPrimary(context),
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
           Expanded(
-            child: SliderTheme(
-              data: SliderTheme.of(context).copyWith(
-                trackHeight: 3,
-                activeTrackColor: AppColors.primary(context),
-                inactiveTrackColor: AppColors.separator(context),
-                thumbColor: AppColors.primary(context),
-                overlayShape: SliderComponentShape.noOverlay,
-                thumbShape: const RoundSliderThumbShape(
-                  enabledThumbRadius: 7,
-                  disabledThumbRadius: 6,
-                ),
-                activeTickMarkColor: Colors.transparent,
-                inactiveTickMarkColor: Colors.transparent,
-                showValueIndicator: ShowValueIndicator.never,
-              ),
-              child: Slider(
-                value: value,
-                min: min,
-                max: max,
-                divisions: divisions,
-                onChanged: onChanged,
-              ),
+            child: AppSlider(
+              value: value,
+              min: min,
+              max: max,
+              divisions: divisions,
+              onChanged: enabled ? onChanged : null,
             ),
           ),
           SizedBox(
-            width: 36,
+            width: AppControlMetrics.sliderValueWidth,
             child: Text(
               displayValue,
               textAlign: TextAlign.end,
-              style: TextStyle(
+              style: AppTypography.formValueEmphasis.copyWith(
                 color: AppColors.textPrimary(context),
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
               ),
             ),
           ),

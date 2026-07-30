@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mochi_player/core/ui/theme/app_theme.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
+import 'package:mochi_player/core/ui/theme/app_theme.dart';
 
 class AppSearchBar extends StatefulWidget {
   const AppSearchBar({super.key});

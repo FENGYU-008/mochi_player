@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../theme/app_spacing.dart';
-import 'search_bar.dart';
+import 'package:mochi_player/core/ui/components/forms/search_bar.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 class AppHeader extends StatelessWidget {
   static const double height = 60;

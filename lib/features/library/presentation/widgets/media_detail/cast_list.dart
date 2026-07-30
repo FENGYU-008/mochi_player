@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mochi_player/features/library/presentation/view_models/media_detail_view_model.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
-import 'package:mochi_player/core/ui/widgets/horizontal_scroll_view.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 
 class CastList extends StatefulWidget {
   final MediaDetailViewModel viewModel;

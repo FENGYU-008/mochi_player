@@ -5,10 +5,7 @@ import 'package:mochi_player/features/library/application/media_library_provider
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
-import 'package:mochi_player/core/ui/theme/app_radii.dart';
-import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-import 'package:mochi_player/core/ui/widgets/app_select.dart';
-import 'package:mochi_player/core/ui/widgets/app_surface.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 
 class EpisodeList extends StatefulWidget {
   final TVShow tvShow;

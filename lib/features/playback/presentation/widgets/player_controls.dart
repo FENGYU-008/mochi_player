@@ -5,9 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import 'package:mochi_player/core/ui/theme/app_radii.dart';
-import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-import 'package:mochi_player/core/ui/widgets/glass_surface.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 
 class PlayerControls extends StatefulWidget {
   final Player player;
@@ -601,11 +599,9 @@ class _AudioMenuButton extends StatelessWidget {
           ),
       ],
       child: _PopupControlButton(
-        child: Icon(
+        child: const Icon(
           Icons.audiotrack_rounded,
-          color: selectedTrack == null || _isAuto(selectedTrack!)
-              ? Colors.white70
-              : Colors.white,
+          color: Colors.white,
           size: 20,
         ),
       ),
@@ -659,10 +655,6 @@ class _SubtitleMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeTrack = selectedTrack;
-    final hasSubtitleEnabled =
-        activeTrack != null && !_isAuto(activeTrack) && !_isOff(activeTrack);
-
     return PopupMenuButton<Object>(
       tooltip: '字幕',
       padding: EdgeInsets.zero,
@@ -738,9 +730,9 @@ class _SubtitleMenuButton extends StatelessWidget {
           ),
       ],
       child: _PopupControlButton(
-        child: Icon(
+        child: const Icon(
           Icons.closed_caption_rounded,
-          color: hasSubtitleEnabled ? Colors.white : Colors.white70,
+          color: Colors.white,
           size: 20,
         ),
       ),

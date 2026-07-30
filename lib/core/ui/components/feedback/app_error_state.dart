@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_spacing.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 class AppErrorState extends StatelessWidget {
   final String message;

@@ -6,9 +6,7 @@ import 'package:mochi_player/features/settings/application/app_settings_provider
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/media/media_type.dart';
-import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/widgets/app_icon_button.dart';
-import 'package:mochi_player/core/ui/widgets/app_empty_state.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:provider/provider.dart';
 
 class FileBrowserPage extends StatefulWidget {

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:mochi_player/core/ui/components/layout/app_surface.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
-import 'package:mochi_player/core/ui/widgets/app_surface.dart';
-
-const _controlHeight = 36.0;
-const _fieldGap = 6.0;
+import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
 class AppSegment<T> {
   final T value;
@@ -42,7 +41,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
             : maxWidth;
         return SizedBox(
           width: controlWidth,
-          height: _controlHeight,
+          height: AppControlMetrics.rowHeight,
           child: AppSurface(
             tone: AppSurfaceTone.elevated,
             showBorder: true,
@@ -119,14 +118,12 @@ class _SegmentButtonState<T> extends State<_SegmentButton<T>> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(widget.segment.icon, size: 16, color: foreground),
-              const SizedBox(width: _fieldGap),
+              const SizedBox(width: AppControlMetrics.iconLabelGap),
               Text(
                 widget.segment.label,
-                style: TextStyle(
+                style: AppTypography.controlLabel.copyWith(
                   color: foreground,
-                  fontSize: 13,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                  height: 1,
                 ),
               ),
             ],

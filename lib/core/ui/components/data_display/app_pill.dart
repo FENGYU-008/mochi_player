@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
-import '../theme/app_radii.dart';
-import '../theme/app_spacing.dart';
-import 'app_button.dart';
+import 'package:mochi_player/core/ui/components/buttons/app_button.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 class AppPill extends StatelessWidget {
   final String text;

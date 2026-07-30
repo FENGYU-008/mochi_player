@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:mochi_player/core/ui/widgets/app_button.dart';
-import 'package:mochi_player/core/ui/widgets/app_pill.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/models.dart';

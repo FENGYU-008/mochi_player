@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import '../theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
 
 class GlassSurface extends StatelessWidget {
   final Widget child;

@@ -1,0 +1,111 @@
+import 'package:flutter/material.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
+import 'package:mochi_player/core/ui/theme/app_typography.dart';
+
+class AppFormRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? subtitle;
+  final Widget control;
+  final bool enabled;
+  final bool expandControl;
+  final double? labelWidth;
+  final double? height;
+
+  const AppFormRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.control,
+    this.subtitle,
+    this.enabled = true,
+    this.expandControl = true,
+    this.labelWidth = AppControlMetrics.labelWidth,
+    this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = AppColors.textPrimary(context);
+    final secondaryColor = AppColors.textSecondary(context);
+    final resolvedHeight =
+        height ??
+        (subtitle == null
+            ? AppControlMetrics.rowHeight
+            : AppControlMetrics.descriptiveRowHeight);
+    final labelContent = _FormRowLabel(
+      label: label,
+      subtitle: subtitle,
+      textColor: enabled ? textColor : secondaryColor,
+      secondaryColor: secondaryColor,
+    );
+
+    return AnimatedOpacity(
+      duration: AppControlMetrics.stateAnimationDuration,
+      opacity: enabled ? 1 : 0.5,
+      child: SizedBox(
+        height: resolvedHeight,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.compact),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: AppControlMetrics.iconSize,
+                color: enabled ? secondaryColor : secondaryColor.withAlpha(100),
+              ),
+              const SizedBox(width: AppControlMetrics.iconLabelGap),
+              if (labelWidth == null)
+                Expanded(child: labelContent)
+              else
+                SizedBox(width: labelWidth, child: labelContent),
+              const SizedBox(width: AppControlMetrics.labelControlGap),
+              if (expandControl) Expanded(child: control) else control,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FormRowLabel extends StatelessWidget {
+  final String label;
+  final String? subtitle;
+  final Color textColor;
+  final Color secondaryColor;
+
+  const _FormRowLabel({
+    required this.label,
+    required this.subtitle,
+    required this.textColor,
+    required this.secondaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.formLabel.copyWith(color: textColor),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            subtitle!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.formSupporting.copyWith(color: secondaryColor),
+          ),
+        ],
+      ],
+    );
+  }
+}

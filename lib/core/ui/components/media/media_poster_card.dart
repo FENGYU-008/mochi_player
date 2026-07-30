@@ -162,11 +162,15 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            // 副标题
-            if (widget.subtitle != null) ...[
-              const SizedBox(height: AppSpacing.xxs),
-              Text(
-                widget.subtitle!,
+            // 始终保留副标题槽位，避免缺少副标题时图片区域被 Expanded 拉高。
+            const SizedBox(height: AppSpacing.xxs),
+            Visibility(
+              visible: widget.subtitle != null,
+              maintainState: true,
+              maintainAnimation: true,
+              maintainSize: true,
+              child: Text(
+                widget.subtitle ?? '\u00A0',
                 style: TextStyle(
                   fontSize: 12,
                   color: theme.textTheme.bodyMedium!.color!.withAlpha(153),
@@ -174,7 +178,7 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-            ],
+            ),
           ],
         ),
       ),

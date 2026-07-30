@@ -3,14 +3,9 @@ import 'package:provider/provider.dart';
 
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
-import 'package:mochi_player/core/ui/widgets/media_poster_card.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
-import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/widgets/app_header.dart';
-import 'package:mochi_player/core/ui/widgets/app_icon_button.dart';
-import 'package:mochi_player/core/ui/widgets/app_empty_state.dart';
-import 'package:mochi_player/core/ui/widgets/app_error_state.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 
 /// Section 类型
 enum SectionType { continueWatching, movies, tvShows, recentlyAdded }
