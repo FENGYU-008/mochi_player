@@ -47,18 +47,27 @@ class _FileListItemState extends State<FileListItem> {
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
         hoverColor: Colors.transparent,
-        child: AnimatedContainer(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: _isHovering ? 1 : 0),
           duration: const Duration(milliseconds: 150),
-          decoration: BoxDecoration(
-            color: _isHovering
-                ? theme.primaryColor.withAlpha(25)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadii.small),
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
+          curve: Curves.easeOut,
+          builder: (context, hoverProgress, child) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Color.lerp(
+                  Colors.transparent,
+                  theme.primaryColor.withAlpha(25),
+                  hoverProgress,
+                ),
+                borderRadius: BorderRadius.circular(AppRadii.small),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              child: child,
+            );
+          },
           child: Row(
             children: [
               // Icon

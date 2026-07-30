@@ -29,12 +29,9 @@ class AppSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final backgroundColor = tone == AppSurfaceTone.elevated
         ? AppColors.elevatedSurface(context)
-        : theme.brightness == Brightness.dark
-        ? Colors.white.withAlpha(12)
-        : Colors.black.withAlpha(6);
+        : AppColors.subtleSurface(context);
     final decoration = BoxDecoration(
       color: backgroundColor,
       borderRadius: borderRadius,

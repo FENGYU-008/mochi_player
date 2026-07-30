@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
@@ -9,6 +12,8 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'features/library/application/file_browser_provider.dart';
 import 'app/presentation/pages/main_page.dart';
+
+const _windowControlsChannel = MethodChannel('mochi_player/window_controls');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,20 +26,25 @@ void main() async {
   final appSettingsProvider = AppSettingsProvider();
   await appSettingsProvider.load();
 
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(1200, 800),
-    minimumSize: Size(900, 600),
+  final windowOptions = WindowOptions(
+    size: const Size(1200, 800),
+    minimumSize: const Size(900, 600),
     center: true,
     title: 'Mochi Player',
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
-    windowButtonVisibility: false,
+    windowButtonVisibility: Platform.isMacOS,
   );
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
     await windowManager.focus();
+    if (Platform.isMacOS) {
+      await _windowControlsChannel.invokeMethod<void>(
+        'positionNativeWindowButtons',
+      );
+    }
   });
 
   runApp(
@@ -61,6 +71,8 @@ class MyInfuseApp extends StatelessWidget {
       title: 'Mochi Player',
       debugShowCheckedModeBanner: false,
       themeMode: themeProvider.themeMode,
+      themeAnimationDuration: kThemeAnimationDuration,
+      themeAnimationCurve: Curves.linear,
 
       // 直接使用从 AppTheme 类中导入的主题
       theme: AppTheme.lightTheme,

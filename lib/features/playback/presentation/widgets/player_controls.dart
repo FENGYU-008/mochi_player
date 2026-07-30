@@ -759,17 +759,23 @@ class _PopupControlButtonState extends State<_PopupControlButton> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovering = true),
       onExit: (_) => setState(() => _isHovering = false),
-      child: AnimatedContainer(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(end: _isHovering ? 1 : 0),
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
-        width: widget.width,
-        height: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: _isHovering
-              ? Colors.white.withAlpha((255 * 0.2).round())
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+        builder: (context, hoverProgress, child) => Container(
+          width: widget.width,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Color.lerp(
+              Colors.transparent,
+              Colors.white.withAlpha((255 * 0.2).round()),
+              hoverProgress,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: child,
         ),
         child: widget.child,
       ),
@@ -847,19 +853,24 @@ class _ControlButtonState extends State<_ControlButton>
           animation: _controller,
           builder: (_, child) => Transform.scale(
             scale: _scaleAnim.value, // 缩放效果
-            child: AnimatedContainer(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: _isHovering ? 1 : 0),
               duration: const Duration(milliseconds: 200),
-              // 背景色渐变
               curve: Curves.easeOut,
-              width: width,
-              height: height,
-              padding: padding,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _isHovering
-                    ? Colors.white.withAlpha((255 * 0.2).round())
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(isFixed ? height / 2 : 8),
+              builder: (context, hoverProgress, child) => Container(
+                width: width,
+                height: height,
+                padding: padding,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Color.lerp(
+                    Colors.transparent,
+                    Colors.white.withAlpha((255 * 0.2).round()),
+                    hoverProgress,
+                  ),
+                  borderRadius: BorderRadius.circular(isFixed ? height / 2 : 8),
+                ),
+                child: child,
               ),
               child: child,
             ),

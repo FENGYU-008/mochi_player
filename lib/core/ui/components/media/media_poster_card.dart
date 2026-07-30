@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
@@ -75,111 +76,109 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 图片区域
-            Expanded(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutQuart,
-                transform: Matrix4.identity()
-                  ..scaleByDouble(
-                    _isHovering ? 1.025 : 1.0,
-                    _isHovering ? 1.025 : 1.0,
-                    1.0,
-                    1.0,
-                  ),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadii.card),
-                  boxShadow: _isHovering
-                      ? [
-                          BoxShadow(
-                            color: customTheme.cardShadowColor.withAlpha(10),
-                            blurRadius: 40,
-                            offset: const Offset(0, 20),
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: _isHovering ? 1 : 0),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutQuart,
+          builder: (context, hoverProgress, child) {
+            final titleColor = theme.textTheme.bodyMedium!.color!;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 图片区域
+                Expanded(
+                  child: Container(
+                    transform: Matrix4.identity()
+                      ..scaleByDouble(
+                        1 + (0.025 * hoverProgress),
+                        1 + (0.025 * hoverProgress),
+                        1.0,
+                        1.0,
+                      ),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadii.card),
+                      boxShadow: [
+                        BoxShadow(
+                          color: customTheme.cardShadowColor.withAlpha(
+                            (4 + (6 * hoverProgress)).round(),
                           ),
-                        ]
-                      : [
-                          BoxShadow(
-                            color: customTheme.cardShadowColor.withAlpha(4),
-                            blurRadius: 3,
-                            offset: const Offset(0, 1),
+                          blurRadius: 3 + (37 * hoverProgress),
+                          offset: Offset(0, 1 + (19 * hoverProgress)),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadii.card),
+                      child: Stack(
+                        children: [
+                          // 图片
+                          Positioned.fill(child: _buildImage(theme)),
+                          // 评分徽章 (左上角)
+                          if (widget.rating > 0)
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: _buildRatingBadge(theme),
+                            ),
+                          // 进度条 (底部)
+                          if (widget.showProgress && widget.progress != null)
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: _buildProgressBar(theme),
+                            ),
+                          // 悬停高光
+                          Positioned.fill(
+                            child: Opacity(
+                              opacity: 0.05 * hoverProgress,
+                              child: ColoredBox(
+                                color: AppColors.mediaHoverOverlay(context),
+                              ),
+                            ),
                           ),
                         ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadii.card),
-                  child: Stack(
-                    children: [
-                      // 图片
-                      Positioned.fill(child: _buildImage(theme)),
-                      // 评分徽章 (左上角)
-                      if (widget.rating > 0)
-                        Positioned(
-                          top: 8,
-                          left: 8,
-                          child: _buildRatingBadge(theme),
-                        ),
-                      // 进度条 (底部)
-                      if (widget.showProgress && widget.progress != null)
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: _buildProgressBar(theme),
-                        ),
-                      // 悬停高光
-                      AnimatedOpacity(
-                        duration: const Duration(milliseconds: 300),
-                        opacity: _isHovering ? 0.05 : 0.0,
-                        child: Container(
-                          color: theme.brightness == Brightness.light
-                              ? Colors.white
-                              : Colors.black,
-                        ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.compact),
-            // 标题
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                color: _isHovering
-                    ? theme.textTheme.bodyMedium!.color!.withAlpha(204)
-                    : theme.textTheme.bodyMedium!.color,
-              ),
-              child: Text(
-                widget.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            // 始终保留副标题槽位，避免缺少副标题时图片区域被 Expanded 拉高。
-            const SizedBox(height: AppSpacing.xxs),
-            Visibility(
-              visible: widget.subtitle != null,
-              maintainState: true,
-              maintainAnimation: true,
-              maintainSize: true,
-              child: Text(
-                widget.subtitle ?? '\u00A0',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: theme.textTheme.bodyMedium!.color!.withAlpha(153),
+                const SizedBox(height: AppSpacing.compact),
+                // 标题
+                Text(
+                  widget.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: Color.lerp(
+                      titleColor,
+                      titleColor.withAlpha(204),
+                      hoverProgress,
+                    ),
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+                // 始终保留副标题槽位，避免缺少副标题时图片区域被 Expanded 拉高。
+                const SizedBox(height: AppSpacing.xxs),
+                Visibility(
+                  visible: widget.subtitle != null,
+                  maintainState: true,
+                  maintainAnimation: true,
+                  maintainSize: true,
+                  child: Text(
+                    widget.subtitle ?? '\u00A0',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.textTheme.bodyMedium!.color!.withAlpha(153),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

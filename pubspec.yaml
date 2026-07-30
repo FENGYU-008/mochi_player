@@ -39,7 +39,6 @@ dependencies:
   window_manager: ^0.5.1
   intl: ^0.20.2
   shared_preferences: ^2.2.3
-  flutter_svg: ^2.0.10
   webdav_client: ^1.2.2
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1

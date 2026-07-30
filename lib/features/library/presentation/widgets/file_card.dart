@@ -48,62 +48,73 @@ class _FileCardState extends State<FileCard> {
         highlightColor: Colors.transparent,
         hoverColor: Colors.transparent,
         borderRadius: BorderRadius.circular(AppRadii.control),
-        child: AnimatedContainer(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: _isHovering ? 1 : 0),
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            color: _isHovering
-                ? theme.primaryColor.withAlpha(25)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadii.control),
-            border: Border.all(
-              color: _isHovering
-                  ? theme.primaryColor.withAlpha(77)
-                  : Colors.transparent,
-              width: 1,
-            ),
-          ),
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // === 图标区域 ===
-              Expanded(
-                child: Icon(
-                  iconData,
-                  size: 56, // 稍微减小图标尺寸
-                  color: iconColor,
+          builder: (context, hoverProgress, child) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Color.lerp(
+                  Colors.transparent,
+                  theme.primaryColor.withAlpha(25),
+                  hoverProgress,
+                ),
+                borderRadius: BorderRadius.circular(AppRadii.control),
+                border: Border.all(
+                  color: Color.lerp(
+                    Colors.transparent,
+                    theme.primaryColor.withAlpha(77),
+                    hoverProgress,
+                  )!,
+                  width: 1,
                 ),
               ),
-              const SizedBox(height: 8),
-              // === 标题 ===
-              Text(
-                widget.item.fileName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: _isHovering
-                      ? theme.primaryColor
-                      : theme.textTheme.bodyMedium!.color,
-                ),
-              ),
-              const SizedBox(height: 2),
-              // === 副标题 ===
-              if (subtitle.isNotEmpty)
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: theme.textTheme.titleMedium!.color,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // === 图标区域 ===
+                  Expanded(
+                    child: Icon(
+                      iconData,
+                      size: 56, // 稍微减小图标尺寸
+                      color: iconColor,
+                    ),
                   ),
-                ),
-            ],
-          ),
+                  const SizedBox(height: 8),
+                  // === 标题 ===
+                  Text(
+                    widget.item.fileName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Color.lerp(
+                        theme.textTheme.bodyMedium!.color,
+                        theme.primaryColor,
+                        hoverProgress,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  // === 副标题 ===
+                  if (subtitle.isNotEmpty)
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: theme.textTheme.titleMedium!.color,
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

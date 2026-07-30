@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/playback/presentation/pages/player_page.dart';
@@ -156,12 +157,11 @@ class PlaybackLauncher {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        final theme = Theme.of(sheetContext); // 获取 Sheet 的 Theme
-        final isDark = theme.brightness == Brightness.dark;
+        final theme = Theme.of(sheetContext);
 
         return Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF2C2C2E) : Colors.white,
+            color: AppColors.modalSurface(sheetContext),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(

@@ -20,6 +20,7 @@ export 'components/layout/glass_surface.dart';
 export 'components/layout/horizontal_scroll_view.dart';
 export 'components/media/media_poster_card.dart';
 export 'components/navigation/app_header.dart';
+export 'components/overlays/app_confirm_dialog.dart';
 export 'components/overlays/app_modal.dart';
 export 'theme/app_colors.dart';
 export 'theme/app_control_metrics.dart';

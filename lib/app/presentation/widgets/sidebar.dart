@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/app/presentation/widgets/macos_traffic_lights.dart';
 import 'package:window_manager/window_manager.dart';
+
+class _SidebarMetrics {
+  const _SidebarMetrics._();
+
+  static const width = 224.0;
+  static const topDragAreaHeight = 60.0;
+  static const horizontalInset = 16.0;
+  static const sectionGap = 16.0;
+  static const itemHeight = 36.0;
+  static const itemVerticalGap = 1.0;
+  static const itemHorizontalPadding = 12.0;
+  static const itemRadius = 8.0;
+  static const itemIconSize = 17.0;
+  static const itemIconLabelGap = 10.0;
+}
 
 class Sidebar extends StatelessWidget {
   final int selectedIndex;
@@ -18,7 +32,7 @@ class Sidebar extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: 250,
+      width: _SidebarMetrics.width,
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground(context),
         border: Border(
@@ -28,19 +42,13 @@ class Sidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 顶部拖动区域，为 macOS 原生红绿灯按钮留出空间
+          // 顶部拖动区域同时为 macOS 原生窗口按钮留出空间。
           GestureDetector(
             behavior: HitTestBehavior.translucent,
-            onPanStart: (details) {
-              windowManager.startDragging();
-            },
+            onPanStart: (_) => windowManager.startDragging(),
             child: const SizedBox(
-              height: 60,
+              height: _SidebarMetrics.topDragAreaHeight,
               width: double.infinity,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: MacosTrafficLights(),
-              ),
             ),
           ),
 
@@ -51,12 +59,12 @@ class Sidebar extends StatelessWidget {
             _ItemConfig(Icons.tv, "剧集", 2),
           ]),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: _SidebarMetrics.sectionGap),
 
           _buildSectionTitle("来源", context),
           _buildGroup([_ItemConfig(Icons.folder_open_outlined, "文件浏览", 3)]),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: _SidebarMetrics.sectionGap),
 
           _buildSectionTitle("列表", context),
           _buildGroup([_ItemConfig(Icons.favorite_border, "收藏", 4)]),
@@ -65,7 +73,9 @@ class Sidebar extends StatelessWidget {
           Divider(height: 1, color: theme.dividerColor),
           const SizedBox(height: 10),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: _SidebarMetrics.horizontalInset,
+            ),
             child: _SidebarItem(
               icon: Icons.settings_outlined,
               title: "设置",
@@ -101,7 +111,10 @@ class Sidebar extends StatelessWidget {
     return Column(
       children: items.map((item) {
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          padding: const EdgeInsets.symmetric(
+            horizontal: _SidebarMetrics.horizontalInset,
+            vertical: _SidebarMetrics.itemVerticalGap,
+          ),
           child: _SidebarItem(
             icon: item.icon,
             title: item.title,
@@ -149,19 +162,11 @@ class _SidebarItemState extends State<_SidebarItem> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isSelected = widget.selectedIndex == widget.index;
-
-    Color backgroundColor = Colors.transparent;
-    if (isSelected) {
-      backgroundColor = AppColors.primary(context);
-    } else if (_isHovering) {
-      backgroundColor = theme.textTheme.bodyMedium!.color!.withAlpha(
-        (255 * 0.05).round(),
-      );
-    }
-
-    final foregroundColor = isSelected
-        ? Colors.white
-        : theme.textTheme.titleMedium!.color!;
+    final primary = AppColors.primary(context);
+    final restingForeground = theme.textTheme.titleMedium!.color!;
+    final hoverBackground = theme.textTheme.bodyMedium!.color!.withAlpha(
+      (255 * 0.05).round(),
+    );
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
@@ -169,29 +174,67 @@ class _SidebarItemState extends State<_SidebarItem> {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () => widget.onTap(widget.index),
-        child: AnimatedContainer(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: isSelected ? 1 : 0),
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Icon(widget.icon, size: 18, color: foregroundColor),
-              const SizedBox(width: 12),
-              Text(
-                widget.title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: foregroundColor,
-                ),
-              ),
-            ],
-          ),
+          builder: (context, selectionProgress, child) {
+            return TweenAnimationBuilder<double>(
+              tween: Tween(end: _isHovering && !isSelected ? 1 : 0),
+              duration: const Duration(milliseconds: 140),
+              curve: Curves.easeOut,
+              builder: (context, hoverProgress, child) {
+                final unselectedBackground = Color.lerp(
+                  Colors.transparent,
+                  hoverBackground,
+                  hoverProgress,
+                )!;
+                final backgroundColor = Color.lerp(
+                  unselectedBackground,
+                  primary,
+                  selectionProgress,
+                )!;
+                final foregroundColor = Color.lerp(
+                  restingForeground,
+                  Colors.white,
+                  selectionProgress,
+                )!;
+                return Container(
+                  height: _SidebarMetrics.itemHeight,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: _SidebarMetrics.itemHorizontalPadding,
+                  ),
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(
+                      _SidebarMetrics.itemRadius,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.icon,
+                        size: _SidebarMetrics.itemIconSize,
+                        color: foregroundColor,
+                      ),
+                      const SizedBox(width: _SidebarMetrics.itemIconLabelGap),
+                      Text(
+                        widget.title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: foregroundColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              child: child,
+            );
+          },
         ),
       ),
     );

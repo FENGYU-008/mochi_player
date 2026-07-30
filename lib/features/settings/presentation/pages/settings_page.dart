@@ -112,7 +112,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               children: [
                 Align(
-                  alignment: Alignment.topCenter,
+                  alignment: Alignment.topLeft,
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 760),
                     child: Column(
@@ -510,26 +510,13 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _confirmRescrapeLibrary() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppConfirmDialog(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('补全媒体库元数据？'),
-          content: const Text(
-            '这会先同步 WebDAV 根目录，移除已不存在的本地记录，然后只为缺少元数据的文件请求 TMDB。已有匹配结果、播放进度和收藏会保留。',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('开始补全'),
-            ),
-          ],
-        );
-      },
+      title: '补全媒体库元数据？',
+      message:
+          '这会先同步 WebDAV 根目录，移除已不存在的本地记录，然后只为缺少元数据的文件请求 TMDB。已有匹配结果、播放进度和收藏会保留。',
+      confirmLabel: '开始补全',
+      icon: Icons.manage_search_rounded,
     );
 
     if (confirmed != true || !mounted) return;
@@ -558,28 +545,13 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _confirmClearLibrary() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppConfirmDialog(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('清空媒体库？'),
-          content: const Text('这会清空本地扫描文件、元数据、播放进度和收藏，不会删除 WebDAV 上的文件。'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('清空'),
-            ),
-          ],
-        );
-      },
+      title: '清空媒体库？',
+      message: '这会清空本地扫描文件、元数据、播放进度和收藏，不会删除 WebDAV 上的文件。',
+      confirmLabel: '清空',
+      icon: Icons.delete_sweep_rounded,
+      destructive: true,
     );
 
     if (confirmed != true || !mounted) return;

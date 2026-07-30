@@ -83,9 +83,7 @@ class AppModalScaffold extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.brightness == Brightness.light
-            ? Colors.white
-            : const Color(0xFF2C2C2E),
+        color: AppColors.modalSurface(context),
         borderRadius: borderRadius,
         boxShadow: [
           BoxShadow(

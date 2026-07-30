@@ -47,12 +47,19 @@ class _AppIconButtonState extends State<AppIconButton> {
         ? selectedColor
         : widget.foregroundColor ??
               AppColors.textPrimary(context).withAlpha(214);
-    final background =
+    final restingBackground =
         widget.backgroundColor ??
         (widget.selected
             ? selectedColor.withAlpha(22)
             : overlayTone
-            ? Colors.white.withAlpha(_isHovering ? 50 : 34)
+            ? Colors.white.withAlpha(34)
+            : AppColors.hoverSurface(context));
+    final hoverBackground =
+        widget.backgroundColor ??
+        (widget.selected
+            ? selectedColor.withAlpha(22)
+            : overlayTone
+            ? Colors.white.withAlpha(50)
             : AppColors.hoverSurface(context));
     final borderColor =
         widget.borderColor ??
@@ -70,15 +77,27 @@ class _AppIconButtonState extends State<AppIconButton> {
         cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
         child: GestureDetector(
           onTap: widget.onPressed,
-          child: AnimatedContainer(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: _isHovering && enabled ? 1 : 0),
             duration: const Duration(milliseconds: 140),
-            width: widget.size,
-            height: widget.size,
-            decoration: BoxDecoration(
-              color: enabled ? background : background.withAlpha(80),
-              shape: BoxShape.circle,
-              border: Border.all(color: borderColor),
-            ),
+            curve: Curves.easeOut,
+            builder: (context, hoverProgress, child) {
+              final background = Color.lerp(
+                restingBackground,
+                hoverBackground,
+                hoverProgress,
+              )!;
+              return Container(
+                width: widget.size,
+                height: widget.size,
+                decoration: BoxDecoration(
+                  color: enabled ? background : background.withAlpha(80),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: borderColor),
+                ),
+                child: child,
+              );
+            },
             child: Icon(widget.icon, size: widget.iconSize, color: foreground),
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mochi_player/core/domain/media/trending_item.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
 
 /// 趋势分类卡片配置
 class TrendingCardConfig {
@@ -178,10 +179,7 @@ class _TrendingListItemState extends State<_TrendingListItem> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final hoverBgColor = isDark
-        ? Colors.white.withAlpha(15)
-        : Colors.black.withAlpha(8);
+    final hoverBgColor = AppColors.hoverSurface(context);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),

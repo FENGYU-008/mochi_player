@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'package:mochi_player/core/ui/components/forms/search_bar.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 class AppHeader extends StatelessWidget {
@@ -28,9 +29,7 @@ class AppHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final clampedOpacity = opacity.clamp(0.0, 1.0).toDouble();
-    final backgroundColor = theme.brightness == Brightness.light
-        ? Colors.white.withAlpha((255 * 0.85).round())
-        : const Color(0xFF2C2C2E).withAlpha((255 * 0.85).round());
+    final backgroundColor = AppColors.headerBackground(context);
 
     return IgnorePointer(
       ignoring: ignoreWhenTransparent && clampedOpacity < 0.1,

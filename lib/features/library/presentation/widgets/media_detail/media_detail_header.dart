@@ -19,10 +19,7 @@ class MediaDetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cardColor = theme.brightness == Brightness.dark
-        ? const Color(0xFF1C1C1E)
-        : Colors.white;
+    final cardColor = Theme.of(context).scaffoldBackgroundColor;
 
     return RepaintBoundary(
       child: SizedBox(

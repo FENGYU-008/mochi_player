@@ -147,28 +147,33 @@ class _GlassScrollButtonState extends State<_GlassScrollButton> {
               borderRadius: BorderRadius.circular(30), // 圆形
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // 高斯模糊
-                child: AnimatedContainer(
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(end: _isHoveringButton ? 1 : 0),
                   duration: const Duration(milliseconds: 200),
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withAlpha(
-                      (255 * (_isHoveringButton ? 0.6 : 0.4)).round(),
-                    ), // 半透明黑底
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withAlpha(
-                        (255 * 0.1).round(),
-                      ), // 极细的微光边框
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha((255 * 0.2).round()),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                  curve: Curves.easeOut,
+                  builder: (context, hoverProgress, child) => Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Color.lerp(
+                        Colors.black.withAlpha((255 * 0.4).round()),
+                        Colors.black.withAlpha((255 * 0.6).round()),
+                        hoverProgress,
                       ),
-                    ],
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withAlpha((255 * 0.1).round()),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha((255 * 0.2).round()),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: child,
                   ),
                   child: Icon(
                     widget.icon,

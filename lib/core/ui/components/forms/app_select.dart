@@ -37,7 +37,6 @@ class AppSelect<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final selectedLabel = _labelFor(value) ?? placeholder;
     final foreground = AppColors.textPrimary(context).withAlpha(230);
     final isEnabled = enabled && onSelected != null;
@@ -60,7 +59,7 @@ class AppSelect<T> extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
           ),
-          color: isDark ? const Color(0xFF2A2A2D) : Colors.white,
+          color: AppColors.selectMenuSurface(context),
           elevation: 6,
           tooltip: '',
           onSelected: onSelected,
@@ -102,15 +101,9 @@ class AppSelect<T> extends StatelessWidget {
             height: height,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withAlpha(14)
-                    : Colors.black.withAlpha(6),
+                color: AppColors.selectControlSurface(context),
                 borderRadius: BorderRadius.circular(borderRadius),
-                border: Border.all(
-                  color: AppColors.textPrimary(
-                    context,
-                  ).withAlpha(isDark ? 42 : 24),
-                ),
+                border: Border.all(color: AppColors.selectBorder(context)),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(

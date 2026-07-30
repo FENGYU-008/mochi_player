@@ -94,42 +94,60 @@ class _SegmentButtonState<T> extends State<_SegmentButton<T>> {
   Widget build(BuildContext context) {
     final primary = AppColors.primary(context);
     final selected = widget.selected;
-    final foreground = selected
-        ? Colors.white
-        : AppColors.textPrimary(context).withAlpha(220);
-    final background = selected
-        ? primary
-        : _hovering
-        ? AppColors.hoverSurface(context)
-        : Colors.transparent;
+    final restingForeground = AppColors.textPrimary(context).withAlpha(220);
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onPressed,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
-          height: double.infinity,
-          color: background,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(widget.segment.icon, size: 16, color: foreground),
-              const SizedBox(width: AppControlMetrics.iconLabelGap),
-              Text(
-                widget.segment.label,
-                style: AppTypography.controlLabel.copyWith(
-                  color: foreground,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: selected ? 1 : 0),
+      duration: kThemeAnimationDuration,
+      curve: Curves.linear,
+      builder: (context, selectionProgress, child) {
+        final foreground = Color.lerp(
+          restingForeground,
+          Colors.white,
+          selectionProgress,
+        )!;
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hovering = true),
+          onExit: (_) => setState(() => _hovering = false),
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: widget.onPressed,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ColoredBox(
+                  color: Color.lerp(
+                    Colors.transparent,
+                    primary,
+                    selectionProgress,
+                  )!,
                 ),
-              ),
-            ],
+                AnimatedOpacity(
+                  duration: AppControlMetrics.stateAnimationDuration,
+                  opacity: !selected && _hovering ? 1 : 0,
+                  child: ColoredBox(color: AppColors.hoverSurface(context)),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(widget.segment.icon, size: 16, color: foreground),
+                    const SizedBox(width: AppControlMetrics.iconLabelGap),
+                    Text(
+                      widget.segment.label,
+                      style: AppTypography.controlLabel.copyWith(
+                        color: foreground,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

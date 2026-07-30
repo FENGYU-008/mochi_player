@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/theme/app_radii.dart';
-import 'package:mochi_player/core/ui/theme/app_spacing.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 
 class SettingsTestButton extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -10,23 +8,14 @@ class SettingsTestButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextButton(
+    return AppActionButton(
       onPressed: onPressed,
-      style: TextButton.styleFrom(
-        foregroundColor: AppColors.textPrimary(context),
-        backgroundColor: AppColors.elevatedSurface(context),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xs,
-        ),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.control),
-          side: BorderSide(color: AppColors.separator(context)),
-        ),
-      ),
-      child: const Text('测试连接', style: TextStyle(fontSize: 13)),
+      label: '测试连接',
+      variant: AppButtonVariant.secondary,
+      height: AppControlMetrics.inputHeight,
+      borderRadius: AppRadii.control,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      textStyle: AppTypography.controlLabel,
     );
   }
 }

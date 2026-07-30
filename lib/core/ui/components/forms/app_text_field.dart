@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
@@ -80,27 +79,36 @@ class _AppTextFieldState extends State<AppTextField> {
   Widget build(BuildContext context) {
     final primary = AppColors.primary(context);
     final textColor = AppColors.textPrimary(context);
-    final inputBackground = Theme.of(context).brightness == Brightness.dark
-        ? Colors.black.withAlpha(36)
-        : Colors.white.withAlpha(210);
+    final inputBackground = AppColors.inputBackground(context);
+    final restingBorder = AppColors.separator(context).withAlpha(150);
+    final focusedBorder = primary.withAlpha(215);
 
     return Align(
       alignment: Alignment.centerRight,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: widget.maxWidth),
-        child: AnimatedContainer(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: _focusNode.hasFocus ? 1 : 0),
           duration: AppControlMetrics.stateAnimationDuration,
-          height: AppControlMetrics.inputHeight,
-          decoration: BoxDecoration(
-            color: inputBackground,
-            borderRadius: BorderRadius.circular(AppRadii.small),
-            border: Border.all(
-              color: _focusNode.hasFocus
-                  ? primary.withAlpha(215)
-                  : AppColors.separator(context).withAlpha(150),
-              width: _focusNode.hasFocus ? 1.2 : 1,
-            ),
-          ),
+          curve: Curves.easeOut,
+          builder: (context, focusProgress, child) {
+            return Container(
+              height: AppControlMetrics.inputHeight,
+              decoration: BoxDecoration(
+                color: inputBackground,
+                borderRadius: BorderRadius.circular(AppRadii.small),
+                border: Border.all(
+                  color: Color.lerp(
+                    restingBorder,
+                    focusedBorder,
+                    focusProgress,
+                  )!,
+                  width: 1 + (0.2 * focusProgress),
+                ),
+              ),
+              child: child,
+            );
+          },
           child: CupertinoTextField(
             controller: widget.controller,
             enabled: widget.enabled,

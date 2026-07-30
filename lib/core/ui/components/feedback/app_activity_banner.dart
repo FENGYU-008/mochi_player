@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
@@ -20,9 +21,7 @@ class AppActivityBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final baseSurfaceColor = theme.brightness == Brightness.light
-        ? Colors.white.withAlpha(235)
-        : const Color(0xFF1F1F22).withAlpha(242);
+    final baseSurfaceColor = AppColors.activitySurface(context);
     final accentColor = _accentColor(context);
     final isStatusMessage =
         tone == AppActivityBannerTone.success ||

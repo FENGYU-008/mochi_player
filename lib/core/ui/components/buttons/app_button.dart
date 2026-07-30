@@ -10,8 +10,9 @@ enum AppControlTone { adaptive, overlay }
 
 class AppActionButton extends StatefulWidget {
   final VoidCallback? onPressed;
-  final IconData icon;
+  final IconData? icon;
   final String label;
+  final TextStyle? textStyle;
   final AppButtonVariant variant;
   final AppControlTone tone;
   final bool destructive;
@@ -23,8 +24,9 @@ class AppActionButton extends StatefulWidget {
   const AppActionButton({
     super.key,
     required this.onPressed,
-    required this.icon,
     required this.label,
+    this.icon,
+    this.textStyle,
     this.variant = AppButtonVariant.primary,
     this.tone = AppControlTone.adaptive,
     this.destructive = false,
@@ -45,24 +47,30 @@ class _AppActionButtonState extends State<AppActionButton> {
   Widget build(BuildContext context) {
     final enabled = widget.onPressed != null && !widget.busy;
     final isPrimary = widget.variant == AppButtonVariant.primary;
-    final isDestructive = widget.destructive && !isPrimary;
+    final isDestructive = widget.destructive;
     final primary = AppColors.primary(context);
     final danger = Colors.redAccent;
+    final actionColor = isDestructive ? danger : primary;
     final overlayTone = widget.tone == AppControlTone.overlay;
     final adaptiveSurface = AppColors.elevatedSurface(context);
     final adaptiveHoverSurface = Color.alphaBlend(
       AppColors.hoverSurface(context),
       adaptiveSurface,
     );
-    final background = isPrimary
-        ? primary
+    final restingBackground = isPrimary
+        ? actionColor
         : isDestructive
-        ? danger.withAlpha(_isHovering ? 26 : 14)
+        ? danger.withAlpha(14)
         : overlayTone
-        ? Colors.black.withAlpha(_isHovering ? 100 : 76)
-        : _isHovering
-        ? adaptiveHoverSurface
+        ? Colors.black.withAlpha(76)
         : adaptiveSurface;
+    final hoverBackground = isPrimary
+        ? actionColor
+        : isDestructive
+        ? danger.withAlpha(26)
+        : overlayTone
+        ? Colors.black.withAlpha(100)
+        : adaptiveHoverSurface;
     final foreground = isPrimary
         ? Colors.white
         : isDestructive
@@ -70,15 +78,22 @@ class _AppActionButtonState extends State<AppActionButton> {
         : overlayTone
         ? Colors.white.withAlpha(235)
         : AppColors.textPrimary(context).withAlpha(220);
-    final borderColor = isPrimary
+    final restingBorderColor = isPrimary
         ? Colors.transparent
         : isDestructive
-        ? danger.withAlpha(_isHovering ? 190 : 128)
+        ? danger.withAlpha(128)
         : overlayTone
-        ? Colors.white.withAlpha(_isHovering ? 92 : 58)
+        ? Colors.white.withAlpha(58)
+        : AppColors.separator(context);
+    final hoverBorderColor = isPrimary
+        ? Colors.transparent
+        : isDestructive
+        ? danger.withAlpha(190)
+        : overlayTone
+        ? Colors.white.withAlpha(92)
         : AppColors.separator(context);
     final disabledBackground = isPrimary
-        ? primary.withAlpha(90)
+        ? actionColor.withAlpha(90)
         : isDestructive
         ? danger.withAlpha(14)
         : overlayTone
@@ -94,25 +109,45 @@ class _AppActionButtonState extends State<AppActionButton> {
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 120),
           opacity: enabled ? 1 : 0.45,
-          child: AnimatedContainer(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: _isHovering && enabled ? 1 : 0),
             duration: const Duration(milliseconds: 140),
             curve: Curves.easeOut,
-            height: widget.height,
-            padding: widget.padding,
-            decoration: BoxDecoration(
-              color: enabled ? background : disabledBackground,
-              borderRadius: BorderRadius.circular(widget.borderRadius),
-              border: Border.all(color: borderColor),
-              boxShadow: isPrimary && enabled
-                  ? [
-                      BoxShadow(
-                        color: primary.withAlpha(_isHovering ? 78 : 46),
-                        blurRadius: _isHovering ? 18 : 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ]
-                  : null,
-            ),
+            builder: (context, hoverProgress, child) {
+              return Container(
+                height: widget.height,
+                padding: widget.padding,
+                decoration: BoxDecoration(
+                  color: enabled
+                      ? Color.lerp(
+                          restingBackground,
+                          hoverBackground,
+                          hoverProgress,
+                        )
+                      : disabledBackground,
+                  borderRadius: BorderRadius.circular(widget.borderRadius),
+                  border: Border.all(
+                    color: Color.lerp(
+                      restingBorderColor,
+                      hoverBorderColor,
+                      hoverProgress,
+                    )!,
+                  ),
+                  boxShadow: isPrimary && enabled
+                      ? [
+                          BoxShadow(
+                            color: actionColor.withAlpha(
+                              (46 + (32 * hoverProgress)).round(),
+                            ),
+                            blurRadius: 12 + (6 * hoverProgress),
+                            offset: const Offset(0, 6),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: child,
+              );
+            },
             child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -126,17 +161,20 @@ class _AppActionButtonState extends State<AppActionButton> {
                       color: foreground,
                     ),
                   )
-                else
+                else if (widget.icon != null)
                   Icon(widget.icon, size: 19, color: foreground),
-                const SizedBox(width: 8),
+                if (widget.busy || widget.icon != null)
+                  const SizedBox(width: 8),
                 Text(
                   widget.label,
-                  style: TextStyle(
-                    color: foreground,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    height: 1,
-                  ),
+                  style:
+                      widget.textStyle?.copyWith(color: foreground) ??
+                      TextStyle(
+                        color: foreground,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                      ),
                 ),
               ],
             ),

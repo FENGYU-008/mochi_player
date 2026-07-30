@@ -131,16 +131,24 @@ class _FavoriteLabelButtonState extends State<_FavoriteLabelButton> {
         : widget.overlayTone
         ? Colors.white.withAlpha(235)
         : AppColors.textPrimary(context).withAlpha(220);
-    final background = widget.overlayTone
-        ? Colors.black.withAlpha(_hovering ? 100 : 76)
+    final restingBackground = widget.overlayTone
+        ? Colors.black.withAlpha(76)
+        : AppColors.elevatedSurface(context);
+    final hoveredBackground = widget.overlayTone
+        ? Colors.black.withAlpha(100)
         : Color.alphaBlend(
             AppColors.hoverSurface(context),
             AppColors.elevatedSurface(context),
           );
-    final borderColor = widget.selected
+    final restingBorder = widget.selected
         ? selectedColor.withAlpha(widget.overlayTone ? 170 : 120)
         : widget.overlayTone
-        ? Colors.white.withAlpha(_hovering ? 92 : 58)
+        ? Colors.white.withAlpha(58)
+        : AppColors.separator(context);
+    final hoveredBorder = widget.selected
+        ? restingBorder
+        : widget.overlayTone
+        ? Colors.white.withAlpha(92)
         : AppColors.separator(context);
 
     return MouseRegion(
@@ -149,15 +157,25 @@ class _FavoriteLabelButtonState extends State<_FavoriteLabelButton> {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onPressed,
-        child: AnimatedContainer(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: _hovering ? 1 : 0),
           duration: const Duration(milliseconds: 140),
           curve: Curves.easeOut,
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: borderColor),
+          builder: (context, hoverProgress, child) => Container(
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            decoration: BoxDecoration(
+              color: Color.lerp(
+                restingBackground,
+                hoveredBackground,
+                hoverProgress,
+              ),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Color.lerp(restingBorder, hoveredBorder, hoverProgress)!,
+              ),
+            ),
+            child: child,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
