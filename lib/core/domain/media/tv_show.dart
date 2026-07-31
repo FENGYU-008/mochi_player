@@ -1,20 +1,33 @@
 import 'artist.dart';
+import 'library_item.dart';
 import 'season.dart';
 
 /// 电视剧 Domain Model
-class TVShow {
+class TVShow implements LibraryItem {
+  @override
   final String tmdbId;
+  @override
   final String title;
+  @override
   final String? originalTitle;
+  @override
   final int? releaseYear;
   final DateTime? firstAirDate;
+  @override
   final String? posterUrl;
+  @override
   final String? backdropUrl;
+  @override
   final String? logoUrl;
+  @override
   final String? overview;
+  @override
   final String? certification;
+  @override
   final double rating;
+  @override
   final List<String> genres;
+  @override
   final List<Artist> cast;
   final String? status;
   final int? numberOfSeasons;

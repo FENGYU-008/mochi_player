@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
-import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
-import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
-import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
+import 'package:mochi_player/features/library/presentation/widgets/continue_watching_card.dart';
+import 'package:mochi_player/features/library/presentation/widgets/library_item_poster_card.dart';
 
 /// Section 类型
 enum SectionType { continueWatching, movies, tvShows, recentlyAdded }
@@ -112,45 +111,15 @@ class _SectionViewPageState extends State<SectionViewPage> {
             left: 0,
             right: 0,
             height: AppHeader.height,
-            child: _SectionTopBar(
+            child: AppHeader(
               title: _sectionTitle(widget.sectionType),
+              showBackButton: true,
               onBack: widget.onBack,
             ),
           ),
         ],
       ),
     );
-  }
-}
-
-class _SectionTopBar extends StatelessWidget {
-  final String title;
-  final VoidCallback? onBack;
-
-  const _SectionTopBar({required this.title, required this.onBack});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppHeader(
-      title: title,
-      leading: AppIconButton(
-        onPressed: () => _goBack(context),
-        icon: Icons.arrow_back_rounded,
-        tooltip: '返回',
-        foregroundColor: AppColors.textPrimary(context),
-        backgroundColor: AppColors.hoverSurface(context),
-        size: 36,
-        iconSize: 20,
-      ),
-    );
-  }
-
-  void _goBack(BuildContext context) {
-    if (onBack != null) {
-      onBack!();
-      return;
-    }
-    Navigator.of(context).maybePop();
   }
 }
 
@@ -181,14 +150,35 @@ class _SectionPageContent extends StatelessWidget {
         }
 
         final provider = context.read<MediaLibraryProvider>();
-        final itemCount = _itemCount(provider, sectionType);
-        if (itemCount == 0) {
-          return _EmptySectionState(title: _sectionTitle(sectionType));
-        }
-
-        return _buildGrid(context, provider, itemCount);
+        return switch (sectionType) {
+          SectionType.continueWatching => _buildSection(
+            provider.continueWatchingItems,
+            (item) => ContinueWatchingCard(item: item),
+          ),
+          SectionType.recentlyAdded => _buildSection(
+            provider.recentlyAddedContent,
+            (item) => LibraryItemPosterCard(item: item),
+          ),
+          SectionType.movies => _buildSection(
+            provider.movies,
+            (item) => LibraryItemPosterCard(item: item),
+          ),
+          SectionType.tvShows => _buildSection(
+            provider.tvShows,
+            (item) => LibraryItemPosterCard(item: item),
+          ),
+        };
       },
     );
+  }
+
+  Widget _buildSection<T>(List<T> items, Widget Function(T item) itemBuilder) {
+    if (items.isEmpty) {
+      final title = _sectionTitle(sectionType);
+      return AppEmptyState(title: '$title为空', description: '请先扫描媒体库以发现资源');
+    }
+
+    return _buildGrid(items, itemBuilder);
   }
 
   int _contentRevisionFor(
@@ -213,24 +203,7 @@ class _SectionPageContent extends StatelessWidget {
     }
   }
 
-  int _itemCount(MediaLibraryProvider provider, SectionType sectionType) {
-    switch (sectionType) {
-      case SectionType.continueWatching:
-        return provider.continueWatching.length;
-      case SectionType.recentlyAdded:
-        return provider.recentlyAddedContent.length;
-      case SectionType.movies:
-        return provider.movies.length;
-      case SectionType.tvShows:
-        return provider.tvShows.length;
-    }
-  }
-
-  Widget _buildGrid(
-    BuildContext context,
-    MediaLibraryProvider provider,
-    int itemCount,
-  ) {
+  Widget _buildGrid<T>(List<T> items, Widget Function(T item) itemBuilder) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isBackdrop = sectionType == SectionType.continueWatching;
@@ -248,7 +221,7 @@ class _SectionPageContent extends StatelessWidget {
             40,
             isBackdrop ? 44 : 40,
           ),
-          itemCount: itemCount,
+          itemCount: items.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
             childAspectRatio: isBackdrop ? 1.35 : 0.57,
@@ -256,7 +229,7 @@ class _SectionPageContent extends StatelessWidget {
             mainAxisSpacing: isBackdrop ? 24 : 32,
           ),
           itemBuilder: (context, index) {
-            return _buildCard(context, provider, index);
+            return itemBuilder(items[index]);
           },
         );
       },
@@ -268,130 +241,6 @@ class _SectionPageContent extends StatelessWidget {
     final crossAxisCount = (contentWidth / desiredItemWidth).round();
     return crossAxisCount < 3 ? 3 : crossAxisCount;
   }
-
-  Widget _buildCard(
-    BuildContext context,
-    MediaLibraryProvider provider,
-    int index,
-  ) {
-    switch (sectionType) {
-      case SectionType.continueWatching:
-        return _buildContinueWatchingCard(
-          context,
-          provider.continueWatching[index],
-          provider,
-        );
-      case SectionType.recentlyAdded:
-        return _buildRecentlyAddedCard(
-          context,
-          provider.recentlyAddedContent[index],
-        );
-      case SectionType.movies:
-        return _buildMovieCard(context, provider.movies[index]);
-      case SectionType.tvShows:
-        return _buildTVShowCard(context, provider.tvShows[index]);
-    }
-  }
-}
-
-Widget _buildMovieCard(BuildContext context, Movie movie) {
-  return MediaPosterCard(
-    title: movie.title,
-    subtitle: movie.releaseYear?.toString(),
-    posterUrl: movie.posterUrl,
-    rating: movie.rating,
-    tmdbId: movie.tmdbId,
-    cardType: MediaCardType.poster,
-    onTap: () => openMediaDetailPage(context, movie),
-  );
-}
-
-Widget _buildTVShowCard(BuildContext context, TVShow show) {
-  String? subtitle;
-  if (show.numberOfSeasons != null && show.numberOfSeasons! > 0) {
-    subtitle = show.numberOfSeasons == 1 ? '1 季' : '${show.numberOfSeasons} 季';
-  } else if (show.releaseYear != null) {
-    subtitle = show.releaseYear.toString();
-  }
-
-  return MediaPosterCard(
-    title: show.title,
-    subtitle: subtitle,
-    posterUrl: show.posterUrl,
-    rating: show.rating,
-    tmdbId: show.tmdbId,
-    cardType: MediaCardType.poster,
-    onTap: () => openMediaDetailPage(context, show),
-  );
-}
-
-Widget _buildRecentlyAddedCard(BuildContext context, dynamic item) {
-  if (item is Movie) {
-    return _buildMovieCard(context, item);
-  }
-  if (item is TVShow) {
-    return _buildTVShowCard(context, item);
-  }
-  return const SizedBox.shrink();
-}
-
-Widget _buildContinueWatchingCard(
-  BuildContext context,
-  MediaFile file,
-  MediaLibraryProvider provider,
-) {
-  var title = file.parsedTitle;
-  String? subtitle;
-  String? imageUrl;
-  var rating = 0.0;
-  dynamic metadata;
-
-  if (file.mediaType == MediaType.movie) {
-    metadata = provider.getMovieMetadata(file.tmdbId ?? '');
-    if (metadata != null) {
-      title = metadata.title;
-      imageUrl = metadata.backdropUrl;
-      rating = metadata.rating;
-      subtitle = metadata.releaseYear?.toString();
-    }
-  } else {
-    subtitle = _episodeLabel(file);
-    metadata = provider.getTVShowMetadata(file.tmdbId ?? '');
-    if (metadata != null) {
-      title = metadata.title;
-      imageUrl = metadata.backdropUrl;
-      rating = metadata.rating;
-      if (subtitle == null && metadata.numberOfSeasons != null) {
-        subtitle = '${metadata.numberOfSeasons} 季';
-      }
-    }
-  }
-
-  return MediaPosterCard(
-    title: title,
-    subtitle: subtitle,
-    posterUrl: imageUrl,
-    rating: rating,
-    tmdbId: file.tmdbId,
-    cardType: MediaCardType.backdrop,
-    progress: file.progress,
-    showProgress: true,
-    onTap: () {
-      PlaybackLauncher.playFile(
-        context,
-        file,
-        contextTitle: file.mediaType == MediaType.episode ? title : null,
-      );
-    },
-  );
-}
-
-String? _episodeLabel(MediaFile file) {
-  final season = file.parsedSeason;
-  final episode = file.parsedEpisode;
-  if (season == null || episode == null) return null;
-
-  return '第 $season 季 第 $episode 集';
 }
 
 String _sectionTitle(SectionType sectionType) {
@@ -404,17 +253,6 @@ String _sectionTitle(SectionType sectionType) {
       return '电影';
     case SectionType.tvShows:
       return '剧集';
-  }
-}
-
-class _EmptySectionState extends StatelessWidget {
-  final String title;
-
-  const _EmptySectionState({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppEmptyState(title: '$title为空', description: '请先扫描媒体库以发现资源');
   }
 }
 

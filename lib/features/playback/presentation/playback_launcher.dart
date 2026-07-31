@@ -25,7 +25,7 @@ class PlaybackLauncher {
     );
   }
 
-  static void playLibraryItem(BuildContext context, Object item) {
+  static void playLibraryItem(BuildContext context, LibraryItem item) {
     if (item is Movie) {
       playMovie(context, item);
       return;
@@ -195,7 +195,7 @@ class PlaybackLauncher {
                 separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (ctx, index) {
                   final file = versions[index];
-                  final label = _buildVersionLabel(file);
+                  final label = MediaFilePresentation.versionTitle(file);
                   return ListTile(
                     leading: Icon(
                       Icons.movie_outlined,
@@ -206,7 +206,10 @@ class PlaybackLauncher {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
-                      _buildVersionSubtitle(file),
+                      MediaFilePresentation.versionSubtitle(
+                        file,
+                        includeContainer: false,
+                      ),
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                     onTap: () {
@@ -222,31 +225,6 @@ class PlaybackLauncher {
         );
       },
     );
-  }
-
-  static String _buildVersionLabel(MediaFile file) {
-    return [
-      file.quality,
-      file.videoCodec,
-      if (file.isHdr) file.hdrFormat ?? 'HDR',
-    ].whereType<String>().where((s) => s.isNotEmpty).join(' • ');
-  }
-
-  static String _buildVersionSubtitle(MediaFile file) {
-    final parts = <String>[];
-    if (file.audioCodec != null) parts.add(file.audioCodec!);
-    if (file.audioChannels != null) parts.add(file.audioChannels!);
-    if (file.size > 0) parts.add(_formatFileSize(file.size));
-    return parts.join(' • ');
-  }
-
-  static String _formatFileSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) {
-      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-    }
-    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
   }
 
   static MediaFile? _firstPlayableEpisodeFile(List<MediaFile> files) {

@@ -144,21 +144,21 @@ class _HeaderContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasLogo = viewModel.logoUrl?.isNotEmpty == true;
+    final logoUrl = viewModel.logoUrl;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (hasLogo) ...[
+        if (logoUrl != null && logoUrl.isNotEmpty) ...[
           _LogoImage(
-            logoUrl: viewModel.logoUrl!,
+            logoUrl: logoUrl,
             fallbackTitle: viewModel.title,
             compact: compact,
           ),
           const SizedBox(height: 14),
         ],
         _MetadataStrip(viewModel: viewModel),
-        if (!hasLogo) ...[
+        if (logoUrl == null || logoUrl.isEmpty) ...[
           const SizedBox(height: 12),
           _TitleText(title: viewModel.title, compact: compact),
         ],
@@ -226,17 +226,15 @@ class _PrimaryActionArea extends StatelessWidget {
       );
     }
 
-    if (viewModel.isMovie) {
+    final movie = viewModel.movie;
+    if (movie != null) {
       return _PrimaryPlayAction(
         label: '播放',
         detail: files.isEmpty ? '未找到本地文件' : _versionCount(files),
         enabled: files.isNotEmpty,
         onPressed: files.isEmpty
             ? null
-            : () => PlaybackLauncher.playMovie(
-                context,
-                viewModel.originalItem as Movie,
-              ),
+            : () => PlaybackLauncher.playMovie(context, movie),
       );
     }
 
@@ -295,7 +293,7 @@ class _PrimaryActionArea extends StatelessWidget {
 
   String _resumeDetail(MediaFile file) {
     if (file.duration <= 0) return '从上次进度继续';
-    return '从 ${_formatDuration(Duration(milliseconds: file.position))} 继续';
+    return '从 ${MediaFormat.clockDuration(Duration(milliseconds: file.position))} 继续';
   }
 
   String _versionCount(List<MediaFile> files) {
@@ -308,14 +306,6 @@ class _PrimaryActionArea extends StatelessWidget {
         .length;
     return count == 1 ? '1 集可播放' : '$count 集可播放';
   }
-
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    if (hours > 0) return '$hours:$minutes:$seconds';
-    return '$minutes:$seconds';
-  }
 }
 
 class _MetadataStrip extends StatelessWidget {
@@ -327,22 +317,39 @@ class _MetadataStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = <Widget>[];
     if (viewModel.rating > 0) {
-      items.add(_RatingPill(rating: viewModel.rating));
+      items.add(
+        AppPill(
+          text: viewModel.rating.toStringAsFixed(1),
+          icon: Icons.star_rounded,
+          rating: true,
+        ),
+      );
     }
     if (viewModel.releaseYear != null) {
-      items.add(_TextPill('${viewModel.releaseYear}'));
+      items.add(
+        AppPill(text: '${viewModel.releaseYear}', tone: AppControlTone.overlay),
+      );
     }
-    if (viewModel.certification != null &&
-        viewModel.certification!.isNotEmpty) {
-      items.add(_TextPill(viewModel.certification!));
+    final certification = viewModel.certification;
+    if (certification != null && certification.isNotEmpty) {
+      items.add(AppPill(text: certification, tone: AppControlTone.overlay));
     }
     if (viewModel.isTVShow) {
       final seasons = viewModel.seasons.length;
       if (seasons > 0) {
-        items.add(_TextPill(seasons == 1 ? '1 季' : '$seasons 季'));
+        items.add(
+          AppPill(
+            text: MediaFormat.seasonCount(seasons),
+            tone: AppControlTone.overlay,
+          ),
+        );
       }
     }
-    items.addAll(viewModel.genres.take(3).map(_TextPill.new));
+    items.addAll(
+      viewModel.genres
+          .take(3)
+          .map((genre) => AppPill(text: genre, tone: AppControlTone.overlay)),
+    );
 
     return Wrap(spacing: 8, runSpacing: 8, children: items);
   }
@@ -486,32 +493,6 @@ class _TitleText extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _RatingPill extends StatelessWidget {
-  final double rating;
-
-  const _RatingPill({required this.rating});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppPill(
-      text: rating.toStringAsFixed(1),
-      icon: Icons.star_rounded,
-      rating: true,
-    );
-  }
-}
-
-class _TextPill extends StatelessWidget {
-  final String text;
-
-  const _TextPill(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return AppPill(text: text, tone: AppControlTone.overlay);
   }
 }
 

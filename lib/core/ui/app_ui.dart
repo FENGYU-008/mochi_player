@@ -22,6 +22,7 @@ export 'components/media/media_poster_card.dart';
 export 'components/navigation/app_header.dart';
 export 'components/overlays/app_confirm_dialog.dart';
 export 'components/overlays/app_modal.dart';
+export 'formatters/media_format.dart';
 export 'theme/app_colors.dart';
 export 'theme/app_control_metrics.dart';
 export 'theme/app_radii.dart';

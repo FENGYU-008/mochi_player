@@ -21,7 +21,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0; // 默认选中 Home
-  dynamic _detailItem;
+  LibraryItem? _detailItem;
   SectionType? _sectionType;
   final Map<SectionType, double> _sectionScrollOffsets = {};
   final Map<int, double> _libraryScrollOffsets = {};
@@ -74,7 +74,7 @@ class _MainPageState extends State<MainPage> {
     _homeRecentlyAddedOffset = offset;
   }
 
-  void _openMediaDetail(dynamic item) {
+  void _openMediaDetail(LibraryItem item) {
     setState(() {
       _detailItem = item;
     });
@@ -127,7 +127,7 @@ class _MainPageState extends State<MainPage> {
   // === 核心修改：页面路由表 ===
   Widget _getPageContent(int index) {
     if (_detailItem != null) {
-      return MediaDetailPage(item: _detailItem, onBack: _closeMediaDetail);
+      return MediaDetailPage(item: _detailItem!, onBack: _closeMediaDetail);
     }
 
     final sectionType = _sectionType;

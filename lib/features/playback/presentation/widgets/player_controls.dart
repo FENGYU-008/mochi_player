@@ -447,6 +447,75 @@ class _PlayerControlsState extends State<PlayerControls> {
   }
 }
 
+class _PlayerPopupMenu<T> extends StatelessWidget {
+  final String tooltip;
+  final BoxConstraints constraints;
+  final ValueChanged<T> onSelected;
+  final List<PopupMenuEntry<T>> Function(BuildContext) itemBuilder;
+  final Widget child;
+
+  const _PlayerPopupMenu({
+    required this.tooltip,
+    required this.constraints,
+    required this.onSelected,
+    required this.itemBuilder,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<T>(
+      tooltip: tooltip,
+      padding: EdgeInsets.zero,
+      constraints: constraints,
+      color: Colors.black.withAlpha((255 * 0.9).round()),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      onSelected: onSelected,
+      itemBuilder: itemBuilder,
+      child: child,
+    );
+  }
+}
+
+class _CheckedPopupMenuItem<T> extends PopupMenuItem<T> {
+  _CheckedPopupMenuItem({
+    required T value,
+    required String label,
+    required bool selected,
+    double minWidth = 0,
+    double maxWidth = double.infinity,
+    super.height = 36,
+  }) : super(
+         value: value,
+         child: ConstrainedBox(
+           constraints: BoxConstraints(minWidth: minWidth, maxWidth: maxWidth),
+           child: Row(
+             children: [
+               SizedBox(
+                 width: 20,
+                 child: selected
+                     ? const Icon(
+                         Icons.check_rounded,
+                         color: Colors.white,
+                         size: 18,
+                       )
+                     : null,
+               ),
+               const SizedBox(width: 8),
+               Expanded(
+                 child: Text(
+                   label,
+                   maxLines: 1,
+                   overflow: TextOverflow.ellipsis,
+                   style: const TextStyle(color: Colors.white, fontSize: 13),
+                 ),
+               ),
+             ],
+           ),
+         ),
+       );
+}
+
 class _RateMenuButton extends StatelessWidget {
   static const List<double> _rates = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
 
@@ -464,37 +533,16 @@ class _RateMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<double>(
+    return _PlayerPopupMenu<double>(
       tooltip: '倍速',
-      padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 120, maxWidth: 160),
-      color: Colors.black.withAlpha((255 * 0.9).round()),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onSelected: onSelected,
       itemBuilder: (context) => [
         for (final value in _rates)
-          PopupMenuItem<double>(
+          _CheckedPopupMenuItem<double>(
             value: value,
-            height: 36,
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  child: (rate - value).abs() < 0.01
-                      ? const Icon(
-                          Icons.check_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _labelFor(value),
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                ),
-              ],
-            ),
+            label: _labelFor(value),
+            selected: (rate - value).abs() < 0.01,
           ),
       ],
       child: _PopupControlButton(
@@ -558,44 +606,18 @@ class _AudioMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<AudioTrack>(
+    return _PlayerPopupMenu<AudioTrack>(
       tooltip: '音轨',
-      padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 220, maxWidth: 380),
-      color: Colors.black.withAlpha((255 * 0.9).round()),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onSelected: onSelected,
       itemBuilder: (context) => [
         for (final track in tracks)
-          PopupMenuItem<AudioTrack>(
+          _CheckedPopupMenuItem<AudioTrack>(
             value: track,
-            height: 36,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 180, maxWidth: 340),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 20,
-                    child: selectedTrack == track
-                        ? const Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _labelFor(track),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            label: _labelFor(track),
+            selected: selectedTrack == track,
+            minWidth: 180,
+            maxWidth: 340,
           ),
       ],
       child: _PopupControlButton(
@@ -655,12 +677,9 @@ class _SubtitleMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<Object>(
+    return _PlayerPopupMenu<Object>(
       tooltip: '字幕',
-      padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 220, maxWidth: 360),
-      color: Colors.black.withAlpha((255 * 0.9).round()),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onSelected: (value) {
         if (value is SubtitleTrack) {
           onSelected(value);
@@ -669,64 +688,20 @@ class _SubtitleMenuButton extends StatelessWidget {
         }
       },
       itemBuilder: (context) => [
-        PopupMenuItem<Object>(
+        _CheckedPopupMenuItem<Object>(
           value: _SubtitleMenuAction.toggleStyleOverride,
+          label: '覆盖内建字幕样式',
+          selected: overrideEmbeddedStyle,
           height: 40,
-          child: Row(
-            children: [
-              SizedBox(
-                width: 20,
-                child: overrideEmbeddedStyle
-                    ? const Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                        size: 18,
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  '覆盖内建字幕样式',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.white, fontSize: 13),
-                ),
-              ),
-            ],
-          ),
         ),
         const PopupMenuDivider(height: 8),
         for (final track in tracks)
-          PopupMenuItem<Object>(
+          _CheckedPopupMenuItem<Object>(
             value: track,
-            height: 36,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 180, maxWidth: 320),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 20,
-                    child: selectedTrack == track
-                        ? const Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _labelFor(track),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            label: _labelFor(track),
+            selected: selectedTrack == track,
+            minWidth: 180,
+            maxWidth: 320,
           ),
       ],
       child: _PopupControlButton(

@@ -20,7 +20,6 @@ class _EpisodeListState extends State<EpisodeList> {
   List<Season> _sortedSeasons = [];
   Season? _selectedSeason;
   List<Episode> _sortedEpisodes = [];
-  Map<String, MediaFile> _mediaFileByTmdbId = const {};
 
   @override
   void initState() {
@@ -29,17 +28,10 @@ class _EpisodeListState extends State<EpisodeList> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _mediaFileByTmdbId = _buildMediaFileIndex();
-  }
-
-  @override
   void didUpdateWidget(covariant EpisodeList oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.tvShow != widget.tvShow) {
       _prepareSeasons();
-      _mediaFileByTmdbId = _buildMediaFileIndex();
     }
   }
 
@@ -82,6 +74,12 @@ class _EpisodeListState extends State<EpisodeList> {
 
   @override
   Widget build(BuildContext context) {
+    context.select<MediaLibraryProvider, (int, int)>(
+      (provider) =>
+          (provider.mediaCatalogRevision, provider.watchProgressRevision),
+    );
+    final mediaFileByTmdbId = _buildMediaFileIndex();
+
     if (_sortedSeasons.isEmpty) {
       return const SliverToBoxAdapter(
         child: Padding(
@@ -114,7 +112,7 @@ class _EpisodeListState extends State<EpisodeList> {
               return _buildEpisodeCard(
                 context,
                 episode,
-                _mediaFileByTmdbId[episode.tmdbId],
+                mediaFileByTmdbId[episode.tmdbId],
               );
             },
             childCount: _sortedEpisodes.isEmpty
@@ -317,7 +315,9 @@ class _EpisodeMetaRow extends StatelessWidget {
     }
     final mediaFile = file;
     if (mediaFile != null && mediaFile.duration > 0) {
-      parts.add(_formatDuration(Duration(milliseconds: mediaFile.duration)));
+      parts.add(
+        MediaFormat.compactDuration(Duration(milliseconds: mediaFile.duration)),
+      );
     }
 
     if (parts.isEmpty) return const SizedBox.shrink();
@@ -335,17 +335,6 @@ class _EpisodeMetaRow extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  String _formatDuration(Duration duration) {
-    if (duration.inHours > 0) {
-      final minutes = duration.inMinutes
-          .remainder(60)
-          .toString()
-          .padLeft(2, '0');
-      return '${duration.inHours}h ${minutes}m';
-    }
-    return '${duration.inMinutes}m';
   }
 }
 

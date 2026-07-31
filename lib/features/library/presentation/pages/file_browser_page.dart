@@ -120,99 +120,41 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
     _FileBrowserTopBarState state,
     FileBrowserProvider provider,
   ) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-      decoration: BoxDecoration(
-        color: theme.canvasColor, // 使用主题中的画布颜色
-        border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor.withAlpha((255 * 0.5).round()),
-            width: 1,
-          ),
+    return AppHeader(
+      title: state.currentPath,
+      subtitle: '浏览文件',
+      showSearch: false,
+      showBackButton: state.canGoBack,
+      onBack: provider.navigateBack,
+      leading: state.canGoBack
+          ? null
+          : Icon(
+              Icons.folder_open_rounded,
+              color: AppColors.primary(context),
+              size: 24,
+            ),
+      actions: [
+        AppIconButton(
+          onPressed: () => provider.toggleViewMode(),
+          icon: state.viewMode == ViewMode.grid
+              ? Icons.view_list_rounded
+              : Icons.grid_view_rounded,
+          tooltip: "切换视图",
+          foregroundColor: AppColors.textPrimary(context),
+          backgroundColor: AppColors.hoverSurface(context),
+          size: 36,
+          iconSize: 19,
         ),
-      ),
-      child: Row(
-        children: [
-          // A. 返回按钮 (只有能返回时才显示)
-          if (state.canGoBack)
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: AppIconButton(
-                onPressed: () => provider.navigateBack(),
-                icon: Icons.arrow_back_ios_new_rounded,
-                tooltip: "返回上一级",
-                foregroundColor: AppColors.textPrimary(context),
-                backgroundColor: AppColors.hoverSurface(context),
-                size: 36,
-                iconSize: 16,
-              ),
-            ),
-
-          // B. 当前路径图标
-          Icon(
-            Icons.folder_open_rounded,
-            color: AppColors.primary(context),
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-
-          // C. 当前路径文字
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "浏览文件",
-                  style: TextStyle(
-                    color: theme.textTheme.titleMedium?.color,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  state.currentPath, // 显示 WebDAV 路径
-                  style: TextStyle(
-                    color: theme.textTheme.bodyMedium!.color,
-                    fontSize: 16,
-                    fontFamily: 'SF Pro Display',
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-
-          // D. 视图切换按钮
-          AppIconButton(
-            onPressed: () => provider.toggleViewMode(),
-            icon: state.viewMode == ViewMode.grid
-                ? Icons.view_list_rounded
-                : Icons.grid_view_rounded,
-            tooltip: "切换视图",
-            foregroundColor: AppColors.textPrimary(context),
-            backgroundColor: AppColors.hoverSurface(context),
-            size: 36,
-            iconSize: 19,
-          ),
-          const SizedBox(width: 8),
-
-          // E. 刷新按钮
-          AppIconButton(
-            onPressed: () => provider.refresh(),
-            icon: Icons.refresh_rounded,
-            tooltip: "刷新目录",
-            foregroundColor: AppColors.textPrimary(context),
-            backgroundColor: AppColors.hoverSurface(context),
-            size: 36,
-            iconSize: 20,
-          ),
-        ],
-      ),
+        AppIconButton(
+          onPressed: () => provider.refresh(),
+          icon: Icons.refresh_rounded,
+          tooltip: "刷新目录",
+          foregroundColor: AppColors.textPrimary(context),
+          backgroundColor: AppColors.hoverSurface(context),
+          size: 36,
+          iconSize: 20,
+        ),
+      ],
     );
   }
 

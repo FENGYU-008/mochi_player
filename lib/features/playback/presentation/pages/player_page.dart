@@ -775,7 +775,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     if (mounted) {
       setState(() {
         _showResumeNotice = true;
-        _resumePositionLabel = _formatDuration(position);
+        _resumePositionLabel = MediaFormat.clockDuration(position);
       });
     }
     _resumeNoticeTimer = Timer(const Duration(seconds: 6), () {
@@ -785,13 +785,6 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
         });
       }
     });
-  }
-
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return hours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
   }
 
   void _cycleSubtitleTrack() {

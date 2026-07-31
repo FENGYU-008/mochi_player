@@ -2,11 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-import 'package:mochi_player/core/ui/components/buttons/app_icon_button.dart';
-import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/theme/app_radii.dart';
-import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-
 Future<T?> showAppModal<T>({
   required BuildContext context,
   required Widget child,
@@ -68,73 +63,4 @@ Future<T?> showAppModal<T>({
       );
     },
   );
-}
-
-class AppModalScaffold extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const AppModalScaffold({super.key, required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final borderRadius = BorderRadius.circular(AppRadii.large);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.modalSurface(context),
-        borderRadius: borderRadius,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(51),
-            blurRadius: 50,
-            offset: const Offset(0, 30),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: borderRadius,
-        child: Column(
-          children: [
-            SizedBox(
-              height: 56,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary(context),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    AppIconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: Icons.close_rounded,
-                      tooltip: '关闭',
-                      size: 32,
-                      iconSize: 18,
-                      foregroundColor: AppColors.textPrimary(context),
-                      backgroundColor: AppColors.hoverSurface(context),
-                      borderColor: Colors.transparent,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Container(height: 1, color: theme.dividerColor),
-            Expanded(child: child),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -9,7 +9,7 @@ import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.d
 /// 首页 Hero Section
 /// 展示随机选择的一部电影或剧集，带有背景图、标题和操作按钮
 class HeroSection extends StatelessWidget {
-  final dynamic heroItem; // Movie 或 TVShow
+  final LibraryItem? heroItem;
   final VoidCallback? onRefresh;
 
   const HeroSection({super.key, required this.heroItem, this.onRefresh});
@@ -20,17 +20,7 @@ class HeroSection extends StatelessWidget {
       return const SizedBox(height: 420);
     }
 
-    final isMovie = heroItem is Movie;
-    final movie = isMovie ? heroItem as Movie : null;
-    final tvShow = !isMovie ? heroItem as TVShow : null;
-
-    final title = isMovie ? movie!.title : tvShow!.title;
-    final backdropUrl = isMovie ? movie!.backdropUrl : tvShow!.backdropUrl;
-    final posterUrl = isMovie ? movie!.posterUrl : tvShow!.posterUrl;
-    final rating = isMovie ? movie!.rating : tvShow!.rating;
-    final overview = isMovie ? movie!.overview : tvShow!.overview;
-    final genres = isMovie ? movie!.genres : tvShow!.genres;
-    final releaseYear = isMovie ? movie!.releaseYear : tvShow!.releaseYear;
+    final item = heroItem!;
 
     return SizedBox(
       height: 420,
@@ -39,7 +29,7 @@ class HeroSection extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // 背景图
-          _buildBackdropImage(backdropUrl, posterUrl),
+          _buildBackdropImage(item.backdropUrl, item.posterUrl),
 
           // 渐变遮罩
           _buildGradientOverlay(context),
@@ -53,12 +43,12 @@ class HeroSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 评分 + 年份 + 类型
-                _buildMetaRow(rating, releaseYear, genres),
+                _buildMetaRow(item.rating, item.releaseYear, item.genres),
                 const SizedBox(height: 16),
 
                 // 标题
                 Text(
-                  title,
+                  item.title,
                   style: const TextStyle(
                     fontSize: 44,
                     fontWeight: FontWeight.w900,
@@ -78,7 +68,7 @@ class HeroSection extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // 简介
-                if (overview != null && overview.isNotEmpty)
+                if (item.overview case final overview? when overview.isNotEmpty)
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 820),
                     child: Text(
@@ -203,10 +193,10 @@ class HeroSection extends StatelessWidget {
   }
 
   void _handlePlay(BuildContext context) {
-    PlaybackLauncher.playLibraryItem(context, heroItem);
+    PlaybackLauncher.playLibraryItem(context, heroItem!);
   }
 
   void _handleMoreInfo(BuildContext context) {
-    openMediaDetailPage(context, heroItem);
+    openMediaDetailPage(context, heroItem!);
   }
 }

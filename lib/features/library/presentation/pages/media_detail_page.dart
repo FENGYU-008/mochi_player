@@ -10,10 +10,9 @@ import 'package:mochi_player/features/playback/presentation/playback_launcher.da
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
-typedef OpenMediaDetail = void Function(dynamic item);
+typedef OpenMediaDetail = void Function(LibraryItem item);
 
-void openMediaDetailPage(BuildContext context, dynamic item) {
-  assert(item is Movie || item is TVShow, 'Item must be Movie or TVShow');
+void openMediaDetailPage(BuildContext context, LibraryItem item) {
   final scope = MediaDetailNavigationScope.maybeOf(context);
   if (scope != null) {
     scope.openMediaDetail(item);
@@ -48,11 +47,10 @@ class MediaDetailNavigationScope extends InheritedWidget {
 }
 
 class MediaDetailPage extends StatelessWidget {
-  final dynamic item;
+  final LibraryItem item;
   final VoidCallback? onBack;
 
-  const MediaDetailPage({super.key, required this.item, this.onBack})
-    : assert(item is Movie || item is TVShow, 'Item must be Movie or TVShow');
+  const MediaDetailPage({super.key, required this.item, this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -67,42 +65,15 @@ class MediaDetailPage extends StatelessWidget {
             left: 0,
             right: 0,
             height: AppHeader.height,
-            child: _DetailTopBar(viewModel: viewModel, onBack: onBack),
+            child: AppHeader(
+              title: viewModel.title,
+              showBackButton: true,
+              onBack: onBack,
+            ),
           ),
         ],
       ),
     );
-  }
-}
-
-class _DetailTopBar extends StatelessWidget {
-  final MediaDetailViewModel viewModel;
-  final VoidCallback? onBack;
-
-  const _DetailTopBar({required this.viewModel, required this.onBack});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppHeader(
-      title: viewModel.title,
-      leading: AppIconButton(
-        onPressed: () => _goBack(context),
-        icon: Icons.arrow_back_rounded,
-        tooltip: '返回',
-        foregroundColor: AppColors.textPrimary(context),
-        backgroundColor: AppColors.hoverSurface(context),
-        size: 36,
-        iconSize: 20,
-      ),
-    );
-  }
-
-  void _goBack(BuildContext context) {
-    if (onBack != null) {
-      onBack!();
-      return;
-    }
-    Navigator.of(context).maybePop();
   }
 }
 
@@ -113,13 +84,14 @@ class _MediaDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tvShow = viewModel.tvShow;
     return CustomScrollView(
       cacheExtent: 320,
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: AppHeader.height)),
         SliverToBoxAdapter(child: MediaDetailHeader(viewModel: viewModel)),
 
-        if (viewModel.isTVShow) ...[
+        if (tvShow != null) ...[
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.page,
@@ -127,7 +99,7 @@ class _MediaDetailContent extends StatelessWidget {
               AppSpacing.page,
               AppSpacing.xxl,
             ),
-            sliver: EpisodeList(tvShow: viewModel.originalItem as TVShow),
+            sliver: EpisodeList(tvShow: tvShow),
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
@@ -188,6 +160,10 @@ class _MovieMediaInfoSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    context.select<MediaLibraryProvider, (int, int)>(
+      (provider) =>
+          (provider.mediaCatalogRevision, provider.watchProgressRevision),
+    );
     final files = context.read<MediaLibraryProvider>().getVersions(
       viewModel.tmdbId,
     )..sort(_compareVersions);
@@ -205,7 +181,16 @@ class _MovieMediaInfoSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         if (files.isEmpty)
-          _EmptyInfoBox(message: '未找到可播放的本地文件')
+          SizedBox(
+            width: double.infinity,
+            child: AppSurface(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Text(
+                '未找到可播放的本地文件',
+                style: TextStyle(color: theme.textTheme.bodySmall?.color),
+              ),
+            ),
+          )
         else
           Column(
             children: [
@@ -318,7 +303,7 @@ class _VersionRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _versionTitle(file),
+                  MediaFilePresentation.versionTitle(file),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -328,7 +313,10 @@ class _VersionRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  _versionSubtitle(file),
+                  MediaFilePresentation.versionSubtitle(
+                    file,
+                    includeResumePosition: true,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -353,74 +341,6 @@ class _VersionRow extends StatelessWidget {
           const SizedBox(width: 12),
           Icon(Icons.play_arrow_rounded, color: theme.colorScheme.primary),
         ],
-      ),
-    );
-  }
-
-  String _versionTitle(MediaFile file) {
-    final parts = [
-      file.quality,
-      file.videoCodec,
-      if (file.isHdr) file.hdrFormat ?? 'HDR',
-      file.versionLabel,
-    ].whereType<String>().where((part) => part.trim().isNotEmpty).toList();
-    return parts.isEmpty ? file.fileName : parts.join(' • ');
-  }
-
-  String _versionSubtitle(MediaFile file) {
-    final parts = <String>[];
-    if (file.audioCodec != null && file.audioCodec!.isNotEmpty) {
-      parts.add(file.audioCodec!);
-    }
-    if (file.audioChannels != null && file.audioChannels!.isNotEmpty) {
-      parts.add(file.audioChannels!);
-    }
-    if (file.container != null && file.container!.isNotEmpty) {
-      parts.add(file.container!.toUpperCase());
-    }
-    if (file.size > 0) parts.add(_formatFileSize(file.size));
-    if (file.position > 0 && file.duration > 0 && file.progress < 0.95) {
-      parts.add(
-        '从 ${_formatDuration(Duration(milliseconds: file.position))} 继续',
-      );
-    }
-    return parts.isEmpty ? file.fileName : parts.join(' • ');
-  }
-
-  String _formatFileSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) {
-      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-    }
-    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
-  }
-
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    if (hours > 0) return '$hours:$minutes:$seconds';
-    return '$minutes:$seconds';
-  }
-}
-
-class _EmptyInfoBox extends StatelessWidget {
-  final String message;
-
-  const _EmptyInfoBox({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SizedBox(
-      width: double.infinity,
-      child: AppSurface(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Text(
-          message,
-          style: TextStyle(color: theme.textTheme.bodySmall?.color),
-        ),
       ),
     );
   }

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
-import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/features/library/presentation/pages/section_view_page.dart';
-import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
+import 'package:mochi_player/features/library/application/media_library_view_data.dart';
+import 'package:mochi_player/features/library/presentation/widgets/continue_watching_card.dart';
+import 'package:mochi_player/features/library/presentation/widgets/library_item_poster_card.dart';
 import 'package:provider/provider.dart';
 
 import 'hero_section.dart';
@@ -106,7 +107,10 @@ class _HomeContentState extends State<HomeContent> {
         }
 
         if (!shellState.hasHomeContent) {
-          return _buildEmptyState();
+          return const AppEmptyState(
+            title: '媒体库为空',
+            description: '请先扫描媒体库以发现资源',
+          );
         }
 
         return CustomScrollView(
@@ -137,7 +141,7 @@ class _HomeContentState extends State<HomeContent> {
               ),
               builder: (context, revision, child) {
                 final provider = context.read<MediaLibraryProvider>();
-                final continueWatchingItems = provider.continueWatching;
+                final continueWatchingItems = provider.continueWatchingItems;
                 if (continueWatchingItems.isEmpty) {
                   return const SliverToBoxAdapter(child: SizedBox.shrink());
                 }
@@ -153,10 +157,7 @@ class _HomeContentState extends State<HomeContent> {
                       ),
                     ),
                     SliverToBoxAdapter(
-                      child: _buildContinueWatchingList(
-                        continueWatchingItems,
-                        provider,
-                      ),
+                      child: _buildContinueWatchingList(continueWatchingItems),
                     ),
                     const SliverToBoxAdapter(child: SizedBox(height: 30)),
                   ],
@@ -233,10 +234,6 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return const AppEmptyState(title: '媒体库为空', description: '请先扫描媒体库以发现资源');
-  }
-
   SliverToBoxAdapter _buildSectionHeaderSliver(
     BuildContext context,
     String title, {
@@ -288,10 +285,7 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _buildContinueWatchingList(
-    List<MediaFile> items,
-    MediaLibraryProvider provider,
-  ) {
+  Widget _buildContinueWatchingList(List<ResolvedMediaFileItem> items) {
     const double wideImageWidth = 280;
     const double wideImageHeight = 158;
     const double textSectionHeight = 48;
@@ -308,58 +302,11 @@ class _HomeContentState extends State<HomeContent> {
           scrollDirection: Axis.horizontal,
           itemCount: items.length,
           itemBuilder: (context, index) {
-            final file = items[index];
-            // 获取关联的元数据
-            String title = file.parsedTitle;
-            String? subtitle;
-            String? imageUrl;
-            double rating = 0.0;
-
-            if (file.mediaType == MediaType.movie) {
-              final metadata = provider.getMovieMetadata(file.tmdbId ?? '');
-              if (metadata != null) {
-                title = metadata.title;
-                imageUrl = metadata.backdropUrl;
-                rating = metadata.rating;
-                subtitle = metadata.releaseYear?.toString();
-              }
-            } else {
-              subtitle = _episodeLabel(file);
-              final metadata = provider.getTVShowMetadata(file.tmdbId ?? '');
-              if (metadata != null) {
-                title = metadata.title;
-                imageUrl = metadata.backdropUrl;
-                rating = metadata.rating;
-                // 显示当前观看的季和集
-                if (subtitle == null && metadata.numberOfSeasons != null) {
-                  subtitle = '${metadata.numberOfSeasons} 季';
-                }
-              }
-            }
-
             return SizedBox(
               width: wideImageWidth,
               child: Padding(
                 padding: const EdgeInsets.only(right: AppSpacing.xl),
-                child: MediaPosterCard(
-                  title: title,
-                  subtitle: subtitle,
-                  posterUrl: imageUrl,
-                  rating: rating,
-                  tmdbId: file.tmdbId,
-                  cardType: MediaCardType.backdrop,
-                  progress: file.progress,
-                  showProgress: true,
-                  onTap: () {
-                    PlaybackLauncher.playFile(
-                      context,
-                      file,
-                      contextTitle: file.mediaType == MediaType.episode
-                          ? title
-                          : null,
-                    );
-                  },
-                ),
+                child: ContinueWatchingCard(item: items[index]),
               ),
             );
           },
@@ -368,15 +315,7 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  String? _episodeLabel(MediaFile file) {
-    final season = file.parsedSeason;
-    final episode = file.parsedEpisode;
-    if (season == null || episode == null) return null;
-
-    return '第 $season 季 第 $episode 集';
-  }
-
-  Widget _buildRecentlyAddedList(List<dynamic> items) {
+  Widget _buildRecentlyAddedList(List<LibraryItem> items) {
     const double posterWidth = 160;
     const double posterHeight = 200;
     const double textSectionHeight = 48;
@@ -393,41 +332,11 @@ class _HomeContentState extends State<HomeContent> {
           scrollDirection: Axis.horizontal,
           itemCount: items.length,
           itemBuilder: (context, index) {
-            final item = items[index];
-            final isMovie = item is Movie;
-
-            final title = isMovie ? item.title : (item as TVShow).title;
-            final posterUrl = isMovie
-                ? item.posterUrl
-                : (item as TVShow).posterUrl;
-            final rating = isMovie ? item.rating : (item as TVShow).rating;
-            final tmdbId = isMovie ? item.tmdbId : (item as TVShow).tmdbId;
-
-            String? subtitle;
-            if (isMovie) {
-              subtitle = item.releaseYear?.toString();
-            } else {
-              final show = item as TVShow;
-              if (show.numberOfSeasons != null && show.numberOfSeasons! > 0) {
-                subtitle = show.numberOfSeasons == 1
-                    ? '1 季'
-                    : '${show.numberOfSeasons} 季';
-              }
-            }
-
             return SizedBox(
               width: posterWidth,
               child: Padding(
                 padding: const EdgeInsets.only(right: AppSpacing.xl),
-                child: MediaPosterCard(
-                  title: title,
-                  subtitle: subtitle,
-                  posterUrl: posterUrl,
-                  rating: rating,
-                  tmdbId: tmdbId,
-                  cardType: MediaCardType.poster,
-                  onTap: () => openMediaDetailPage(context, item),
-                ),
+                child: LibraryItemPosterCard(item: items[index]),
               ),
             );
           },

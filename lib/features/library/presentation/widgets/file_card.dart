@@ -1,134 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/domain/media/media_file.dart';
-import 'package:mochi_player/core/domain/media/media_type.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
+import 'file_entry_presentation.dart';
 
-class FileCard extends StatefulWidget {
+class FileCard extends StatelessWidget {
   final MediaFile item;
   final VoidCallback? onTap;
 
   const FileCard({super.key, required this.item, this.onTap});
 
   @override
-  State<FileCard> createState() => _FileCardState();
-}
-
-class _FileCardState extends State<FileCard> {
-  bool _isHovering = false;
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    bool isFolder = widget.item.mediaType == MediaType.folder;
-    IconData iconData = isFolder
-        ? Icons.folder_rounded
-        : Icons.insert_drive_file_outlined;
-    Color iconColor = isFolder
-        ? theme.primaryColor
-        : theme.textTheme.titleMedium!.color!;
+    final presentation = FileEntryPresentation(item);
+    final subtitle = presentation.isFolder ? '文件夹' : presentation.size;
 
-    String subtitle = "";
-    if (isFolder) {
-      subtitle = "文件夹";
-    } else {
-      String sizeText = widget.item.size > 0
-          ? _formatSize(widget.item.size)
-          : "";
-      subtitle = sizeText;
-    }
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      cursor: SystemMouseCursors.click,
-      child: InkWell(
-        onTap: widget.onTap,
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadii.control),
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(end: _isHovering ? 1 : 0),
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          builder: (context, hoverProgress, child) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Color.lerp(
-                  Colors.transparent,
-                  theme.primaryColor.withAlpha(25),
-                  hoverProgress,
-                ),
-                borderRadius: BorderRadius.circular(AppRadii.control),
-                border: Border.all(
-                  color: Color.lerp(
-                    Colors.transparent,
-                    theme.primaryColor.withAlpha(77),
-                    hoverProgress,
-                  )!,
-                  width: 1,
-                ),
+    return FileEntryHoverSurface(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadii.control),
+      padding: const EdgeInsets.all(AppSpacing.md),
+      showBorder: true,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Icon(
+              presentation.icon,
+              size: 56,
+              color: presentation.iconColor(context),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            item.fileName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: theme.textTheme.bodyMedium!.color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          if (subtitle.isNotEmpty)
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                color: theme.textTheme.titleMedium!.color,
               ),
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // === 图标区域 ===
-                  Expanded(
-                    child: Icon(
-                      iconData,
-                      size: 56, // 稍微减小图标尺寸
-                      color: iconColor,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // === 标题 ===
-                  Text(
-                    widget.item.fileName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Color.lerp(
-                        theme.textTheme.bodyMedium!.color,
-                        theme.primaryColor,
-                        hoverProgress,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  // === 副标题 ===
-                  if (subtitle.isNotEmpty)
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: theme.textTheme.titleMedium!.color,
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
+            ),
+        ],
       ),
     );
-  }
-
-  String _formatSize(int bytes) {
-    if (bytes <= 0) return "";
-    const suffixes = ["B", "KB", "MB", "GB", "TB"];
-    var i = 0;
-    double size = bytes.toDouble();
-    while (size > 1024 && i < suffixes.length - 1) {
-      size /= 1024;
-      i++;
-    }
-    return "${size.toStringAsFixed(1)} ${suffixes[i]}";
   }
 }

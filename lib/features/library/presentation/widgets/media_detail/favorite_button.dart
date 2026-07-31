@@ -72,12 +72,17 @@ class _FavoriteButtonState extends State<FavoriteButton> {
         : Icons.favorite_border_rounded;
 
     if (widget.showLabel) {
-      return _FavoriteLabelButton(
+      return AppActionButton(
         onPressed: _toggleFavorite,
         icon: icon,
         label: _isFavorite ? '已收藏' : '加入收藏',
+        variant: AppButtonVariant.secondary,
+        tone: overlayTone ? AppControlTone.overlay : AppControlTone.adaptive,
         selected: _isFavorite,
-        overlayTone: overlayTone,
+        accentColor: AppColors.favorite,
+        height: 36,
+        borderRadius: 10,
+        padding: const EdgeInsets.symmetric(horizontal: 15),
       );
     }
 
@@ -97,104 +102,6 @@ class _FavoriteButtonState extends State<FavoriteButton> {
       backgroundColor: backgroundColor,
       size: 44,
       iconSize: 22,
-    );
-  }
-}
-
-class _FavoriteLabelButton extends StatefulWidget {
-  final VoidCallback onPressed;
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final bool overlayTone;
-
-  const _FavoriteLabelButton({
-    required this.onPressed,
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.overlayTone,
-  });
-
-  @override
-  State<_FavoriteLabelButton> createState() => _FavoriteLabelButtonState();
-}
-
-class _FavoriteLabelButtonState extends State<_FavoriteLabelButton> {
-  bool _hovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final selectedColor = AppColors.favorite;
-    final foreground = widget.selected
-        ? selectedColor
-        : widget.overlayTone
-        ? Colors.white.withAlpha(235)
-        : AppColors.textPrimary(context).withAlpha(220);
-    final restingBackground = widget.overlayTone
-        ? Colors.black.withAlpha(76)
-        : AppColors.elevatedSurface(context);
-    final hoveredBackground = widget.overlayTone
-        ? Colors.black.withAlpha(100)
-        : Color.alphaBlend(
-            AppColors.hoverSurface(context),
-            AppColors.elevatedSurface(context),
-          );
-    final restingBorder = widget.selected
-        ? selectedColor.withAlpha(widget.overlayTone ? 170 : 120)
-        : widget.overlayTone
-        ? Colors.white.withAlpha(58)
-        : AppColors.separator(context);
-    final hoveredBorder = widget.selected
-        ? restingBorder
-        : widget.overlayTone
-        ? Colors.white.withAlpha(92)
-        : AppColors.separator(context);
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onPressed,
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(end: _hovering ? 1 : 0),
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOut,
-          builder: (context, hoverProgress, child) => Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            decoration: BoxDecoration(
-              color: Color.lerp(
-                restingBackground,
-                hoveredBackground,
-                hoverProgress,
-              ),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: Color.lerp(restingBorder, hoveredBorder, hoverProgress)!,
-              ),
-            ),
-            child: child,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(widget.icon, size: 18, color: foreground),
-              const SizedBox(width: 8),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  color: foreground,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  height: 1,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

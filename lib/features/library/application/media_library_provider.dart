@@ -11,6 +11,8 @@ import 'package:mochi_player/core/infrastructure/database/model_converter.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
 import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/library/infrastructure/filename_parser.dart';
+import 'package:mochi_player/features/library/application/media_library_view_data.dart';
+import 'package:mochi_player/core/ui/formatters/media_format.dart';
 
 /// 媒体库 Provider
 /// 管理媒体文件和元数据的状态
@@ -184,8 +186,8 @@ class MediaLibraryProvider extends ChangeNotifier {
       .map(ModelConverter.toMediaFile)
       .toList();
 
-  /// 获取继续观看
-  List<MediaFile> get continueWatching {
+  /// 获取继续观看所需的完整展示数据。
+  List<ResolvedMediaFileItem> get continueWatchingItems {
     final list = _mediaFileEntities
         .where((f) => f.watchStatus == entity.WatchStatus.watching)
         .toList();
@@ -194,46 +196,16 @@ class MediaLibraryProvider extends ChangeNotifier {
         a.lastWatchedAt ?? DateTime(0),
       ),
     );
-    return list.map(ModelConverter.toMediaFile).toList();
+    return list
+        .map((file) => _resolveMediaFileItem(file, useBackdrop: true))
+        .toList();
   }
 
-  /// 获取收藏
-  List<MediaFile> get favorites => _mediaFileEntities
+  /// 获取收藏所需的完整展示数据。
+  List<ResolvedMediaFileItem> get favoriteItems => _mediaFileEntities
       .where((f) => f.isFavorite)
-      .map(ModelConverter.toMediaFile)
+      .map(_resolveMediaFileItem)
       .toList();
-
-  /// 获取最近添加
-  List<MediaFile> get recentlyAdded {
-    final list = _mediaFileEntities.toList();
-    list.sort((a, b) => b.addedAt.compareTo(a.addedAt));
-    return list.map(ModelConverter.toMediaFile).toList();
-  }
-
-  /// 根据 TMDB ID 获取电影元数据
-  Movie? getMovieMetadata(String tmdbId) {
-    try {
-      final entity = _movieMetadataEntities.firstWhere(
-        (m) => m.tmdbId == tmdbId,
-      );
-      return ModelConverter.toMovie(entity);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /// 根据 TMDB ID 获取剧集元数据 (包含 seasons/episodes)
-  TVShow? getTVShowMetadata(String tmdbId) {
-    try {
-      final showTmdbId = _showKeyFromTmdbId(tmdbId) ?? tmdbId;
-      final entity = _tvShowMetadataEntities.firstWhere(
-        (t) => t.tmdbId == showTmdbId,
-      );
-      return _convertTVShowWithSeasons(entity);
-    } catch (_) {
-      return null;
-    }
-  }
 
   /// 根据 TMDB ID 获取同一资源的所有版本
   /// 对于电影：精确匹配 tmdbId
@@ -330,9 +302,9 @@ class MediaLibraryProvider extends ChangeNotifier {
   bool get isTrendingLoading => _isTrendingLoading;
 
   /// 获取最近添加的电影和剧集（用于首页展示）
-  List<dynamic> get recentlyAddedContent {
+  List<LibraryItem> get recentlyAddedContent {
     // 合并电影和剧集，按添加时间排序（使用相关 mediaFile 的 addedAt）
-    final List<MapEntry<DateTime, dynamic>> items = [];
+    final List<MapEntry<DateTime, LibraryItem>> items = [];
     final availableMovieTmdbIds = _availableMovieTmdbIds;
     final availableTVShowTmdbIds = _availableTVShowTmdbIds;
 
@@ -371,8 +343,8 @@ class MediaLibraryProvider extends ChangeNotifier {
   }
 
   /// 获取随机 Hero 项目 (Movie 或 TVShow)
-  dynamic getRandomHeroItem() {
-    final allItems = <dynamic>[...movies, ...tvShows];
+  LibraryItem? getRandomHeroItem() {
+    final allItems = <LibraryItem>[...movies, ...tvShows];
     if (allItems.isEmpty) return null;
 
     // 使用当前日期作为种子，使同一天内显示相同的 hero
@@ -873,6 +845,56 @@ class MediaLibraryProvider extends ChangeNotifier {
     final availableTVShowTmdbIds = _availableTVShowTmdbIds;
     return _tvShowMetadataEntities.any(
       (show) => availableTVShowTmdbIds.contains(show.tmdbId),
+    );
+  }
+
+  ResolvedMediaFileItem _resolveMediaFileItem(
+    entity.MediaFileEntity source, {
+    bool useBackdrop = false,
+  }) {
+    final file = ModelConverter.toMediaFile(source);
+    LibraryItem? libraryItem;
+
+    if (source.mediaType == entity.MediaType.movie && source.tmdbId != null) {
+      final index = _movieMetadataEntities.indexWhere(
+        (movie) => movie.tmdbId == source.tmdbId,
+      );
+      if (index >= 0) {
+        libraryItem = ModelConverter.toMovie(_movieMetadataEntities[index]);
+      }
+    } else if (source.mediaType == entity.MediaType.episode &&
+        source.tmdbId != null) {
+      final showId = _showKeyFromTmdbId(source.tmdbId);
+      final index = _tvShowMetadataEntities.indexWhere(
+        (show) => show.tmdbId == showId,
+      );
+      if (index >= 0) {
+        libraryItem = ModelConverter.toTVShow(_tvShowMetadataEntities[index]);
+      }
+    }
+
+    String? subtitle;
+    if (source.mediaType == entity.MediaType.episode && useBackdrop) {
+      subtitle = MediaFormat.episodeLabel(file);
+    }
+    if (subtitle == null && libraryItem is TVShow) {
+      final seasons = libraryItem.numberOfSeasons;
+      if (seasons != null && seasons > 0) {
+        subtitle = MediaFormat.seasonCount(seasons);
+      }
+    }
+    subtitle ??= libraryItem?.releaseYear?.toString();
+
+    return ResolvedMediaFileItem(
+      file: file,
+      libraryItem: libraryItem,
+      title: libraryItem?.title ?? source.parsedTitle,
+      subtitle: subtitle,
+      imageUrl: useBackdrop ? libraryItem?.backdropUrl : libraryItem?.posterUrl,
+      rating: libraryItem?.rating ?? 0,
+      playbackContextTitle: source.mediaType == entity.MediaType.episode
+          ? libraryItem?.title
+          : null,
     );
   }
 }

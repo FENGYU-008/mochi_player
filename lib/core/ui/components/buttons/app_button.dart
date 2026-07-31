@@ -16,6 +16,8 @@ class AppActionButton extends StatefulWidget {
   final AppButtonVariant variant;
   final AppControlTone tone;
   final bool destructive;
+  final bool selected;
+  final Color? accentColor;
   final bool busy;
   final double height;
   final double borderRadius;
@@ -30,6 +32,8 @@ class AppActionButton extends StatefulWidget {
     this.variant = AppButtonVariant.primary,
     this.tone = AppControlTone.adaptive,
     this.destructive = false,
+    this.selected = false,
+    this.accentColor,
     this.busy = false,
     this.height = 44,
     this.borderRadius = AppRadii.surface,
@@ -50,7 +54,7 @@ class _AppActionButtonState extends State<AppActionButton> {
     final isDestructive = widget.destructive;
     final primary = AppColors.primary(context);
     final danger = Colors.redAccent;
-    final actionColor = isDestructive ? danger : primary;
+    final actionColor = isDestructive ? danger : widget.accentColor ?? primary;
     final overlayTone = widget.tone == AppControlTone.overlay;
     final adaptiveSurface = AppColors.elevatedSurface(context);
     final adaptiveHoverSurface = Color.alphaBlend(
@@ -61,6 +65,8 @@ class _AppActionButtonState extends State<AppActionButton> {
         ? actionColor
         : isDestructive
         ? danger.withAlpha(14)
+        : widget.selected
+        ? actionColor.withAlpha(28)
         : overlayTone
         ? Colors.black.withAlpha(76)
         : adaptiveSurface;
@@ -68,6 +74,8 @@ class _AppActionButtonState extends State<AppActionButton> {
         ? actionColor
         : isDestructive
         ? danger.withAlpha(26)
+        : widget.selected
+        ? actionColor.withAlpha(42)
         : overlayTone
         ? Colors.black.withAlpha(100)
         : adaptiveHoverSurface;
@@ -75,6 +83,8 @@ class _AppActionButtonState extends State<AppActionButton> {
         ? Colors.white
         : isDestructive
         ? danger
+        : widget.selected
+        ? actionColor
         : overlayTone
         ? Colors.white.withAlpha(235)
         : AppColors.textPrimary(context).withAlpha(220);
@@ -82,6 +92,8 @@ class _AppActionButtonState extends State<AppActionButton> {
         ? Colors.transparent
         : isDestructive
         ? danger.withAlpha(128)
+        : widget.selected
+        ? actionColor.withAlpha(150)
         : overlayTone
         ? Colors.white.withAlpha(58)
         : AppColors.separator(context);
@@ -89,6 +101,8 @@ class _AppActionButtonState extends State<AppActionButton> {
         ? Colors.transparent
         : isDestructive
         ? danger.withAlpha(190)
+        : widget.selected
+        ? actionColor.withAlpha(190)
         : overlayTone
         ? Colors.white.withAlpha(92)
         : AppColors.separator(context);
