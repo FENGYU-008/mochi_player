@@ -16,6 +16,7 @@ class AppTextField extends StatefulWidget {
   final FocusNode? focusNode;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  final VoidCallback? onFocusLost;
   final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
@@ -29,6 +30,7 @@ class AppTextField extends StatefulWidget {
     this.focusNode,
     this.onChanged,
     this.onSubmitted,
+    this.onFocusLost,
     this.inputFormatters,
   });
 
@@ -39,6 +41,7 @@ class AppTextField extends StatefulWidget {
 class _AppTextFieldState extends State<AppTextField> {
   late FocusNode _focusNode;
   late bool _ownsFocusNode;
+  bool _wasFocused = false;
 
   @override
   void initState() {
@@ -63,6 +66,7 @@ class _AppTextFieldState extends State<AppTextField> {
   void _attachFocusNode(FocusNode? focusNode) {
     _ownsFocusNode = focusNode == null;
     _focusNode = focusNode ?? FocusNode();
+    _wasFocused = _focusNode.hasFocus;
     _focusNode.addListener(_handleFocusChange);
   }
 
@@ -72,6 +76,9 @@ class _AppTextFieldState extends State<AppTextField> {
   }
 
   void _handleFocusChange() {
+    final hasFocus = _focusNode.hasFocus;
+    if (_wasFocused && !hasFocus) widget.onFocusLost?.call();
+    _wasFocused = hasFocus;
     if (mounted) setState(() {});
   }
 

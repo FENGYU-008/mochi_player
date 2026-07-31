@@ -41,7 +41,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Timer? _feedbackTimer;
   bool _autoSaveInFlight = false;
   bool _autoSavePending = false;
-  AppSettings? _lastPersistedSettings;
+  bool _runtimeApplyPending = false;
   String? _feedbackMessage;
   AppActivityBannerTone? _feedbackTone;
 
@@ -65,7 +65,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final settings = context.read<AppSettingsProvider>();
     _syncControllers(settings);
-    _lastPersistedSettings = settings.settings;
     for (final controller in _settingsControllers) {
       controller.addListener(_scheduleAutoSave);
     }
@@ -116,7 +115,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       children: [
                         _buildThemeSettings(context),
                         const SizedBox(height: AppSpacing.xxl),
-                        _buildWebDavSettings(context),
+                        _buildOpenListSettings(context),
                         const SizedBox(height: AppSpacing.xxl),
                         _buildTmdbSettings(context),
                         const SizedBox(height: AppSpacing.xxl),
@@ -218,27 +217,30 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildWebDavSettings(BuildContext context) {
+  Widget _buildOpenListSettings(BuildContext context) {
     return Selector<AppSettingsProvider, bool>(
       selector: (context, provider) => provider.isSaving,
       builder: (context, isBusy, child) {
         return SettingsSection(
-          title: 'WebDAV',
+          title: 'OpenList',
           child: AppFormGroup(
             children: [
               AppFormTextField(
                 controller: _webDavUrlController,
                 keyboardType: TextInputType.url,
-                label: '服务器地址',
+                label: 'OpenList 服务器地址',
+                onFocusLost: _commitNetworkSettings,
               ),
               AppFormTextField(
                 controller: _webDavUsernameController,
                 label: '用户名',
+                onFocusLost: _commitNetworkSettings,
               ),
               AppFormTextField(
                 controller: _webDavPasswordController,
                 obscureText: !_showWebDavPassword,
                 label: '密码',
+                onFocusLost: _commitNetworkSettings,
                 trailing: _VisibilityToggle(
                   visible: _showWebDavPassword,
                   onPressed: () {
@@ -250,7 +252,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               AppFormRow(
                 label: '连接状态',
-                subtitle: '检查当前 WebDAV 配置是否可用',
+                subtitle: '通过 WebDAV 检查目录访问是否可用',
                 labelWidth: null,
                 expandControl: false,
                 control: _SettingsActionButton(
@@ -277,6 +279,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 controller: _tmdbApiKeyController,
                 obscureText: !_showTmdbApiKey,
                 label: 'API 密钥',
+                onFocusLost: _commitNetworkSettings,
                 trailing: _VisibilityToggle(
                   visible: _showTmdbApiKey,
                   onPressed: () {
@@ -290,6 +293,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 controller: _tmdbApiBaseUrlController,
                 keyboardType: TextInputType.url,
                 label: 'API 地址',
+                onFocusLost: _commitNetworkSettings,
               ),
               AppFormSwitchRow(
                 title: '使用 TMDB 代理',
@@ -299,7 +303,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   setState(() {
                     _tmdbProxyEnabled = value;
                   });
-                  _scheduleAutoSave();
+                  _scheduleAutoSave(applyRuntime: true, immediate: true);
                 },
               ),
               AppFormTextField(
@@ -307,6 +311,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 enabled: _tmdbProxyEnabled,
                 keyboardType: TextInputType.url,
                 label: 'HTTP 代理',
+                onFocusLost: _commitNetworkSettings,
               ),
               AppFormRow(
                 label: '连接状态',
@@ -420,13 +425,21 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _scheduleAutoSave() {
+  void _scheduleAutoSave({bool applyRuntime = false, bool immediate = false}) {
     if (!_controllersInitialized || _isSyncingControllers) return;
+    if (applyRuntime) _runtimeApplyPending = true;
 
     _saveDebounce?.cancel();
-    _saveDebounce = Timer(const Duration(milliseconds: 450), () {
-      unawaited(_autoSaveSettings());
-    });
+    _saveDebounce = Timer(
+      immediate ? Duration.zero : const Duration(milliseconds: 450),
+      () {
+        unawaited(_autoSaveSettings());
+      },
+    );
+  }
+
+  void _commitNetworkSettings() {
+    _scheduleAutoSave(applyRuntime: true, immediate: true);
   }
 
   Future<void> _autoSaveSettings() async {
@@ -437,21 +450,32 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     _autoSaveInFlight = true;
+    final shouldApplyRuntime = _runtimeApplyPending;
+    _runtimeApplyPending = false;
     try {
       final settingsProvider = context.read<AppSettingsProvider>();
-      final previousSettings =
-          _lastPersistedSettings ?? settingsProvider.settings;
-      await _persistSettings();
+      final previousRuntimeSettings =
+          settingsProvider.appliedRuntimeSettings ?? settingsProvider.settings;
+      await _persistSettings(
+        applyRuntime: shouldApplyRuntime,
+        syncControllers: false,
+      );
       if (mounted && settingsProvider.error == null) {
         final currentSettings = settingsProvider.settings;
-        _lastPersistedSettings = currentSettings;
-        unawaited(_refreshAfterAutoSave(previousSettings, currentSettings));
+        if (shouldApplyRuntime) {
+          unawaited(
+            _refreshAfterRuntimeSettingsApplied(
+              previousRuntimeSettings,
+              currentSettings,
+            ),
+          );
+        }
       }
     } finally {
       _autoSaveInFlight = false;
       if (_autoSavePending && mounted) {
         _autoSavePending = false;
-        _scheduleAutoSave();
+        _scheduleAutoSave(immediate: _runtimeApplyPending);
       }
     }
   }
@@ -478,7 +502,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _testWebDavConnection() async {
-    final didSave = await _persistSettings();
+    final didSave = await _persistSettings(applyRuntime: true);
     if (!didSave || !mounted) return;
 
     final settingsProvider = context.read<AppSettingsProvider>();
@@ -486,13 +510,13 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
 
     _showFeedback(
-      isConnected ? 'WebDAV 连接成功' : 'WebDAV 连接失败',
+      isConnected ? 'OpenList WebDAV 连接成功' : 'OpenList WebDAV 连接失败',
       isConnected ? AppActivityBannerTone.success : AppActivityBannerTone.error,
     );
   }
 
   Future<void> _testTmdbConnection() async {
-    final didSave = await _persistSettings();
+    final didSave = await _persistSettings(applyRuntime: true);
     if (!didSave || !mounted) return;
 
     final settingsProvider = context.read<AppSettingsProvider>();
@@ -517,7 +541,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     if (confirmed != true || !mounted) return;
 
-    final didSave = await _persistSettings();
+    final didSave = await _persistSettings(applyRuntime: true);
     if (!didSave || !mounted) return;
 
     final settingsProvider = context.read<AppSettingsProvider>();
@@ -560,7 +584,10 @@ class _SettingsPageState extends State<SettingsPage> {
     _showFeedback('媒体库已清空', AppActivityBannerTone.success);
   }
 
-  Future<bool> _persistSettings() async {
+  Future<bool> _persistSettings({
+    bool applyRuntime = false,
+    bool syncControllers = true,
+  }) async {
     final settingsProvider = context.read<AppSettingsProvider>();
 
     await settingsProvider.saveSettings(
@@ -583,6 +610,7 @@ class _SettingsPageState extends State<SettingsPage> {
       audioLanguagePriority: _audioLanguagePriorityController.text,
       subtitleLanguagePriority: _subtitleLanguagePriorityController.text,
       subtitleFontSize: _subtitleFontSize,
+      applyRuntime: applyRuntime,
     );
     if (!mounted) return false;
 
@@ -592,13 +620,12 @@ class _SettingsPageState extends State<SettingsPage> {
       return false;
     }
 
-    _syncControllers(settingsProvider);
-    _lastPersistedSettings = settingsProvider.settings;
-    if (mounted) setState(() {});
+    if (syncControllers) _syncControllers(settingsProvider);
+    if (mounted && syncControllers) setState(() {});
     return true;
   }
 
-  Future<void> _refreshAfterAutoSave(
+  Future<void> _refreshAfterRuntimeSettingsApplied(
     AppSettings previousSettings,
     AppSettings currentSettings,
   ) async {

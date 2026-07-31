@@ -16,6 +16,7 @@ class AppFormTextField extends StatelessWidget {
   final Widget? trailing;
   final String? suffixText;
   final double maxWidth;
+  final VoidCallback? onFocusLost;
 
   const AppFormTextField({
     super.key,
@@ -28,6 +29,7 @@ class AppFormTextField extends StatelessWidget {
     this.trailing,
     this.suffixText,
     this.maxWidth = AppControlMetrics.defaultFieldWidth,
+    this.onFocusLost,
   });
 
   @override
@@ -50,6 +52,7 @@ class AppFormTextField extends StatelessWidget {
                   enabled: enabled,
                   obscureText: obscureText,
                   keyboardType: keyboardType,
+                  onFocusLost: onFocusLost,
                   textAlign: suffixText == null
                       ? TextAlign.start
                       : TextAlign.end,

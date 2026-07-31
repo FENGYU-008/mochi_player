@@ -6,7 +6,16 @@ import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
 
 class AppSearchBar extends StatefulWidget {
-  const AppSearchBar({super.key});
+  final String hintText;
+  final ValueChanged<String>? onChanged;
+  final double width;
+
+  const AppSearchBar({
+    super.key,
+    this.hintText = '搜索...',
+    this.onChanged,
+    this.width = 240,
+  });
 
   @override
   State<AppSearchBar> createState() => _AppSearchBarState();
@@ -85,7 +94,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
 
     return RepaintBoundary(
       child: SizedBox(
-        width: 240,
+        width: widget.width,
         height: 35,
         child: Stack(
           fit: StackFit.expand,
@@ -131,8 +140,9 @@ class _AppSearchBarState extends State<AppSearchBar> {
                     child: TextField(
                       controller: _controller,
                       focusNode: _focusNode,
+                      onChanged: widget.onChanged,
                       decoration: InputDecoration(
-                        hintText: "搜索...",
+                        hintText: widget.hintText,
                         hintStyle: TextStyle(
                           color: customTheme.searchBarHintColor,
                           fontSize: 14,
@@ -174,6 +184,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
       child: GestureDetector(
         onTap: () {
           _controller.clear();
+          widget.onChanged?.call('');
         },
         child: Container(
           key: const ValueKey('clear_button'),

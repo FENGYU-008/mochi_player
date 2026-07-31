@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/features/library/application/file_browser_provider.dart';
-import 'package:mochi_player/features/library/presentation/widgets/file_card.dart';
-import 'package:mochi_player/features/library/presentation/widgets/file_list_item.dart';
-import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
-import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
-import 'package:mochi_player/core/domain/media/media_file.dart';
-import 'package:mochi_player/core/domain/media/media_type.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
+import 'package:mochi_player/features/library/application/file_browser_provider.dart';
+import 'package:mochi_player/features/library/domain/file_browser_entry.dart';
+import 'package:mochi_player/features/library/presentation/widgets/file_browser_list.dart';
+import 'package:mochi_player/features/library/presentation/widgets/file_browser_toolbar.dart';
+import 'package:mochi_player/features/library/presentation/widgets/file_browser_grid_tile.dart';
+import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
+import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:provider/provider.dart';
 
 class FileBrowserPage extends StatefulWidget {
@@ -21,71 +21,55 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.read<FileBrowserProvider>();
+
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // === 1. 顶部功能栏 (Top Bar) ===
-          Selector<FileBrowserProvider, _FileBrowserTopBarState>(
-            selector: (context, provider) => _FileBrowserTopBarState(
-              currentPath: provider.currentPath,
-              canGoBack: provider.canGoBack,
-              viewMode: provider.viewMode,
-            ),
-            builder: (context, topBarState, child) {
-              return _buildTopBar(
-                context,
-                topBarState,
-                context.read<FileBrowserProvider>(),
-              );
-            },
+          AppHeader(
+            title: '文件浏览',
+            searchHint: '搜索当前目录…',
+            onSearchChanged: provider.setSearchQuery,
+            searchWidth: 300,
           ),
-
-          // === 2. 内容区域 (Content) ===
           Expanded(
             child:
                 Selector2<
                   FileBrowserProvider,
                   AppSettingsProvider,
-                  _FileBrowserContentState
+                  _FileBrowserState
                 >(
                   selector: (context, fileProvider, settingsProvider) {
                     final error =
                         fileProvider.error ??
                         (settingsProvider.hasWebDavConfig
                             ? null
-                            : '请先在设置中配置 WebDAV');
-                    return _FileBrowserContentState(
-                      items: fileProvider.items,
+                            : '请先在设置中配置 OpenList');
+                    return _FileBrowserState(
+                      items: fileProvider.visibleItems,
+                      totalItemCount: fileProvider.items.length,
                       isLoading: fileProvider.isLoading,
                       hasLoaded: fileProvider.hasLoaded,
                       hasWebDavConfig: settingsProvider.hasWebDavConfig,
                       error: error,
+                      currentPath: fileProvider.currentPath,
+                      canGoBack: fileProvider.canGoBack,
+                      canGoForward: fileProvider.canGoForward,
                       viewMode: fileProvider.viewMode,
+                      sortField: fileProvider.sortField,
+                      sortAscending: fileProvider.sortAscending,
+                      hasSearchQuery: fileProvider.searchQuery
+                          .trim()
+                          .isNotEmpty,
                     );
                   },
-                  builder: (context, contentState, child) {
-                    if (!contentState.hasWebDavConfig) {
-                      return _buildEmptyState(contentState.error);
-                    }
-
-                    if (contentState.shouldLoadInitialPath) {
-                      _scheduleInitialLoad();
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (contentState.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (contentState.items.isEmpty) {
-                      return _buildEmptyState(contentState.error);
-                    }
-
-                    return _buildContent(
-                      context,
-                      contentState,
-                      context.read<FileBrowserProvider>(),
+                  builder: (context, state, child) {
+                    if (state.shouldLoadInitialPath) _scheduleInitialLoad();
+                    return _FileBrowserBody(
+                      state: state,
+                      provider: context.read<FileBrowserProvider>(),
+                      onItemTap: (item) => _onItemTap(context, item, provider),
                     );
                   },
                 ),
@@ -101,7 +85,6 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-
       final settingsProvider = context.read<AppSettingsProvider>();
       final fileProvider = context.read<FileBrowserProvider>();
       if (!settingsProvider.hasWebDavConfig ||
@@ -109,204 +92,238 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
           fileProvider.isLoading) {
         return;
       }
-
       fileProvider.fetchFiles(fileProvider.currentPath);
     });
   }
 
-  // 构建顶部导航栏
-  Widget _buildTopBar(
+  void _onItemTap(
     BuildContext context,
-    _FileBrowserTopBarState state,
+    FileBrowserEntry item,
     FileBrowserProvider provider,
   ) {
-    return AppHeader(
-      title: state.currentPath,
-      subtitle: '浏览文件',
-      showSearch: false,
-      showBackButton: state.canGoBack,
-      onBack: provider.navigateBack,
-      leading: state.canGoBack
-          ? null
-          : Icon(
-              Icons.folder_open_rounded,
-              color: AppColors.primary(context),
-              size: 24,
+    if (item.isDirectory) {
+      provider.enterFolder(item);
+      return;
+    }
+    if (!item.isPlayable) return;
+    PlaybackLauncher.playFile(
+      context,
+      provider.createPlaybackFile(item),
+      loadingMessage: '正在获取播放链接: ${item.name}',
+      failureMessage: '获取播放链接失败，请检查 OpenList 配置或网络',
+    );
+  }
+}
+
+class _FileBrowserBody extends StatelessWidget {
+  final _FileBrowserState state;
+  final FileBrowserProvider provider;
+  final ValueChanged<FileBrowserEntry> onItemTap;
+
+  const _FileBrowserBody({
+    required this.state,
+    required this.provider,
+    required this.onItemTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.section,
+        AppSpacing.xxl,
+        AppSpacing.section,
+        AppSpacing.xxl,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FileBrowserToolbar(
+            currentPath: state.currentPath,
+            canGoBack: state.canGoBack,
+            canGoForward: state.canGoForward,
+            viewMode: state.viewMode,
+            sortField: state.sortField,
+            sortAscending: state.sortAscending,
+            onBack: provider.navigateBack,
+            onForward: provider.navigateForward,
+            onPathSelected: provider.navigateToPath,
+            onSortChanged: (field, ascending) =>
+                provider.setSort(field, ascending: ascending),
+            onViewModeChanged: provider.setViewMode,
+            onRefresh: provider.refresh,
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          Expanded(child: _buildContent()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (!state.hasWebDavConfig) return _emptyState(state.error);
+    if (state.isLoading || state.shouldLoadInitialPath) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.items.isEmpty) {
+      return _emptyState(
+        state.hasSearchQuery ? '没有匹配的文件' : state.error,
+        searchEmpty: state.hasSearchQuery,
+      );
+    }
+    if (state.viewMode == ViewMode.grid) return _buildGrid();
+    return _buildList();
+  }
+
+  Widget _buildGrid() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: GridView.builder(
+            padding: EdgeInsets.zero,
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 138,
+              childAspectRatio: 0.95,
+              crossAxisSpacing: AppSpacing.md,
+              mainAxisSpacing: AppSpacing.md,
             ),
-      actions: [
-        AppIconButton(
-          onPressed: () => provider.toggleViewMode(),
-          icon: state.viewMode == ViewMode.grid
-              ? Icons.view_list_rounded
-              : Icons.grid_view_rounded,
-          tooltip: "切换视图",
-          foregroundColor: AppColors.textPrimary(context),
-          backgroundColor: AppColors.hoverSurface(context),
-          size: 36,
-          iconSize: 19,
+            itemCount: state.items.length,
+            itemBuilder: (context, index) {
+              final item = state.items[index];
+              return FileBrowserGridTile(
+                item: item,
+                onTap: item.isDirectory || item.isPlayable
+                    ? () => onItemTap(item)
+                    : null,
+              );
+            },
+          ),
         ),
-        AppIconButton(
-          onPressed: () => provider.refresh(),
-          icon: Icons.refresh_rounded,
-          tooltip: "刷新目录",
-          foregroundColor: AppColors.textPrimary(context),
-          backgroundColor: AppColors.hoverSurface(context),
-          size: 36,
-          iconSize: 20,
-        ),
+        const SizedBox(height: AppSpacing.md),
+        _buildSummary(),
       ],
     );
   }
 
-  // 根据视图模式构建内容
-  Widget _buildContent(
-    BuildContext context,
-    _FileBrowserContentState state,
-    FileBrowserProvider provider,
-  ) {
-    if (state.viewMode == ViewMode.grid) {
-      return _buildGridView(context, state.items, provider);
-    } else {
-      return _buildListView(context, state.items, provider);
-    }
-  }
-
-  // 构建网格视图
-  Widget _buildGridView(
-    BuildContext context,
-    List<MediaFile> items,
-    FileBrowserProvider provider,
-  ) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(20),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 130,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return FileCard(
-          item: item,
-          onTap: () => _onItemTap(context, item, provider),
+  Widget _buildList() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const summarySpace = 34.0;
+        final naturalHeight =
+            FileBrowserList.headerHeight +
+            state.items.length * FileBrowserList.rowHeight;
+        final surfaceHeight = naturalHeight.clamp(
+          0.0,
+          constraints.maxHeight - summarySpace,
+        );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: surfaceHeight,
+              child: FileBrowserList(items: state.items, onItemTap: onItemTap),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _buildSummary(),
+          ],
         );
       },
     );
   }
 
-  // 构建列表视图
-  Widget _buildListView(
-    BuildContext context,
-    List<MediaFile> items,
-    FileBrowserProvider provider,
-  ) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return FileListItem(
-          item: item,
-          onTap: () => _onItemTap(context, item, provider),
-        );
-      },
-    );
-  }
+  Widget _buildSummary() => FileBrowserSummary(
+    items: state.items,
+    totalItemCount: state.totalItemCount,
+    isFiltered: state.hasSearchQuery,
+  );
 
-  // 统一处理项目点击事件
-  void _onItemTap(
-    BuildContext context,
-    MediaFile item,
-    FileBrowserProvider provider,
-  ) {
-    if (item.mediaType == MediaType.folder) {
-      provider.enterFolder(item);
-    } else {
-      _playVideo(context, item);
-    }
-  }
-
-  // 播放视频的逻辑
-  void _playVideo(BuildContext context, MediaFile item) {
-    PlaybackLauncher.playFile(
-      context,
-      item,
-      loadingMessage: "正在获取播放链接: ${item.fileName}",
-      failureMessage: "获取播放链接失败，请检查 Alist 配置或网络",
-    );
-  }
-
-  // 构建空状态视图
-  Widget _buildEmptyState(String? error) {
+  Widget _emptyState(String? error, {bool searchEmpty = false}) {
     return AppEmptyState(
       title: error ?? '此文件夹为空',
-      icon: error == null ? Icons.folder_off_outlined : Icons.settings_outlined,
+      icon: searchEmpty
+          ? Icons.search_off_rounded
+          : error == null
+          ? Icons.folder_off_outlined
+          : Icons.settings_outlined,
     );
   }
 }
 
-class _FileBrowserTopBarState {
-  final String currentPath;
-  final bool canGoBack;
-  final ViewMode viewMode;
-
-  const _FileBrowserTopBarState({
-    required this.currentPath,
-    required this.canGoBack,
-    required this.viewMode,
-  });
-
-  @override
-  bool operator ==(Object other) {
-    return other is _FileBrowserTopBarState &&
-        other.currentPath == currentPath &&
-        other.canGoBack == canGoBack &&
-        other.viewMode == viewMode;
-  }
-
-  @override
-  int get hashCode => Object.hash(currentPath, canGoBack, viewMode);
-}
-
-class _FileBrowserContentState {
-  final List<MediaFile> items;
+class _FileBrowserState {
+  final List<FileBrowserEntry> items;
+  final int totalItemCount;
   final bool isLoading;
   final bool hasLoaded;
   final bool hasWebDavConfig;
   final String? error;
+  final String currentPath;
+  final bool canGoBack;
+  final bool canGoForward;
   final ViewMode viewMode;
+  final FileSortField sortField;
+  final bool sortAscending;
+  final bool hasSearchQuery;
 
-  const _FileBrowserContentState({
+  const _FileBrowserState({
     required this.items,
+    required this.totalItemCount,
     required this.isLoading,
     required this.hasLoaded,
     required this.hasWebDavConfig,
     required this.error,
+    required this.currentPath,
+    required this.canGoBack,
+    required this.canGoForward,
     required this.viewMode,
+    required this.sortField,
+    required this.sortAscending,
+    required this.hasSearchQuery,
   });
 
   bool get shouldLoadInitialPath => hasWebDavConfig && !hasLoaded && !isLoading;
 
   @override
   bool operator ==(Object other) {
-    return other is _FileBrowserContentState &&
-        identical(other.items, items) &&
+    return other is _FileBrowserState &&
+        _sameItems(other.items, items) &&
+        other.totalItemCount == totalItemCount &&
         other.isLoading == isLoading &&
         other.hasLoaded == hasLoaded &&
         other.hasWebDavConfig == hasWebDavConfig &&
         other.error == error &&
-        other.viewMode == viewMode;
+        other.currentPath == currentPath &&
+        other.canGoBack == canGoBack &&
+        other.canGoForward == canGoForward &&
+        other.viewMode == viewMode &&
+        other.sortField == sortField &&
+        other.sortAscending == sortAscending &&
+        other.hasSearchQuery == hasSearchQuery;
   }
 
   @override
   int get hashCode => Object.hash(
-    identityHashCode(items),
+    Object.hashAll(items),
+    totalItemCount,
     isLoading,
     hasLoaded,
     hasWebDavConfig,
     error,
+    currentPath,
+    canGoBack,
+    canGoForward,
     viewMode,
+    sortField,
+    sortAscending,
+    hasSearchQuery,
   );
+
+  static bool _sameItems(List<FileBrowserEntry> a, List<FileBrowserEntry> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var index = 0; index < a.length; index++) {
+      if (!identical(a[index], b[index])) return false;
+    }
+    return true;
+  }
 }

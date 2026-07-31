@@ -1,39 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/core/domain/media/media_file.dart';
+
+import 'package:mochi_player/core/ui/components/layout/app_hover_surface.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-import 'file_entry_presentation.dart';
+import 'package:mochi_player/features/library/presentation/widgets/file_browser_item_presentation.dart';
+import 'package:mochi_player/features/library/domain/file_browser_entry.dart';
 
-class FileCard extends StatelessWidget {
-  final MediaFile item;
+class FileBrowserGridTile extends StatelessWidget {
+  final FileBrowserEntry item;
   final VoidCallback? onTap;
 
-  const FileCard({super.key, required this.item, this.onTap});
+  const FileBrowserGridTile({super.key, required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final presentation = FileEntryPresentation(item);
-    final subtitle = presentation.isFolder ? '文件夹' : presentation.size;
+    final subtitle = item.isDirectory
+        ? item.browserTypeLabel
+        : '${item.browserTypeLabel} · ${item.browserSizeLabel}';
 
-    return FileEntryHoverSurface(
+    return AppHoverSurface(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.control),
       padding: const EdgeInsets.all(AppSpacing.md),
-      showBorder: true,
+      hoverColor: AppColors.hoverSurface(context),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
             child: Icon(
-              presentation.icon,
-              size: 56,
-              color: presentation.iconColor(context),
+              item.browserIcon,
+              size: 42,
+              color: item.browserIconColor(context),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            item.fileName,
+            item.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,

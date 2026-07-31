@@ -30,14 +30,14 @@ Future<T?> showAppModal<T>({
               onTap: () => Navigator.of(context).pop(),
               behavior: HitTestBehavior.opaque,
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(color: Colors.black.withAlpha(51)),
+                filter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
+                child: Container(color: Colors.black.withAlpha(20)),
               ),
             ),
           ),
           ScaleTransition(
             scale: Tween<double>(
-              begin: 0.92,
+              begin: 0.97,
               end: 1.0,
             ).animate(curvedAnimation),
             child: FadeTransition(opacity: curvedAnimation, child: child),

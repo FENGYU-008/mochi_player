@@ -1,3 +1,5 @@
+import 'package:mochi_player/core/domain/media/media_file_kind.dart';
+
 /// 文件名解析结果
 ///
 /// 从文件名中提取的所有信息，用于填充 MediaFileEntity
@@ -162,21 +164,6 @@ class FileNameParser {
     caseSensitive: false,
   );
 
-  // 视频扩展名
-  static const _videoExtensions = {
-    'mp4',
-    'mkv',
-    'avi',
-    'mov',
-    'wmv',
-    'flv',
-    'webm',
-    'ts',
-    'm2ts',
-    'mpg',
-    'mpeg',
-  };
-
   /// 解析文件名
   static ParsedResult parse({required String fileName, String? filePath}) {
     final pathSegments = _pathSegments(filePath);
@@ -191,7 +178,7 @@ class FileNameParser {
     String? container;
     if (fileName.contains('.')) {
       final ext = fileName.split('.').last.toLowerCase();
-      if (_videoExtensions.contains(ext)) {
+      if (MediaFileKindResolver.isVideoExtension(ext)) {
         container = ext;
       }
     }
@@ -476,7 +463,7 @@ class FileNameParser {
     if (dotIndex <= 0) return fileName;
 
     final ext = fileName.substring(dotIndex + 1).toLowerCase();
-    return _videoExtensions.contains(ext)
+    return MediaFileKindResolver.isVideoExtension(ext)
         ? fileName.substring(0, dotIndex)
         : fileName;
   }

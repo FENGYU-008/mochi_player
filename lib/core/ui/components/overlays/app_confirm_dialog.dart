@@ -67,9 +67,9 @@ class AppConfirmDialog extends StatelessWidget {
         border: Border.all(color: AppColors.separator(context)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(54),
-            blurRadius: 36,
-            offset: const Offset(0, 18),
+            color: Colors.black.withAlpha(28),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
         ],
       ),

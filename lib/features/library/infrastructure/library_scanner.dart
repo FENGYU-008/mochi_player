@@ -4,6 +4,7 @@ import 'package:webdav_client/webdav_client.dart' as webdav;
 import 'package:mochi_player/core/infrastructure/database/entities/entities.dart';
 import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/library/infrastructure/filename_parser.dart';
+import 'package:mochi_player/core/domain/media/media_file_kind.dart';
 
 /// 媒体库扫描器
 ///
@@ -12,7 +13,7 @@ import 'package:mochi_player/features/library/infrastructure/filename_parser.dar
 /// - 解析文件名提取元信息
 /// - 输出 MediaFileEntity 流
 class LibraryScanner {
-  final WebDavService _webDavService;
+  final WebDavFileSystem _webDavService;
   final _logger = Logger(printer: PrettyPrinter(methodCount: 0));
   bool _hadReadError = false;
 
@@ -91,7 +92,11 @@ class LibraryScanner {
 
       for (final file in files) {
         final name = file.name;
-        if (name == null || name.isEmpty) continue;
+        if (name == null || name.isEmpty || name.startsWith('.')) continue;
+        if (file.isDir != true &&
+            MediaFileKindResolver.resolve(name) != MediaFileKind.video) {
+          continue;
+        }
 
         final itemPath = _joinPath(
           directoryPath,

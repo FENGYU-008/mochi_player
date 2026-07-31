@@ -18,6 +18,9 @@ class AppHeader extends StatelessWidget {
   final String? subtitle;
   final List<Widget> actions;
   final bool showSearch;
+  final String searchHint;
+  final ValueChanged<String>? onSearchChanged;
+  final double searchWidth;
   final double opacity;
   final bool ignoreWhenTransparent;
 
@@ -30,6 +33,9 @@ class AppHeader extends StatelessWidget {
     this.subtitle,
     this.actions = const [],
     this.showSearch = true,
+    this.searchHint = '搜索...',
+    this.onSearchChanged,
+    this.searchWidth = 240,
     this.opacity = 1,
     this.ignoreWhenTransparent = false,
   });
@@ -132,7 +138,11 @@ class AppHeader extends StatelessWidget {
                     ],
                     if (showSearch) ...[
                       const SizedBox(width: 20),
-                      const AppSearchBar(),
+                      AppSearchBar(
+                        hintText: searchHint,
+                        onChanged: onSearchChanged,
+                        width: searchWidth,
+                      ),
                     ],
                   ],
                 ),

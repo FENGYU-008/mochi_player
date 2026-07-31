@@ -5,6 +5,7 @@ import 'package:mochi_player/features/settings/infrastructure/app_settings_servi
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
 import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
+import 'package:mochi_player/core/infrastructure/openlist/openlist_playback_service.dart';
 
 class AppSettingsProvider extends ChangeNotifier {
   final AppSettingsService _settingsService;
@@ -13,11 +14,13 @@ class AppSettingsProvider extends ChangeNotifier {
     : _settingsService = settingsService ?? AppSettingsService();
 
   AppSettings _settings = const AppSettings();
+  AppSettings? _appliedRuntimeSettings;
   bool _isLoading = false;
   bool _isSaving = false;
   String? _error;
 
   AppSettings get settings => _settings;
+  AppSettings? get appliedRuntimeSettings => _appliedRuntimeSettings;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   String? get error => _error;
@@ -68,6 +71,7 @@ class AppSettingsProvider extends ChangeNotifier {
     required String audioLanguagePriority,
     required String subtitleLanguagePriority,
     required double subtitleFontSize,
+    bool applyRuntime = false,
   }) async {
     _isSaving = true;
     _error = null;
@@ -90,7 +94,7 @@ class AppSettingsProvider extends ChangeNotifier {
         subtitleFontSize: subtitleFontSize,
       );
       _settings = await _settingsService.save(nextSettings);
-      await _applyRuntimeSettings();
+      if (applyRuntime) await _applyRuntimeSettings();
     } catch (e) {
       _error = '保存设置失败: $e';
     } finally {
@@ -128,8 +132,15 @@ class AppSettingsProvider extends ChangeNotifier {
         _settings.webDavUsername,
         _settings.webDavPassword,
       );
+      OpenListPlaybackService().configure(
+        _settings.webDavUrl,
+        _settings.webDavUsername,
+        _settings.webDavPassword,
+      );
     } else {
       WebDavService().clear();
+      OpenListPlaybackService().clear();
     }
+    _appliedRuntimeSettings = _settings;
   }
 }
