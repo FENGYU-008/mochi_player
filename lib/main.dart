@@ -7,6 +7,7 @@ import 'package:mochi_player/features/settings/application/app_settings_provider
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/settings/application/theme_provider.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
+import 'package:mochi_player/core/ui/components/navigation/app_window_controls.dart';
 import 'package:mochi_player/core/infrastructure/database/database_service.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -77,6 +78,16 @@ class MyInfuseApp extends StatelessWidget {
       // 直接使用从 AppTheme 类中导入的主题
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
+
+      builder: (context, child) {
+        return Stack(
+          children: [
+            Positioned.fill(child: child ?? const SizedBox.shrink()),
+            if (AppWindowControls.isVisible)
+              const Positioned(top: 0, right: 0, child: AppWindowControls()),
+          ],
+        );
+      },
 
       home: const MainPage(),
     );

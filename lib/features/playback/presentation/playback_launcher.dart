@@ -62,7 +62,9 @@ class PlaybackLauncher {
   static void playTVShow(BuildContext context, TVShow show) {
     final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
     final versions = provider.getVersions(show.tmdbId);
-    final target = EpisodePlaybackTargetResolver.resolve(versions);
+    final target = EpisodePlaybackTargetResolver.resolveForShowPlayback(
+      versions,
+    );
 
     if (target == null) {
       _showError(context, "未找到可播放剧集");

@@ -3,17 +3,17 @@ import 'package:mochi_player/core/domain/media/models.dart';
 
 void main() {
   test('resumes the latest unfinished episode', () {
-    final target = EpisodePlaybackTargetResolver.resolve([
+    final target = EpisodePlaybackTargetResolver.resolveForShowPlayback([
       _episode(1, status: WatchStatus.watching, watchedMinute: 2),
       _episode(2),
     ]);
 
     expect(target?.file.parsedEpisode, 1);
-    expect(target?.reason, EpisodePlaybackReason.resumeCurrent);
+    expect(target?.reason, EpisodePlaybackReason.resumeEpisode);
   });
 
   test('advances from a completed episode to the next local episode', () {
-    final target = EpisodePlaybackTargetResolver.resolve([
+    final target = EpisodePlaybackTargetResolver.resolveForShowPlayback([
       _episode(1, status: WatchStatus.completed, watchedMinute: 3),
       _episode(2),
       _episode(3),
@@ -24,7 +24,7 @@ void main() {
   });
 
   test('advances across seasons and skips episodes already completed', () {
-    final target = EpisodePlaybackTargetResolver.resolve([
+    final target = EpisodePlaybackTargetResolver.resolveForShowPlayback([
       _episode(10, season: 1, status: WatchStatus.completed, watchedMinute: 3),
       _episode(1, season: 2, status: WatchStatus.completed, watchedMinute: 2),
       _episode(2, season: 2),
@@ -35,10 +35,19 @@ void main() {
   });
 
   test('omits a fully watched show from continue watching', () {
-    final target = EpisodePlaybackTargetResolver.resolve([
+    final target = EpisodePlaybackTargetResolver.resolveForContinueWatching([
       _episode(1, status: WatchStatus.completed, watchedMinute: 2),
       _episode(2, status: WatchStatus.completed, watchedMinute: 3),
-    ], fallbackToFirst: false);
+    ]);
+
+    expect(target, isNull);
+  });
+
+  test('omits a show that has never been played from continue watching', () {
+    final target = EpisodePlaybackTargetResolver.resolveForContinueWatching([
+      _episode(1),
+      _episode(2),
+    ]);
 
     expect(target, isNull);
   });

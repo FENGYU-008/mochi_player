@@ -56,6 +56,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AppTextContextMenu), findsOneWidget);
+    expect(find.byType(AppPopupMenuPanel), findsOneWidget);
+    expect(find.byType(AppPopupMenuItem), findsWidgets);
     final labels = tester
         .widgetList<Text>(
           find.descendant(

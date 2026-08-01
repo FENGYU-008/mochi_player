@@ -58,74 +58,22 @@ class _AppActionButtonState extends State<AppActionButton> {
     final danger = Colors.redAccent;
     final actionColor = isDestructive ? danger : widget.accentColor ?? primary;
     final overlayTone = widget.tone == AppControlTone.overlay;
-    final selectedOverlay = overlayTone && widget.selected && !isPrimary;
     final adaptiveSurface = AppColors.elevatedSurface(context);
     final adaptiveHoverSurface = Color.alphaBlend(
       AppColors.hoverSurface(context),
       adaptiveSurface,
     );
-    final restingBackground = isPrimary
-        ? actionColor
-        : isDestructive
-        ? danger.withAlpha(14)
-        : selectedOverlay
-        ? Colors.black.withAlpha(76)
-        : widget.selected
-        ? actionColor.withAlpha(28)
-        : overlayTone
-        ? Colors.black.withAlpha(76)
-        : adaptiveSurface;
-    final hoverBackground = isPrimary
-        ? actionColor
-        : isDestructive
-        ? danger.withAlpha(26)
-        : selectedOverlay
-        ? Colors.black.withAlpha(100)
-        : widget.selected
-        ? actionColor.withAlpha(42)
-        : overlayTone
-        ? Colors.black.withAlpha(100)
-        : adaptiveHoverSurface;
-    final foreground = isPrimary
-        ? Colors.white
-        : isDestructive
-        ? danger
-        : selectedOverlay
-        ? Colors.white.withAlpha(235)
-        : widget.selected
-        ? actionColor
-        : overlayTone
-        ? Colors.white.withAlpha(235)
-        : AppColors.textPrimary(context).withAlpha(220);
-    final restingBorderColor = isPrimary
-        ? Colors.transparent
-        : isDestructive
-        ? danger.withAlpha(128)
-        : selectedOverlay
-        ? Colors.white.withAlpha(58)
-        : widget.selected
-        ? actionColor.withAlpha(150)
-        : overlayTone
-        ? Colors.white.withAlpha(58)
-        : AppColors.separator(context);
-    final hoverBorderColor = isPrimary
-        ? Colors.transparent
-        : isDestructive
-        ? danger.withAlpha(190)
-        : selectedOverlay
-        ? Colors.white.withAlpha(92)
-        : widget.selected
-        ? actionColor.withAlpha(190)
-        : overlayTone
-        ? Colors.white.withAlpha(92)
-        : AppColors.separator(context);
-    final disabledBackground = isPrimary
-        ? actionColor.withAlpha(90)
-        : isDestructive
-        ? danger.withAlpha(14)
-        : overlayTone
-        ? Colors.black.withAlpha(42)
-        : AppColors.hoverSurface(context);
+    final palette = _AppActionButtonPalette.resolve(
+      context: context,
+      actionColor: actionColor,
+      dangerColor: danger,
+      isPrimary: isPrimary,
+      isDestructive: isDestructive,
+      isOverlay: overlayTone,
+      isSelected: widget.selected,
+      adaptiveSurface: adaptiveSurface,
+      adaptiveHoverSurface: adaptiveHoverSurface,
+    );
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
@@ -147,16 +95,16 @@ class _AppActionButtonState extends State<AppActionButton> {
                 decoration: BoxDecoration(
                   color: enabled
                       ? Color.lerp(
-                          restingBackground,
-                          hoverBackground,
+                          palette.restingBackground,
+                          palette.hoverBackground,
                           hoverProgress,
                         )
-                      : disabledBackground,
+                      : palette.disabledBackground,
                   borderRadius: BorderRadius.circular(widget.borderRadius),
                   border: Border.all(
                     color: Color.lerp(
-                      restingBorderColor,
-                      hoverBorderColor,
+                      palette.restingBorder,
+                      palette.hoverBorder,
                       hoverProgress,
                     )!,
                   ),
@@ -185,23 +133,23 @@ class _AppActionButtonState extends State<AppActionButton> {
                     height: 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: foreground,
+                      color: palette.foreground,
                     ),
                   )
                 else if (widget.icon != null)
                   Icon(
                     widget.icon,
                     size: 19,
-                    color: widget.iconColor ?? foreground,
+                    color: widget.iconColor ?? palette.foreground,
                   ),
                 if (widget.busy || widget.icon != null)
                   const SizedBox(width: 8),
                 Text(
                   widget.label,
                   style:
-                      widget.textStyle?.copyWith(color: foreground) ??
+                      widget.textStyle?.copyWith(color: palette.foreground) ??
                       TextStyle(
-                        color: foreground,
+                        color: palette.foreground,
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         height: 1,
@@ -212,6 +160,85 @@ class _AppActionButtonState extends State<AppActionButton> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AppActionButtonPalette {
+  final Color restingBackground;
+  final Color hoverBackground;
+  final Color disabledBackground;
+  final Color foreground;
+  final Color restingBorder;
+  final Color hoverBorder;
+
+  const _AppActionButtonPalette({
+    required this.restingBackground,
+    required this.hoverBackground,
+    required this.disabledBackground,
+    required this.foreground,
+    required this.restingBorder,
+    required this.hoverBorder,
+  });
+
+  factory _AppActionButtonPalette.resolve({
+    required BuildContext context,
+    required Color actionColor,
+    required Color dangerColor,
+    required bool isPrimary,
+    required bool isDestructive,
+    required bool isOverlay,
+    required bool isSelected,
+    required Color adaptiveSurface,
+    required Color adaptiveHoverSurface,
+  }) {
+    if (isPrimary) {
+      return _AppActionButtonPalette(
+        restingBackground: actionColor,
+        hoverBackground: actionColor,
+        disabledBackground: actionColor.withAlpha(90),
+        foreground: Colors.white,
+        restingBorder: Colors.transparent,
+        hoverBorder: Colors.transparent,
+      );
+    }
+    if (isDestructive) {
+      return _AppActionButtonPalette(
+        restingBackground: dangerColor.withAlpha(14),
+        hoverBackground: dangerColor.withAlpha(26),
+        disabledBackground: dangerColor.withAlpha(14),
+        foreground: dangerColor,
+        restingBorder: dangerColor.withAlpha(128),
+        hoverBorder: dangerColor.withAlpha(190),
+      );
+    }
+    if (isOverlay) {
+      return _AppActionButtonPalette(
+        restingBackground: Colors.black.withAlpha(76),
+        hoverBackground: Colors.black.withAlpha(100),
+        disabledBackground: Colors.black.withAlpha(42),
+        foreground: Colors.white.withAlpha(235),
+        restingBorder: Colors.white.withAlpha(58),
+        hoverBorder: Colors.white.withAlpha(92),
+      );
+    }
+    if (isSelected) {
+      return _AppActionButtonPalette(
+        restingBackground: actionColor.withAlpha(28),
+        hoverBackground: actionColor.withAlpha(42),
+        disabledBackground: AppColors.hoverSurface(context),
+        foreground: actionColor,
+        restingBorder: actionColor.withAlpha(150),
+        hoverBorder: actionColor.withAlpha(190),
+      );
+    }
+    return _AppActionButtonPalette(
+      restingBackground: adaptiveSurface,
+      hoverBackground: adaptiveHoverSurface,
+      disabledBackground: AppColors.hoverSurface(context),
+      foreground: AppColors.textPrimary(context).withAlpha(220),
+      restingBorder: AppColors.separator(context),
+      hoverBorder: AppColors.separator(context),
     );
   }
 }

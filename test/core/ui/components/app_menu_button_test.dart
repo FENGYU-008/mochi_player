@@ -34,6 +34,8 @@ void main() {
     await tester.tap(find.byIcon(AppIcons.more));
     await tester.pumpAndSettle();
 
+    expect(find.byType(AppPopupMenuPanel), findsOneWidget);
+    expect(find.byType(AppPopupMenuItem), findsOneWidget);
     final menuTextContext = tester.element(find.text('打开'));
     expect(
       DefaultTextStyle.of(menuTextContext).style.decoration,

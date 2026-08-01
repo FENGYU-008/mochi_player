@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
-class FavoriteButton extends StatefulWidget {
+class FavoriteButton extends StatelessWidget {
   final String tmdbId;
   final Color? overrideColor;
   final bool showLabel;
@@ -16,60 +16,32 @@ class FavoriteButton extends StatefulWidget {
   });
 
   @override
-  State<FavoriteButton> createState() => _FavoriteButtonState();
-}
-
-class _FavoriteButtonState extends State<FavoriteButton> {
-  bool _isFavorite = false;
-  bool _initialized = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_initialized) {
-      _initialized = true;
-      _checkFavoriteStatus();
-    }
-  }
-
-  void _checkFavoriteStatus() {
-    final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
-    if (mounted) {
-      setState(() => _isFavorite = provider.isFavorite(widget.tmdbId));
-    }
-  }
-
-  Future<void> _toggleFavorite() async {
-    final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
-    final nextValue = !_isFavorite;
-    final didApply = await provider.setFavorite(
-      widget.tmdbId,
-      isFavorite: nextValue,
-    );
-
-    if (mounted && didApply) {
-      setState(() => _isFavorite = nextValue);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final overlayTone = widget.overrideColor != null;
-    final baseColor = widget.overrideColor ?? AppColors.textPrimary(context);
+    final isFavorite = context.select<MediaLibraryProvider, bool>(
+      (provider) => provider.isFavorite(tmdbId),
+    );
+    final overlayTone = overrideColor != null;
+    final baseColor = overrideColor ?? AppColors.textPrimary(context);
     final favoriteColor = AppColors.favorite(context);
-    final icon = _isFavorite
+    final icon = isFavorite
         ? Icons.favorite_rounded
         : Icons.favorite_border_rounded;
+    void toggleFavorite() {
+      context.read<MediaLibraryProvider>().setFavorite(
+        tmdbId,
+        isFavorite: !isFavorite,
+      );
+    }
 
-    if (widget.showLabel) {
+    if (showLabel) {
       return AppActionButton(
-        onPressed: _toggleFavorite,
+        onPressed: toggleFavorite,
         icon: icon,
-        iconColor: overlayTone && _isFavorite ? favoriteColor : null,
-        label: _isFavorite ? '已收藏' : '加入收藏',
+        iconColor: overlayTone && isFavorite ? favoriteColor : null,
+        label: isFavorite ? '已收藏' : '加入收藏',
         variant: AppButtonVariant.secondary,
         tone: overlayTone ? AppControlTone.overlay : AppControlTone.adaptive,
-        selected: _isFavorite,
+        selected: isFavorite,
         accentColor: favoriteColor,
         height: 36,
         borderRadius: 10,
@@ -78,15 +50,15 @@ class _FavoriteButtonState extends State<FavoriteButton> {
     }
 
     final backgroundColor = overlayTone
-        ? Colors.white.withAlpha(_isFavorite ? 54 : 34)
-        : _isFavorite
+        ? Colors.white.withAlpha(isFavorite ? 54 : 34)
+        : isFavorite
         ? favoriteColor.withAlpha(24)
         : AppColors.hoverSurface(context);
     return AppIconButton(
-      onPressed: _toggleFavorite,
+      onPressed: toggleFavorite,
       icon: icon,
-      tooltip: _isFavorite ? "取消收藏" : "加入收藏",
-      selected: _isFavorite,
+      tooltip: isFavorite ? "取消收藏" : "加入收藏",
+      selected: isFavorite,
       tone: overlayTone ? AppControlTone.overlay : AppControlTone.adaptive,
       selectedColor: favoriteColor,
       foregroundColor: baseColor,

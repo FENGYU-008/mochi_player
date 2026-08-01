@@ -1,0 +1,68 @@
+name: Windows CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Test and build Windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show Flutter environment
+        run: flutter doctor -v
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test --reporter compact
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Package Windows release
+        shell: pwsh
+        run: |
+          $releaseDirectory = "build/windows/x64/runner/Release"
+          if (-not (Test-Path $releaseDirectory)) {
+            throw "Windows release directory was not generated: $releaseDirectory"
+          }
+          Compress-Archive `
+            -Path "$releaseDirectory/*" `
+            -DestinationPath "mochi-player-windows-x64.zip" `
+            -Force
+
+      - name: Upload Windows application
+        uses: actions/upload-artifact@v7
+        with:
+          name: mochi-player-windows-x64
+          path: mochi-player-windows-x64.zip
+          if-no-files-found: error
+          retention-days: 14

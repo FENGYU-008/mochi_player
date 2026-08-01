@@ -48,6 +48,47 @@ void main() {
     );
   });
 
+  testWidgets('supports a hover border without a resting border', (
+    tester,
+  ) async {
+    const areaKey = Key('hover-border-only-area');
+    const hoverBorderColor = Color(0xFF7065A8);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AppClickableArea(
+            key: areaKey,
+            onTap: _noop,
+            borderRadius: BorderRadius.zero,
+            hoverColor: Colors.transparent,
+            hoverBorderColor: hoverBorderColor,
+            child: SizedBox(width: 80, height: 40),
+          ),
+        ),
+      ),
+    );
+
+    Color borderColor() {
+      final container = tester.widget<Container>(
+        find.descendant(
+          of: find.byKey(areaKey),
+          matching: find.byType(Container),
+        ),
+      );
+      return (container.decoration! as BoxDecoration).border!.top.color;
+    }
+
+    expect(borderColor(), hoverBorderColor.withAlpha(0));
+
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await gesture.addPointer(location: Offset.zero);
+    await gesture.moveTo(tester.getCenter(find.byKey(areaKey)));
+    await tester.pumpAndSettle();
+    expect(borderColor(), hoverBorderColor);
+    await gesture.removePointer();
+  });
+
   testWidgets('keeps the hover color unchanged while pressed', (tester) async {
     const areaKey = Key('opaque-clickable-area');
     const backgroundColor = Color(0xFF202023);
@@ -150,3 +191,5 @@ void main() {
     await gesture.removePointer();
   });
 }
+
+void _noop() {}

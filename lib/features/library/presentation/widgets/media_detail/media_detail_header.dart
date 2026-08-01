@@ -212,7 +212,9 @@ class _PrimaryActionArea extends StatelessWidget {
     final files = provider.getVersions(viewModel.tmdbId);
 
     if (viewModel.isTVShow) {
-      final target = EpisodePlaybackTargetResolver.resolve(files);
+      final target = EpisodePlaybackTargetResolver.resolveForShowPlayback(
+        files,
+      );
       if (target == null) {
         return const _PrimaryPlayAction(
           label: '不可播放',

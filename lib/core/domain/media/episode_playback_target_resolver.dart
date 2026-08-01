@@ -2,7 +2,7 @@ import 'media_file.dart';
 import 'media_type.dart';
 import 'watch_status.dart';
 
-enum EpisodePlaybackReason { resumeCurrent, playNext, playFirst }
+enum EpisodePlaybackReason { resumeEpisode, playNext, startFromBeginning }
 
 class EpisodePlaybackTarget {
   final MediaFile file;
@@ -16,7 +16,7 @@ class EpisodePlaybackTarget {
   });
 
   bool get resumesCurrentEpisode =>
-      reason == EpisodePlaybackReason.resumeCurrent;
+      reason == EpisodePlaybackReason.resumeEpisode;
 }
 
 /// Selects the episode a TV show should play according to watch progression.
@@ -26,9 +26,17 @@ class EpisodePlaybackTarget {
 class EpisodePlaybackTargetResolver {
   const EpisodePlaybackTargetResolver._();
 
-  static EpisodePlaybackTarget? resolve(
+  static EpisodePlaybackTarget? resolveForShowPlayback(
+    Iterable<MediaFile> files,
+  ) => _resolve(files, allowReplay: true);
+
+  static EpisodePlaybackTarget? resolveForContinueWatching(
+    Iterable<MediaFile> files,
+  ) => _resolve(files, allowReplay: false);
+
+  static EpisodePlaybackTarget? _resolve(
     Iterable<MediaFile> files, {
-    bool fallbackToFirst = true,
+    required bool allowReplay,
   }) {
     final episodes =
         files.where((file) => file.mediaType == MediaType.episode).toList()
@@ -50,7 +58,7 @@ class EpisodePlaybackTargetResolver {
       if (latest.watchStatus == WatchStatus.watching) {
         return EpisodePlaybackTarget(
           file: latest,
-          reason: EpisodePlaybackReason.resumeCurrent,
+          reason: EpisodePlaybackReason.resumeEpisode,
           activityAt: latest.lastWatchedAt,
         );
       }
@@ -68,19 +76,20 @@ class EpisodePlaybackTargetResolver {
           activityAt: latest.lastWatchedAt,
         );
       }
-
-      if (!fallbackToFirst) return null;
-    } else if (!fallbackToFirst) {
-      return null;
     }
 
-    final firstIncomplete = episodes.cast<MediaFile?>().firstWhere(
-      (file) => file!.watchStatus != WatchStatus.completed,
-      orElse: () => null,
-    );
+    if (!allowReplay) return null;
+
+    MediaFile? firstIncomplete;
+    for (final episode in episodes) {
+      if (episode.watchStatus != WatchStatus.completed) {
+        firstIncomplete = episode;
+        break;
+      }
+    }
     return EpisodePlaybackTarget(
       file: firstIncomplete ?? episodes.first,
-      reason: EpisodePlaybackReason.playFirst,
+      reason: EpisodePlaybackReason.startFromBeginning,
       activityAt: watched.isEmpty ? null : watched.first.lastWatchedAt,
     );
   }

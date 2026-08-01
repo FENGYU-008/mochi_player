@@ -1,0 +1,90 @@
+import 'episode_playback_target_resolver.dart';
+import 'media_file.dart';
+import 'media_type.dart';
+import 'watch_status.dart';
+
+class ContinueWatchingTarget {
+  final MediaFile file;
+  final DateTime activityAt;
+
+  const ContinueWatchingTarget({required this.file, required this.activityAt});
+}
+
+/// Produces one ordered continue-watching target per logical title.
+class ContinueWatchingResolver {
+  const ContinueWatchingResolver._();
+
+  static List<ContinueWatchingTarget> resolve(Iterable<MediaFile> files) {
+    final targets = <ContinueWatchingTarget>[];
+    final episodeGroups = <String, List<MediaFile>>{};
+    final movieGroups = <String, List<MediaFile>>{};
+
+    for (final file in files) {
+      switch (file.mediaType) {
+        case MediaType.episode:
+          episodeGroups.putIfAbsent(_showKey(file), () => []).add(file);
+          continue;
+        case MediaType.movie:
+          movieGroups.putIfAbsent(_movieKey(file), () => []).add(file);
+          continue;
+        case MediaType.folder:
+        case MediaType.unknown:
+          if (file.watchStatus == WatchStatus.watching) {
+            targets.add(_target(file));
+          }
+          continue;
+      }
+    }
+
+    for (final episodes in episodeGroups.values) {
+      final episodeTarget =
+          EpisodePlaybackTargetResolver.resolveForContinueWatching(episodes);
+      if (episodeTarget == null) continue;
+      targets.add(
+        ContinueWatchingTarget(
+          file: episodeTarget.file,
+          activityAt: episodeTarget.activityAt ?? DateTime(0),
+        ),
+      );
+    }
+
+    for (final versions in movieGroups.values) {
+      final watching =
+          versions
+              .where((file) => file.watchStatus == WatchStatus.watching)
+              .toList()
+            ..sort(_compareActivityDescending);
+      if (watching.isNotEmpty) targets.add(_target(watching.first));
+    }
+
+    targets.sort((a, b) => b.activityAt.compareTo(a.activityAt));
+    return targets;
+  }
+
+  static ContinueWatchingTarget _target(MediaFile file) {
+    return ContinueWatchingTarget(
+      file: file,
+      activityAt: file.lastWatchedAt ?? DateTime(0),
+    );
+  }
+
+  static int _compareActivityDescending(MediaFile a, MediaFile b) {
+    return (b.lastWatchedAt ?? DateTime(0)).compareTo(
+      a.lastWatchedAt ?? DateTime(0),
+    );
+  }
+
+  static String _movieKey(MediaFile file) => file.tmdbId ?? file.path;
+
+  static String _showKey(MediaFile file) {
+    final tmdbId = file.tmdbId;
+    if (tmdbId != null && tmdbId.isNotEmpty) {
+      final match = RegExp(r'^(\d+)(?:_s\d+e\d+)?$').firstMatch(tmdbId);
+      final showId = match?.group(1);
+      if (showId != null) return 'tmdb:$showId';
+    }
+
+    final title = file.parsedTitle.trim().toLowerCase();
+    return title.isEmpty ? 'file:${file.path}' : 'title:$title';
+  }
+}

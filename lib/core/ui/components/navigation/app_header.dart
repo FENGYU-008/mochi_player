@@ -5,6 +5,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'package:mochi_player/core/ui/components/forms/search_bar.dart';
 import 'package:mochi_player/core/ui/components/buttons/app_icon_button.dart';
+import 'package:mochi_player/core/ui/components/navigation/app_window_controls.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
@@ -72,8 +73,11 @@ class AppHeader extends StatelessWidget {
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
                 height: height,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.page,
+                padding: EdgeInsets.only(
+                  left: AppSpacing.page,
+                  right: AppWindowControls.isVisible
+                      ? AppWindowControls.headerEndInset
+                      : AppSpacing.page,
                 ),
                 decoration: BoxDecoration(
                   color: backgroundColor,

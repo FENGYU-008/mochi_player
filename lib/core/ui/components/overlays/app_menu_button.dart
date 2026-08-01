@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:mochi_player/core/ui/components/layout/app_clickable_area.dart';
+import 'package:mochi_player/core/ui/components/overlays/app_popup_menu.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_icons.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
@@ -41,8 +42,6 @@ class AppMenuButton<T> extends StatefulWidget {
 
 class _AppMenuButtonState<T> extends State<AppMenuButton<T>>
     with SingleTickerProviderStateMixin {
-  static const _itemHeight = 36.0;
-  static const _menuPadding = 6.0;
   static const _screenMargin = 8.0;
   static const _menuGap = 6.0;
 
@@ -84,7 +83,9 @@ class _AppMenuButtonState<T> extends State<AppMenuButton<T>>
     if (anchor == null || overlay == null) return;
 
     final anchorOrigin = anchor.localToGlobal(Offset.zero, ancestor: overlay);
-    final menuHeight = widget.options.length * _itemHeight + _menuPadding * 2;
+    final menuHeight =
+        widget.options.length * AppPopupMenuMetrics.itemHeight +
+        AppPopupMenuMetrics.panelPadding * 2;
     final availableBelow =
         overlay.size.height - anchorOrigin.dy - anchor.size.height;
     final showAbove = availableBelow < menuHeight + _menuGap;
@@ -116,10 +117,15 @@ class _AppMenuButtonState<T> extends State<AppMenuButton<T>>
               child: ScaleTransition(
                 scale: _scale,
                 alignment: alignment,
-                child: _AppMenuPanel<T>(
-                  options: widget.options,
-                  selectedValue: widget.selectedValue,
-                  onSelected: _select,
+                child: AppPopupMenuPanel(
+                  children: [
+                    for (final option in widget.options)
+                      _AppMenuOptionRow<T>(
+                        option: option,
+                        selected: option.value == widget.selectedValue,
+                        onTap: () => _select(option.value),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -159,59 +165,6 @@ class _AppMenuButtonState<T> extends State<AppMenuButton<T>>
   }
 }
 
-class _AppMenuPanel<T> extends StatelessWidget {
-  final List<AppMenuOption<T>> options;
-  final T? selectedValue;
-  final ValueChanged<T> onSelected;
-
-  const _AppMenuPanel({
-    required this.options,
-    required this.selectedValue,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final shadowColor = Theme.of(context).brightness == Brightness.dark
-        ? Colors.black.withAlpha(112)
-        : Colors.black.withAlpha(28);
-    return DefaultTextStyle(
-      style: TextStyle(
-        color: AppColors.textPrimary(context),
-        decoration: TextDecoration.none,
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.selectMenuSurface(context),
-          borderRadius: BorderRadius.circular(AppRadii.control),
-          border: Border.all(color: AppColors.selectBorder(context)),
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor,
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(_AppMenuButtonState._menuPadding),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final option in options)
-                _AppMenuOptionRow<T>(
-                  option: option,
-                  selected: option.value == selectedValue,
-                  onTap: () => onSelected(option.value),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _AppMenuOptionRow<T> extends StatelessWidget {
   final AppMenuOption<T> option;
   final bool selected;
@@ -228,12 +181,8 @@ class _AppMenuOptionRow<T> extends StatelessWidget {
     final foreground = selected
         ? AppColors.primary(context)
         : AppColors.textPrimary(context);
-    return AppClickableArea(
-      onTap: onTap,
-      height: _AppMenuButtonState._itemHeight,
-      borderRadius: BorderRadius.circular(AppRadii.small),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      hoverColor: AppColors.hoverSurface(context),
+    return AppPopupMenuItem(
+      onPressed: onTap,
       child: Row(
         children: [
           if (option.icon != null) ...[

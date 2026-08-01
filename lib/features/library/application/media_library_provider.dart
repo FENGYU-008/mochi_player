@@ -80,7 +80,9 @@ class MediaLibraryProvider extends ChangeNotifier {
   }
 
   void _recountContinueWatching() {
-    _continueWatchingCount = _buildContinueWatchingCandidates().length;
+    _continueWatchingCount = ContinueWatchingResolver.resolve(
+      mediaFiles,
+    ).length;
   }
 
   // ===== 公开 API (返回 Domain 模型) =====
@@ -186,74 +188,9 @@ class MediaLibraryProvider extends ChangeNotifier {
 
   /// 获取继续观看所需的完整展示数据。
   List<ResolvedMediaFileItem> get continueWatchingItems {
-    return _buildContinueWatchingCandidates()
-        .map(
-          (candidate) =>
-              _resolveMediaFileItem(candidate.file, useBackdrop: true),
-        )
+    return ContinueWatchingResolver.resolve(mediaFiles)
+        .map((target) => _resolveMediaFileItem(target.file, useBackdrop: true))
         .toList();
-  }
-
-  List<_ContinueWatchingCandidate> _buildContinueWatchingCandidates() {
-    final result = <_ContinueWatchingCandidate>[];
-    final episodeGroups = <String, List<entity.MediaFileEntity>>{};
-    final movieGroups = <String, List<entity.MediaFileEntity>>{};
-
-    for (final file in _mediaFileEntities) {
-      if (file.mediaType == entity.MediaType.episode) {
-        final key = _showKeyForEntity(file) ?? 'file:${file.path}';
-        episodeGroups.putIfAbsent(key, () => []).add(file);
-      } else if (file.mediaType == entity.MediaType.movie) {
-        final key = file.tmdbId ?? file.path;
-        movieGroups.putIfAbsent(key, () => []).add(file);
-      } else if (file.watchStatus == entity.WatchStatus.watching) {
-        result.add(
-          _ContinueWatchingCandidate(
-            file: file,
-            activityAt: file.lastWatchedAt ?? DateTime(0),
-          ),
-        );
-      }
-    }
-
-    for (final group in episodeGroups.values) {
-      final decision = EpisodePlaybackTargetResolver.resolve(
-        group.map(ModelConverter.toMediaFile),
-        fallbackToFirst: false,
-      );
-      if (decision == null) continue;
-      final target = group.firstWhere(
-        (file) => file.path == decision.file.path,
-      );
-      result.add(
-        _ContinueWatchingCandidate(
-          file: target,
-          activityAt: decision.activityAt ?? DateTime(0),
-        ),
-      );
-    }
-
-    for (final group in movieGroups.values) {
-      final watching =
-          group
-              .where((file) => file.watchStatus == entity.WatchStatus.watching)
-              .toList()
-            ..sort(
-              (a, b) => (b.lastWatchedAt ?? DateTime(0)).compareTo(
-                a.lastWatchedAt ?? DateTime(0),
-              ),
-            );
-      if (watching.isEmpty) continue;
-      result.add(
-        _ContinueWatchingCandidate(
-          file: watching.first,
-          activityAt: watching.first.lastWatchedAt ?? DateTime(0),
-        ),
-      );
-    }
-
-    result.sort((a, b) => b.activityAt.compareTo(a.activityAt));
-    return result;
   }
 
   /// Returns one favorite card per logical movie or TV show.
@@ -265,7 +202,7 @@ class MediaLibraryProvider extends ChangeNotifier {
     for (final file in _mediaFileEntities.where((file) => file.isFavorite)) {
       groupedItems.putIfAbsent(
         _favoriteGroupKey(file),
-        () => _resolveMediaFileItem(file),
+        () => _resolveMediaFileItem(ModelConverter.toMediaFile(file)),
       );
     }
     return groupedItems.values.toList();
@@ -931,22 +868,20 @@ class MediaLibraryProvider extends ChangeNotifier {
   }
 
   ResolvedMediaFileItem _resolveMediaFileItem(
-    entity.MediaFileEntity source, {
+    MediaFile file, {
     bool useBackdrop = false,
   }) {
-    final file = ModelConverter.toMediaFile(source);
     LibraryItem? libraryItem;
 
-    if (source.mediaType == entity.MediaType.movie && source.tmdbId != null) {
+    if (file.mediaType == MediaType.movie && file.tmdbId != null) {
       final index = _movieMetadataEntities.indexWhere(
-        (movie) => movie.tmdbId == source.tmdbId,
+        (movie) => movie.tmdbId == file.tmdbId,
       );
       if (index >= 0) {
         libraryItem = ModelConverter.toMovie(_movieMetadataEntities[index]);
       }
-    } else if (source.mediaType == entity.MediaType.episode &&
-        source.tmdbId != null) {
-      final showId = _showKeyFromTmdbId(source.tmdbId);
+    } else if (file.mediaType == MediaType.episode && file.tmdbId != null) {
+      final showId = _showKeyFromTmdbId(file.tmdbId);
       final index = _tvShowMetadataEntities.indexWhere(
         (show) => show.tmdbId == showId,
       );
@@ -956,7 +891,7 @@ class MediaLibraryProvider extends ChangeNotifier {
     }
 
     String? subtitle;
-    if (source.mediaType == entity.MediaType.episode && useBackdrop) {
+    if (file.mediaType == MediaType.episode && useBackdrop) {
       subtitle = MediaFormat.episodeLabel(file);
     }
     if (subtitle == null && libraryItem is TVShow) {
@@ -970,11 +905,11 @@ class MediaLibraryProvider extends ChangeNotifier {
     return ResolvedMediaFileItem(
       file: file,
       libraryItem: libraryItem,
-      title: libraryItem?.title ?? source.parsedTitle,
+      title: libraryItem?.title ?? file.parsedTitle,
       subtitle: subtitle,
       imageUrl: useBackdrop ? libraryItem?.backdropUrl : libraryItem?.posterUrl,
       rating: libraryItem?.rating ?? 0,
-      playbackContextTitle: source.mediaType == entity.MediaType.episode
+      playbackContextTitle: file.mediaType == MediaType.episode
           ? libraryItem?.title
           : null,
     );
@@ -990,15 +925,5 @@ class _LibraryScanResult {
     required this.newCount,
     required this.removedCount,
     required this.hadReadError,
-  });
-}
-
-class _ContinueWatchingCandidate {
-  final entity.MediaFileEntity file;
-  final DateTime activityAt;
-
-  const _ContinueWatchingCandidate({
-    required this.file,
-    required this.activityAt,
   });
 }

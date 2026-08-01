@@ -49,13 +49,9 @@ class _AppClickableAreaState extends State<AppClickableArea> {
     final hoverColor = widget.backgroundColor.a == 0
         ? widget.hoverColor
         : Color.alphaBlend(widget.hoverColor, widget.backgroundColor);
-    final restingBorderColor = switch ((
-      widget.borderColor,
-      widget.hoverBorderColor,
-    )) {
-      (final border?, final hoverBorder?) when border.a == 0 =>
-        hoverBorder.withAlpha(0),
-      (final border, _) => border,
+    final restingBorderColor = switch (widget.borderColor) {
+      final border when border != null && border.a > 0 => border,
+      _ => widget.hoverBorderColor?.withAlpha(0) ?? widget.borderColor,
     };
     final hoverBorderColor = widget.hoverBorderColor ?? restingBorderColor;
 
