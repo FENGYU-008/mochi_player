@@ -9,6 +9,7 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
   final Color elevatedSurface;
   final Color subtleSurface;
   final Color hoverSurface;
+  final Color selectedSurface;
   final Color inputBackground;
   final Color headerBackground;
   final Color activitySurface;
@@ -26,6 +27,7 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
     required this.elevatedSurface,
     required this.subtleSurface,
     required this.hoverSurface,
+    required this.selectedSurface,
     required this.inputBackground,
     required this.headerBackground,
     required this.activitySurface,
@@ -45,6 +47,7 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
     Color? elevatedSurface,
     Color? subtleSurface,
     Color? hoverSurface,
+    Color? selectedSurface,
     Color? inputBackground,
     Color? headerBackground,
     Color? activitySurface,
@@ -62,6 +65,7 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
       elevatedSurface: elevatedSurface ?? this.elevatedSurface,
       subtleSurface: subtleSurface ?? this.subtleSurface,
       hoverSurface: hoverSurface ?? this.hoverSurface,
+      selectedSurface: selectedSurface ?? this.selectedSurface,
       inputBackground: inputBackground ?? this.inputBackground,
       headerBackground: headerBackground ?? this.headerBackground,
       activitySurface: activitySurface ?? this.activitySurface,
@@ -91,6 +95,7 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
       elevatedSurface: Color.lerp(elevatedSurface, other.elevatedSurface, t)!,
       subtleSurface: Color.lerp(subtleSurface, other.subtleSurface, t)!,
       hoverSurface: Color.lerp(hoverSurface, other.hoverSurface, t)!,
+      selectedSurface: Color.lerp(selectedSurface, other.selectedSurface, t)!,
       inputBackground: Color.lerp(inputBackground, other.inputBackground, t)!,
       headerBackground: Color.lerp(
         headerBackground,
@@ -120,9 +125,10 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
 }
 
 class AppColors {
-  static const accent = Color(0xFF007AFF);
-  static const accentDark = Color(0xFF0A84FF);
-  static const favorite = Color(0xFFFF3B30);
+  static const primaryLight = Color(0xFF7065A8);
+  static const primaryDark = Color(0xFF9186C2);
+  static const favoriteLight = Color(0xFFB45F73);
+  static const favoriteDark = Color(0xFFD18191);
   static const rating = Color(0xFFFFCC00);
 
   static AppColorSchemeExtension _scheme(BuildContext context) {
@@ -131,6 +137,12 @@ class AppColors {
 
   static Color primary(BuildContext context) {
     return Theme.of(context).colorScheme.primary;
+  }
+
+  static Color favorite(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? favoriteDark
+        : favoriteLight;
   }
 
   static Color textPrimary(BuildContext context) {
@@ -155,6 +167,10 @@ class AppColors {
 
   static Color hoverSurface(BuildContext context) {
     return _scheme(context).hoverSurface;
+  }
+
+  static Color selectedSurface(BuildContext context) {
+    return _scheme(context).selectedSurface;
   }
 
   static Color subtleSurface(BuildContext context) =>

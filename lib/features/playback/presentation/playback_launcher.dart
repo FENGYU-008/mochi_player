@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
@@ -56,18 +58,18 @@ class PlaybackLauncher {
     }
   }
 
-  /// 播放剧集：选择第一集本地文件并播放。
+  /// 播放剧集：续播未看完的一集，或在看完后进入下一集。
   static void playTVShow(BuildContext context, TVShow show) {
     final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
     final versions = provider.getVersions(show.tmdbId);
-    final targetFile = _firstPlayableEpisodeFile(versions);
+    final target = EpisodePlaybackTargetResolver.resolve(versions);
 
-    if (targetFile == null) {
+    if (target == null) {
       _showError(context, "未找到可播放剧集");
       return;
     }
 
-    _openPlayer(context, targetFile, contextTitle: show.title);
+    _openPlayer(context, target.file, contextTitle: show.title);
   }
 
   /// 播放剧集：查找对应 Episode 的文件并播放
@@ -102,25 +104,22 @@ class PlaybackLauncher {
     String? failureMessage,
     List<MediaFile> playlist = const [],
   }) async {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const CircularProgressIndicator(strokeWidth: 2),
-            const SizedBox(width: 16),
-            Expanded(child: Text(loadingMessage ?? "正在获取播放链接...")),
-          ],
-        ),
-        duration: const Duration(minutes: 1),
-      ),
-    );
+    AppActivityBannerController? loadingBanner;
+    final loadingDelay = Timer(const Duration(milliseconds: 180), () {
+      if (!context.mounted) return;
+      loadingBanner = showAppActivityBanner(
+        context: context,
+        message: loadingMessage ?? '正在获取播放链接…',
+        tone: AppActivityBannerTone.progress,
+      );
+    });
 
     String? directLink;
     try {
       directLink = await OpenListPlaybackService().getDirectLink(file.path);
     } finally {
-      messenger.hideCurrentSnackBar();
+      loadingDelay.cancel();
+      loadingBanner?.dismiss();
     }
     if (!context.mounted) return;
 
@@ -143,8 +142,11 @@ class PlaybackLauncher {
   }
 
   static void _showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+    showAppActivityBanner(
+      context: context,
+      message: message,
+      tone: AppActivityBannerTone.error,
+      duration: const Duration(seconds: 3),
     );
   }
 
@@ -225,21 +227,5 @@ class PlaybackLauncher {
         );
       },
     );
-  }
-
-  static MediaFile? _firstPlayableEpisodeFile(List<MediaFile> files) {
-    final candidates = files
-        .where((file) => file.mediaType == MediaType.episode)
-        .toList();
-    if (candidates.isEmpty) return files.isEmpty ? null : files.first;
-
-    candidates.sort((a, b) {
-      final season = (a.parsedSeason ?? 999999).compareTo(
-        b.parsedSeason ?? 999999,
-      );
-      if (season != 0) return season;
-      return (a.parsedEpisode ?? 999999).compareTo(b.parsedEpisode ?? 999999);
-    });
-    return candidates.first;
   }
 }

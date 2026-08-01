@@ -172,18 +172,18 @@ class _MovieMediaInfoSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionTitle(
-          title: '版本',
+          title: '可播放版本',
           trailing: files.isEmpty
               ? null
               : files.length == 1
-              ? '1 个本地文件'
-              : '${files.length} 个本地文件',
+              ? '1 个文件'
+              : '${files.length} 个文件',
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         if (files.isEmpty)
           SizedBox(
             width: double.infinity,
-            child: AppSurface(
+            child: AppPanel(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Text(
                 '未找到可播放的本地文件',
@@ -255,8 +255,8 @@ class _SectionTitle extends StatelessWidget {
         Text(
           title,
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
             color: theme.textTheme.bodyLarge?.color,
           ),
         ),
@@ -289,57 +289,70 @@ class _VersionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = file.progress.clamp(0.0, 1.0);
-
-    return AppSurface(
+    final borderRadius = BorderRadius.circular(10);
+    return AppClickableArea(
       onTap: onTap,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      borderRadius: borderRadius,
+      backgroundColor: Colors.transparent,
+      hoverColor: AppColors.hoverSurface(context),
+      borderColor: AppColors.separator(context),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         children: [
-          Icon(Icons.movie_creation_outlined, color: theme.colorScheme.primary),
-          const SizedBox(width: 12),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withAlpha(20),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: theme.colorScheme.primary.withAlpha(46),
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              AppIcons.video,
+              color: theme.colorScheme.primary,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  MediaFilePresentation.versionTitle(file),
+                  MediaFilePresentation.playableVersionTitle(file),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 2),
                 Text(
-                  MediaFilePresentation.versionSubtitle(
-                    file,
-                    includeResumePosition: true,
-                  ),
+                  MediaFilePresentation.playableVersionDetails(file),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: theme.textTheme.bodySmall?.color,
                   ),
                 ),
-                if (progress > 0 && progress < 0.95) ...[
-                  const SizedBox(height: 9),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadii.full),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 3,
-                      backgroundColor: theme.dividerColor.withAlpha(80),
-                    ),
+                const SizedBox(height: 2),
+                Text(
+                  file.fileName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: theme.textTheme.bodySmall?.color?.withAlpha(180),
                   ),
-                ],
+                ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          Icon(Icons.play_arrow_rounded, color: theme.colorScheme.primary),
         ],
       ),
     );

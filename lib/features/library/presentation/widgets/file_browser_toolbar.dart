@@ -139,12 +139,11 @@ class _FilePathBreadcrumb extends StatelessWidget {
           itemBuilder: (context, index) {
             final crumb = crumbs[index];
             final current = index == crumbs.length - 1;
-            return AppHoverSurface(
+            return AppClickableArea(
               onTap: current ? null : () => onSelected(crumb.path),
               borderRadius: BorderRadius.circular(AppRadii.small),
               padding: const EdgeInsets.symmetric(horizontal: 7),
               hoverColor: Colors.transparent,
-              pressedColor: Colors.transparent,
               child: Center(
                 child: Text(
                   crumb.label,

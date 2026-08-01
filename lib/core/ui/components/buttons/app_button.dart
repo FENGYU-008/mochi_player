@@ -13,6 +13,7 @@ class AppActionButton extends StatefulWidget {
   final IconData? icon;
   final String label;
   final TextStyle? textStyle;
+  final Color? iconColor;
   final AppButtonVariant variant;
   final AppControlTone tone;
   final bool destructive;
@@ -29,6 +30,7 @@ class AppActionButton extends StatefulWidget {
     required this.label,
     this.icon,
     this.textStyle,
+    this.iconColor,
     this.variant = AppButtonVariant.primary,
     this.tone = AppControlTone.adaptive,
     this.destructive = false,
@@ -56,6 +58,7 @@ class _AppActionButtonState extends State<AppActionButton> {
     final danger = Colors.redAccent;
     final actionColor = isDestructive ? danger : widget.accentColor ?? primary;
     final overlayTone = widget.tone == AppControlTone.overlay;
+    final selectedOverlay = overlayTone && widget.selected && !isPrimary;
     final adaptiveSurface = AppColors.elevatedSurface(context);
     final adaptiveHoverSurface = Color.alphaBlend(
       AppColors.hoverSurface(context),
@@ -65,6 +68,8 @@ class _AppActionButtonState extends State<AppActionButton> {
         ? actionColor
         : isDestructive
         ? danger.withAlpha(14)
+        : selectedOverlay
+        ? Colors.black.withAlpha(76)
         : widget.selected
         ? actionColor.withAlpha(28)
         : overlayTone
@@ -74,6 +79,8 @@ class _AppActionButtonState extends State<AppActionButton> {
         ? actionColor
         : isDestructive
         ? danger.withAlpha(26)
+        : selectedOverlay
+        ? Colors.black.withAlpha(100)
         : widget.selected
         ? actionColor.withAlpha(42)
         : overlayTone
@@ -83,6 +90,8 @@ class _AppActionButtonState extends State<AppActionButton> {
         ? Colors.white
         : isDestructive
         ? danger
+        : selectedOverlay
+        ? Colors.white.withAlpha(235)
         : widget.selected
         ? actionColor
         : overlayTone
@@ -92,6 +101,8 @@ class _AppActionButtonState extends State<AppActionButton> {
         ? Colors.transparent
         : isDestructive
         ? danger.withAlpha(128)
+        : selectedOverlay
+        ? Colors.white.withAlpha(58)
         : widget.selected
         ? actionColor.withAlpha(150)
         : overlayTone
@@ -101,6 +112,8 @@ class _AppActionButtonState extends State<AppActionButton> {
         ? Colors.transparent
         : isDestructive
         ? danger.withAlpha(190)
+        : selectedOverlay
+        ? Colors.white.withAlpha(92)
         : widget.selected
         ? actionColor.withAlpha(190)
         : overlayTone
@@ -176,7 +189,11 @@ class _AppActionButtonState extends State<AppActionButton> {
                     ),
                   )
                 else if (widget.icon != null)
-                  Icon(widget.icon, size: 19, color: foreground),
+                  Icon(
+                    widget.icon,
+                    size: 19,
+                    color: widget.iconColor ?? foreground,
+                  ),
                 if (widget.busy || widget.icon != null)
                   const SizedBox(width: 8),
                 Text(

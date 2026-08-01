@@ -72,15 +72,6 @@ class DatabaseService {
     });
   }
 
-  /// 获取正在观看的媒体文件 (按最后观看时间排序)
-  Future<List<MediaFileEntity>> getContinueWatching() async {
-    return await _isar.mediaFileEntitys
-        .filter()
-        .watchStatusEqualTo(WatchStatus.watching)
-        .sortByLastWatchedAtDesc()
-        .findAll();
-  }
-
   /// 获取收藏的媒体文件
   Future<List<MediaFileEntity>> getFavorites() async {
     return await _isar.mediaFileEntitys
@@ -134,10 +125,16 @@ class DatabaseService {
     await saveMediaFile(file);
   }
 
-  /// 切换收藏状态
-  Future<void> toggleFavorite(MediaFileEntity file) async {
-    file.isFavorite = !file.isFavorite;
-    await saveMediaFile(file);
+  /// Sets one or more physical files to the same favorite state atomically.
+  Future<void> setFavorite(
+    List<MediaFileEntity> files, {
+    required bool isFavorite,
+  }) async {
+    if (files.isEmpty) return;
+    for (final file in files) {
+      file.isFavorite = isFavorite;
+    }
+    await saveMediaFiles(files);
   }
 
   // ===== MovieMetadata CRUD =====

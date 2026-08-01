@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/core/ui/components/layout/app_surface.dart';
+import 'package:mochi_player/core/ui/components/layout/app_clickable_area.dart';
+import 'package:mochi_player/core/ui/components/layout/app_panel.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
@@ -42,8 +43,8 @@ class AppSegmentedControl<T> extends StatelessWidget {
         return SizedBox(
           width: controlWidth,
           height: AppControlMetrics.segmentedHeight,
-          child: AppSurface(
-            tone: AppSurfaceTone.elevated,
+          child: AppPanel(
+            tone: AppPanelTone.elevated,
             showBorder: true,
             borderRadius: BorderRadius.circular(AppRadii.control),
             clipBehavior: Clip.antiAlias,
@@ -72,7 +73,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
   }
 }
 
-class _SegmentButton<T> extends StatefulWidget {
+class _SegmentButton<T> extends StatelessWidget {
   final AppSegment<T> segment;
   final bool selected;
   final VoidCallback onPressed;
@@ -84,70 +85,34 @@ class _SegmentButton<T> extends StatefulWidget {
   });
 
   @override
-  State<_SegmentButton<T>> createState() => _SegmentButtonState<T>();
-}
-
-class _SegmentButtonState<T> extends State<_SegmentButton<T>> {
-  bool _hovering = false;
-
-  @override
   Widget build(BuildContext context) {
     final primary = AppColors.primary(context);
-    final selected = widget.selected;
+    final selectedSurface = AppColors.selectedSurface(context);
     final restingForeground = AppColors.textPrimary(context).withAlpha(220);
+    final foreground = selected ? primary : restingForeground;
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween(end: selected ? 1 : 0),
-      duration: kThemeAnimationDuration,
-      curve: Curves.linear,
-      builder: (context, selectionProgress, child) {
-        final foreground = Color.lerp(
-          restingForeground,
-          Colors.white,
-          selectionProgress,
-        )!;
-        return MouseRegion(
-          onEnter: (_) => setState(() => _hovering = true),
-          onExit: (_) => setState(() => _hovering = false),
-          cursor: SystemMouseCursors.click,
-          child: GestureDetector(
-            onTap: widget.onPressed,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                ColoredBox(
-                  color: Color.lerp(
-                    primary.withAlpha(0),
-                    primary,
-                    selectionProgress,
-                  )!,
-                ),
-                AnimatedOpacity(
-                  duration: AppControlMetrics.stateAnimationDuration,
-                  opacity: !selected && _hovering ? 1 : 0,
-                  child: ColoredBox(color: AppColors.hoverSurface(context)),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(widget.segment.icon, size: 16, color: foreground),
-                    const SizedBox(width: AppControlMetrics.iconLabelGap),
-                    Text(
-                      widget.segment.label,
-                      style: AppTypography.controlLabel.copyWith(
-                        color: foreground,
-                        fontWeight: selected
-                            ? FontWeight.w700
-                            : FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+    return AppClickableArea(
+      onTap: onPressed,
+      height: double.infinity,
+      borderRadius: BorderRadius.zero,
+      backgroundColor: selected ? selectedSurface : Colors.transparent,
+      hoverColor: selected
+          ? Colors.transparent
+          : AppColors.hoverSurface(context),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(segment.icon, size: 16, color: foreground),
+          const SizedBox(width: AppControlMetrics.iconLabelGap),
+          Text(
+            segment.label,
+            style: AppTypography.controlLabel.copyWith(
+              color: foreground,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
@@ -5,6 +7,54 @@ import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 enum AppActivityBannerTone { progress, success, error, info }
+
+class AppActivityBannerController {
+  OverlayEntry? _entry;
+  Timer? _dismissTimer;
+
+  AppActivityBannerController._();
+
+  void dismiss() {
+    _dismissTimer?.cancel();
+    _dismissTimer = null;
+    final entry = _entry;
+    _entry = null;
+    if (entry?.mounted ?? false) entry!.remove();
+  }
+}
+
+AppActivityBannerController showAppActivityBanner({
+  required BuildContext context,
+  required String message,
+  AppActivityBannerTone tone = AppActivityBannerTone.info,
+  Duration? duration,
+  double top = 70,
+}) {
+  final controller = AppActivityBannerController._();
+  final overlay = Overlay.maybeOf(context, rootOverlay: true);
+  if (overlay == null) return controller;
+
+  final entry = OverlayEntry(
+    builder: (context) => Positioned(
+      top: top,
+      left: AppSpacing.page,
+      right: AppSpacing.page,
+      child: SafeArea(
+        bottom: false,
+        child: IgnorePointer(
+          child: AppActivityBanner(message: message, tone: tone),
+        ),
+      ),
+    ),
+  );
+  controller._entry = entry;
+  overlay.insert(entry);
+
+  if (duration != null) {
+    controller._dismissTimer = Timer(duration, controller.dismiss);
+  }
+  return controller;
+}
 
 class AppActivityBanner extends StatelessWidget {
   final String message;

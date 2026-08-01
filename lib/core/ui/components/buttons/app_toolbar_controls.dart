@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mochi_player/core/ui/components/layout/app_hover_surface.dart';
+import 'package:mochi_player/core/ui/components/layout/app_clickable_area.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 
@@ -53,25 +53,25 @@ class AppToolbarButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = AppColors.primary(context);
     final neutralStateColor = AppColors.hoverSurface(context);
+    final selectedSurface = AppColors.selectedSurface(context);
     final child = Tooltip(
       message: tooltip,
-      child: AppHoverSurface(
+      child: AppClickableArea(
         onTap: onPressed,
         width: 36,
         height: 34,
         borderRadius: showBorder
             ? BorderRadius.circular(AppRadii.surface)
             : BorderRadius.zero,
-        backgroundColor: selected ? primary : Colors.transparent,
-        hoverColor: selected ? primary : neutralStateColor,
-        pressedColor: selected ? primary : neutralStateColor,
+        backgroundColor: selected ? selectedSurface : Colors.transparent,
+        hoverColor: selected ? Colors.transparent : neutralStateColor,
         child: Icon(
           icon,
           size: 18,
           color: onPressed == null
               ? AppColors.textSecondary(context).withAlpha(90)
               : selected
-              ? Colors.white
+              ? primary
               : AppColors.textPrimary(context),
         ),
       ),

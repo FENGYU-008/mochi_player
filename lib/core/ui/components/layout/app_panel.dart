@@ -3,33 +3,31 @@ import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 
-enum AppSurfaceTone { subtle, elevated }
+enum AppPanelTone { subtle, elevated }
 
-class AppSurface extends StatelessWidget {
+class AppPanel extends StatelessWidget {
   final Widget child;
-  final AppSurfaceTone tone;
+  final AppPanelTone tone;
   final BorderRadius borderRadius;
   final EdgeInsetsGeometry? padding;
   final bool showBorder;
-  final VoidCallback? onTap;
   final Clip clipBehavior;
 
-  const AppSurface({
+  const AppPanel({
     super.key,
     required this.child,
-    this.tone = AppSurfaceTone.subtle,
+    this.tone = AppPanelTone.subtle,
     this.borderRadius = const BorderRadius.all(
       Radius.circular(AppRadii.control),
     ),
     this.padding,
     this.showBorder = false,
-    this.onTap,
     this.clipBehavior = Clip.antiAlias,
   });
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = tone == AppSurfaceTone.elevated
+    final backgroundColor = tone == AppPanelTone.elevated
         ? AppColors.elevatedSurface(context)
         : AppColors.subtleSurface(context);
     final decoration = BoxDecoration(
@@ -39,24 +37,10 @@ class AppSurface extends StatelessWidget {
           ? Border.all(color: AppColors.separator(context))
           : null,
     );
-    final paddedChild = padding == null
-        ? child
-        : Padding(padding: padding!, child: child);
-    final content = onTap == null
-        ? DecoratedBox(decoration: decoration, child: paddedChild)
-        : DecoratedBox(
-            decoration: decoration,
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: borderRadius,
-              clipBehavior: clipBehavior,
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: borderRadius,
-                child: paddedChild,
-              ),
-            ),
-          );
+    final content = DecoratedBox(
+      decoration: decoration,
+      child: padding == null ? child : Padding(padding: padding!, child: child),
+    );
 
     if (clipBehavior == Clip.none) return content;
     return ClipRRect(

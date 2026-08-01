@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mochi_player/core/ui/components/layout/app_hover_surface.dart';
+import 'package:mochi_player/core/ui/components/layout/app_clickable_area.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_icons.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
@@ -148,12 +148,11 @@ class _AppMenuButtonState<T> extends State<AppMenuButton<T>>
   Widget build(BuildContext context) {
     return Tooltip(
       message: widget.tooltip,
-      child: AppHoverSurface(
+      child: AppClickableArea(
         onTap: _enabled ? _open : null,
         borderRadius: widget.borderRadius,
         padding: widget.padding,
         hoverColor: AppColors.hoverSurface(context),
-        pressedColor: AppColors.hoverSurface(context),
         child: KeyedSubtree(key: _anchorKey, child: widget.child),
       ),
     );
@@ -229,13 +228,12 @@ class _AppMenuOptionRow<T> extends StatelessWidget {
     final foreground = selected
         ? AppColors.primary(context)
         : AppColors.textPrimary(context);
-    return AppHoverSurface(
+    return AppClickableArea(
       onTap: onTap,
       height: _AppMenuButtonState._itemHeight,
       borderRadius: BorderRadius.circular(AppRadii.small),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       hoverColor: AppColors.hoverSurface(context),
-      pressedColor: AppColors.hoverSurface(context),
       child: Row(
         children: [
           if (option.icon != null) ...[

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mochi_player/core/ui/components/layout/app_hover_surface.dart';
+import 'package:mochi_player/core/ui/components/layout/app_clickable_area.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
@@ -20,7 +20,7 @@ class FileBrowserGridTile extends StatelessWidget {
         ? item.browserTypeLabel
         : '${item.browserTypeLabel} · ${item.browserSizeLabel}';
 
-    return AppHoverSurface(
+    return AppClickableArea(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.control),
       padding: const EdgeInsets.all(AppSpacing.md),

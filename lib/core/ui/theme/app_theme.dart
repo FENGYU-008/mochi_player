@@ -69,12 +69,12 @@ class AppTheme {
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     useMaterial3: true,
-    primaryColor: AppColors.accent,
+    primaryColor: AppColors.primaryLight,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.accent,
+      seedColor: AppColors.primaryLight,
       brightness: Brightness.light,
-      primary: AppColors.accent,
-      secondary: AppColors.accent,
+      primary: AppColors.primaryLight,
+      secondary: AppColors.primaryLight,
     ),
     scaffoldBackgroundColor: Colors.white,
     canvasColor: const Color(0xFFF5F5F7),
@@ -93,6 +93,7 @@ class AppTheme {
         elevatedSurface: Color(0xFFF2F2F7),
         subtleSurface: Color(0x06000000),
         hoverSurface: Color(0x0D1D1D1F),
+        selectedSurface: Color(0xFFECEAF4),
         inputBackground: Color(0xD2FFFFFF),
         headerBackground: Color(0xD9FFFFFF),
         activitySurface: Color(0xEBFFFFFF),
@@ -116,13 +117,12 @@ class AppTheme {
   static final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     useMaterial3: true,
-    // 恢复为你喜欢的、更深的蓝色
-    primaryColor: AppColors.accentDark,
+    primaryColor: AppColors.primaryDark,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.accentDark,
+      seedColor: AppColors.primaryDark,
       brightness: Brightness.dark,
-      primary: AppColors.accentDark,
-      secondary: AppColors.accentDark,
+      primary: AppColors.primaryDark,
+      secondary: AppColors.primaryDark,
     ),
     scaffoldBackgroundColor: const Color(0xFF1C1C1E),
     // 主背景
@@ -143,6 +143,7 @@ class AppTheme {
         elevatedSurface: Color(0xFF2C2C2E),
         subtleSurface: Color(0x0CFFFFFF),
         hoverSurface: Color(0x16F5F5F7),
+        selectedSurface: Color(0xFF35323F),
         inputBackground: Color(0x24000000),
         headerBackground: Color(0xD92C2C2E),
         activitySurface: Color(0xF21F1F22),

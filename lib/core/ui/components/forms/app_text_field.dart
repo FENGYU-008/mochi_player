@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:mochi_player/core/ui/components/overlays/app_text_context_menu.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
@@ -140,6 +141,7 @@ class _AppTextFieldState extends State<AppTextField> {
             inputFormatters: widget.inputFormatters,
             onChanged: widget.onChanged,
             onSubmitted: widget.onSubmitted,
+            contextMenuBuilder: AppTextContextMenu.buildForEditableText,
             cursorColor: primary,
             cursorHeight: 14,
             textAlign: widget.textAlign,

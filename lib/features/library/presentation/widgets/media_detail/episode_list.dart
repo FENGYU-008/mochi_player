@@ -138,7 +138,7 @@ class _EpisodeListState extends State<EpisodeList> {
         episodeFile?.watchStatus == WatchStatus.completed || progress >= 0.95;
     final showStatus = !available || completed;
 
-    return AppSurface(
+    return AppClickableArea(
       onTap: available
           ? () => PlaybackLauncher.playEpisode(
               context,
@@ -146,9 +146,12 @@ class _EpisodeListState extends State<EpisodeList> {
               showTitle: widget.tvShow.title,
             )
           : null,
+      borderRadius: BorderRadius.circular(AppRadii.control),
+      backgroundColor: AppColors.subtleSurface(context),
+      hoverColor: AppColors.hoverSurface(context),
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _buildStill(episode, episodeFile, theme),
           const SizedBox(width: 16),
@@ -158,7 +161,7 @@ class _EpisodeListState extends State<EpisodeList> {
               children: [
                 Row(
                   children: [
-                    Expanded(
+                    Flexible(
                       child: Text(
                         '${episode.episodeNumber}. ${episode.title}',
                         style: TextStyle(
@@ -173,17 +176,10 @@ class _EpisodeListState extends State<EpisodeList> {
                       ),
                     ),
                     if (showStatus) ...[
-                      const SizedBox(width: 10),
-                      _EpisodeStatusPill(
+                      const SizedBox(width: 8),
+                      _EpisodeStatusLabel(
                         available: available,
                         completed: completed,
-                      ),
-                    ] else ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.play_arrow_rounded,
-                        size: 20,
-                        color: theme.colorScheme.primary.withAlpha(190),
                       ),
                     ],
                   ],
@@ -258,11 +254,11 @@ class _EpisodeListState extends State<EpisodeList> {
   }
 }
 
-class _EpisodeStatusPill extends StatelessWidget {
+class _EpisodeStatusLabel extends StatelessWidget {
   final bool available;
   final bool completed;
 
-  const _EpisodeStatusPill({required this.available, required this.completed});
+  const _EpisodeStatusLabel({required this.available, required this.completed});
 
   @override
   Widget build(BuildContext context) {
@@ -279,22 +275,26 @@ class _EpisodeStatusPill extends StatelessWidget {
         : completed
         ? Colors.green
         : theme.colorScheme.primary;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: color.withAlpha(28),
-        borderRadius: BorderRadius.circular(AppRadii.small),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
+    return SizedBox(
+      height: 18,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -372,6 +372,7 @@ class _EpisodeHeader extends StatelessWidget {
               value: selectedSeason,
               placeholder: '选择季',
               width: 92,
+              height: 32,
               options: [
                 for (final season in sortedSeasons)
                   AppSelectOption(

@@ -66,8 +66,8 @@ void main() {
       duration: 100000,
       position: 25000,
       height: 2160,
-      videoCodec: 'HEVC',
-      audioCodec: 'EAC3',
+      videoCodec: 'hevc',
+      audioCodec: 'eac3',
       audioChannels: '5.1',
       container: 'mkv',
       isHdr: true,
@@ -81,7 +81,12 @@ void main() {
     );
     expect(
       MediaFilePresentation.versionSubtitle(file, includeResumePosition: true),
-      'EAC3 • 5.1 • MKV • 1.00 GB • 从 00:25 继续',
+      'eac3 • 5.1 • MKV • 1.00 GB • 从 00:25 继续',
+    );
+    expect(MediaFilePresentation.playableVersionTitle(file), '4K BluRay');
+    expect(
+      MediaFilePresentation.playableVersionDetails(file),
+      'HEVC HDR10 · EAC3 5.1 · MKV · 1.00 GB',
     );
   });
 }

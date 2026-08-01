@@ -34,32 +34,21 @@ class _FavoriteButtonState extends State<FavoriteButton> {
 
   void _checkFavoriteStatus() {
     final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
-    final files = provider.getVersions(widget.tmdbId);
-    if (files.isNotEmpty) {
-      if (mounted) {
-        setState(() => _isFavorite = files.any((f) => f.isFavorite));
-      }
+    if (mounted) {
+      setState(() => _isFavorite = provider.isFavorite(widget.tmdbId));
     }
   }
 
   Future<void> _toggleFavorite() async {
     final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
-    final files = provider.getVersions(widget.tmdbId);
-    if (files.isEmpty) return;
+    final nextValue = !_isFavorite;
+    final didApply = await provider.setFavorite(
+      widget.tmdbId,
+      isFavorite: nextValue,
+    );
 
-    for (final file in files) {
-      await provider.toggleFavorite(file);
-    }
-
-    if (mounted) {
-      setState(() => _isFavorite = !_isFavorite);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isFavorite ? '已加入收藏' : '已取消收藏'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    if (mounted && didApply) {
+      setState(() => _isFavorite = nextValue);
     }
   }
 
@@ -67,6 +56,7 @@ class _FavoriteButtonState extends State<FavoriteButton> {
   Widget build(BuildContext context) {
     final overlayTone = widget.overrideColor != null;
     final baseColor = widget.overrideColor ?? AppColors.textPrimary(context);
+    final favoriteColor = AppColors.favorite(context);
     final icon = _isFavorite
         ? Icons.favorite_rounded
         : Icons.favorite_border_rounded;
@@ -75,11 +65,12 @@ class _FavoriteButtonState extends State<FavoriteButton> {
       return AppActionButton(
         onPressed: _toggleFavorite,
         icon: icon,
+        iconColor: overlayTone && _isFavorite ? favoriteColor : null,
         label: _isFavorite ? '已收藏' : '加入收藏',
         variant: AppButtonVariant.secondary,
         tone: overlayTone ? AppControlTone.overlay : AppControlTone.adaptive,
         selected: _isFavorite,
-        accentColor: AppColors.favorite,
+        accentColor: favoriteColor,
         height: 36,
         borderRadius: 10,
         padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -89,7 +80,7 @@ class _FavoriteButtonState extends State<FavoriteButton> {
     final backgroundColor = overlayTone
         ? Colors.white.withAlpha(_isFavorite ? 54 : 34)
         : _isFavorite
-        ? AppColors.favorite.withAlpha(24)
+        ? favoriteColor.withAlpha(24)
         : AppColors.hoverSurface(context);
     return AppIconButton(
       onPressed: _toggleFavorite,
@@ -97,7 +88,7 @@ class _FavoriteButtonState extends State<FavoriteButton> {
       tooltip: _isFavorite ? "取消收藏" : "加入收藏",
       selected: _isFavorite,
       tone: overlayTone ? AppControlTone.overlay : AppControlTone.adaptive,
-      selectedColor: AppColors.favorite,
+      selectedColor: favoriteColor,
       foregroundColor: baseColor,
       backgroundColor: backgroundColor,
       size: 44,

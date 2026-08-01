@@ -88,4 +88,67 @@ abstract final class MediaFilePresentation {
     }
     return parts.isEmpty ? file.fileName : parts.join(' • ');
   }
+
+  /// Compact title used by playable-version cards.
+  ///
+  /// The stored label also contains codecs; those belong in the details line.
+  static String playableVersionTitle(MediaFile file) {
+    var title = file.versionLabel?.trim() ?? '';
+    if (title.isEmpty) {
+      return file.quality.isNotEmpty ? file.quality : file.fileName;
+    }
+
+    final technicalParts = [
+      _formattedCodec(file.videoCodec),
+      _formattedCodec(file.audioCodec),
+      _formattedHdr(file.hdrFormat),
+    ].whereType<String>().where((part) => part.isNotEmpty);
+    for (final part in technicalParts) {
+      title = title.replaceAll(
+        RegExp(RegExp.escape(part), caseSensitive: false),
+        ' ',
+      );
+    }
+    title = title.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return title.isEmpty
+        ? (file.quality.isNotEmpty ? file.quality : file.fileName)
+        : title;
+  }
+
+  /// Technical details displayed below a playable version title.
+  static String playableVersionDetails(MediaFile file) {
+    final parts = <String>[];
+    final videoParts = [
+      _formattedCodec(file.videoCodec),
+      _formattedHdr(file.hdrFormat),
+    ].whereType<String>().where((part) => part.isNotEmpty).toList();
+    if (videoParts.isNotEmpty) parts.add(videoParts.join(' '));
+
+    final audioParts = [
+      _formattedCodec(file.audioCodec),
+      file.audioChannels,
+    ].whereType<String>().where((part) => part.isNotEmpty).toList();
+    if (audioParts.isNotEmpty) parts.add(audioParts.join(' '));
+
+    final container = file.container;
+    if (container != null && container.isNotEmpty) {
+      parts.add(container.toUpperCase());
+    }
+    if (file.size > 0) parts.add(MediaFormat.fileSize(file.size));
+    return parts.isEmpty ? file.fileName : parts.join(' · ');
+  }
+
+  static String? _formattedHdr(String? value) {
+    if (value == null || value.isEmpty) return null;
+    return switch (value.toLowerCase()) {
+      'dolby_vision' => 'Dolby Vision',
+      'hdr10plus' => 'HDR10+',
+      _ => value.replaceAll('_', ' ').toUpperCase(),
+    };
+  }
+
+  static String? _formattedCodec(String? value) {
+    if (value == null || value.isEmpty) return null;
+    return value.toUpperCase();
+  }
 }

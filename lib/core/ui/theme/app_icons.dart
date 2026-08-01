@@ -3,6 +3,13 @@ import 'package:flutter/cupertino.dart';
 class AppIcons {
   const AppIcons._();
 
+  static const libraryHome = CupertinoIcons.house;
+  static const movies = CupertinoIcons.film;
+  static const series = CupertinoIcons.tv;
+  static const fileBrowser = CupertinoIcons.folder;
+  static const favorites = CupertinoIcons.heart;
+  static const settings = CupertinoIcons.gear;
+
   static const back = CupertinoIcons.arrow_left;
   static const forward = CupertinoIcons.arrow_right;
   static const chevronDown = CupertinoIcons.chevron_down;

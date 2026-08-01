@@ -210,19 +210,37 @@ class _PrimaryActionArea extends StatelessWidget {
   _PrimaryPlayAction _resolvePrimaryAction(BuildContext context) {
     final provider = context.read<MediaLibraryProvider>();
     final files = provider.getVersions(viewModel.tmdbId);
+
+    if (viewModel.isTVShow) {
+      final target = EpisodePlaybackTargetResolver.resolve(files);
+      if (target == null) {
+        return const _PrimaryPlayAction(
+          label: '不可播放',
+          detail: '未找到可播放剧集',
+          enabled: false,
+        );
+      }
+      final verb = target.resumesCurrentEpisode ? '继续' : '播放';
+      return _PrimaryPlayAction(
+        label: _episodeActionLabel(target.file, verb),
+        detail: target.resumesCurrentEpisode
+            ? _resumeDetail(target.file)
+            : _episodeCountDetail(files),
+        onPressed: () => PlaybackLauncher.playFile(
+          context,
+          target.file,
+          contextTitle: viewModel.title,
+        ),
+      );
+    }
+
     final resumeFile = _latestResumeFile(files);
 
     if (resumeFile != null) {
       return _PrimaryPlayAction(
-        label: viewModel.isTVShow
-            ? _episodeActionLabel(resumeFile, '继续')
-            : '继续播放',
+        label: '继续播放',
         detail: _resumeDetail(resumeFile),
-        onPressed: () => PlaybackLauncher.playFile(
-          context,
-          resumeFile,
-          contextTitle: viewModel.isTVShow ? viewModel.title : null,
-        ),
+        onPressed: () => PlaybackLauncher.playFile(context, resumeFile),
       );
     }
 
@@ -230,7 +248,6 @@ class _PrimaryActionArea extends StatelessWidget {
     if (movie != null) {
       return _PrimaryPlayAction(
         label: '播放',
-        detail: files.isEmpty ? '未找到本地文件' : _versionCount(files),
         enabled: files.isNotEmpty,
         onPressed: files.isEmpty
             ? null
@@ -238,19 +255,7 @@ class _PrimaryActionArea extends StatelessWidget {
       );
     }
 
-    final firstFile = _firstPlayableEpisodeFile(files);
-    return _PrimaryPlayAction(
-      label: firstFile == null ? '不可播放' : _episodeActionLabel(firstFile, '播放'),
-      detail: firstFile == null ? '未找到可播放剧集' : _episodeCountDetail(files),
-      enabled: firstFile != null,
-      onPressed: firstFile == null
-          ? null
-          : () => PlaybackLauncher.playFile(
-              context,
-              firstFile,
-              contextTitle: viewModel.title,
-            ),
-    );
+    return const _PrimaryPlayAction(label: '不可播放', enabled: false);
   }
 
   MediaFile? _latestResumeFile(List<MediaFile> files) {
@@ -269,21 +274,6 @@ class _PrimaryActionArea extends StatelessWidget {
     return candidates.first;
   }
 
-  MediaFile? _firstPlayableEpisodeFile(List<MediaFile> files) {
-    final candidates = files
-        .where((file) => file.mediaType == MediaType.episode)
-        .toList();
-    if (candidates.isEmpty) return null;
-    candidates.sort((a, b) {
-      final season = (a.parsedSeason ?? 999999).compareTo(
-        b.parsedSeason ?? 999999,
-      );
-      if (season != 0) return season;
-      return (a.parsedEpisode ?? 999999).compareTo(b.parsedEpisode ?? 999999);
-    });
-    return candidates.first;
-  }
-
   String _episodeActionLabel(MediaFile file, String verb) {
     final episode = file.parsedEpisode;
     if (episode != null) return '$verb第 $episode 集';
@@ -294,10 +284,6 @@ class _PrimaryActionArea extends StatelessWidget {
   String _resumeDetail(MediaFile file) {
     if (file.duration <= 0) return '从上次进度继续';
     return '从 ${MediaFormat.clockDuration(Duration(milliseconds: file.position))} 继续';
-  }
-
-  String _versionCount(List<MediaFile> files) {
-    return files.length == 1 ? '1 个版本可播放' : '${files.length} 个版本可播放';
   }
 
   String _episodeCountDetail(List<MediaFile> files) {

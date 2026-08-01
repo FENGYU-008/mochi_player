@@ -80,9 +80,7 @@ class MediaLibraryProvider extends ChangeNotifier {
   }
 
   void _recountContinueWatching() {
-    _continueWatchingCount = _mediaFileEntities
-        .where((file) => file.watchStatus == entity.WatchStatus.watching)
-        .length;
+    _continueWatchingCount = _buildContinueWatchingCandidates().length;
   }
 
   // ===== 公开 API (返回 Domain 模型) =====
@@ -188,24 +186,100 @@ class MediaLibraryProvider extends ChangeNotifier {
 
   /// 获取继续观看所需的完整展示数据。
   List<ResolvedMediaFileItem> get continueWatchingItems {
-    final list = _mediaFileEntities
-        .where((f) => f.watchStatus == entity.WatchStatus.watching)
-        .toList();
-    list.sort(
-      (a, b) => (b.lastWatchedAt ?? DateTime(0)).compareTo(
-        a.lastWatchedAt ?? DateTime(0),
-      ),
-    );
-    return list
-        .map((file) => _resolveMediaFileItem(file, useBackdrop: true))
+    return _buildContinueWatchingCandidates()
+        .map(
+          (candidate) =>
+              _resolveMediaFileItem(candidate.file, useBackdrop: true),
+        )
         .toList();
   }
 
-  /// 获取收藏所需的完整展示数据。
-  List<ResolvedMediaFileItem> get favoriteItems => _mediaFileEntities
-      .where((f) => f.isFavorite)
-      .map(_resolveMediaFileItem)
-      .toList();
+  List<_ContinueWatchingCandidate> _buildContinueWatchingCandidates() {
+    final result = <_ContinueWatchingCandidate>[];
+    final episodeGroups = <String, List<entity.MediaFileEntity>>{};
+    final movieGroups = <String, List<entity.MediaFileEntity>>{};
+
+    for (final file in _mediaFileEntities) {
+      if (file.mediaType == entity.MediaType.episode) {
+        final key = _showKeyForEntity(file) ?? 'file:${file.path}';
+        episodeGroups.putIfAbsent(key, () => []).add(file);
+      } else if (file.mediaType == entity.MediaType.movie) {
+        final key = file.tmdbId ?? file.path;
+        movieGroups.putIfAbsent(key, () => []).add(file);
+      } else if (file.watchStatus == entity.WatchStatus.watching) {
+        result.add(
+          _ContinueWatchingCandidate(
+            file: file,
+            activityAt: file.lastWatchedAt ?? DateTime(0),
+          ),
+        );
+      }
+    }
+
+    for (final group in episodeGroups.values) {
+      final decision = EpisodePlaybackTargetResolver.resolve(
+        group.map(ModelConverter.toMediaFile),
+        fallbackToFirst: false,
+      );
+      if (decision == null) continue;
+      final target = group.firstWhere(
+        (file) => file.path == decision.file.path,
+      );
+      result.add(
+        _ContinueWatchingCandidate(
+          file: target,
+          activityAt: decision.activityAt ?? DateTime(0),
+        ),
+      );
+    }
+
+    for (final group in movieGroups.values) {
+      final watching =
+          group
+              .where((file) => file.watchStatus == entity.WatchStatus.watching)
+              .toList()
+            ..sort(
+              (a, b) => (b.lastWatchedAt ?? DateTime(0)).compareTo(
+                a.lastWatchedAt ?? DateTime(0),
+              ),
+            );
+      if (watching.isEmpty) continue;
+      result.add(
+        _ContinueWatchingCandidate(
+          file: watching.first,
+          activityAt: watching.first.lastWatchedAt ?? DateTime(0),
+        ),
+      );
+    }
+
+    result.sort((a, b) => b.activityAt.compareTo(a.activityAt));
+    return result;
+  }
+
+  /// Returns one favorite card per logical movie or TV show.
+  ///
+  /// Favorite state remains on physical files so every playable version keeps
+  /// the same state, but presentation must not expose those storage details.
+  List<ResolvedMediaFileItem> get favoriteItems {
+    final groupedItems = <String, ResolvedMediaFileItem>{};
+    for (final file in _mediaFileEntities.where((file) => file.isFavorite)) {
+      groupedItems.putIfAbsent(
+        _favoriteGroupKey(file),
+        () => _resolveMediaFileItem(file),
+      );
+    }
+    return groupedItems.values.toList();
+  }
+
+  String _favoriteGroupKey(entity.MediaFileEntity file) {
+    if (file.mediaType == entity.MediaType.episode) {
+      return 'tv:${_showKeyForEntity(file) ?? file.path}';
+    }
+    if (file.mediaType == entity.MediaType.movie) {
+      return 'movie:${file.tmdbId ?? file.path}';
+    }
+    return 'file:${file.path}';
+  }
 
   /// 根据 TMDB ID 获取同一资源的所有版本
   /// 对于电影：精确匹配 tmdbId
@@ -641,17 +715,8 @@ class MediaLibraryProvider extends ChangeNotifier {
       return;
     }
 
-    final wasWatching =
-        mediaFileEntity.watchStatus == entity.WatchStatus.watching;
     await _db.updateProgress(mediaFileEntity, position, duration: duration);
-    final isWatching =
-        mediaFileEntity.watchStatus == entity.WatchStatus.watching;
-    if (wasWatching != isWatching) {
-      _continueWatchingCount += isWatching ? 1 : -1;
-      if (_continueWatchingCount < 0) {
-        _continueWatchingCount = 0;
-      }
-    }
+    _recountContinueWatching();
     _markWatchProgressChanged();
     notifyListeners();
   }
@@ -686,12 +751,29 @@ class MediaLibraryProvider extends ChangeNotifier {
     return null;
   }
 
-  /// 切换收藏
-  Future<void> toggleFavorite(MediaFile file) async {
-    final entity = _mediaFileEntities.firstWhere((e) => e.id == file.id);
-    await _db.toggleFavorite(entity);
-    _markFavoriteChanged();
-    notifyListeners();
+  bool isFavorite(String tmdbId) =>
+      getVersions(tmdbId).any((file) => file.isFavorite);
+
+  /// Applies a single favorite state to every physical version of a title.
+  Future<bool> setFavorite(String tmdbId, {required bool isFavorite}) async {
+    final matchingFiles = _mediaFileEntities
+        .where(
+          (file) =>
+              file.tmdbId == tmdbId ||
+              (file.tmdbId?.startsWith('${tmdbId}_') ?? false),
+        )
+        .toList();
+    if (matchingFiles.isEmpty) return false;
+
+    final changedFiles = matchingFiles
+        .where((file) => file.isFavorite != isFavorite)
+        .toList();
+    if (changedFiles.isNotEmpty) {
+      await _db.setFavorite(changedFiles, isFavorite: isFavorite);
+      _markFavoriteChanged();
+      notifyListeners();
+    }
+    return true;
   }
 
   // ===== 清理 =====
@@ -869,7 +951,7 @@ class MediaLibraryProvider extends ChangeNotifier {
         (show) => show.tmdbId == showId,
       );
       if (index >= 0) {
-        libraryItem = ModelConverter.toTVShow(_tvShowMetadataEntities[index]);
+        libraryItem = _convertTVShowWithSeasons(_tvShowMetadataEntities[index]);
       }
     }
 
@@ -908,5 +990,15 @@ class _LibraryScanResult {
     required this.newCount,
     required this.removedCount,
     required this.hadReadError,
+  });
+}
+
+class _ContinueWatchingCandidate {
+  final entity.MediaFileEntity file;
+  final DateTime activityAt;
+
+  const _ContinueWatchingCandidate({
+    required this.file,
+    required this.activityAt,
   });
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:mochi_player/core/ui/components/layout/app_hover_surface.dart';
+import 'package:mochi_player/core/ui/components/layout/app_clickable_area.dart';
 import 'package:mochi_player/core/ui/components/overlays/app_menu_button.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_icons.dart';
@@ -19,7 +19,7 @@ class FileBrowserListRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AppHoverSurface(
+    return AppClickableArea(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.small),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),

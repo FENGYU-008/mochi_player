@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mochi_player/core/ui/components/layout/app_clickable_area.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:mochi_player/core/ui/theme/app_icons.dart';
 import 'package:window_manager/window_manager.dart';
 
 class _SidebarMetrics {
@@ -54,20 +56,20 @@ class Sidebar extends StatelessWidget {
 
           _buildSectionTitle("媒体库", context),
           _buildGroup([
-            _ItemConfig(Icons.home_rounded, "首页", 0),
-            _ItemConfig(Icons.movie_outlined, "电影", 1),
-            _ItemConfig(Icons.tv, "剧集", 2),
+            _ItemConfig(AppIcons.libraryHome, "首页", 0),
+            _ItemConfig(AppIcons.movies, "电影", 1),
+            _ItemConfig(AppIcons.series, "剧集", 2),
           ]),
 
           const SizedBox(height: _SidebarMetrics.sectionGap),
 
           _buildSectionTitle("来源", context),
-          _buildGroup([_ItemConfig(Icons.folder_open_outlined, "文件浏览", 3)]),
+          _buildGroup([_ItemConfig(AppIcons.fileBrowser, "文件浏览", 3)]),
 
           const SizedBox(height: _SidebarMetrics.sectionGap),
 
           _buildSectionTitle("列表", context),
-          _buildGroup([_ItemConfig(Icons.favorite_border, "收藏", 4)]),
+          _buildGroup([_ItemConfig(AppIcons.favorites, "收藏", 4)]),
 
           const Spacer(),
           Divider(height: 1, color: theme.dividerColor),
@@ -77,7 +79,7 @@ class Sidebar extends StatelessWidget {
               horizontal: _SidebarMetrics.horizontalInset,
             ),
             child: _SidebarItem(
-              icon: Icons.settings_outlined,
+              icon: AppIcons.settings,
               title: "设置",
               index: 5,
               selectedIndex: selectedIndex,
@@ -136,7 +138,7 @@ class _ItemConfig {
   _ItemConfig(this.icon, this.title, this.index);
 }
 
-class _SidebarItem extends StatefulWidget {
+class _SidebarItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final int index;
@@ -152,90 +154,42 @@ class _SidebarItem extends StatefulWidget {
   });
 
   @override
-  State<_SidebarItem> createState() => _SidebarItemState();
-}
-
-class _SidebarItemState extends State<_SidebarItem> {
-  bool _isHovering = false;
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isSelected = widget.selectedIndex == widget.index;
+    final isSelected = selectedIndex == index;
     final primary = AppColors.primary(context);
+    final selectedBackground = AppColors.selectedSurface(context);
     final restingForeground = theme.textTheme.titleMedium!.color!;
-    final hoverBackground = theme.textTheme.bodyMedium!.color!.withAlpha(
-      (255 * 0.05).round(),
-    );
+    final foregroundColor = isSelected ? primary : restingForeground;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => widget.onTap(widget.index),
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(end: isSelected ? 1 : 0),
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          builder: (context, selectionProgress, child) {
-            return TweenAnimationBuilder<double>(
-              tween: Tween(end: _isHovering && !isSelected ? 1 : 0),
-              duration: const Duration(milliseconds: 140),
-              curve: Curves.easeOut,
-              builder: (context, hoverProgress, child) {
-                final unselectedBackground = Color.lerp(
-                  Colors.transparent,
-                  hoverBackground,
-                  hoverProgress,
-                )!;
-                final backgroundColor = Color.lerp(
-                  unselectedBackground,
-                  primary,
-                  selectionProgress,
-                )!;
-                final foregroundColor = Color.lerp(
-                  restingForeground,
-                  Colors.white,
-                  selectionProgress,
-                )!;
-                return Container(
-                  height: _SidebarMetrics.itemHeight,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: _SidebarMetrics.itemHorizontalPadding,
-                  ),
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                    borderRadius: BorderRadius.circular(
-                      _SidebarMetrics.itemRadius,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        widget.icon,
-                        size: _SidebarMetrics.itemIconSize,
-                        color: foregroundColor,
-                      ),
-                      const SizedBox(width: _SidebarMetrics.itemIconLabelGap),
-                      Text(
-                        widget.title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: foregroundColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-              child: child,
-            );
-          },
-        ),
+    return AppClickableArea(
+      onTap: () => onTap(index),
+      height: _SidebarMetrics.itemHeight,
+      padding: const EdgeInsets.symmetric(
+        horizontal: _SidebarMetrics.itemHorizontalPadding,
+      ),
+      borderRadius: BorderRadius.circular(_SidebarMetrics.itemRadius),
+      backgroundColor: isSelected ? selectedBackground : Colors.transparent,
+      hoverColor: isSelected
+          ? Colors.transparent
+          : AppColors.hoverSurface(context),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: _SidebarMetrics.itemIconSize,
+            color: foregroundColor,
+          ),
+          const SizedBox(width: _SidebarMetrics.itemIconLabelGap),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: foregroundColor,
+            ),
+          ),
+        ],
       ),
     );
   }
