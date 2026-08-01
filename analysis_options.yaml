@@ -9,6 +9,13 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # Generated Isar adapters can use SDK APIs marked experimental by newer
+  # analyzers. They are still compiled by every platform build, but are not
+  # useful targets for source-level lint review.
+  exclude:
+    - "**/*.g.dart"
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
