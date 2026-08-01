@@ -44,7 +44,7 @@ class Sidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 顶部拖动区域同时为 macOS 原生窗口按钮留出空间。
+          // 顶部拖动区域为 macOS 原生按钮和 Windows 自绘按钮留出空间。
           GestureDetector(
             behavior: HitTestBehavior.translucent,
             onPanStart: (_) => windowManager.startDragging(),

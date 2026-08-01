@@ -8,10 +8,10 @@ import 'package:mochi_player/core/ui/theme/app_colors.dart';
 ///
 /// macOS 继续使用系统原生的交通灯按钮，其他平台不显示此组件。
 class AppWindowControls extends StatefulWidget {
-  static const double buttonWidth = 46;
-  static const double height = 36;
-  static const double width = buttonWidth * 3;
-  static const double headerEndInset = width + 8;
+  static const double buttonSize = 30;
+  static const double buttonGap = 4;
+  static const double height = 60;
+  static const double width = buttonSize * 3 + buttonGap * 2;
 
   const AppWindowControls({super.key});
 
@@ -93,12 +93,14 @@ class _AppWindowControlsState extends State<AppWindowControls>
       width: AppWindowControls.width,
       height: AppWindowControls.height,
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _WindowControlButton(
             label: '最小化',
             glyph: _WindowControlGlyph.minimize,
             onPressed: windowManager.minimize,
           ),
+          const SizedBox(width: AppWindowControls.buttonGap),
           _WindowControlButton(
             label: _isMaximized ? '还原' : '最大化',
             glyph: _isMaximized
@@ -106,6 +108,7 @@ class _AppWindowControlsState extends State<AppWindowControls>
                 : _WindowControlGlyph.maximize,
             onPressed: _toggleMaximized,
           ),
+          const SizedBox(width: AppWindowControls.buttonGap),
           _WindowControlButton(
             label: '关闭',
             glyph: _WindowControlGlyph.close,
@@ -142,11 +145,14 @@ class _WindowControlButtonState extends State<_WindowControlButton> {
 
   @override
   Widget build(BuildContext context) {
+    final accent = AppColors.favorite(context);
     final foreground = widget.isClose && _isHovering
-        ? Colors.white
-        : AppColors.textPrimary(context);
+        ? accent
+        : _isHovering
+        ? AppColors.textPrimary(context)
+        : AppColors.textSecondary(context);
     final hoverColor = widget.isClose
-        ? const Color(0xFFC42B1C)
+        ? accent.withAlpha(34)
         : AppColors.hoverSurface(context);
 
     return Semantics(
@@ -162,12 +168,15 @@ class _WindowControlButtonState extends State<_WindowControlButton> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 100),
             curve: Curves.linear,
-            width: AppWindowControls.buttonWidth,
-            height: AppWindowControls.height,
-            color: _isHovering ? hoverColor : Colors.transparent,
+            width: AppWindowControls.buttonSize,
+            height: AppWindowControls.buttonSize,
+            decoration: BoxDecoration(
+              color: _isHovering ? hoverColor : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
             alignment: Alignment.center,
             child: CustomPaint(
-              size: const Size.square(12),
+              size: const Size.square(13),
               painter: _WindowControlGlyphPainter(
                 glyph: widget.glyph,
                 color: foreground,
@@ -191,7 +200,7 @@ class _WindowControlGlyphPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
+      ..strokeWidth = 1.15
       ..strokeCap = StrokeCap.square;
 
     switch (glyph) {

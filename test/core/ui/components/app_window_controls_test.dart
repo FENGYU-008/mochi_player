@@ -47,6 +47,20 @@ void main() {
       expect(find.bySemanticsLabel('最小化'), findsOneWidget);
       expect(find.bySemanticsLabel('最大化'), findsOneWidget);
       expect(find.bySemanticsLabel('关闭'), findsOneWidget);
+      final buttons = find.descendant(
+        of: find.byType(AppWindowControls),
+        matching: find.byType(AnimatedContainer),
+      );
+      expect(buttons, findsNWidgets(3));
+      for (final element in buttons.evaluate()) {
+        expect(
+          tester.getSize(find.byWidget(element.widget)),
+          const Size.square(AppWindowControls.buttonSize),
+        );
+        final decoration =
+            (element.widget as AnimatedContainer).decoration! as BoxDecoration;
+        expect(decoration.borderRadius, BorderRadius.circular(8));
+      }
 
       await tester.tap(find.bySemanticsLabel('最小化'));
       await tester.tap(find.bySemanticsLabel('最大化'));
@@ -84,11 +98,13 @@ void main() {
       final center = tester.getCenter(closeButton);
       await mouse.moveTo(center);
       await tester.pumpAndSettle();
-      expect(buttonColor(), const Color(0xFFC42B1C));
+      final context = tester.element(closeButton);
+      final expectedHoverColor = AppColors.favorite(context).withAlpha(34);
+      expect(buttonColor(), expectedHoverColor);
 
       await mouse.down(center);
       await tester.pump();
-      expect(buttonColor(), const Color(0xFFC42B1C));
+      expect(buttonColor(), expectedHoverColor);
       await mouse.up();
       await mouse.removePointer();
     },
@@ -117,26 +133,24 @@ void main() {
     expect(tester.getSize(find.byType(AppWindowControls)), Size.zero);
   });
 
-  testWindowsWidgets('reserves the caption width in a shared header', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _testApp(
-        const SizedBox(
-          width: 800,
-          child: AppHeader(title: '文件浏览', searchWidth: 240),
+  testWindowsWidgets(
+    'keeps the shared header independent from caption buttons',
+    (tester) async {
+      await tester.pumpWidget(
+        _testApp(
+          const SizedBox(
+            width: 800,
+            child: AppHeader(title: '文件浏览', searchWidth: 240),
+          ),
         ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    final headerRight = tester.getTopRight(find.byType(AppHeader)).dx;
-    final searchRight = tester.getTopRight(find.byType(AppSearchBar)).dx;
-    expect(
-      headerRight - searchRight,
-      greaterThanOrEqualTo(AppWindowControls.headerEndInset),
-    );
-  });
+      final headerRight = tester.getTopRight(find.byType(AppHeader)).dx;
+      final searchRight = tester.getTopRight(find.byType(AppSearchBar)).dx;
+      expect(headerRight - searchRight, AppSpacing.page);
+    },
+  );
 }
 
 void testWindowsWidgets(String description, WidgetTesterCallback callback) {
