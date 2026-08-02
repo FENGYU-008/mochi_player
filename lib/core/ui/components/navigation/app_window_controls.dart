@@ -4,12 +4,18 @@ import 'package:window_manager/window_manager.dart';
 
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 
+/// macOS 原生窗口按钮与 Windows 自绘按钮共用的左上角布局规格。
+abstract final class AppWindowChromeMetrics {
+  static const double leadingInset = 8;
+  static const double leadingContentInset = 104;
+}
+
 /// Windows 无边框窗口使用的最小化、最大化和关闭按钮。
 ///
 /// macOS 继续使用系统原生的交通灯按钮，其他平台不显示此组件。
 class AppWindowControls extends StatefulWidget {
-  static const double buttonSize = 30;
-  static const double buttonGap = 4;
+  static const double buttonSize = 28;
+  static const double buttonGap = 2;
   static const double height = 60;
   static const double width = buttonSize * 3 + buttonGap * 2;
 
@@ -146,11 +152,10 @@ class _WindowControlButtonState extends State<_WindowControlButton> {
   @override
   Widget build(BuildContext context) {
     final accent = AppColors.favorite(context);
-    final foreground = widget.isClose && _isHovering
+    final restingForeground = AppColors.textSecondary(context);
+    final hoverForeground = widget.isClose
         ? accent
-        : _isHovering
-        ? AppColors.textPrimary(context)
-        : AppColors.textSecondary(context);
+        : AppColors.textPrimary(context);
     final hoverColor = widget.isClose
         ? accent.withAlpha(34)
         : AppColors.hoverSurface(context);
@@ -165,21 +170,32 @@ class _WindowControlButtonState extends State<_WindowControlButton> {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: widget.onPressed,
-          child: AnimatedContainer(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: _isHovering ? 1 : 0),
             duration: const Duration(milliseconds: 100),
-            curve: Curves.linear,
-            width: AppWindowControls.buttonSize,
-            height: AppWindowControls.buttonSize,
-            decoration: BoxDecoration(
-              color: _isHovering ? hoverColor : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: CustomPaint(
-              size: const Size.square(13),
-              painter: _WindowControlGlyphPainter(
-                glyph: widget.glyph,
-                color: foreground,
+            curve: Curves.easeOutCubic,
+            builder: (context, hoverProgress, child) => Container(
+              width: AppWindowControls.buttonSize,
+              height: AppWindowControls.buttonSize,
+              decoration: BoxDecoration(
+                color: Color.lerp(
+                  hoverColor.withAlpha(0),
+                  hoverColor,
+                  hoverProgress,
+                ),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              alignment: Alignment.center,
+              child: CustomPaint(
+                size: const Size.square(12),
+                painter: _WindowControlGlyphPainter(
+                  glyph: widget.glyph,
+                  color: Color.lerp(
+                    restingForeground,
+                    hoverForeground,
+                    hoverProgress,
+                  )!,
+                ),
               ),
             ),
           ),
@@ -200,39 +216,47 @@ class _WindowControlGlyphPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.15
-      ..strokeCap = StrokeCap.square;
+      ..strokeWidth = 1.25
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
     switch (glyph) {
       case _WindowControlGlyph.minimize:
         canvas.drawLine(
-          Offset(1, size.height - 2),
-          Offset(size.width - 1, size.height - 2),
+          Offset(2, size.height - 3),
+          Offset(size.width - 2, size.height - 3),
           paint,
         );
       case _WindowControlGlyph.maximize:
-        canvas.drawRect(
-          Rect.fromLTWH(1.5, 1.5, size.width - 3, size.height - 3),
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(2, 2, size.width - 4, size.height - 4),
+            const Radius.circular(1),
+          ),
           paint,
         );
       case _WindowControlGlyph.restore:
-        canvas.drawRect(
-          Rect.fromLTWH(3.5, 1.5, size.width - 5, size.height - 5),
-          paint,
-        );
-        canvas.drawRect(
-          Rect.fromLTWH(1.5, 3.5, size.width - 5, size.height - 5),
+        final backWindow = Path()
+          ..moveTo(4, 2)
+          ..lineTo(size.width - 2, 2)
+          ..lineTo(size.width - 2, size.height - 4);
+        canvas.drawPath(backWindow, paint);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(2, 4, size.width - 6, size.height - 6),
+            const Radius.circular(1),
+          ),
           paint,
         );
       case _WindowControlGlyph.close:
         canvas.drawLine(
-          const Offset(1.5, 1.5),
-          Offset(size.width - 1.5, size.height - 1.5),
+          const Offset(2, 2),
+          Offset(size.width - 2, size.height - 2),
           paint,
         );
         canvas.drawLine(
-          Offset(size.width - 1.5, 1.5),
-          Offset(1.5, size.height - 1.5),
+          Offset(size.width - 2, 2),
+          Offset(2, size.height - 2),
           paint,
         );
     }

@@ -44,12 +44,16 @@ void main() {
         tester.getSize(find.byType(AppWindowControls)),
         const Size(AppWindowControls.width, AppWindowControls.height),
       );
+      expect(
+        AppWindowChromeMetrics.leadingInset + AppWindowControls.width,
+        lessThan(AppWindowChromeMetrics.leadingContentInset),
+      );
       expect(find.bySemanticsLabel('最小化'), findsOneWidget);
       expect(find.bySemanticsLabel('最大化'), findsOneWidget);
       expect(find.bySemanticsLabel('关闭'), findsOneWidget);
       final buttons = find.descendant(
         of: find.byType(AppWindowControls),
-        matching: find.byType(AnimatedContainer),
+        matching: find.byType(TweenAnimationBuilder<double>),
       );
       expect(buttons, findsNWidgets(3));
       for (final element in buttons.evaluate()) {
@@ -57,9 +61,14 @@ void main() {
           tester.getSize(find.byWidget(element.widget)),
           const Size.square(AppWindowControls.buttonSize),
         );
+        final buttonContainer = find.descendant(
+          of: find.byWidget(element.widget),
+          matching: find.byType(Container),
+        );
         final decoration =
-            (element.widget as AnimatedContainer).decoration! as BoxDecoration;
-        expect(decoration.borderRadius, BorderRadius.circular(8));
+            tester.widget<Container>(buttonContainer).decoration!
+                as BoxDecoration;
+        expect(decoration.borderRadius, BorderRadius.circular(9));
       }
 
       await tester.tap(find.bySemanticsLabel('最小化'));
@@ -81,24 +90,29 @@ void main() {
       await tester.pump();
 
       final closeButton = find.bySemanticsLabel('关闭');
-      final animatedContainer = find.descendant(
+      final animatedButton = find.descendant(
         of: closeButton,
-        matching: find.byType(AnimatedContainer),
+        matching: find.byType(TweenAnimationBuilder<double>),
       );
 
       Color buttonColor() {
-        final widget = tester.widget<AnimatedContainer>(animatedContainer);
-        return (widget.decoration! as BoxDecoration).color!;
+        final container = find.descendant(
+          of: animatedButton,
+          matching: find.byType(Container),
+        );
+        return (tester.widget<Container>(container).decoration!
+                as BoxDecoration)
+            .color!;
       }
 
-      expect(buttonColor(), Colors.transparent);
+      final context = tester.element(closeButton);
+      expect(buttonColor(), AppColors.favorite(context).withAlpha(0));
 
       final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
       await mouse.addPointer(location: Offset.zero);
       final center = tester.getCenter(closeButton);
       await mouse.moveTo(center);
       await tester.pumpAndSettle();
-      final context = tester.element(closeButton);
       final expectedHoverColor = AppColors.favorite(context).withAlpha(34);
       expect(buttonColor(), expectedHoverColor);
 

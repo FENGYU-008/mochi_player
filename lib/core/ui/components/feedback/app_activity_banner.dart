@@ -83,64 +83,67 @@ class AppActivityBanner extends StatelessWidget {
         ? accentColor.withAlpha(150)
         : theme.dividerColor;
 
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 460),
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          AppSpacing.compact,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
-        decoration: BoxDecoration(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(AppRadii.control),
-          border: Border.all(color: borderColor),
-          boxShadow: [
-            BoxShadow(
-              color: (isStatusMessage ? accentColor : Colors.black).withAlpha(
-                isStatusMessage ? 42 : 30,
+    return DefaultTextStyle.merge(
+      style: const TextStyle(decoration: TextDecoration.none),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 460),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.compact,
+            AppSpacing.md,
+            AppSpacing.md,
+          ),
+          decoration: BoxDecoration(
+            color: surfaceColor,
+            borderRadius: BorderRadius.circular(AppRadii.control),
+            border: Border.all(color: borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: (isStatusMessage ? accentColor : Colors.black).withAlpha(
+                  isStatusMessage ? 42 : 30,
+                ),
+                blurRadius: isStatusMessage ? 22 : 18,
+                offset: const Offset(0, 10),
               ),
-              blurRadius: isStatusMessage ? 22 : 18,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                _buildLeading(accentColor),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    message,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: theme.textTheme.bodyMedium?.color,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  _buildLeading(accentColor),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      message,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: theme.textTheme.bodyMedium?.color,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                  ),
+                ],
+              ),
+              if (progress != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    minHeight: 3,
+                    value: progress,
+                    color: accentColor,
+                    backgroundColor: theme.dividerColor.withAlpha(115),
                   ),
                 ),
               ],
-            ),
-            if (progress != null) ...[
-              const SizedBox(height: AppSpacing.sm),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: LinearProgressIndicator(
-                  minHeight: 3,
-                  value: progress,
-                  color: accentColor,
-                  backgroundColor: theme.dividerColor.withAlpha(115),
-                ),
-              ),
             ],
-          ],
+          ),
         ),
       ),
     );

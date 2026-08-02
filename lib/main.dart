@@ -84,7 +84,11 @@ class MyInfuseApp extends StatelessWidget {
           children: [
             Positioned.fill(child: child ?? const SizedBox.shrink()),
             if (AppWindowControls.isVisible)
-              const Positioned(top: 0, left: 16, child: AppWindowControls()),
+              const Positioned(
+                top: 0,
+                left: AppWindowChromeMetrics.leadingInset,
+                child: AppWindowControls(),
+              ),
           ],
         );
       },

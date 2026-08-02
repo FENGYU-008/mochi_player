@@ -6,6 +6,7 @@ class MainFlutterWindow: NSWindow {
   private var defaultWindowButtonContainerOrigin: NSPoint?
   private var windowButtonsConfigured = false
   private var windowControlChannel: FlutterMethodChannel?
+  private var windowObserverTokens: [NSObjectProtocol] = []
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
@@ -32,6 +33,13 @@ class MainFlutterWindow: NSWindow {
     windowControlChannel = channel
 
     super.awakeFromNib()
+    observeWindowChromeChanges()
+  }
+
+  deinit {
+    for token in windowObserverTokens {
+      NotificationCenter.default.removeObserver(token)
+    }
   }
 
   override func becomeKey() {
@@ -41,6 +49,20 @@ class MainFlutterWindow: NSWindow {
     }
 
     scheduleNativeWindowButtonPositioning()
+  }
+
+  private func observeWindowChromeChanges() {
+    let exitFullScreenToken = NotificationCenter.default.addObserver(
+      forName: NSWindow.didExitFullScreenNotification,
+      object: self,
+      queue: .main
+    ) { [weak self] _ in
+      guard self?.windowButtonsConfigured == true else {
+        return
+      }
+      self?.scheduleNativeWindowButtonPositioning()
+    }
+    windowObserverTokens.append(exitFullScreenToken)
   }
 
   private func scheduleNativeWindowButtonPositioning() {

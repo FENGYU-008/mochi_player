@@ -44,6 +44,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   late final PlaybackSessionController _session;
 
   bool _isControlsVisible = true;
+  bool _isPlayerMenuOpen = false;
   Timer? _hideControlsTimer;
   Timer? _progressSaveTimer;
   bool _isFullScreen = false;
@@ -83,20 +84,22 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   bool get _hasPrevious => _session.hasPrevious;
   bool get _hasNext => _session.hasNext;
 
-  // 🟢 新增：组合标题的 Getter
   String get _displayTitle {
     if (widget.contextTitle != null &&
         _currentItem.mediaType == MediaType.episode) {
-      final season = _currentItem.parsedSeason;
-      final episode = _currentItem.parsedEpisode;
-      if (season != null && episode != null) {
-        return '${widget.contextTitle} - 第 $season 季 第 $episode 集';
-      }
       return widget.contextTitle!;
     }
     return _currentItem.parsedTitle.isNotEmpty
         ? _currentItem.parsedTitle
         : _currentItem.fileName;
+  }
+
+  String? get _displaySecondaryTitle {
+    if (_currentItem.mediaType != MediaType.episode) return null;
+    final season = _currentItem.parsedSeason;
+    final episode = _currentItem.parsedEpisode;
+    if (season == null || episode == null) return null;
+    return '第 $season 季 · 第 $episode 集';
   }
 
   @override
@@ -840,11 +843,26 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     if (_isDisposed) return;
 
     _hideControlsTimer?.cancel();
+    if (_isPlayerMenuOpen) return;
     _hideControlsTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
+      if (mounted && !_isPlayerMenuOpen) {
         setState(() => _isControlsVisible = false);
       }
     });
+  }
+
+  void _setPlayerMenuVisibility(bool isOpen) {
+    if (_isDisposed || _isPlayerMenuOpen == isOpen) return;
+
+    _isPlayerMenuOpen = isOpen;
+    _hideControlsTimer?.cancel();
+    if (isOpen) {
+      if (mounted && !_isControlsVisible) {
+        setState(() => _isControlsVisible = true);
+      }
+      return;
+    }
+    _startHideControlsTimer();
   }
 
   void _onPointerHover(PointerEvent event) {
@@ -857,7 +875,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _onPointerExit(PointerEvent event) {
-    if (_isDisposed) return;
+    if (_isDisposed || _isPlayerMenuOpen) return;
 
     _hideControlsTimer?.cancel();
     if (mounted) {
@@ -1107,8 +1125,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                 ),
               PlayerControls(
                 player: _player,
-                controller: _videoController,
-                title: _displayTitle, // 🟢 使用新的组合标题
+                title: _displayTitle,
+                secondaryTitle: _displaySecondaryTitle,
                 isVisible: _isControlsVisible,
                 isFullScreen: _isFullScreen,
                 onBack: () {
@@ -1134,6 +1152,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                 selectedSubtitleTrack: _selectedSubtitleTrack,
                 overrideEmbeddedSubtitleStyle: _overrideEmbeddedSubtitleStyle,
                 onSubtitleStyleOverrideChanged: _setSubtitleStyleOverride,
+                onMenuVisibilityChanged: _setPlayerMenuVisibility,
                 onSubtitleSelected: (track) {
                   unawaited(_setSubtitleTrack(track));
                 },
@@ -1170,7 +1189,7 @@ class _PlayerMessage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.black.withAlpha((255 * 0.72).round()),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadii.full),
           border: Border.all(
             color: Colors.white.withAlpha((255 * 0.12).round()),
           ),
