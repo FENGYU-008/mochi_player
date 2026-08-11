@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
@@ -14,6 +15,9 @@ abstract final class AppWindowChromeMetrics {
 ///
 /// macOS 继续使用系统原生的交通灯按钮，其他平台不显示此组件。
 class AppWindowControls extends StatefulWidget {
+  static const _nativeChannel = MethodChannel('mochi_player/window_controls');
+  static final ValueNotifier<bool> _miniPlayerMode = ValueNotifier(false);
+
   static const double buttonSize = 28;
   static const double buttonGap = 2;
   static const double height = 60;
@@ -23,6 +27,22 @@ class AppWindowControls extends StatefulWidget {
 
   static bool get isVisible =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
+
+  static Future<void> positionNativeWindowButtons() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS) return;
+    await _nativeChannel.invokeMethod<void>('positionNativeWindowButtons');
+  }
+
+  static Future<void> setMiniPlayerMode(bool enabled) async {
+    if (_miniPlayerMode.value != enabled) {
+      _miniPlayerMode.value = enabled;
+    }
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS) return;
+    await _nativeChannel.invokeMethod<void>(
+      'setNativeWindowButtonsVisible',
+      !enabled,
+    );
+  }
 
   @override
   State<AppWindowControls> createState() => _AppWindowControlsState();
@@ -36,14 +56,20 @@ class _AppWindowControlsState extends State<AppWindowControls>
   @override
   void initState() {
     super.initState();
+    AppWindowControls._miniPlayerMode.addListener(_handleModeChanged);
     windowManager.addListener(this);
     _syncMaximizedState();
   }
 
   @override
   void dispose() {
+    AppWindowControls._miniPlayerMode.removeListener(_handleModeChanged);
     windowManager.removeListener(this);
     super.dispose();
+  }
+
+  void _handleModeChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _syncMaximizedState() async {
@@ -91,7 +117,9 @@ class _AppWindowControlsState extends State<AppWindowControls>
 
   @override
   Widget build(BuildContext context) {
-    if (!AppWindowControls.isVisible || _isFullScreen) {
+    if (!AppWindowControls.isVisible ||
+        _isFullScreen ||
+        AppWindowControls._miniPlayerMode.value) {
       return const SizedBox.shrink();
     }
 

@@ -5,6 +5,7 @@ class MainFlutterWindow: NSWindow {
   private static let windowButtonOffset = NSPoint(x: 12, y: -10)
   private var defaultWindowButtonContainerOrigin: NSPoint?
   private var windowButtonsConfigured = false
+  private var nativeWindowButtonsVisible = true
   private var windowControlChannel: FlutterMethodChannel?
   private var windowObserverTokens: [NSObjectProtocol] = []
 
@@ -21,14 +22,33 @@ class MainFlutterWindow: NSWindow {
       binaryMessenger: flutterViewController.engine.binaryMessenger
     )
     channel.setMethodCallHandler { [weak self] call, result in
-      guard call.method == "positionNativeWindowButtons" else {
-        result(FlutterMethodNotImplemented)
+      guard let self = self else {
+        result(nil)
         return
       }
 
-      self?.windowButtonsConfigured = true
-      self?.scheduleNativeWindowButtonPositioning()
-      result(nil)
+      switch call.method {
+      case "positionNativeWindowButtons":
+        self.windowButtonsConfigured = true
+        self.scheduleNativeWindowButtonPositioning()
+        result(nil)
+      case "setNativeWindowButtonsVisible":
+        guard let visible = call.arguments as? Bool else {
+          result(
+            FlutterError(
+              code: "invalid_arguments",
+              message: "Expected a Boolean visibility value.",
+              details: nil
+            )
+          )
+          return
+        }
+        self.nativeWindowButtonsVisible = visible
+        self.updateNativeWindowButtonVisibility()
+        result(nil)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
     }
     windowControlChannel = channel
 
@@ -96,5 +116,17 @@ class MainFlutterWindow: NSWindow {
 
     buttonContainer.updateTrackingAreas()
     buttonContainer.superview?.updateTrackingAreas()
+    updateNativeWindowButtonVisibility()
+  }
+
+  private func updateNativeWindowButtonVisibility() {
+    let buttonTypes: [NSWindow.ButtonType] = [
+      .closeButton,
+      .miniaturizeButton,
+      .zoomButton
+    ]
+    for buttonType in buttonTypes {
+      standardWindowButton(buttonType)?.isHidden = !nativeWindowButtonsVisible
+    }
   }
 }

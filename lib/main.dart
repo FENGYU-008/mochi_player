@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
@@ -13,8 +12,6 @@ import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'features/library/application/file_browser_provider.dart';
 import 'app/presentation/pages/main_page.dart';
-
-const _windowControlsChannel = MethodChannel('mochi_player/window_controls');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,9 +39,7 @@ void main() async {
     await windowManager.show();
     await windowManager.focus();
     if (Platform.isMacOS) {
-      await _windowControlsChannel.invokeMethod<void>(
-        'positionNativeWindowButtons',
-      );
+      await AppWindowControls.positionNativeWindowButtons();
     }
   });
 

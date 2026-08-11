@@ -13,6 +13,7 @@ import 'package:mochi_player/features/playback/domain/playback_resume_policy.dar
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
+import 'package:mochi_player/features/playback/presentation/widgets/player_chrome.dart';
 import 'package:mochi_player/features/playback/presentation/widgets/player_controls.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -36,6 +37,9 @@ class PlayerPage extends StatefulWidget {
 
 class _PlayerPageState extends State<PlayerPage> with WindowListener {
   static const Duration _progressSaveInterval = Duration(seconds: 10);
+  static const Size _miniPlayerSize = Size(480, 300);
+  static const Size _miniPlayerMinimumSize = Size(420, 260);
+  static const Size _regularMinimumWindowSize = Size(900, 600);
 
   late final Player _player;
   late final VideoController _videoController;
@@ -48,6 +52,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   Timer? _hideControlsTimer;
   Timer? _progressSaveTimer;
   bool _isFullScreen = false;
+  bool _isMiniPlayer = false;
+  bool _isMiniPlayerAlwaysOnTop = false;
   bool _isBuffering = false;
   bool _hasRestoredPosition = false;
   bool _didAutoSelectAudio = false;
@@ -62,6 +68,12 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   int _mediaOpenGeneration = 0;
   Future<void>? _initialWindowFullScreenCapture;
   Future<void>? _fullScreenTransition;
+  Future<void>? _miniPlayerTransition;
+  Future<void>? _miniAlwaysOnTopTransition;
+  Rect? _windowBoundsBeforeMiniPlayer;
+  Rect? _controlBarBounds;
+  bool _windowWasMaximizedBeforeMiniPlayer = false;
+  bool _windowWasAlwaysOnTopBeforeMiniPlayer = false;
 
   List<String> _subtitle = [];
   List<AudioTrack> _audioTracks = const [];
@@ -72,6 +84,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     null,
     null,
   );
+
   final List<StreamSubscription> _subscriptions = [];
 
   final FocusNode _focusNode = FocusNode();
@@ -865,6 +878,11 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     _startHideControlsTimer();
   }
 
+  void _setControlBarBounds(Rect bounds) {
+    if (_isDisposed || _isMiniPlayer || _controlBarBounds == bounds) return;
+    setState(() => _controlBarBounds = bounds);
+  }
+
   void _onPointerHover(PointerEvent event) {
     if (_isDisposed) return;
 
@@ -932,10 +950,110 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     await Future.delayed(const Duration(milliseconds: 120));
     if (_isDisposed) return;
 
+    if (_isMiniPlayer) {
+      await _exitMiniPlayer();
+      if (_isDisposed) return;
+    }
+
     if (_isFullScreen) {
       await _exitPlayerFullScreen();
     } else {
       await _enterPlayerFullScreen();
+    }
+  }
+
+  void _toggleMiniPlayer() {
+    if (_isDisposed || _miniPlayerTransition != null) return;
+
+    _miniPlayerTransition =
+        (_isMiniPlayer ? _exitMiniPlayer() : _enterMiniPlayer()).whenComplete(
+          () => _miniPlayerTransition = null,
+        );
+    unawaited(_miniPlayerTransition);
+  }
+
+  void _toggleMiniPlayerAlwaysOnTop() {
+    if (_isDisposed || !_isMiniPlayer || _miniAlwaysOnTopTransition != null) {
+      return;
+    }
+
+    final nextValue = !_isMiniPlayerAlwaysOnTop;
+    _miniAlwaysOnTopTransition = () async {
+      await windowManager.setAlwaysOnTop(nextValue);
+      if (mounted) {
+        setState(() => _isMiniPlayerAlwaysOnTop = nextValue);
+      }
+    }().whenComplete(() => _miniAlwaysOnTopTransition = null);
+    unawaited(_miniAlwaysOnTopTransition);
+  }
+
+  Future<void> _enterMiniPlayer() async {
+    await _fullScreenTransition;
+    if (_isDisposed) return;
+
+    if (_isFullScreen) {
+      await _exitPlayerFullScreen();
+      if (_isDisposed) return;
+    }
+
+    _windowWasMaximizedBeforeMiniPlayer = await windowManager.isMaximized();
+    if (_windowWasMaximizedBeforeMiniPlayer) {
+      await windowManager.unmaximize();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    if (_isDisposed) return;
+
+    final currentBounds = await windowManager.getBounds();
+    _windowBoundsBeforeMiniPlayer = currentBounds;
+    _windowWasAlwaysOnTopBeforeMiniPlayer = await windowManager.isAlwaysOnTop();
+    await AppWindowControls.setMiniPlayerMode(true);
+
+    final targetPosition = Offset(
+      (currentBounds.right - _miniPlayerSize.width).clamp(0.0, double.infinity),
+      (currentBounds.bottom - _miniPlayerSize.height).clamp(
+        0.0,
+        double.infinity,
+      ),
+    );
+    await windowManager.setMinimumSize(_miniPlayerMinimumSize);
+    await windowManager.setBounds(
+      targetPosition & _miniPlayerSize,
+      animate: true,
+    );
+    await windowManager.setAlwaysOnTop(true);
+
+    if (!mounted) return;
+    setState(() {
+      _isMiniPlayer = true;
+      _isMiniPlayerAlwaysOnTop = true;
+      _controlBarBounds = null;
+    });
+    _startHideControlsTimer();
+  }
+
+  Future<void> _exitMiniPlayer({bool updateState = true}) async {
+    if (!_isMiniPlayer && _windowBoundsBeforeMiniPlayer == null) return;
+
+    await _miniAlwaysOnTopTransition;
+    final previousBounds = _windowBoundsBeforeMiniPlayer;
+    _windowBoundsBeforeMiniPlayer = null;
+    await windowManager.setAlwaysOnTop(_windowWasAlwaysOnTopBeforeMiniPlayer);
+    if (previousBounds != null) {
+      await windowManager.setBounds(previousBounds, animate: true);
+    }
+    await windowManager.setMinimumSize(_regularMinimumWindowSize);
+    if (_windowWasMaximizedBeforeMiniPlayer) {
+      await windowManager.maximize();
+    }
+
+    _windowWasMaximizedBeforeMiniPlayer = false;
+    _isMiniPlayer = false;
+    _isMiniPlayerAlwaysOnTop = false;
+    _controlBarBounds = null;
+    await AppWindowControls.setMiniPlayerMode(false);
+    if (updateState && mounted) {
+      setState(() {});
+      _startHideControlsTimer();
     }
   }
 
@@ -980,6 +1098,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
   Future<void> _handleBackPressed() async {
     await _fullScreenTransition;
+    await _miniPlayerTransition;
+    await _exitMiniPlayer();
     await _exitPlayerFullScreen();
     if (mounted) {
       Navigator.of(context).maybePop();
@@ -993,6 +1113,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
     unawaited(_saveProgress(force: true, allowDisposed: true));
     unawaited(() async {
+      await _miniPlayerTransition;
+      await _exitMiniPlayer(updateState: false);
       await _fullScreenTransition;
       await _exitPlayerFullScreen(updateState: false);
     }());
@@ -1010,6 +1132,10 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
+    final subtitleFontSize = PlayerSubtitleSizing.fontSize(
+      configuredFontSize: _playbackSettings.subtitleFontSize,
+      viewportSize: MediaQuery.sizeOf(context),
+    );
     return Scaffold(
       backgroundColor: Colors.black,
       body: Focus(
@@ -1092,34 +1218,38 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                   ),
                 ),
               if (_overrideEmbeddedSubtitleStyle)
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  left: 20,
-                  right: 20,
-                  bottom: _isControlsVisible ? 120.0 : 20.0,
-                  child: IgnorePointer(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (final line in _subtitle)
-                          Text(
-                            line,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: _playbackSettings.subtitleFontSize,
-                              height: 1.4,
-                              color: Colors.white,
-                              shadows: const [
-                                Shadow(
-                                  blurRadius: 2,
-                                  color: Colors.black,
-                                  offset: Offset(1, 1),
-                                ),
-                              ],
+                Positioned.fill(
+                  child: PlayerSubtitleAvoidingControls(
+                    controlsVisible: _isControlsVisible,
+                    isMiniPlayer: _isMiniPlayer,
+                    controlBarBounds: _controlBarBounds,
+                    child: IgnorePointer(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final line in _subtitle)
+                            Text(
+                              line,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: subtitleFontSize,
+                                height: 1.25,
+                                color: Colors.white,
+                                shadows: const [
+                                  Shadow(
+                                    blurRadius: 2,
+                                    color: Colors.black,
+                                    offset: Offset(1, 1),
+                                  ),
+                                ],
+                              ),
+                              textHeightBehavior: const TextHeightBehavior(
+                                applyHeightToFirstAscent: false,
+                                applyHeightToLastDescent: false,
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1129,6 +1259,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                 secondaryTitle: _displaySecondaryTitle,
                 isVisible: _isControlsVisible,
                 isFullScreen: _isFullScreen,
+                isMiniPlayer: _isMiniPlayer,
+                isMiniPlayerAlwaysOnTop: _isMiniPlayerAlwaysOnTop,
                 onBack: () {
                   unawaited(_handleBackPressed());
                 },
@@ -1143,6 +1275,9 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                         unawaited(_playQueueOffset(1));
                       }
                     : null,
+                onPip: _toggleMiniPlayer,
+                onToggleMiniPlayerAlwaysOnTop: _toggleMiniPlayerAlwaysOnTop,
+                onControlBarBoundsChanged: _setControlBarBounds,
                 audioTracks: _audioTracks,
                 selectedAudioTrack: _selectedAudioTrack,
                 onAudioSelected: (track) {

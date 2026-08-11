@@ -11,6 +11,13 @@ class PlayerChromeLayout {
   static const double controlHeight = 34;
   static const Duration visibilityDuration = Duration(milliseconds: 200);
 
+  static double bottomPanelWidth(double windowWidth) {
+    if (windowWidth <= 700) {
+      return (windowWidth - AppSpacing.lg * 2).clamp(0, double.infinity);
+    }
+    return (windowWidth * 0.58).clamp(560.0, 1040.0).toDouble();
+  }
+
   /// 为左上角的系统窗口按钮预留空间。
   static double topLeftInset({
     required TargetPlatform platform,
@@ -22,6 +29,101 @@ class PlayerChromeLayout {
       TargetPlatform.windows => AppWindowChromeMetrics.leadingContentInset,
       _ => AppSpacing.xxl,
     };
+  }
+}
+
+/// 根据当前播放器视口缩放 Mochi 字幕字号。
+abstract final class PlayerSubtitleSizing {
+  static const Size _referenceViewport = Size(1200, 700);
+
+  static double fontSize({
+    required double configuredFontSize,
+    required Size viewportSize,
+  }) {
+    final widthScale = viewportSize.width / _referenceViewport.width;
+    final heightScale = viewportSize.height / _referenceViewport.height;
+    final viewportScale = widthScale < heightScale ? widthScale : heightScale;
+    final scale = viewportScale.clamp(0.3, 1.6);
+    return (configuredFontSize * scale).clamp(10.0, 64.0).toDouble();
+  }
+}
+
+/// 让字幕默认贴近窗口底部，仅在可见控制栏与字幕实际区域重叠时向上避让。
+class PlayerSubtitleAvoidingControls extends StatelessWidget {
+  final Widget child;
+  final Rect? controlBarBounds;
+  final bool controlsVisible;
+  final bool isMiniPlayer;
+
+  const PlayerSubtitleAvoidingControls({
+    super.key,
+    required this.child,
+    required this.controlsVisible,
+    required this.isMiniPlayer,
+    this.controlBarBounds,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomSingleChildLayout(
+      delegate: _SubtitleAvoidanceLayoutDelegate(
+        controlBarBounds: controlBarBounds,
+        shouldAvoidControls: controlsVisible && !isMiniPlayer,
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SubtitleAvoidanceLayoutDelegate extends SingleChildLayoutDelegate {
+  static const double _horizontalMargin = 20;
+  static const double _bottomMargin = 20;
+  static const double _controlGap = AppSpacing.xs;
+
+  final Rect? controlBarBounds;
+  final bool shouldAvoidControls;
+
+  const _SubtitleAvoidanceLayoutDelegate({
+    required this.controlBarBounds,
+    required this.shouldAvoidControls,
+  });
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
+    return BoxConstraints(
+      maxWidth: (constraints.maxWidth - _horizontalMargin * 2).clamp(
+        0,
+        double.infinity,
+      ),
+      maxHeight: constraints.maxHeight,
+    );
+  }
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) {
+    final x = (size.width - childSize.width) / 2;
+    final bottomPosition = size.height - _bottomMargin - childSize.height;
+    var y = bottomPosition;
+    final controls = controlBarBounds;
+
+    if (shouldAvoidControls &&
+        controls != null &&
+        bottomPosition < controls.bottom + _controlGap &&
+        bottomPosition + childSize.height > controls.top - _controlGap) {
+      y = controls.top - _controlGap - childSize.height;
+    }
+
+    final preferredMinimumY = PlayerChromeLayout.topBarHeight + AppSpacing.md;
+    final minimumY = bottomPosition < preferredMinimumY
+        ? bottomPosition
+        : preferredMinimumY;
+    return Offset(x, y.clamp(minimumY, bottomPosition).toDouble());
+  }
+
+  @override
+  bool shouldRelayout(_SubtitleAvoidanceLayoutDelegate oldDelegate) {
+    return controlBarBounds != oldDelegate.controlBarBounds ||
+        shouldAvoidControls != oldDelegate.shouldAvoidControls;
   }
 }
 
@@ -174,54 +276,215 @@ class _PlayerBackButton extends StatelessWidget {
 /// 播放器底部玻璃控制面板。
 ///
 /// 进度与具体按钮由上层注入，因此播放器状态和视觉容器保持解耦。
-class PlayerBottomControlBar extends StatelessWidget {
+class PlayerBottomControlBar extends StatefulWidget {
   final Widget progress;
   final Widget controls;
+  final ValueChanged<Rect>? onBoundsChanged;
 
   const PlayerBottomControlBar({
     super.key,
     required this.progress,
     required this.controls,
+    this.onBoundsChanged,
+  });
+
+  @override
+  State<PlayerBottomControlBar> createState() => _PlayerBottomControlBarState();
+}
+
+class _PlayerBottomControlBarState extends State<PlayerBottomControlBar> {
+  final GlobalKey _panelKey = GlobalKey();
+  Offset _dragOffset = Offset.zero;
+  Rect? _lastReportedBounds;
+
+  Offset _clampOffset(Size windowSize, double panelWidth) {
+    final horizontalRoom = ((windowSize.width - panelWidth) / 2 - AppSpacing.md)
+        .clamp(0.0, double.infinity);
+    final upwardRoom =
+        (windowSize.height - PlayerChromeLayout.topBarHeight - 96).clamp(
+          0.0,
+          double.infinity,
+        );
+    return Offset(
+      _dragOffset.dx.clamp(-horizontalRoom, horizontalRoom),
+      _dragOffset.dy.clamp(-upwardRoom, 0.0),
+    );
+  }
+
+  void _dragBy(DragUpdateDetails details, Size windowSize, double panelWidth) {
+    setState(() {
+      _dragOffset = _clampOffset(windowSize, panelWidth) + details.delta;
+    });
+  }
+
+  void _reportBoundsAfterLayout() {
+    if (widget.onBoundsChanged == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final renderBox = _panelKey.currentContext?.findRenderObject();
+      if (renderBox is! RenderBox || !renderBox.hasSize) return;
+      final bounds = renderBox.localToGlobal(Offset.zero) & renderBox.size;
+      if (_lastReportedBounds == bounds) return;
+      _lastReportedBounds = bounds;
+      widget.onBoundsChanged?.call(bounds);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final windowSize = MediaQuery.sizeOf(context);
+    final panelWidth = PlayerChromeLayout.bottomPanelWidth(windowSize.width);
+    final horizontalPadding = windowSize.width <= 1000
+        ? AppSpacing.md
+        : AppSpacing.xl;
+    final effectiveOffset = _clampOffset(windowSize, panelWidth);
+    _reportBoundsAfterLayout();
+    return SizedBox(
+      width: windowSize.width,
+      height: windowSize.height,
+      child: SafeArea(
+        top: false,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned(
+              left: (windowSize.width - panelWidth) / 2 + effectiveOffset.dx,
+              bottom: AppSpacing.md - effectiveOffset.dy,
+              width: panelWidth,
+              child: SizedBox(
+                key: _panelKey,
+                child: GlassSurface(
+                  key: const ValueKey('player-bottom-control-bar'),
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(AppRadii.large),
+                  ),
+                  color: const Color(0x80000000),
+                  borderColor: const Color(0x1AFFFFFF),
+                  blur: 16,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.move,
+                          child: GestureDetector(
+                            key: const ValueKey(
+                              'player-control-bar-drag-surface',
+                            ),
+                            behavior: HitTestBehavior.opaque,
+                            onPanUpdate: (details) =>
+                                _dragBy(details, windowSize, panelWidth),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          AppSpacing.sm,
+                          horizontalPadding,
+                          AppSpacing.sm,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            widget.progress,
+                            const SizedBox(height: AppSpacing.xs),
+                            widget.controls,
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact controls used by the always-on-top mini-player window.
+class PlayerMiniControls extends StatelessWidget {
+  final bool isPlaying;
+  final bool isAlwaysOnTop;
+  final VoidCallback onPlayPause;
+  final VoidCallback onToggleAlwaysOnTop;
+  final VoidCallback onRestoreWindow;
+
+  const PlayerMiniControls({
+    super.key,
+    required this.isPlaying,
+    required this.isAlwaysOnTop,
+    required this.onPlayPause,
+    required this.onToggleAlwaysOnTop,
+    required this.onRestoreWindow,
   });
 
   @override
   Widget build(BuildContext context) {
-    final windowWidth = MediaQuery.sizeOf(context).width;
-    final panelWidth = (windowWidth * 0.7).clamp(620.0, 1520.0).toDouble();
-    final horizontalPadding = windowWidth <= 1000
-        ? AppSpacing.md
-        : AppSpacing.xl;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.md),
-        child: SizedBox(
-          width: panelWidth,
-          child: GlassSurface(
-            key: const ValueKey('player-bottom-control-bar'),
-            borderRadius: const BorderRadius.all(
-              Radius.circular(AppRadii.large),
-            ),
-            color: const Color(0x80000000),
-            borderColor: const Color(0x1AFFFFFF),
-            blur: 16,
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              AppSpacing.sm,
-              horizontalPadding,
-              AppSpacing.sm,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                progress,
-                const SizedBox(height: AppSpacing.xs),
-                controls,
-              ],
+    return GlassSurface(
+      key: const ValueKey('player-mini-controls'),
+      borderRadius: const BorderRadius.all(Radius.circular(AppRadii.full)),
+      color: const Color(0x70000000),
+      borderColor: const Color(0x1FFFFFFF),
+      blur: 14,
+      padding: const EdgeInsets.all(3),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _MiniPlayerControlButton(
+            onPressed: onPlayPause,
+            child: Icon(
+              isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+              color: Colors.white,
+              size: 22,
             ),
           ),
-        ),
+          const SizedBox(width: 2),
+          _MiniPlayerControlButton(
+            onPressed: onToggleAlwaysOnTop,
+            child: Icon(
+              isAlwaysOnTop ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+              color: isAlwaysOnTop
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.white70,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 2),
+          _MiniPlayerControlButton(
+            onPressed: onRestoreWindow,
+            child: const Icon(
+              Icons.open_in_full_rounded,
+              color: Colors.white,
+              size: 16,
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+class _MiniPlayerControlButton extends StatelessWidget {
+  final Widget child;
+  final VoidCallback onPressed;
+
+  const _MiniPlayerControlButton({
+    required this.child,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppClickableArea(
+      width: 32,
+      height: 32,
+      onTap: onPressed,
+      borderRadius: const BorderRadius.all(Radius.circular(AppRadii.full)),
+      hoverColor: const Color(0x18FFFFFF),
+      child: Center(child: child),
     );
   }
 }
