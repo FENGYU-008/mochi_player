@@ -7,7 +7,6 @@ class AppSettings {
   static const minPlaybackReadaheadSeconds = 5;
   static const maxPlaybackReadaheadSeconds = 1800;
   static const defaultEnableHardwareAcceleration = true;
-  static const defaultAudioLanguagePriority = 'zh,chi,zho,jpn,ja,eng';
   static const defaultSubtitleLanguagePriority = 'zh,chi,zho,chs,cht,eng';
   static const defaultSubtitleFontSize = 24.0;
   static const defaultTmdbProxyEnabled = true;
@@ -22,7 +21,6 @@ class AppSettings {
   final int playbackCacheSizeMb;
   final int playbackReadaheadSeconds;
   final bool enableHardwareAcceleration;
-  final String audioLanguagePriority;
   final String subtitleLanguagePriority;
   final double subtitleFontSize;
 
@@ -37,7 +35,6 @@ class AppSettings {
     this.playbackCacheSizeMb = defaultPlaybackCacheSizeMb,
     this.playbackReadaheadSeconds = defaultPlaybackReadaheadSeconds,
     this.enableHardwareAcceleration = defaultEnableHardwareAcceleration,
-    this.audioLanguagePriority = defaultAudioLanguagePriority,
     this.subtitleLanguagePriority = defaultSubtitleLanguagePriority,
     this.subtitleFontSize = defaultSubtitleFontSize,
   });
@@ -50,11 +47,6 @@ class AppSettings {
   bool get hasTmdbApiKey => tmdbApiKey.trim().isNotEmpty;
 
   int get playbackCacheMaxBytes => playbackCacheSizeMb * 1024 * 1024;
-
-  String get normalizedAudioLanguagePriority => _normalizeLanguagePriority(
-    audioLanguagePriority,
-    defaultAudioLanguagePriority,
-  );
 
   String get normalizedSubtitleLanguagePriority => _normalizeLanguagePriority(
     subtitleLanguagePriority,
@@ -85,10 +77,6 @@ class AppSettings {
           .clamp(minPlaybackReadaheadSeconds, maxPlaybackReadaheadSeconds)
           .toInt(),
       enableHardwareAcceleration: enableHardwareAcceleration,
-      audioLanguagePriority: _normalizeLanguagePriority(
-        audioLanguagePriority,
-        fallback.audioLanguagePriority,
-      ),
       subtitleLanguagePriority: _normalizeLanguagePriority(
         subtitleLanguagePriority,
         fallback.subtitleLanguagePriority,

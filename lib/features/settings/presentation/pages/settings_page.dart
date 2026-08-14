@@ -26,7 +26,6 @@ class _SettingsPageState extends State<SettingsPage> {
   final _tmdbProxyUrlController = TextEditingController();
   final _playbackCacheSizeMbController = TextEditingController();
   final _playbackReadaheadSecondsController = TextEditingController();
-  final _audioLanguagePriorityController = TextEditingController();
   final _subtitleLanguagePriorityController = TextEditingController();
 
   bool _controllersInitialized = false;
@@ -54,7 +53,6 @@ class _SettingsPageState extends State<SettingsPage> {
     _tmdbProxyUrlController,
     _playbackCacheSizeMbController,
     _playbackReadaheadSecondsController,
-    _audioLanguagePriorityController,
     _subtitleLanguagePriorityController,
   ];
 
@@ -86,7 +84,6 @@ class _SettingsPageState extends State<SettingsPage> {
     _tmdbProxyUrlController.dispose();
     _playbackCacheSizeMbController.dispose();
     _playbackReadaheadSecondsController.dispose();
-    _audioLanguagePriorityController.dispose();
     _subtitleLanguagePriorityController.dispose();
     super.dispose();
   }
@@ -360,10 +357,6 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           ),
           AppFormTextField(
-            controller: _audioLanguagePriorityController,
-            label: '默认音轨语言',
-          ),
-          AppFormTextField(
             controller: _subtitleLanguagePriorityController,
             label: '默认字幕语言',
           ),
@@ -607,7 +600,6 @@ class _SettingsPageState extends State<SettingsPage> {
         AppSettings.defaultPlaybackReadaheadSeconds,
       ),
       enableHardwareAcceleration: _enableHardwareAcceleration,
-      audioLanguagePriority: _audioLanguagePriorityController.text,
       subtitleLanguagePriority: _subtitleLanguagePriorityController.text,
       subtitleFontSize: _subtitleFontSize,
       applyRuntime: applyRuntime,
@@ -683,10 +675,6 @@ class _SettingsPageState extends State<SettingsPage> {
         settingsProvider.playbackReadaheadSeconds.toString(),
       );
       _enableHardwareAcceleration = settingsProvider.enableHardwareAcceleration;
-      _setControllerText(
-        _audioLanguagePriorityController,
-        settingsProvider.audioLanguagePriority,
-      );
       _setControllerText(
         _subtitleLanguagePriorityController,
         settingsProvider.subtitleLanguagePriority,

@@ -3,11 +3,12 @@ import FlutterMacOS
 
 class MainFlutterWindow: NSWindow {
   private static let windowButtonOffset = NSPoint(x: 12, y: -10)
-  private var defaultWindowButtonContainerOrigin: NSPoint?
+  private var defaultWindowButtonOrigins: [NSWindow.ButtonType: NSPoint] = [:]
   private var windowButtonsConfigured = false
   private var nativeWindowButtonsVisible = true
   private var windowControlChannel: FlutterMethodChannel?
   private var windowObserverTokens: [NSObjectProtocol] = []
+  private var windowButtonPositioningScheduled = false
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
@@ -30,7 +31,9 @@ class MainFlutterWindow: NSWindow {
       switch call.method {
       case "positionNativeWindowButtons":
         self.windowButtonsConfigured = true
-        self.scheduleNativeWindowButtonPositioning()
+        if !self.positionNativeWindowButtons() {
+          self.scheduleNativeWindowButtonPositioning()
+        }
         result(nil)
       case "setNativeWindowButtonsVisible":
         guard let visible = call.arguments as? Bool else {
@@ -43,8 +46,12 @@ class MainFlutterWindow: NSWindow {
           )
           return
         }
-        self.nativeWindowButtonsVisible = visible
-        self.updateNativeWindowButtonVisibility()
+        if visible {
+          self.showNativeWindowButtonsAfterPositioning()
+        } else {
+          self.nativeWindowButtonsVisible = false
+          self.updateNativeWindowButtonVisibility()
+        }
         result(nil)
       default:
         result(FlutterMethodNotImplemented)
@@ -68,64 +75,113 @@ class MainFlutterWindow: NSWindow {
       return
     }
 
-    scheduleNativeWindowButtonPositioning()
+    if !positionNativeWindowButtons() {
+      scheduleNativeWindowButtonPositioning()
+    }
   }
 
   private func observeWindowChromeChanges() {
-    let exitFullScreenToken = NotificationCenter.default.addObserver(
-      forName: NSWindow.didExitFullScreenNotification,
-      object: self,
-      queue: .main
-    ) { [weak self] _ in
-      guard self?.windowButtonsConfigured == true else {
-        return
+    let notifications: [Notification.Name] = [
+      NSWindow.didResizeNotification,
+      NSWindow.didEndLiveResizeNotification,
+      NSWindow.didExitFullScreenNotification
+    ]
+
+    for notification in notifications {
+      let token = NotificationCenter.default.addObserver(
+        forName: notification,
+        object: self,
+        queue: .main
+      ) { [weak self] _ in
+        guard let self = self, self.windowButtonsConfigured else {
+          return
+        }
+        if !self.positionNativeWindowButtons() {
+          self.scheduleNativeWindowButtonPositioning()
+        }
       }
-      self?.scheduleNativeWindowButtonPositioning()
+      windowObserverTokens.append(token)
     }
-    windowObserverTokens.append(exitFullScreenToken)
   }
 
   private func scheduleNativeWindowButtonPositioning() {
+    guard !windowButtonPositioningScheduled else {
+      return
+    }
+    windowButtonPositioningScheduled = true
     DispatchQueue.main.async { [weak self] in
-      self?.positionNativeWindowButtons()
+      guard let self = self else {
+        return
+      }
+      self.windowButtonPositioningScheduled = false
+      _ = self.positionNativeWindowButtons()
     }
   }
 
-  private func positionNativeWindowButtons() {
-    guard
-      let closeButton = standardWindowButton(.closeButton),
-      let buttonContainer = closeButton.superview
-    else {
-      return
-    }
-
-    if defaultWindowButtonContainerOrigin == nil {
-      defaultWindowButtonContainerOrigin = buttonContainer.frame.origin
-    }
-
-    guard let defaultOrigin = defaultWindowButtonContainerOrigin else {
-      return
-    }
-
-    buttonContainer.setFrameOrigin(
-      NSPoint(
-        x: defaultOrigin.x + Self.windowButtonOffset.x,
-        y: defaultOrigin.y + Self.windowButtonOffset.y
-      )
-    )
-
-    buttonContainer.updateTrackingAreas()
-    buttonContainer.superview?.updateTrackingAreas()
+  private func showNativeWindowButtonsAfterPositioning() {
+    nativeWindowButtonsVisible = false
     updateNativeWindowButtonVisibility()
+
+    let positioned = positionNativeWindowButtons()
+    nativeWindowButtonsVisible = true
+    if positioned {
+      updateNativeWindowButtonVisibility()
+    } else {
+      scheduleNativeWindowButtonPositioning()
+    }
   }
 
-  private func updateNativeWindowButtonVisibility() {
-    let buttonTypes: [NSWindow.ButtonType] = [
+  @discardableResult
+  private func positionNativeWindowButtons() -> Bool {
+    var positionedButtonCount = 0
+    for buttonType in nativeWindowButtonTypes {
+      guard let button = standardWindowButton(buttonType) else {
+        continue
+      }
+
+      let currentOrigin = button.frame.origin
+      if let defaultOrigin = defaultWindowButtonOrigins[buttonType] {
+        let expectedOrigin = offsetWindowButtonOrigin(defaultOrigin)
+        let appKitRepositionedButton =
+          abs(currentOrigin.x - expectedOrigin.x) > 0.5 ||
+          abs(currentOrigin.y - expectedOrigin.y) > 0.5
+        if appKitRepositionedButton {
+          defaultWindowButtonOrigins[buttonType] = currentOrigin
+        }
+      } else {
+        defaultWindowButtonOrigins[buttonType] = currentOrigin
+      }
+
+      guard let defaultOrigin = defaultWindowButtonOrigins[buttonType] else {
+        continue
+      }
+      button.setFrameOrigin(offsetWindowButtonOrigin(defaultOrigin))
+      button.updateTrackingAreas()
+      button.superview?.updateTrackingAreas()
+      positionedButtonCount += 1
+    }
+
+    updateNativeWindowButtonVisibility()
+    return positionedButtonCount == nativeWindowButtonTypes.count
+  }
+
+  private func offsetWindowButtonOrigin(_ origin: NSPoint) -> NSPoint {
+    NSPoint(
+      x: origin.x + Self.windowButtonOffset.x,
+      y: origin.y + Self.windowButtonOffset.y
+    )
+  }
+
+  private var nativeWindowButtonTypes: [NSWindow.ButtonType] {
+    [
       .closeButton,
       .miniaturizeButton,
       .zoomButton
     ]
-    for buttonType in buttonTypes {
+  }
+
+  private func updateNativeWindowButtonVisibility() {
+    for buttonType in nativeWindowButtonTypes {
       standardWindowButton(buttonType)?.isHidden = !nativeWindowButtonsVisible
     }
   }

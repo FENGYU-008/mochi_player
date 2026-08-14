@@ -35,7 +35,6 @@ class AppSettingsProvider extends ChangeNotifier {
   int get playbackCacheSizeMb => _settings.playbackCacheSizeMb;
   int get playbackReadaheadSeconds => _settings.playbackReadaheadSeconds;
   bool get enableHardwareAcceleration => _settings.enableHardwareAcceleration;
-  String get audioLanguagePriority => _settings.audioLanguagePriority;
   String get subtitleLanguagePriority => _settings.subtitleLanguagePriority;
   double get subtitleFontSize => _settings.subtitleFontSize;
   bool get hasWebDavConfig => _settings.hasWebDavConfig;
@@ -68,7 +67,6 @@ class AppSettingsProvider extends ChangeNotifier {
     required int playbackCacheSizeMb,
     required int playbackReadaheadSeconds,
     required bool enableHardwareAcceleration,
-    required String audioLanguagePriority,
     required String subtitleLanguagePriority,
     required double subtitleFontSize,
     bool applyRuntime = false,
@@ -89,7 +87,6 @@ class AppSettingsProvider extends ChangeNotifier {
         playbackCacheSizeMb: playbackCacheSizeMb,
         playbackReadaheadSeconds: playbackReadaheadSeconds,
         enableHardwareAcceleration: enableHardwareAcceleration,
-        audioLanguagePriority: audioLanguagePriority.trim(),
         subtitleLanguagePriority: subtitleLanguagePriority.trim(),
         subtitleFontSize: subtitleFontSize,
       );

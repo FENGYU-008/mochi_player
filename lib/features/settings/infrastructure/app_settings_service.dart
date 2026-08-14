@@ -12,7 +12,6 @@ class AppSettingsService {
   static const _playbackCacheSizeMbKey = 'playback_cache_size_mb';
   static const _playbackReadaheadSecondsKey = 'playback_readahead_seconds';
   static const _enableHardwareAccelerationKey = 'enable_hardware_acceleration';
-  static const _audioLanguagePriorityKey = 'audio_language_priority';
   static const _subtitleLanguagePriorityKey = 'subtitle_language_priority';
   static const _subtitleFontSizeKey = 'subtitle_font_size';
   static final AppSettingsService _instance = AppSettingsService._internal();
@@ -42,9 +41,6 @@ class AppSettingsService {
       enableHardwareAcceleration:
           prefs.getBool(_enableHardwareAccelerationKey) ??
           AppSettings.defaultEnableHardwareAcceleration,
-      audioLanguagePriority:
-          prefs.getString(_audioLanguagePriorityKey) ??
-          AppSettings.defaultAudioLanguagePriority,
       subtitleLanguagePriority:
           prefs.getString(_subtitleLanguagePriorityKey) ??
           AppSettings.defaultSubtitleLanguagePriority,
@@ -76,7 +72,6 @@ class AppSettingsService {
           )
           .toInt(),
       enableHardwareAcceleration: settings.enableHardwareAcceleration,
-      audioLanguagePriority: settings.audioLanguagePriority.trim(),
       subtitleLanguagePriority: settings.subtitleLanguagePriority.trim(),
       subtitleFontSize: settings.subtitleFontSize.clamp(18.0, 40.0).toDouble(),
     );
@@ -105,10 +100,6 @@ class AppSettingsService {
     await prefs.setBool(
       _enableHardwareAccelerationKey,
       settingsToSave.enableHardwareAcceleration,
-    );
-    await prefs.setString(
-      _audioLanguagePriorityKey,
-      settingsToSave.audioLanguagePriority,
     );
     await prefs.setString(
       _subtitleLanguagePriorityKey,

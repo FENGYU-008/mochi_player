@@ -10,6 +10,7 @@ import 'package:mochi_player/core/domain/media/media_type.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/playback/application/playback_session_controller.dart';
 import 'package:mochi_player/features/playback/domain/playback_resume_policy.dart';
+import 'package:mochi_player/features/playback/infrastructure/libmpv_log_buffer.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
@@ -56,10 +57,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   bool _isMiniPlayerAlwaysOnTop = false;
   bool _isBuffering = false;
   bool _hasRestoredPosition = false;
-  bool _didAutoSelectAudio = false;
   bool _didAutoSelectSubtitle = false;
-  bool _isTryingAudioFallback = false;
-  bool _playerErrorIsAudioDecode = false;
   bool _showResumeNotice = false;
   bool _overrideEmbeddedSubtitleStyle = false;
   bool _windowWasFullScreenOnOpen = false;
@@ -86,6 +84,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   );
 
   final List<StreamSubscription> _subscriptions = [];
+  final LibmpvLogBuffer _libmpvLogs = LibmpvLogBuffer();
 
   final FocusNode _focusNode = FocusNode();
   Timer? _resumeNoticeTimer;
@@ -128,6 +127,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
         title: 'Mochi Player',
         bufferSize: _playbackSettings.playbackCacheMaxBytes,
         libass: true,
+        logLevel: MPVLogLevel.info,
       ),
     );
 
@@ -166,8 +166,13 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     _subscriptions.addAll([
       _player.stream.error.listen((error) {
         if (_isDisposed) return;
-        debugPrint('播放器错误: $error');
+        debugPrint('播放器错误: ${LibmpvLogBuffer.sanitize(error)}');
+        _dumpLibmpvLogs();
         _handlePlayerError(error);
+      }),
+      _player.stream.log.listen((log) {
+        if (_isDisposed) return;
+        _libmpvLogs.add(log);
       }),
       _player.stream.tracks.listen((tracks) {
         if (_isDisposed) return;
@@ -178,9 +183,6 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
             _audioTracks = audioTracks;
             _subtitleTracks = subtitleTracks;
           });
-        }
-        if (!_didAutoSelectAudio) {
-          _autoSelectAudio(audioTracks);
         }
         if (!_didAutoSelectSubtitle) {
           _autoSelectSubtitle(subtitleTracks);
@@ -241,7 +243,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
     final resumePosition = _resumePosition();
 
-    debugPrint('正在播放直链: ${_session.currentUrl}');
+    debugPrint('正在播放直链: ${LibmpvLogBuffer.sanitize(_session.currentUrl)}');
     await _applyPlayerSettings(generation);
     if (!_canUsePlayer(generation)) return;
 
@@ -267,11 +269,12 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
       _startProgressSaveTimer();
       _startHideControlsTimer();
     } catch (error) {
-      debugPrint('打开媒体失败: $error');
+      debugPrint('打开媒体失败: ${LibmpvLogBuffer.sanitize(error.toString())}');
+      _dumpLibmpvLogs();
       if (_canUsePlayer(generation)) {
+        final message = LibmpvLogBuffer.sanitize(error.toString());
         setState(() {
-          _playerError = error.toString();
-          _playerErrorIsAudioDecode = _isTrueHdDecoderError(error.toString());
+          _playerError = message;
         });
       }
     }
@@ -294,7 +297,6 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
       'demuxer-max-back-bytes': (_playbackSettings.playbackCacheMaxBytes ~/ 4)
           .toString(),
       'hwdec': _playbackSettings.enableHardwareAcceleration ? 'auto' : 'no',
-      'alang': _playbackSettings.normalizedAudioLanguagePriority,
       'slang': _playbackSettings.normalizedSubtitleLanguagePriority,
       'vo-profile': 'high-quality',
     };
@@ -336,16 +338,24 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   void _handlePlayerError(String error) {
     if (_isDisposed) return;
 
-    final isAudioDecodeError = _isTrueHdDecoderError(error);
+    final message = LibmpvLogBuffer.sanitize(error);
     if (mounted) {
       setState(() {
-        _playerError = error;
-        _playerErrorIsAudioDecode = isAudioDecodeError;
+        _playerError = message;
       });
     }
+  }
 
-    if (isAudioDecodeError) {
-      unawaited(_trySelectFallbackAudioTrack(fromError: true));
+  void _dumpLibmpvLogs() {
+    final entries = _libmpvLogs.snapshot();
+    if (entries.isEmpty) {
+      debugPrint('libmpv 日志上下文为空');
+      return;
+    }
+
+    debugPrint('libmpv 最近 ${entries.length} 条日志：');
+    for (final entry in entries) {
+      debugPrint(entry);
     }
   }
 
@@ -460,9 +470,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     setState(() {
       _isBuffering = false;
       _hasRestoredPosition = false;
-      _didAutoSelectAudio = false;
       _didAutoSelectSubtitle = false;
-      _playerErrorIsAudioDecode = false;
       _showResumeNotice = false;
       _resumePositionLabel = null;
       _playerError = null;
@@ -523,29 +531,6 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     return result;
   }
 
-  bool _isAudioTrackOff(AudioTrack track) => track.id == 'no' && !track.uri;
-
-  bool _isAudioTrackAuto(AudioTrack track) => track.id == 'auto' && !track.uri;
-
-  void _autoSelectAudio(List<AudioTrack> tracks) {
-    final actualTracks = tracks
-        .where((track) => !_isAudioTrackAuto(track) && !_isAudioTrackOff(track))
-        .toList();
-    if (actualTracks.isEmpty) return;
-
-    final hasTrueHdTrack = actualTracks.any(_isTrueHdAudioTrack);
-    if (!hasTrueHdTrack) {
-      _didAutoSelectAudio = true;
-      return;
-    }
-
-    final fallback = _findFallbackAudioTrack(tracks);
-    _didAutoSelectAudio = true;
-    if (fallback != null) {
-      unawaited(_setAudioTrack(fallback));
-    }
-  }
-
   Future<bool> _setAudioTrack(AudioTrack track) async {
     if (_isDisposed) return false;
 
@@ -566,101 +551,13 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     return true;
   }
 
-  Future<bool> _trySelectFallbackAudioTrack({bool fromError = false}) async {
-    if (_isDisposed || _isTryingAudioFallback) return false;
-
-    final fallback = _findFallbackAudioTrack(_audioTracks);
-    if (fallback == null) return false;
-
-    _isTryingAudioFallback = true;
-    try {
-      final didSwitch = await _setAudioTrack(fallback);
-      if (mounted && fromError && didSwitch) {
-        setState(() {
-          _playerError = null;
-          _playerErrorIsAudioDecode = false;
-        });
-      }
-      return didSwitch;
-    } finally {
-      _isTryingAudioFallback = false;
-    }
-  }
-
-  AudioTrack? _findFallbackAudioTrack(List<AudioTrack> tracks) {
-    final candidates = tracks
-        .where((track) => !_isAudioTrackAuto(track) && !_isAudioTrackOff(track))
-        .where((track) => !_isTrueHdAudioTrack(track))
-        .where((track) => track != _selectedAudioTrack)
-        .toList();
-    if (candidates.isEmpty) return null;
-
-    candidates.sort(
-      (a, b) =>
-          _audioCompatibilityScore(b).compareTo(_audioCompatibilityScore(a)),
-    );
-    return candidates.first;
-  }
-
-  int _audioCompatibilityScore(AudioTrack track) {
-    final text = _audioTrackText(track);
-    var score = 10 + _preferredAudioLanguageScore(track);
-    if (text.contains('aac')) score += 40;
-    if (text.contains('eac3') ||
-        text.contains('e-ac-3') ||
-        text.contains('ddp') ||
-        text.contains('dd+')) {
-      score += 36;
-    }
-    if (text.contains('ac3') || text.contains('dolby digital')) score += 32;
-    if (text.contains('dts')) score += 24;
-    if (text.contains('stereo') || text.contains('2.0')) score += 8;
-    return score;
-  }
-
-  int _preferredAudioLanguageScore(AudioTrack track) {
-    final preferences = _languagePreferences(
-      _playbackSettings.normalizedAudioLanguagePriority,
-    );
-    for (var index = 0; index < preferences.length; index++) {
-      if (_trackMatchesLanguage(
-        language: track.language,
-        title: track.title,
-        preference: preferences[index],
-      )) {
-        return (preferences.length - index) * 20;
-      }
-    }
-    return 0;
-  }
-
-  bool _isTrueHdAudioTrack(AudioTrack track) {
-    final text = _audioTrackText(track);
-    return text.contains('truehd') ||
-        text.contains('true hd') ||
-        text.contains('mlp');
-  }
-
-  String _audioTrackText(AudioTrack track) {
-    return [
-      track.id,
-      track.title,
-      track.language,
-      track.codec,
-      track.channels,
-    ].whereType<String>().join(' ').toLowerCase();
-  }
-
-  bool _isTrueHdDecoderError(String error) {
-    final text = error.toLowerCase();
-    return text.contains('truehd') || text.contains('true hd');
-  }
-
   bool _isSubtitleTrackAuto(SubtitleTrack track) =>
       track.id == 'auto' && !track.uri && !track.data;
 
   bool _isSubtitleTrackOff(SubtitleTrack track) =>
       track.id == 'no' && !track.uri && !track.data;
+
+  bool _isAudioTrackOff(AudioTrack track) => track.id == 'no' && !track.uri;
 
   void _autoSelectSubtitle(List<SubtitleTrack> tracks) {
     final availableTracks = tracks
@@ -1186,25 +1083,8 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                   child: _PlayerMessage(
                     icon: Icons.error_outline_rounded,
                     message: _playerError!,
-                    actionLabel:
-                        _playerErrorIsAudioDecode &&
-                            _findFallbackAudioTrack(_audioTracks) != null
-                        ? '切换音轨'
-                        : '关闭',
-                    onAction:
-                        _playerErrorIsAudioDecode &&
-                            _findFallbackAudioTrack(_audioTracks) != null
-                        ? () {
-                            unawaited(
-                              _trySelectFallbackAudioTrack(fromError: true),
-                            );
-                          }
-                        : () {
-                            setState(() {
-                              _playerError = null;
-                              _playerErrorIsAudioDecode = false;
-                            });
-                          },
+                    actionLabel: '关闭',
+                    onAction: () => setState(() => _playerError = null),
                   ),
                 ),
               if (_showResumeNotice && _playerError == null)

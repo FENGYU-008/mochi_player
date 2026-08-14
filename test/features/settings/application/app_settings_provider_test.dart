@@ -40,7 +40,6 @@ Future<void> _save(
     playbackCacheSizeMb: AppSettings.defaultPlaybackCacheSizeMb,
     playbackReadaheadSeconds: AppSettings.defaultPlaybackReadaheadSeconds,
     enableHardwareAcceleration: AppSettings.defaultEnableHardwareAcceleration,
-    audioLanguagePriority: AppSettings.defaultAudioLanguagePriority,
     subtitleLanguagePriority: AppSettings.defaultSubtitleLanguagePriority,
     subtitleFontSize: AppSettings.defaultSubtitleFontSize,
     applyRuntime: applyRuntime,
