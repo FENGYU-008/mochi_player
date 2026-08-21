@@ -1,6 +1,6 @@
-import 'media_file.dart';
-import 'media_type.dart';
-import 'watch_status.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_type.dart';
+import 'package:mochi_player/core/domain/media/watch_status.dart';
 
 enum EpisodePlaybackReason { resumeEpisode, playNext, startFromBeginning }
 

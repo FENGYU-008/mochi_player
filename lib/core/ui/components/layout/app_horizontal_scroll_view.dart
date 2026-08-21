@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
-class HorizontalScrollView extends StatefulWidget {
+class AppHorizontalScrollView extends StatefulWidget {
   final Widget child;
   final ScrollController controller;
   final double bottomPadding;
 
-  const HorizontalScrollView({
+  const AppHorizontalScrollView({
     super.key,
     required this.child,
     required this.controller,
@@ -14,10 +14,11 @@ class HorizontalScrollView extends StatefulWidget {
   });
 
   @override
-  State<HorizontalScrollView> createState() => _HorizontalScrollViewState();
+  State<AppHorizontalScrollView> createState() =>
+      _AppHorizontalScrollViewState();
 }
 
-class _HorizontalScrollViewState extends State<HorizontalScrollView> {
+class _AppHorizontalScrollViewState extends State<AppHorizontalScrollView> {
   bool _isHovering = false;
   bool _showLeftButton = false;
   bool _showRightButton = false;

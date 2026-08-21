@@ -7,7 +7,7 @@ import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_icons.dart';
 import 'package:mochi_player/features/library/domain/file_browser_entry.dart';
 
-extension FileBrowserItemPresentation on FileBrowserEntry {
+extension FileBrowserEntryDisplay on FileBrowserEntry {
   IconData get browserIcon => switch (kind) {
     MediaFileKind.directory => AppIcons.folder,
     MediaFileKind.video => AppIcons.video,

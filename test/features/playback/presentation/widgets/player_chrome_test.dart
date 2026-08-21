@@ -36,8 +36,8 @@ void main() {
       final time = find.byKey(const ValueKey('player-system-time'));
       expect(tester.getTopRight(time).dx, 1176);
 
-      final glass = tester.widget<GlassSurface>(
-        find.descendant(of: backButton, matching: find.byType(GlassSurface)),
+      final glass = tester.widget<AppGlassSurface>(
+        find.descendant(of: backButton, matching: find.byType(AppGlassSurface)),
       );
       expect(
         glass.borderRadius,
@@ -107,7 +107,7 @@ void main() {
       expect(tester.getTopRight(panel).dx, 948);
       expect(tester.getSize(panel).height, 64);
       expect(tester.getBottomRight(panel).dy, 700 - AppSpacing.md);
-      final glass = tester.widget<GlassSurface>(panel);
+      final glass = tester.widget<AppGlassSurface>(panel);
       expect(glass.color, const Color(0x80000000));
       expect(glass.blur, 16);
       expect(

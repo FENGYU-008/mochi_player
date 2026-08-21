@@ -1,6 +1,6 @@
 import 'package:isar/isar.dart';
-import 'artist_embedded.dart';
-import 'season_metadata_entity.dart';
+import 'package:mochi_player/core/infrastructure/database/entities/artist_embedded.dart';
+import 'package:mochi_player/core/infrastructure/database/entities/season_metadata_entity.dart';
 
 part 'tv_show_metadata_entity.g.dart';
 

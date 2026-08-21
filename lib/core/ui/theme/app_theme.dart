@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
 
 // 1. 定义自定义主题扩展
 @immutable

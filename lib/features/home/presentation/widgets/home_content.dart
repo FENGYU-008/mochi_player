@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
+import 'package:mochi_player/features/home/application/trending_media_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
-import 'package:mochi_player/features/library/presentation/pages/section_view_page.dart';
+import 'package:mochi_player/features/library/presentation/pages/library_section_page.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
-import 'package:mochi_player/features/library/application/media_library_view_data.dart';
+import 'package:mochi_player/features/library/application/media_card_view_data.dart';
 import 'package:mochi_player/features/library/presentation/widgets/continue_watching_card.dart';
 import 'package:mochi_player/features/library/presentation/widgets/library_item_poster_card.dart';
 import 'package:provider/provider.dart';
 
-import 'hero_section.dart';
-import 'trending_category_card.dart';
+import 'package:mochi_player/features/home/presentation/widgets/hero_section.dart';
+import 'package:mochi_player/features/home/presentation/widgets/trending_category_card.dart';
 
 class HomeContent extends StatefulWidget {
   /// 回调函数，用于通知父组件滚动偏移量
@@ -96,10 +97,13 @@ class _HomeContentState extends State<HomeContent> {
 
   @override
   Widget build(BuildContext context) {
+    final hasTrendingContent = context.select<TrendingMediaProvider, bool>(
+      (provider) => provider.hasContent,
+    );
     return Selector<MediaLibraryProvider, _HomeShellState>(
       selector: (context, provider) => _HomeShellState(
         showInitialLoading: provider.isLoading && provider.totalFiles == 0,
-        hasHomeContent: provider.hasHomeContent,
+        hasHomeContent: provider.hasLibraryContent || hasTrendingContent,
       ),
       builder: (context, shellState, child) {
         if (shellState.showInitialLoading) {
@@ -151,9 +155,9 @@ class _HomeContentState extends State<HomeContent> {
                     _buildSectionHeaderSliver(
                       context,
                       '继续观看',
-                      onSeeAll: () => openSectionViewPage(
+                      onSeeAll: () => openLibrarySectionPage(
                         context,
-                        SectionType.continueWatching,
+                        LibrarySection.continueWatching,
                       ),
                     ),
                     SliverToBoxAdapter(
@@ -186,9 +190,9 @@ class _HomeContentState extends State<HomeContent> {
                     _buildSectionHeaderSliver(
                       context,
                       '最近添加',
-                      onSeeAll: () => openSectionViewPage(
+                      onSeeAll: () => openLibrarySectionPage(
                         context,
-                        SectionType.recentlyAdded,
+                        LibrarySection.recentlyAdded,
                       ),
                     ),
                     SliverToBoxAdapter(
@@ -201,18 +205,9 @@ class _HomeContentState extends State<HomeContent> {
             ),
 
             // Trending on TMDB (三卡片布局)
-            Selector<MediaLibraryProvider, _TrendingRevision>(
-              selector: (context, provider) => _TrendingRevision(
-                trendingRevision: provider.trendingRevision,
-                isTrendingLoading: provider.isTrendingLoading,
-              ),
-              builder: (context, revision, child) {
-                final provider = context.read<MediaLibraryProvider>();
-                final hasTrendingData =
-                    provider.trendingMovies.isNotEmpty ||
-                    provider.trendingTV.isNotEmpty ||
-                    provider.topRated.isNotEmpty;
-                if (!hasTrendingData && !provider.isTrendingLoading) {
+            Consumer<TrendingMediaProvider>(
+              builder: (context, provider, child) {
+                if (!provider.hasContent && !provider.isLoading) {
                   return const SliverToBoxAdapter(child: SizedBox.shrink());
                 }
 
@@ -285,7 +280,7 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  Widget _buildContinueWatchingList(List<ResolvedMediaFileItem> items) {
+  Widget _buildContinueWatchingList(List<MediaCardViewData> items) {
     const double wideImageWidth = 280;
     const double wideImageHeight = 158;
     const double textSectionHeight = 48;
@@ -293,7 +288,7 @@ class _HomeContentState extends State<HomeContent> {
 
     return SizedBox(
       height: listHeight,
-      child: HorizontalScrollView(
+      child: AppHorizontalScrollView(
         controller: _continueWatchingCtrl,
         bottomPadding: textSectionHeight,
         child: ListView.builder(
@@ -323,7 +318,7 @@ class _HomeContentState extends State<HomeContent> {
 
     return SizedBox(
       height: listHeight,
-      child: HorizontalScrollView(
+      child: AppHorizontalScrollView(
         controller: _recentlyAddedCtrl,
         bottomPadding: textSectionHeight,
         child: ListView.builder(
@@ -346,7 +341,7 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   /// 构建趋势三卡片布局
-  Widget _buildTrendingCards(MediaLibraryProvider provider) {
+  Widget _buildTrendingCards(TrendingMediaProvider provider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
       child: Row(
@@ -361,8 +356,8 @@ class _HomeContentState extends State<HomeContent> {
                 title: '热门电影',
                 subtitle: '全球前三',
               ),
-              items: provider.trendingMovies,
-              isLoading: provider.isTrendingLoading,
+              items: provider.movies,
+              isLoading: provider.isLoading,
             ),
           ),
           const SizedBox(width: 16),
@@ -375,8 +370,8 @@ class _HomeContentState extends State<HomeContent> {
                 title: '热门剧集',
                 subtitle: '最多观看',
               ),
-              items: provider.trendingTV,
-              isLoading: provider.isTrendingLoading,
+              items: provider.tvShows,
+              isLoading: provider.isLoading,
             ),
           ),
           const SizedBox(width: 16),
@@ -390,7 +385,7 @@ class _HomeContentState extends State<HomeContent> {
                 subtitle: '评分最高',
               ),
               items: provider.topRated,
-              isLoading: provider.isTrendingLoading,
+              isLoading: provider.isLoading,
               showRating: true,
             ),
           ),
@@ -465,24 +460,4 @@ class _ContinueWatchingRevision {
     metadataRevision,
     watchProgressRevision,
   );
-}
-
-class _TrendingRevision {
-  final int trendingRevision;
-  final bool isTrendingLoading;
-
-  const _TrendingRevision({
-    required this.trendingRevision,
-    required this.isTrendingLoading,
-  });
-
-  @override
-  bool operator ==(Object other) {
-    return other is _TrendingRevision &&
-        other.trendingRevision == trendingRevision &&
-        other.isTrendingLoading == isTrendingLoading;
-  }
-
-  @override
-  int get hashCode => Object.hash(trendingRevision, isTrendingLoading);
 }

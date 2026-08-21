@@ -171,7 +171,7 @@ class _FileBrowserBody extends StatelessWidget {
         searchEmpty: state.hasSearchQuery,
       );
     }
-    if (state.viewMode == ViewMode.grid) return _buildGrid();
+    if (state.viewMode == FileBrowserViewMode.grid) return _buildGrid();
     return _buildList();
   }
 
@@ -260,7 +260,7 @@ class _FileBrowserState {
   final String currentPath;
   final bool canGoBack;
   final bool canGoForward;
-  final ViewMode viewMode;
+  final FileBrowserViewMode viewMode;
   final FileSortField sortField;
   final bool sortAscending;
   final bool hasSearchQuery;

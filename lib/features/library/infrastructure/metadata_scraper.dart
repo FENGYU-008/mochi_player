@@ -70,16 +70,16 @@ class MetadataScraper {
     for (final file in allFiles) {
       // 如果已有关联且元数据存在，跳过
       if (file.tmdbId != null && file.tmdbId!.isNotEmpty) {
-        if (file.mediaType == MediaType.movie) {
+        if (file.mediaType == StoredMediaType.movie) {
           if (await _db.getMovieByTmdbId(file.tmdbId!) != null) continue;
-        } else if (file.mediaType == MediaType.episode) {
+        } else if (file.mediaType == StoredMediaType.episode) {
           if (await _db.getEpisodeByTmdbId(file.tmdbId!) != null) continue;
         }
       }
 
-      if (file.mediaType == MediaType.movie) {
+      if (file.mediaType == StoredMediaType.movie) {
         movieFiles.add(file);
-      } else if (file.mediaType == MediaType.episode) {
+      } else if (file.mediaType == StoredMediaType.episode) {
         tvFiles.add(file);
       }
     }

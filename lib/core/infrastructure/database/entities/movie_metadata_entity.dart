@@ -1,5 +1,5 @@
 import 'package:isar/isar.dart';
-import 'artist_embedded.dart';
+import 'package:mochi_player/core/infrastructure/database/entities/artist_embedded.dart';
 
 part 'movie_metadata_entity.g.dart';
 

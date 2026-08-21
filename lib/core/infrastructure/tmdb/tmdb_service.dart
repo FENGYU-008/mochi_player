@@ -5,7 +5,7 @@ import 'package:dio/io.dart';
 import 'package:logger/logger.dart';
 import 'package:mochi_player/core/domain/media/trending_item.dart';
 import 'package:mochi_player/core/infrastructure/database/entities/entities.dart';
-import 'proxy_config.dart';
+import 'package:mochi_player/core/infrastructure/tmdb/proxy_config.dart';
 
 /// TMDB API 服务
 /// 负责与 TMDB API 交互并返回解析后的 Entity 模型

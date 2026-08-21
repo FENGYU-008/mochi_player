@@ -34,7 +34,7 @@ class LibraryScanner {
       final fileName = file.name ?? '';
 
       // 解析文件名，提取所有信息
-      final parsed = FileNameParser.parse(
+      final parsed = FilenameParser.parse(
         fileName: fileName,
         filePath: filePath,
       );
@@ -72,16 +72,16 @@ class LibraryScanner {
   }
 
   /// 判断媒体类型
-  MediaType _determineMediaType(ParsedResult parsed) {
+  StoredMediaType _determineMediaType(ParsedMediaFilename parsed) {
     // 有季号或集号的是剧集
     if (parsed.season != null || parsed.episode != null) {
-      return MediaType.episode;
+      return StoredMediaType.episode;
     }
     // 有标题且没有季/集信息的是电影
     if (parsed.title.isNotEmpty) {
-      return MediaType.movie;
+      return StoredMediaType.movie;
     }
-    return MediaType.unknown;
+    return StoredMediaType.unknown;
   }
 
   /// 递归列出所有文件

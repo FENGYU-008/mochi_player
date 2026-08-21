@@ -7,7 +7,7 @@ import 'package:mochi_player/core/domain/media/media_file_kind.dart';
 import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/library/domain/file_browser_entry.dart';
 
-enum ViewMode { grid, list }
+enum FileBrowserViewMode { grid, list }
 
 enum FileSortField { name, size, modifiedAt }
 
@@ -29,7 +29,7 @@ class FileBrowserProvider extends ChangeNotifier {
   String? _error;
   final List<String> _pathHistory = [];
   final List<String> _forwardHistory = [];
-  ViewMode _viewMode = ViewMode.list;
+  FileBrowserViewMode _viewMode = FileBrowserViewMode.list;
   FileSortField _sortField = FileSortField.name;
   bool _sortAscending = true;
   String _searchQuery = '';
@@ -43,7 +43,7 @@ class FileBrowserProvider extends ChangeNotifier {
   String? get error => _error;
   bool get canGoBack => _pathHistory.isNotEmpty;
   bool get canGoForward => _forwardHistory.isNotEmpty;
-  ViewMode get viewMode => _viewMode;
+  FileBrowserViewMode get viewMode => _viewMode;
   FileSortField get sortField => _sortField;
   bool get sortAscending => _sortAscending;
   String get searchQuery => _searchQuery;
@@ -74,7 +74,7 @@ class FileBrowserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setViewMode(ViewMode value) {
+  void setViewMode(FileBrowserViewMode value) {
     if (_viewMode == value) return;
     _viewMode = value;
     notifyListeners();

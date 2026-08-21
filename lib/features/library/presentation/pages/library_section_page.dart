@@ -7,65 +7,67 @@ import 'package:mochi_player/features/library/presentation/widgets/continue_watc
 import 'package:mochi_player/features/library/presentation/widgets/library_item_poster_card.dart';
 
 /// Section 类型
-enum SectionType { continueWatching, movies, tvShows, recentlyAdded }
+enum LibrarySection { continueWatching, movies, tvShows, recentlyAdded }
 
-typedef OpenSectionView = void Function(SectionType sectionType);
+typedef OpenLibrarySection = void Function(LibrarySection section);
 
-void openSectionViewPage(BuildContext context, SectionType sectionType) {
-  final scope = SectionViewNavigationScope.maybeOf(context);
+void openLibrarySectionPage(BuildContext context, LibrarySection section) {
+  final scope = LibrarySectionNavigationScope.maybeOf(context);
   if (scope != null) {
-    scope.openSectionView(sectionType);
+    scope.openLibrarySection(section);
     return;
   }
 
   Navigator.of(context).push(
     MaterialPageRoute<void>(
-      builder: (context) => SectionViewPage(sectionType: sectionType),
+      builder: (context) => LibrarySectionPage(section: section),
     ),
   );
 }
 
-class SectionViewNavigationScope extends InheritedWidget {
-  final OpenSectionView openSectionView;
+class LibrarySectionNavigationScope extends InheritedWidget {
+  final OpenLibrarySection openLibrarySection;
 
-  const SectionViewNavigationScope({
+  const LibrarySectionNavigationScope({
     super.key,
-    required this.openSectionView,
+    required this.openLibrarySection,
     required super.child,
   });
 
-  static SectionViewNavigationScope? maybeOf(BuildContext context) {
+  static LibrarySectionNavigationScope? maybeOf(BuildContext context) {
     final widget = context
-        .getElementForInheritedWidgetOfExactType<SectionViewNavigationScope>()
+        .getElementForInheritedWidgetOfExactType<
+          LibrarySectionNavigationScope
+        >()
         ?.widget;
-    return widget is SectionViewNavigationScope ? widget : null;
+    return widget is LibrarySectionNavigationScope ? widget : null;
   }
 
   @override
-  bool updateShouldNotify(SectionViewNavigationScope oldWidget) {
-    return openSectionView != oldWidget.openSectionView;
+  bool updateShouldNotify(LibrarySectionNavigationScope oldWidget) {
+    return openLibrarySection != oldWidget.openLibrarySection;
   }
 }
 
-class SectionViewPage extends StatefulWidget {
-  final SectionType sectionType;
+class LibrarySectionPage extends StatefulWidget {
+  final LibrarySection section;
   final VoidCallback? onBack;
   final double initialScrollOffset;
   final ValueChanged<double>? onScrollOffsetChanged;
 
-  const SectionViewPage({
+  const LibrarySectionPage({
     super.key,
-    required this.sectionType,
+    required this.section,
     this.onBack,
     this.initialScrollOffset = 0,
     this.onScrollOffsetChanged,
   });
 
   @override
-  State<SectionViewPage> createState() => _SectionViewPageState();
+  State<LibrarySectionPage> createState() => _LibrarySectionPageState();
 }
 
-class _SectionViewPageState extends State<SectionViewPage> {
+class _LibrarySectionPageState extends State<LibrarySectionPage> {
   late final ScrollController _scrollController;
 
   @override
@@ -102,7 +104,7 @@ class _SectionViewPageState extends State<SectionViewPage> {
         children: [
           Positioned.fill(
             child: _SectionPageContent(
-              sectionType: widget.sectionType,
+              section: widget.section,
               scrollController: _scrollController,
             ),
           ),
@@ -112,7 +114,7 @@ class _SectionViewPageState extends State<SectionViewPage> {
             right: 0,
             height: AppHeader.height,
             child: AppHeader(
-              title: _sectionTitle(widget.sectionType),
+              title: _sectionTitle(widget.section),
               showBackButton: true,
               onBack: widget.onBack,
             ),
@@ -124,11 +126,11 @@ class _SectionViewPageState extends State<SectionViewPage> {
 }
 
 class _SectionPageContent extends StatelessWidget {
-  final SectionType sectionType;
+  final LibrarySection section;
   final ScrollController scrollController;
 
   const _SectionPageContent({
-    required this.sectionType,
+    required this.section,
     required this.scrollController,
   });
 
@@ -138,7 +140,7 @@ class _SectionPageContent extends StatelessWidget {
       selector: (context, provider) => _SectionSnapshot(
         showInitialLoading: provider.isLoading && provider.totalFiles == 0,
         error: provider.error,
-        contentRevision: _contentRevisionFor(provider, sectionType),
+        contentRevision: _contentRevisionFor(provider, section),
       ),
       builder: (context, snapshot, child) {
         if (snapshot.showInitialLoading) {
@@ -150,20 +152,20 @@ class _SectionPageContent extends StatelessWidget {
         }
 
         final provider = context.read<MediaLibraryProvider>();
-        return switch (sectionType) {
-          SectionType.continueWatching => _buildSection(
+        return switch (section) {
+          LibrarySection.continueWatching => _buildSection(
             provider.continueWatchingItems,
             (item) => ContinueWatchingCard(item: item),
           ),
-          SectionType.recentlyAdded => _buildSection(
+          LibrarySection.recentlyAdded => _buildSection(
             provider.recentlyAddedContent,
             (item) => LibraryItemPosterCard(item: item),
           ),
-          SectionType.movies => _buildSection(
+          LibrarySection.movies => _buildSection(
             provider.movies,
             (item) => LibraryItemPosterCard(item: item),
           ),
-          SectionType.tvShows => _buildSection(
+          LibrarySection.tvShows => _buildSection(
             provider.tvShows,
             (item) => LibraryItemPosterCard(item: item),
           ),
@@ -174,7 +176,7 @@ class _SectionPageContent extends StatelessWidget {
 
   Widget _buildSection<T>(List<T> items, Widget Function(T item) itemBuilder) {
     if (items.isEmpty) {
-      final title = _sectionTitle(sectionType);
+      final title = _sectionTitle(section);
       return AppEmptyState(title: '$title为空', description: '请先扫描媒体库以发现资源');
     }
 
@@ -183,22 +185,22 @@ class _SectionPageContent extends StatelessWidget {
 
   int _contentRevisionFor(
     MediaLibraryProvider provider,
-    SectionType sectionType,
+    LibrarySection section,
   ) {
-    switch (sectionType) {
-      case SectionType.continueWatching:
+    switch (section) {
+      case LibrarySection.continueWatching:
         return Object.hash(
           provider.mediaCatalogRevision,
           provider.metadataRevision,
           provider.watchProgressRevision,
         );
-      case SectionType.recentlyAdded:
+      case LibrarySection.recentlyAdded:
         return Object.hash(
           provider.mediaCatalogRevision,
           provider.metadataRevision,
         );
-      case SectionType.movies:
-      case SectionType.tvShows:
+      case LibrarySection.movies:
+      case LibrarySection.tvShows:
         return provider.metadataRevision;
     }
   }
@@ -206,14 +208,14 @@ class _SectionPageContent extends StatelessWidget {
   Widget _buildGrid<T>(List<T> items, Widget Function(T item) itemBuilder) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isBackdrop = sectionType == SectionType.continueWatching;
+        final isBackdrop = section == LibrarySection.continueWatching;
         final contentWidth = constraints.maxWidth - 80;
         final crossAxisCount = isBackdrop
             ? (contentWidth / 280).floor().clamp(2, 8).toInt()
             : _libraryPosterColumnCount(contentWidth);
 
         return GridView.builder(
-          key: PageStorageKey<String>('section-view-${sectionType.name}'),
+          key: PageStorageKey<String>('library-section-${section.name}'),
           controller: scrollController,
           padding: EdgeInsets.fromLTRB(
             40,
@@ -243,15 +245,15 @@ class _SectionPageContent extends StatelessWidget {
   }
 }
 
-String _sectionTitle(SectionType sectionType) {
-  switch (sectionType) {
-    case SectionType.continueWatching:
+String _sectionTitle(LibrarySection section) {
+  switch (section) {
+    case LibrarySection.continueWatching:
       return '继续观看';
-    case SectionType.recentlyAdded:
+    case LibrarySection.recentlyAdded:
       return '最近添加';
-    case SectionType.movies:
+    case LibrarySection.movies:
       return '电影';
-    case SectionType.tvShows:
+    case LibrarySection.tvShows:
       return '剧集';
   }
 }

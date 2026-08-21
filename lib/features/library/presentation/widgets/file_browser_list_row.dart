@@ -7,7 +7,7 @@ import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_icons.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-import 'package:mochi_player/features/library/presentation/widgets/file_browser_item_presentation.dart';
+import 'package:mochi_player/features/library/presentation/widgets/file_browser_entry_display.dart';
 import 'package:mochi_player/features/library/domain/file_browser_entry.dart';
 
 class FileBrowserListRow extends StatelessWidget {

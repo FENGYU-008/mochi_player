@@ -251,7 +251,7 @@ class _PlayerBackButton extends StatelessWidget {
       key: const ValueKey('player-back-button'),
       width: 38,
       height: PlayerChromeLayout.topButtonHeight,
-      child: GlassSurface(
+      child: AppGlassSurface(
         borderRadius: radius,
         color: const Color(0x52000000),
         borderColor: const Color(0x2EFFFFFF),
@@ -353,7 +353,7 @@ class _PlayerBottomControlBarState extends State<PlayerBottomControlBar> {
               width: panelWidth,
               child: SizedBox(
                 key: _panelKey,
-                child: GlassSurface(
+                child: AppGlassSurface(
                   key: const ValueKey('player-bottom-control-bar'),
                   borderRadius: const BorderRadius.all(
                     Radius.circular(AppRadii.large),
@@ -423,7 +423,7 @@ class PlayerMiniControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassSurface(
+    return AppGlassSurface(
       key: const ValueKey('player-mini-controls'),
       borderRadius: const BorderRadius.all(Radius.circular(AppRadii.full)),
       color: const Color(0x70000000),

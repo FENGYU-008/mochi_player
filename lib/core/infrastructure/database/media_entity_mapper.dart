@@ -1,8 +1,9 @@
-import 'entities/entities.dart' as entity;
+import 'package:mochi_player/core/infrastructure/database/entities/entities.dart'
+    as entity;
 import 'package:mochi_player/core/domain/media/models.dart';
 
 /// Entity ↔ Domain 模型转换器
-class ModelConverter {
+class MediaEntityMapper {
   // ===== MediaFile =====
 
   static MediaFile toMediaFile(entity.MediaFileEntity e) => MediaFile(
@@ -118,24 +119,24 @@ class ModelConverter {
 
   // ===== WatchStatus =====
 
-  static WatchStatus _toWatchStatus(entity.WatchStatus status) {
+  static WatchStatus _toWatchStatus(entity.StoredWatchStatus status) {
     switch (status) {
-      case entity.WatchStatus.notStarted:
+      case entity.StoredWatchStatus.notStarted:
         return WatchStatus.notStarted;
-      case entity.WatchStatus.watching:
+      case entity.StoredWatchStatus.watching:
         return WatchStatus.watching;
-      case entity.WatchStatus.completed:
+      case entity.StoredWatchStatus.completed:
         return WatchStatus.completed;
     }
   }
 
-  static MediaType _toMediaType(entity.MediaType type) {
+  static MediaType _toMediaType(entity.StoredMediaType type) {
     switch (type) {
-      case entity.MediaType.movie:
+      case entity.StoredMediaType.movie:
         return MediaType.movie;
-      case entity.MediaType.episode:
+      case entity.StoredMediaType.episode:
         return MediaType.episode;
-      case entity.MediaType.unknown:
+      case entity.StoredMediaType.unknown:
         return MediaType.unknown;
     }
   }

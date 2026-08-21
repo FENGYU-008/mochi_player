@@ -1,4 +1,4 @@
-import 'artist.dart';
+import 'package:mochi_player/core/domain/media/artist.dart';
 
 /// A library item that can be rendered and opened by the shared media UI.
 abstract interface class LibraryItem {

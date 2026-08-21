@@ -319,7 +319,7 @@ MediaFileEntity _mediaFileEntityDeserialize(
       _MediaFileEntitymediaTypeValueEnumMap[reader.readByteOrNull(
         offsets[11],
       )] ??
-      MediaType.movie;
+      StoredMediaType.movie;
   object.parsedEpisode = reader.readLongOrNull(offsets[12]);
   object.parsedSeason = reader.readLongOrNull(offsets[13]);
   object.parsedTitle = reader.readString(offsets[14]);
@@ -334,7 +334,7 @@ MediaFileEntity _mediaFileEntityDeserialize(
       _MediaFileEntitywatchStatusValueEnumMap[reader.readByteOrNull(
         offsets[24],
       )] ??
-      WatchStatus.notStarted;
+      StoredWatchStatus.notStarted;
   object.width = reader.readLongOrNull(offsets[25]);
   return object;
 }
@@ -372,7 +372,7 @@ P _mediaFileEntityDeserializeProp<P>(
       return (_MediaFileEntitymediaTypeValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
-              MediaType.movie)
+              StoredMediaType.movie)
           as P;
     case 12:
       return (reader.readLongOrNull(offset)) as P;
@@ -402,7 +402,7 @@ P _mediaFileEntityDeserializeProp<P>(
       return (_MediaFileEntitywatchStatusValueEnumMap[reader.readByteOrNull(
                 offset,
               )] ??
-              WatchStatus.notStarted)
+              StoredWatchStatus.notStarted)
           as P;
     case 25:
       return (reader.readLongOrNull(offset)) as P;
@@ -417,9 +417,9 @@ const _MediaFileEntitymediaTypeEnumValueMap = {
   'unknown': 2,
 };
 const _MediaFileEntitymediaTypeValueEnumMap = {
-  0: MediaType.movie,
-  1: MediaType.episode,
-  2: MediaType.unknown,
+  0: StoredMediaType.movie,
+  1: StoredMediaType.episode,
+  2: StoredMediaType.unknown,
 };
 const _MediaFileEntitywatchStatusEnumValueMap = {
   'notStarted': 0,
@@ -427,9 +427,9 @@ const _MediaFileEntitywatchStatusEnumValueMap = {
   'completed': 2,
 };
 const _MediaFileEntitywatchStatusValueEnumMap = {
-  0: WatchStatus.notStarted,
-  1: WatchStatus.watching,
-  2: WatchStatus.completed,
+  0: StoredWatchStatus.notStarted,
+  1: StoredWatchStatus.watching,
+  2: StoredWatchStatus.completed,
 };
 
 Id _mediaFileEntityGetId(MediaFileEntity object) {
@@ -747,7 +747,7 @@ extension MediaFileEntityQueryWhere
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-  watchStatusEqualTo(WatchStatus watchStatus) {
+  watchStatusEqualTo(StoredWatchStatus watchStatus) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IndexWhereClause.equalTo(
@@ -759,7 +759,7 @@ extension MediaFileEntityQueryWhere
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-  watchStatusNotEqualTo(WatchStatus watchStatus) {
+  watchStatusNotEqualTo(StoredWatchStatus watchStatus) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
@@ -802,7 +802,10 @@ extension MediaFileEntityQueryWhere
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-  watchStatusGreaterThan(WatchStatus watchStatus, {bool include = false}) {
+  watchStatusGreaterThan(
+    StoredWatchStatus watchStatus, {
+    bool include = false,
+  }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IndexWhereClause.between(
@@ -816,7 +819,7 @@ extension MediaFileEntityQueryWhere
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
-  watchStatusLessThan(WatchStatus watchStatus, {bool include = false}) {
+  watchStatusLessThan(StoredWatchStatus watchStatus, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         IndexWhereClause.between(
@@ -831,8 +834,8 @@ extension MediaFileEntityQueryWhere
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause>
   watchStatusBetween(
-    WatchStatus lowerWatchStatus,
-    WatchStatus upperWatchStatus, {
+    StoredWatchStatus lowerWatchStatus,
+    StoredWatchStatus upperWatchStatus, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -2237,7 +2240,7 @@ extension MediaFileEntityQueryFilter
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-  mediaTypeEqualTo(MediaType value) {
+  mediaTypeEqualTo(StoredMediaType value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(property: r'mediaType', value: value),
@@ -2246,7 +2249,7 @@ extension MediaFileEntityQueryFilter
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-  mediaTypeGreaterThan(MediaType value, {bool include = false}) {
+  mediaTypeGreaterThan(StoredMediaType value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(
@@ -2259,7 +2262,7 @@ extension MediaFileEntityQueryFilter
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-  mediaTypeLessThan(MediaType value, {bool include = false}) {
+  mediaTypeLessThan(StoredMediaType value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.lessThan(
@@ -2273,8 +2276,8 @@ extension MediaFileEntityQueryFilter
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
   mediaTypeBetween(
-    MediaType lower,
-    MediaType upper, {
+    StoredMediaType lower,
+    StoredMediaType upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -3592,7 +3595,7 @@ extension MediaFileEntityQueryFilter
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-  watchStatusEqualTo(WatchStatus value) {
+  watchStatusEqualTo(StoredWatchStatus value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.equalTo(property: r'watchStatus', value: value),
@@ -3601,7 +3604,7 @@ extension MediaFileEntityQueryFilter
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-  watchStatusGreaterThan(WatchStatus value, {bool include = false}) {
+  watchStatusGreaterThan(StoredWatchStatus value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(
@@ -3614,7 +3617,7 @@ extension MediaFileEntityQueryFilter
   }
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
-  watchStatusLessThan(WatchStatus value, {bool include = false}) {
+  watchStatusLessThan(StoredWatchStatus value, {bool include = false}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.lessThan(
@@ -3628,8 +3631,8 @@ extension MediaFileEntityQueryFilter
 
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition>
   watchStatusBetween(
-    WatchStatus lower,
-    WatchStatus upper, {
+    StoredWatchStatus lower,
+    StoredWatchStatus upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -4721,7 +4724,7 @@ extension MediaFileEntityQueryProperty
     });
   }
 
-  QueryBuilder<MediaFileEntity, MediaType, QQueryOperations>
+  QueryBuilder<MediaFileEntity, StoredMediaType, QQueryOperations>
   mediaTypeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'mediaType');
@@ -4804,7 +4807,7 @@ extension MediaFileEntityQueryProperty
     });
   }
 
-  QueryBuilder<MediaFileEntity, WatchStatus, QQueryOperations>
+  QueryBuilder<MediaFileEntity, StoredWatchStatus, QQueryOperations>
   watchStatusProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'watchStatus');

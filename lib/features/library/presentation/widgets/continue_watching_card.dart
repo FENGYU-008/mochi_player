@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
-import 'package:mochi_player/features/library/application/media_library_view_data.dart';
+import 'package:mochi_player/features/library/application/media_card_view_data.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 
 class ContinueWatchingCard extends StatelessWidget {
-  final ResolvedMediaFileItem item;
+  final MediaCardViewData item;
 
   const ContinueWatchingCard({super.key, required this.item});
 

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'app_button.dart';
+import 'package:mochi_player/core/ui/components/buttons/app_action_button.dart';
 
 class AppIconButton extends StatefulWidget {
   final VoidCallback? onPressed;
   final IconData icon;
   final String tooltip;
   final bool selected;
-  final AppControlTone tone;
+  final AppControlAppearance appearance;
   final Color? selectedColor;
   final Color? foregroundColor;
   final Color? backgroundColor;
@@ -23,7 +23,7 @@ class AppIconButton extends StatefulWidget {
     required this.icon,
     required this.tooltip,
     this.selected = false,
-    this.tone = AppControlTone.adaptive,
+    this.appearance = AppControlAppearance.adaptive,
     this.selectedColor,
     this.foregroundColor,
     this.backgroundColor,
@@ -43,7 +43,8 @@ class _AppIconButtonState extends State<AppIconButton> {
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onPressed != null;
-    final overlayTone = widget.tone == AppControlTone.overlay;
+    final usesOverlayAppearance =
+        widget.appearance == AppControlAppearance.overlay;
     final selectedColor = widget.selectedColor ?? AppColors.primary(context);
     final foreground = widget.selected
         ? selectedColor
@@ -53,7 +54,7 @@ class _AppIconButtonState extends State<AppIconButton> {
         widget.backgroundColor ??
         (widget.selected
             ? selectedColor.withAlpha(22)
-            : overlayTone
+            : usesOverlayAppearance
             ? Colors.white.withAlpha(34)
             : AppColors.hoverSurface(context));
     final hoverBackground =
@@ -61,7 +62,7 @@ class _AppIconButtonState extends State<AppIconButton> {
         widget.backgroundColor ??
         (widget.selected
             ? selectedColor.withAlpha(34)
-            : overlayTone
+            : usesOverlayAppearance
             ? Colors.white.withAlpha(50)
             : Color.alphaBlend(
                 AppColors.hoverSurface(context),
@@ -71,7 +72,7 @@ class _AppIconButtonState extends State<AppIconButton> {
         widget.borderColor ??
         (widget.selected
             ? selectedColor.withAlpha(90)
-            : overlayTone
+            : usesOverlayAppearance
             ? Colors.white.withAlpha(56)
             : AppColors.separator(context));
 

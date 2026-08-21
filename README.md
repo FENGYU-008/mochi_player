@@ -1,6 +1,7 @@
-# mochi_player
+# Mochi Player
 
-Mochi Player - A friendly, AI-powered media player.
+Mochi Player is a desktop media player for browsing and playing media from
+OpenList/WebDAV libraries.
 
 ## Getting Started
 

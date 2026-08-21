@@ -3,7 +3,7 @@ import 'package:mochi_player/core/domain/media/media_file_kind.dart';
 /// 文件名解析结果
 ///
 /// 从文件名中提取的所有信息，用于填充 MediaFileEntity
-class ParsedResult {
+class ParsedMediaFilename {
   // ===== 基础信息 =====
 
   /// 解析后的标题（用于 TMDB 搜索）
@@ -56,7 +56,7 @@ class ParsedResult {
   /// 版本标签（组合的技术信息，如 "1080p BluRay DTS"）
   final String versionLabel;
 
-  const ParsedResult({
+  const ParsedMediaFilename({
     required this.title,
     this.year,
     this.season,
@@ -77,7 +77,7 @@ class ParsedResult {
 
   @override
   String toString() {
-    return 'ParsedResult(title: $title, year: $year, S${season}E$episode, '
+    return 'ParsedMediaFilename(title: $title, year: $year, S${season}E$episode, '
         'container: $container, resolution: $resolution, videoCodec: $videoCodec, '
         'audioCodec: $audioCodec, isHdr: $isHdr)';
   }
@@ -86,7 +86,7 @@ class ParsedResult {
 /// 文件名解析器
 ///
 /// 从视频文件名中提取标题、年份、季集号、技术规格等信息
-class FileNameParser {
+class FilenameParser {
   // ===== 正则表达式模式 =====
 
   // 季集号: S01E05, S01.E05, Season 1 Episode 5
@@ -165,7 +165,10 @@ class FileNameParser {
   );
 
   /// 解析文件名
-  static ParsedResult parse({required String fileName, String? filePath}) {
+  static ParsedMediaFilename parse({
+    required String fileName,
+    String? filePath,
+  }) {
     final pathSegments = _pathSegments(filePath);
     final parentSegments = pathSegments.isNotEmpty
         ? pathSegments.take(pathSegments.length - 1).toList()
@@ -302,7 +305,7 @@ class FileNameParser {
       hdrFormat: hdrFormat,
     );
 
-    return ParsedResult(
+    return ParsedMediaFilename(
       title: title,
       year: year,
       season: season,

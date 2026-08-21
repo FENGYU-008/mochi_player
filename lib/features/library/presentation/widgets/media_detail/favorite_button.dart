@@ -20,7 +20,7 @@ class FavoriteButton extends StatelessWidget {
     final isFavorite = context.select<MediaLibraryProvider, bool>(
       (provider) => provider.isFavorite(tmdbId),
     );
-    final overlayTone = overrideColor != null;
+    final usesOverlayAppearance = overrideColor != null;
     final baseColor = overrideColor ?? AppColors.textPrimary(context);
     final favoriteColor = AppColors.favorite(context);
     final icon = isFavorite
@@ -37,10 +37,12 @@ class FavoriteButton extends StatelessWidget {
       return AppActionButton(
         onPressed: toggleFavorite,
         icon: icon,
-        iconColor: overlayTone && isFavorite ? favoriteColor : null,
+        iconColor: usesOverlayAppearance && isFavorite ? favoriteColor : null,
         label: isFavorite ? '已收藏' : '加入收藏',
         variant: AppButtonVariant.secondary,
-        tone: overlayTone ? AppControlTone.overlay : AppControlTone.adaptive,
+        appearance: usesOverlayAppearance
+            ? AppControlAppearance.overlay
+            : AppControlAppearance.adaptive,
         selected: isFavorite,
         accentColor: favoriteColor,
         height: 36,
@@ -49,7 +51,7 @@ class FavoriteButton extends StatelessWidget {
       );
     }
 
-    final backgroundColor = overlayTone
+    final backgroundColor = usesOverlayAppearance
         ? Colors.white.withAlpha(isFavorite ? 54 : 34)
         : isFavorite
         ? favoriteColor.withAlpha(24)
@@ -59,7 +61,9 @@ class FavoriteButton extends StatelessWidget {
       icon: icon,
       tooltip: isFavorite ? "取消收藏" : "加入收藏",
       selected: isFavorite,
-      tone: overlayTone ? AppControlTone.overlay : AppControlTone.adaptive,
+      appearance: usesOverlayAppearance
+          ? AppControlAppearance.overlay
+          : AppControlAppearance.adaptive,
       selectedColor: favoriteColor,
       foregroundColor: baseColor,
       backgroundColor: backgroundColor,

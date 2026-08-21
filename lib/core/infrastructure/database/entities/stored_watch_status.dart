@@ -1,5 +1,5 @@
 /// 观看状态
-enum WatchStatus {
+enum StoredWatchStatus {
   /// 未开始
   notStarted,
 

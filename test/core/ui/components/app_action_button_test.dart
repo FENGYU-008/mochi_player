@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
 void main() {
-  testWidgets('keeps selected overlay buttons neutral with an accent icon', (
+  testWidgets('AppActionButton keeps selected overlay colors neutral', (
     tester,
   ) async {
     const accent = Color(0xFFB45F73);
@@ -18,7 +18,7 @@ void main() {
             iconColor: accent,
             label: '已收藏',
             variant: AppButtonVariant.secondary,
-            tone: AppControlTone.overlay,
+            appearance: AppControlAppearance.overlay,
             selected: true,
             accentColor: accent,
           ),

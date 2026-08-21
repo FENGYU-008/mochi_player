@@ -39,7 +39,7 @@ void _parsesCommonEpisodeFilenames() {
   ];
 
   for (final testCase in cases) {
-    final result = FileNameParser.parse(fileName: testCase.fileName);
+    final result = FilenameParser.parse(fileName: testCase.fileName);
     _expectParse(result, testCase);
   }
 }
@@ -73,7 +73,7 @@ void _usesSeasonFolders() {
   ];
 
   for (final testCase in cases) {
-    final result = FileNameParser.parse(
+    final result = FilenameParser.parse(
       fileName: testCase.fileName,
       filePath: testCase.path,
     );
@@ -82,7 +82,7 @@ void _usesSeasonFolders() {
 }
 
 void _infersSeasonOneForEpisodeOnlyFiles() {
-  final result = FileNameParser.parse(
+  final result = FilenameParser.parse(
     fileName: '01.mp4',
     filePath: '/media/进击的巨人/01.mp4',
   );
@@ -94,7 +94,7 @@ void _infersSeasonOneForEpisodeOnlyFiles() {
 }
 
 void _usesMovieFolderTitleAndYear() {
-  final result = FileNameParser.parse(
+  final result = FilenameParser.parse(
     fileName: 'movie.mkv',
     filePath: '/media/Movies/Inception (2010)/movie.mkv',
   );
@@ -105,7 +105,7 @@ void _usesMovieFolderTitleAndYear() {
 }
 
 void _parsesShortMovieTitlesWithTechnicalTags() {
-  final result = FileNameParser.parse(
+  final result = FilenameParser.parse(
     fileName:
         'Saw.2004.2160p.BluRay.REMUX.DV.HDR.HEVC.DTS-HD.MA.TrueHD.7.1.Atmos.mkv',
     filePath:
@@ -119,7 +119,7 @@ void _parsesShortMovieTitlesWithTechnicalTags() {
   _expectEquals(result.isEpisode, false, 'isEpisode');
 }
 
-void _expectParse(ParsedResult result, _ExpectedParse expected) {
+void _expectParse(ParsedMediaFilename result, _ExpectedParse expected) {
   _expectEquals(result.title, expected.title, 'title');
   _expectEquals(result.year, expected.year, 'year');
   _expectEquals(result.season, expected.season, 'season');

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 
-class GlassSurface extends StatelessWidget {
+class AppGlassSurface extends StatelessWidget {
   final Widget child;
   final BorderRadius borderRadius;
   final Color color;
@@ -12,7 +12,7 @@ class GlassSurface extends StatelessWidget {
   final double blur;
   final EdgeInsetsGeometry? padding;
 
-  const GlassSurface({
+  const AppGlassSurface({
     super.key,
     required this.child,
     this.borderRadius = const BorderRadius.all(

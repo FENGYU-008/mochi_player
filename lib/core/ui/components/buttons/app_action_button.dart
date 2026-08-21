@@ -6,7 +6,7 @@ import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 enum AppButtonVariant { primary, secondary }
 
-enum AppControlTone { adaptive, overlay }
+enum AppControlAppearance { adaptive, overlay }
 
 class AppActionButton extends StatefulWidget {
   final VoidCallback? onPressed;
@@ -15,7 +15,7 @@ class AppActionButton extends StatefulWidget {
   final TextStyle? textStyle;
   final Color? iconColor;
   final AppButtonVariant variant;
-  final AppControlTone tone;
+  final AppControlAppearance appearance;
   final bool destructive;
   final bool selected;
   final Color? accentColor;
@@ -32,7 +32,7 @@ class AppActionButton extends StatefulWidget {
     this.textStyle,
     this.iconColor,
     this.variant = AppButtonVariant.primary,
-    this.tone = AppControlTone.adaptive,
+    this.appearance = AppControlAppearance.adaptive,
     this.destructive = false,
     this.selected = false,
     this.accentColor,
@@ -57,7 +57,8 @@ class _AppActionButtonState extends State<AppActionButton> {
     final primary = AppColors.primary(context);
     final danger = Colors.redAccent;
     final actionColor = isDestructive ? danger : widget.accentColor ?? primary;
-    final overlayTone = widget.tone == AppControlTone.overlay;
+    final usesOverlayAppearance =
+        widget.appearance == AppControlAppearance.overlay;
     final adaptiveSurface = AppColors.elevatedSurface(context);
     final adaptiveHoverSurface = Color.alphaBlend(
       AppColors.hoverSurface(context),
@@ -69,7 +70,7 @@ class _AppActionButtonState extends State<AppActionButton> {
       dangerColor: danger,
       isPrimary: isPrimary,
       isDestructive: isDestructive,
-      isOverlay: overlayTone,
+      isOverlay: usesOverlayAppearance,
       isSelected: widget.selected,
       adaptiveSurface: adaptiveSurface,
       adaptiveHoverSurface: adaptiveHoverSurface,

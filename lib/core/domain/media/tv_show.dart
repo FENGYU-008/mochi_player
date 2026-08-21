@@ -1,6 +1,6 @@
-import 'artist.dart';
-import 'library_item.dart';
-import 'season.dart';
+import 'package:mochi_player/core/domain/media/artist.dart';
+import 'package:mochi_player/core/domain/media/library_item.dart';
+import 'package:mochi_player/core/domain/media/season.dart';
 
 /// 电视剧 Domain Model
 class TVShow implements LibraryItem {

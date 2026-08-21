@@ -1,6 +1,6 @@
 import 'package:isar/isar.dart';
-import 'watch_status.dart';
-import 'media_type.dart';
+import 'package:mochi_player/core/infrastructure/database/entities/stored_watch_status.dart';
+import 'package:mochi_player/core/infrastructure/database/entities/stored_media_type.dart';
 
 part 'media_file_entity.g.dart';
 
@@ -31,7 +31,7 @@ class MediaFileEntity {
 
   /// 媒体类型 (movie/episode/unknown)
   @Enumerated(EnumType.ordinal)
-  MediaType mediaType = MediaType.unknown;
+  StoredMediaType mediaType = StoredMediaType.unknown;
 
   // ===== 关联 =====
 
@@ -82,7 +82,7 @@ class MediaFileEntity {
   /// 观看状态
   @Index()
   @Enumerated(EnumType.ordinal)
-  WatchStatus watchStatus = WatchStatus.notStarted;
+  StoredWatchStatus watchStatus = StoredWatchStatus.notStarted;
 
   /// 最后观看时间
   @Index()

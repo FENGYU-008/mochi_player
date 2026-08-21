@@ -5,6 +5,7 @@ import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/settings/application/theme_provider.dart';
 import 'package:mochi_player/features/settings/domain/app_settings.dart';
+import 'package:mochi_player/features/home/application/trending_media_provider.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:provider/provider.dart';
@@ -545,7 +546,7 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    await mediaLibraryProvider.rescrapeLibrary();
+    await mediaLibraryProvider.refreshLibraryMetadata();
     if (!mounted) return;
 
     final error = mediaLibraryProvider.error;
@@ -640,7 +641,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (tmdbChanged &&
         mounted &&
         (previousSettings.hasTmdbApiKey || currentSettings.hasTmdbApiKey)) {
-      await context.read<MediaLibraryProvider>().fetchTrending();
+      await context.read<TrendingMediaProvider>().fetch();
     }
   }
 

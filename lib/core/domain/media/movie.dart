@@ -1,5 +1,5 @@
-import 'artist.dart';
-import 'library_item.dart';
+import 'package:mochi_player/core/domain/media/artist.dart';
+import 'package:mochi_player/core/domain/media/library_item.dart';
 
 /// 电影 Domain Model
 class Movie implements LibraryItem {

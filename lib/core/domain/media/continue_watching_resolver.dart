@@ -1,7 +1,7 @@
-import 'episode_playback_target_resolver.dart';
-import 'media_file.dart';
-import 'media_type.dart';
-import 'watch_status.dart';
+import 'package:mochi_player/core/domain/media/episode_playback_target_resolver.dart';
+import 'package:mochi_player/core/domain/media/media_file.dart';
+import 'package:mochi_player/core/domain/media/media_type.dart';
+import 'package:mochi_player/core/domain/media/watch_status.dart';
 
 class ContinueWatchingTarget {
   final MediaFile file;

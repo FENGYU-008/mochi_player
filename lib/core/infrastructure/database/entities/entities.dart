@@ -1,8 +1,8 @@
 /// Entity models barrel file
 library;
 
-export 'watch_status.dart';
-export 'media_type.dart';
+export 'stored_watch_status.dart';
+export 'stored_media_type.dart';
 export 'artist_embedded.dart';
 export 'media_file_entity.dart';
 export 'movie_metadata_entity.dart';

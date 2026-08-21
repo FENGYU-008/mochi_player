@@ -1,7 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:logger/logger.dart';
-import 'entities/entities.dart';
+import 'package:mochi_player/core/infrastructure/database/entities/entities.dart';
 
 /// 数据库服务 - 管理 Isar 数据库操作
 class DatabaseService {
@@ -115,11 +115,11 @@ class DatabaseService {
 
     // 自动计算观看状态
     if (file.position == 0) {
-      file.watchStatus = WatchStatus.notStarted;
+      file.watchStatus = StoredWatchStatus.notStarted;
     } else if (file.duration > 0 && file.position >= file.duration * 0.95) {
-      file.watchStatus = WatchStatus.completed;
+      file.watchStatus = StoredWatchStatus.completed;
     } else {
-      file.watchStatus = WatchStatus.watching;
+      file.watchStatus = StoredWatchStatus.watching;
     }
 
     await saveMediaFile(file);

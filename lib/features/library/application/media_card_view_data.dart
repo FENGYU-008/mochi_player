@@ -4,7 +4,7 @@ import 'package:mochi_player/core/domain/media/models.dart';
 ///
 /// Widgets consume this object directly instead of querying metadata while
 /// building the UI.
-class ResolvedMediaFileItem {
+class MediaCardViewData {
   final MediaFile file;
   final LibraryItem? libraryItem;
   final String title;
@@ -13,7 +13,7 @@ class ResolvedMediaFileItem {
   final double rating;
   final String? playbackContextTitle;
 
-  const ResolvedMediaFileItem({
+  const MediaCardViewData({
     required this.file,
     required this.title,
     this.libraryItem,

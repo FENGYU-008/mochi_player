@@ -157,12 +157,20 @@ class HeroSection extends StatelessWidget {
 
         // 年份
         if (year != null)
-          AppPill(text: year.toString(), tone: AppControlTone.overlay),
+          AppPill(
+            text: year.toString(),
+            appearance: AppControlAppearance.overlay,
+          ),
 
         // 类型标签
         ...genres
             .take(3)
-            .map((genre) => AppPill(text: genre, tone: AppControlTone.overlay)),
+            .map(
+              (genre) => AppPill(
+                text: genre,
+                appearance: AppControlAppearance.overlay,
+              ),
+            ),
       ],
     );
   }
@@ -184,7 +192,7 @@ class HeroSection extends StatelessWidget {
           icon: Icons.info_outline_rounded,
           label: '详情',
           variant: AppButtonVariant.secondary,
-          tone: AppControlTone.overlay,
+          appearance: AppControlAppearance.overlay,
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 22),
         ),

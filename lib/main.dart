@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
+import 'package:mochi_player/features/home/application/trending_media_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/settings/application/theme_provider.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
@@ -10,8 +11,8 @@ import 'package:mochi_player/core/ui/components/navigation/app_window_controls.d
 import 'package:mochi_player/core/infrastructure/database/database_service.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
-import 'features/library/application/file_browser_provider.dart';
-import 'app/presentation/pages/main_page.dart';
+import 'package:mochi_player/features/library/application/file_browser_provider.dart';
+import 'package:mochi_player/app/presentation/pages/app_shell_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,14 +51,15 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => FileBrowserProvider()),
         ChangeNotifierProvider(create: (_) => MediaLibraryProvider()),
+        ChangeNotifierProvider(create: (_) => TrendingMediaProvider()),
       ],
-      child: const MyInfuseApp(),
+      child: const MochiPlayerApp(),
     ),
   );
 }
 
-class MyInfuseApp extends StatelessWidget {
-  const MyInfuseApp({super.key});
+class MochiPlayerApp extends StatelessWidget {
+  const MochiPlayerApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +90,7 @@ class MyInfuseApp extends StatelessWidget {
         );
       },
 
-      home: const MainPage(),
+      home: const AppShellPage(),
     );
   }
 }

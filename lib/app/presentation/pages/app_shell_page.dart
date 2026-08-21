@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/home/presentation/widgets/home_content.dart';
+import 'package:mochi_player/features/home/application/trending_media_provider.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/pages/file_browser_page.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
-import 'package:mochi_player/features/library/presentation/pages/section_view_page.dart';
+import 'package:mochi_player/features/library/presentation/pages/library_section_page.dart';
 import 'package:mochi_player/features/settings/presentation/pages/settings_page.dart';
 import 'package:provider/provider.dart';
 import 'package:mochi_player/app/presentation/widgets/sidebar.dart';
 import 'package:mochi_player/features/library/presentation/pages/library_page.dart';
 
-class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+class AppShellPage extends StatefulWidget {
+  const AppShellPage({super.key});
 
   @override
-  State<MainPage> createState() => _MainPageState();
+  State<AppShellPage> createState() => _AppShellPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _AppShellPageState extends State<AppShellPage> {
   int _selectedIndex = 0; // 默认选中 Home
   LibraryItem? _detailItem;
-  SectionType? _sectionType;
-  final Map<SectionType, double> _sectionScrollOffsets = {};
+  LibrarySection? _librarySection;
+  final Map<LibrarySection, double> _sectionScrollOffsets = {};
   final Map<int, double> _libraryScrollOffsets = {};
 
   // 用于接收首页滚动偏移量以控制 header 透明度
@@ -43,13 +44,14 @@ class _MainPageState extends State<MainPage> {
   Future<void> _initializeApp() async {
     final settingsProvider = context.read<AppSettingsProvider>();
     final libraryProvider = context.read<MediaLibraryProvider>();
+    final trendingProvider = context.read<TrendingMediaProvider>();
 
     // 1. 先从数据库加载缓存数据 (快速显示)
     await libraryProvider.loadFromDatabase();
 
     // 2. 加载 TMDB 热门趋势。媒体库扫描/刮削由设置页手动触发。
     if (settingsProvider.hasTmdbApiKey) {
-      await libraryProvider.fetchTrending();
+      await trendingProvider.fetch();
     }
   }
 
@@ -86,21 +88,21 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
-  void _openSectionView(SectionType sectionType) {
+  void _openLibrarySection(LibrarySection section) {
     setState(() {
-      _sectionType = sectionType;
+      _librarySection = section;
       _detailItem = null;
     });
   }
 
-  void _closeSectionView() {
+  void _closeLibrarySection() {
     setState(() {
-      _sectionType = null;
+      _librarySection = null;
     });
   }
 
-  void _saveSectionScrollOffset(SectionType sectionType, double offset) {
-    _sectionScrollOffsets[sectionType] = offset;
+  void _saveSectionScrollOffset(LibrarySection section, double offset) {
+    _sectionScrollOffsets[section] = offset;
   }
 
   void _saveLibraryScrollOffset(int index, double offset) {
@@ -110,8 +112,8 @@ class _MainPageState extends State<MainPage> {
   String _contentKeyValue() {
     final item = _detailItem;
     if (item == null) {
-      final sectionType = _sectionType;
-      if (sectionType != null) return 'section:${sectionType.name}';
+      final section = _librarySection;
+      if (section != null) return 'section:${section.name}';
       return 'main-content';
     }
     if (item is Movie) return 'detail:movie:${item.tmdbId}';
@@ -130,14 +132,14 @@ class _MainPageState extends State<MainPage> {
       return MediaDetailPage(item: _detailItem!, onBack: _closeMediaDetail);
     }
 
-    final sectionType = _sectionType;
-    if (sectionType != null) {
-      return SectionViewPage(
-        sectionType: sectionType,
-        onBack: _closeSectionView,
-        initialScrollOffset: _sectionScrollOffsets[sectionType] ?? 0,
+    final section = _librarySection;
+    if (section != null) {
+      return LibrarySectionPage(
+        section: section,
+        onBack: _closeLibrarySection,
+        initialScrollOffset: _sectionScrollOffsets[section] ?? 0,
         onScrollOffsetChanged: (offset) =>
-            _saveSectionScrollOffset(sectionType, offset),
+            _saveSectionScrollOffset(section, offset),
       );
     }
 
@@ -219,7 +221,7 @@ class _MainPageState extends State<MainPage> {
     // 是否显示标准 header (非首页或首页滚动后)
     final showHeader =
         _detailItem == null &&
-        _sectionType == null &&
+        _librarySection == null &&
         _selectedIndex != 3 &&
         _selectedIndex != 5;
 
@@ -233,7 +235,7 @@ class _MainPageState extends State<MainPage> {
               setState(() {
                 _selectedIndex = index;
                 _detailItem = null;
-                _sectionType = null;
+                _librarySection = null;
               });
             },
           ),
@@ -244,8 +246,8 @@ class _MainPageState extends State<MainPage> {
               openMediaDetail: _openMediaDetail,
               child: Container(
                 color: theme.scaffoldBackgroundColor, // 使用主题背景色
-                child: SectionViewNavigationScope(
-                  openSectionView: _openSectionView,
+                child: LibrarySectionNavigationScope(
+                  openLibrarySection: _openLibrarySection,
                   child: Stack(
                     children: [
                       // === 1. 底层内容 (动态切换) ===
@@ -321,7 +323,7 @@ class _MainPageState extends State<MainPage> {
                           return Positioned(
                             top:
                                 _detailItem != null ||
-                                    _sectionType != null ||
+                                    _librarySection != null ||
                                     showHeader ||
                                     _selectedIndex == 5
                                 ? 70

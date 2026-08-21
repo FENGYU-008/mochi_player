@@ -1,5 +1,5 @@
 /// 媒体类型
-enum MediaType {
+enum StoredMediaType {
   /// 电影
   movie,
 

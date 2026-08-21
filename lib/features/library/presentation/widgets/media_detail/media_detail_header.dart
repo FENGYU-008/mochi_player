@@ -315,12 +315,17 @@ class _MetadataStrip extends StatelessWidget {
     }
     if (viewModel.releaseYear != null) {
       items.add(
-        AppPill(text: '${viewModel.releaseYear}', tone: AppControlTone.overlay),
+        AppPill(
+          text: '${viewModel.releaseYear}',
+          appearance: AppControlAppearance.overlay,
+        ),
       );
     }
     final certification = viewModel.certification;
     if (certification != null && certification.isNotEmpty) {
-      items.add(AppPill(text: certification, tone: AppControlTone.overlay));
+      items.add(
+        AppPill(text: certification, appearance: AppControlAppearance.overlay),
+      );
     }
     if (viewModel.isTVShow) {
       final seasons = viewModel.seasons.length;
@@ -328,7 +333,7 @@ class _MetadataStrip extends StatelessWidget {
         items.add(
           AppPill(
             text: MediaFormat.seasonCount(seasons),
-            tone: AppControlTone.overlay,
+            appearance: AppControlAppearance.overlay,
           ),
         );
       }
@@ -336,7 +341,10 @@ class _MetadataStrip extends StatelessWidget {
     items.addAll(
       viewModel.genres
           .take(3)
-          .map((genre) => AppPill(text: genre, tone: AppControlTone.overlay)),
+          .map(
+            (genre) =>
+                AppPill(text: genre, appearance: AppControlAppearance.overlay),
+          ),
     );
 
     return Wrap(spacing: 8, runSpacing: 8, children: items);

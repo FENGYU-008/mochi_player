@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mochi_player/core/ui/components/buttons/app_button.dart';
+import 'package:mochi_player/core/ui/components/buttons/app_action_button.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
@@ -9,30 +9,30 @@ class AppPill extends StatelessWidget {
   final String text;
   final IconData? icon;
   final bool rating;
-  final AppControlTone tone;
+  final AppControlAppearance appearance;
 
   const AppPill({
     super.key,
     required this.text,
     this.icon,
     this.rating = false,
-    this.tone = AppControlTone.adaptive,
+    this.appearance = AppControlAppearance.adaptive,
   });
 
   @override
   Widget build(BuildContext context) {
-    final overlayTone = tone == AppControlTone.overlay;
+    final usesOverlayAppearance = appearance == AppControlAppearance.overlay;
     final background = rating
         ? AppColors.rating
-        : overlayTone
+        : usesOverlayAppearance
         ? Colors.white.withAlpha(42)
         : AppColors.elevatedSurface(context);
     final foreground = rating
         ? Colors.black.withAlpha(220)
-        : overlayTone
+        : usesOverlayAppearance
         ? Colors.white
         : AppColors.textPrimary(context).withAlpha(220);
-    final borderColor = overlayTone
+    final borderColor = usesOverlayAppearance
         ? Colors.white.withAlpha(44)
         : AppColors.separator(context);
 

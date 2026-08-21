@@ -1228,7 +1228,7 @@ class _PlayerMessage extends StatelessWidget {
                 onPressed: onAction,
                 label: actionLabel!,
                 variant: AppButtonVariant.secondary,
-                tone: AppControlTone.overlay,
+                appearance: AppControlAppearance.overlay,
                 height: 32,
                 borderRadius: 10,
                 padding: const EdgeInsets.symmetric(horizontal: 10),

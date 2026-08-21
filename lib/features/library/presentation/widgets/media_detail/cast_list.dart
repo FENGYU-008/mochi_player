@@ -44,7 +44,7 @@ class _CastListState extends State<CastList> {
         const SizedBox(height: 12),
         SizedBox(
           height: 140,
-          child: HorizontalScrollView(
+          child: AppHorizontalScrollView(
             controller: _scrollController,
             bottomPadding: 58,
             child: ListView.separated(

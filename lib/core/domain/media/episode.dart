@@ -1,4 +1,4 @@
-import 'artist.dart';
+import 'package:mochi_player/core/domain/media/artist.dart';
 
 /// 单集 Domain Model
 class Episode {

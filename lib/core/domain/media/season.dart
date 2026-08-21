@@ -1,4 +1,4 @@
-import 'episode.dart';
+import 'package:mochi_player/core/domain/media/episode.dart';
 
 /// 季 Domain Model
 class Season {

@@ -7,14 +7,14 @@ class FileBrowserToolbar extends StatelessWidget {
   final String currentPath;
   final bool canGoBack;
   final bool canGoForward;
-  final ViewMode viewMode;
+  final FileBrowserViewMode viewMode;
   final FileSortField sortField;
   final bool sortAscending;
   final VoidCallback onBack;
   final VoidCallback onForward;
   final ValueChanged<String> onPathSelected;
   final void Function(FileSortField field, bool ascending) onSortChanged;
-  final ValueChanged<ViewMode> onViewModeChanged;
+  final ValueChanged<FileBrowserViewMode> onViewModeChanged;
   final VoidCallback onRefresh;
 
   const FileBrowserToolbar({
@@ -73,16 +73,16 @@ class FileBrowserToolbar extends StatelessWidget {
             AppToolbarButton(
               icon: AppIcons.list,
               tooltip: '列表视图',
-              selected: viewMode == ViewMode.list,
-              onPressed: () => onViewModeChanged(ViewMode.list),
+              selected: viewMode == FileBrowserViewMode.list,
+              onPressed: () => onViewModeChanged(FileBrowserViewMode.list),
               showBorder: false,
             ),
             const AppToolbarDivider(),
             AppToolbarButton(
               icon: AppIcons.grid,
               tooltip: '网格视图',
-              selected: viewMode == ViewMode.grid,
-              onPressed: () => onViewModeChanged(ViewMode.grid),
+              selected: viewMode == FileBrowserViewMode.grid,
+              onPressed: () => onViewModeChanged(FileBrowserViewMode.grid),
               showBorder: false,
             ),
           ],
