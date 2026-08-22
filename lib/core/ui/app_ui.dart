@@ -22,7 +22,6 @@ export 'components/layout/app_glass_surface.dart';
 export 'components/layout/app_horizontal_scroll_view.dart';
 export 'components/media/media_poster_card.dart';
 export 'components/navigation/app_header.dart';
-export 'components/navigation/app_page_route.dart';
 export 'components/navigation/app_window_controls.dart';
 export 'components/overlays/app_confirm_dialog.dart';
 export 'components/overlays/app_modal.dart';

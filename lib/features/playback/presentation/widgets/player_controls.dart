@@ -451,14 +451,7 @@ class _AudioMenuButton extends StatelessWidget {
     this.onMenuVisibilityChanged,
   });
 
-  bool _isAuto(AudioTrack track) => track.id == 'auto' && !track.uri;
-
-  bool _isOff(AudioTrack track) => track.id == 'no' && !track.uri;
-
   String _labelFor(AudioTrack track) {
-    if (_isAuto(track)) return '自动音轨';
-    if (_isOff(track)) return '关闭声音';
-
     final title = track.title?.trim();
     final language = track.language?.trim();
     final codec = track.codec?.trim();
@@ -540,14 +533,10 @@ class _SubtitleMenuButton extends StatelessWidget {
     this.onMenuVisibilityChanged,
   });
 
-  bool _isAuto(SubtitleTrack track) =>
-      track.id == 'auto' && !track.uri && !track.data;
-
   bool _isOff(SubtitleTrack track) =>
       track.id == 'no' && !track.uri && !track.data;
 
   String _labelFor(SubtitleTrack track) {
-    if (_isAuto(track)) return '自动';
     if (_isOff(track)) return '关闭字幕';
 
     final title = track.title?.trim();

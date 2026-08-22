@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:mochi_player/app/routing/app_router.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/home/application/trending_media_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
@@ -12,7 +14,6 @@ import 'package:mochi_player/core/infrastructure/database/database_service.dart'
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
-import 'package:mochi_player/app/presentation/pages/app_shell_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,19 +54,22 @@ void main() async {
         ChangeNotifierProvider(create: (_) => MediaLibraryProvider()),
         ChangeNotifierProvider(create: (_) => TrendingMediaProvider()),
       ],
-      child: const MochiPlayerApp(),
+      child: MochiPlayerApp(router: createAppRouter()),
     ),
   );
 }
 
 class MochiPlayerApp extends StatelessWidget {
-  const MochiPlayerApp({super.key});
+  const MochiPlayerApp({super.key, required this.router});
+
+  final GoRouter router;
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return MaterialApp(
+    return MaterialApp.router(
+      routerConfig: router,
       title: 'Mochi Player',
       debugShowCheckedModeBanner: false,
       themeMode: themeProvider.themeMode,
@@ -89,8 +93,6 @@ class MochiPlayerApp extends StatelessWidget {
           ],
         );
       },
-
-      home: const AppShellPage(),
     );
   }
 }

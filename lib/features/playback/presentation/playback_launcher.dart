@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:mochi_player/app/routing/app_route_paths.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/core/infrastructure/openlist/openlist_playback_service.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
-import 'package:mochi_player/features/playback/presentation/pages/player_page.dart';
+import 'package:mochi_player/features/playback/presentation/player_route_data.dart';
 
 class PlaybackLauncher {
   static void playFile(
@@ -127,14 +129,13 @@ class PlaybackLauncher {
 
     final playerUrl = directLink;
     if (playerUrl != null) {
-      Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute(
-          builder: (context) => PlayerPage(
-            videoItem: file,
-            url: playerUrl,
-            contextTitle: contextTitle,
-            playlist: playlist,
-          ),
+      context.push(
+        AppRoutePaths.player,
+        extra: PlayerRouteData(
+          videoItem: file,
+          url: playerUrl,
+          contextTitle: contextTitle,
+          playlist: playlist,
         ),
       );
     } else {

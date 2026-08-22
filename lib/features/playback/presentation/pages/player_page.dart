@@ -1,27 +1,25 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:provider/provider.dart';
 
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/media/media_type.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
-import 'package:mochi_player/features/playback/application/playback_session_controller.dart';
-import 'package:mochi_player/features/playback/domain/playback_resume_policy.dart';
-import 'package:mochi_player/features/playback/infrastructure/libmpv_log_buffer.dart';
-import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
-import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
+import 'package:mochi_player/features/playback/presentation/controllers/player_playback_controller.dart';
+import 'package:mochi_player/features/playback/presentation/controllers/player_window_mode_controller.dart';
 import 'package:mochi_player/features/playback/presentation/widgets/player_chrome.dart';
 import 'package:mochi_player/features/playback/presentation/widgets/player_controls.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
+import 'package:mochi_player/features/settings/domain/app_settings.dart';
 
 class PlayerPage extends StatefulWidget {
   final MediaFile videoItem;
   final String url;
-  final String? contextTitle; // 🟢 新增：上下文标题 (例如，剧集名称)
+  final String? contextTitle;
   final List<MediaFile> playlist;
 
   const PlayerPage({
@@ -36,65 +34,19 @@ class PlayerPage extends StatefulWidget {
   State<PlayerPage> createState() => _PlayerPageState();
 }
 
-class _PlayerPageState extends State<PlayerPage> with WindowListener {
-  static const Duration _progressSaveInterval = Duration(seconds: 10);
-  static const Size _miniPlayerSize = Size(480, 300);
-  static const Size _miniPlayerMinimumSize = Size(420, 260);
-  static const Size _regularMinimumWindowSize = Size(900, 600);
-
-  late final Player _player;
-  late final VideoController _videoController;
-  late final MediaLibraryProvider _libraryProvider;
+class _PlayerPageState extends State<PlayerPage> {
   late final AppSettings _playbackSettings;
-  late final PlaybackSessionController _session;
-
-  bool _isControlsVisible = true;
-  bool _isPlayerMenuOpen = false;
-  Timer? _hideControlsTimer;
-  Timer? _progressSaveTimer;
-  bool _isFullScreen = false;
-  bool _isMiniPlayer = false;
-  bool _isMiniPlayerAlwaysOnTop = false;
-  bool _isBuffering = false;
-  bool _hasRestoredPosition = false;
-  bool _didAutoSelectSubtitle = false;
-  bool _showResumeNotice = false;
-  bool _overrideEmbeddedSubtitleStyle = false;
-  bool _windowWasFullScreenOnOpen = false;
-  bool _playerUsedWindowFullScreen = false;
-  bool _isDisposed = false;
-  int _mediaOpenGeneration = 0;
-  Future<void>? _initialWindowFullScreenCapture;
-  Future<void>? _fullScreenTransition;
-  Future<void>? _miniPlayerTransition;
-  Future<void>? _miniAlwaysOnTopTransition;
-  Rect? _windowBoundsBeforeMiniPlayer;
-  Rect? _controlBarBounds;
-  bool _windowWasMaximizedBeforeMiniPlayer = false;
-  bool _windowWasAlwaysOnTopBeforeMiniPlayer = false;
-
-  List<String> _subtitle = [];
-  List<AudioTrack> _audioTracks = const [];
-  List<SubtitleTrack> _subtitleTracks = const [];
-  AudioTrack _selectedAudioTrack = const AudioTrack('auto', null, null);
-  SubtitleTrack _selectedSubtitleTrack = const SubtitleTrack(
-    'auto',
-    null,
-    null,
-  );
-
-  final List<StreamSubscription> _subscriptions = [];
-  final LibmpvLogBuffer _libmpvLogs = LibmpvLogBuffer();
+  late final PlayerPlaybackController _playbackController;
+  late final PlayerWindowModeController _windowModeController;
 
   final FocusNode _focusNode = FocusNode();
-  Timer? _resumeNoticeTimer;
-  double _lastVolumeBeforeMute = 100.0;
-  String? _playerError;
-  String? _resumePositionLabel;
+  Timer? _hideControlsTimer;
+  bool _isControlsVisible = true;
+  bool _isPlayerMenuOpen = false;
+  bool _isDisposed = false;
+  Rect? _controlBarBounds;
 
-  MediaFile get _currentItem => _session.currentItem;
-  bool get _hasPrevious => _session.hasPrevious;
-  bool get _hasNext => _session.hasNext;
+  MediaFile get _currentItem => _playbackController.currentItem;
 
   String get _displayTitle {
     if (widget.contextTitle != null &&
@@ -117,641 +69,43 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   @override
   void initState() {
     super.initState();
-    _libraryProvider = context.read<MediaLibraryProvider>();
+    final libraryProvider = context.read<MediaLibraryProvider>();
     _playbackSettings = context.read<AppSettingsProvider>().settings;
-    _initializeSession();
-    windowManager.addListener(this);
+    final queueItems = widget.playlist.isNotEmpty
+        ? widget.playlist
+        : libraryProvider.getPlaybackQueue(widget.videoItem);
 
-    _player = Player(
-      configuration: PlayerConfiguration(
-        title: 'Mochi Player',
-        bufferSize: _playbackSettings.playbackCacheMaxBytes,
-        libass: true,
-        logLevel: MPVLogLevel.info,
-      ),
-    );
+    _playbackController = PlayerPlaybackController(
+      libraryProvider: libraryProvider,
+      settings: _playbackSettings,
+      initialItem: widget.videoItem,
+      queueItems: queueItems,
+      initialUrl: widget.url,
+      onPlaybackActivity: _startHideControlsTimer,
+    )..addListener(_handlePlaybackChanged);
+    _windowModeController = PlayerWindowModeController()
+      ..addListener(_handleWindowModeChanged);
 
-    _videoController = VideoController(
-      _player,
-      configuration: VideoControllerConfiguration(
-        enableHardwareAcceleration:
-            _playbackSettings.enableHardwareAcceleration,
-      ),
-    );
-
-    _bindPlayerStreams();
-    unawaited(_openMedia(_nextMediaOpenGeneration()));
-
+    unawaited(_playbackController.initialize());
+    unawaited(_windowModeController.initialize());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _isDisposed) return;
       FocusScope.of(context).requestFocus(_focusNode);
     });
-
-    unawaited(_ensureInitialWindowFullScreenCaptured());
   }
 
-  void _initializeSession() {
-    final sourcePlaylist = widget.playlist.isNotEmpty
-        ? widget.playlist
-        : _libraryProvider.getPlaybackQueue(widget.videoItem);
-    _session = PlaybackSessionController(
-      libraryProvider: _libraryProvider,
-      initialItem: widget.videoItem,
-      queueItems: sourcePlaylist,
-      initialUrl: widget.url,
-    );
+  void _handlePlaybackChanged() {
+    if (mounted && !_isDisposed) setState(() {});
   }
 
-  void _bindPlayerStreams() {
-    _subscriptions.addAll([
-      _player.stream.error.listen((error) {
-        if (_isDisposed) return;
-        debugPrint('播放器错误: ${LibmpvLogBuffer.sanitize(error)}');
-        _dumpLibmpvLogs();
-        _handlePlayerError(error);
-      }),
-      _player.stream.log.listen((log) {
-        if (_isDisposed) return;
-        _libmpvLogs.add(log);
-      }),
-      _player.stream.tracks.listen((tracks) {
-        if (_isDisposed) return;
-        final audioTracks = _normalizeAudioTracks(tracks.audio);
-        final subtitleTracks = _normalizeSubtitleTracks(tracks.subtitle);
-        if (mounted) {
-          setState(() {
-            _audioTracks = audioTracks;
-            _subtitleTracks = subtitleTracks;
-          });
-        }
-        if (!_didAutoSelectSubtitle) {
-          _autoSelectSubtitle(subtitleTracks);
-        }
-      }),
-      _player.stream.track.listen((track) {
-        if (_isDisposed) return;
-        if (mounted) {
-          setState(() {
-            _selectedAudioTrack = track.audio;
-            _selectedSubtitleTrack = track.subtitle;
-          });
-        }
-      }),
-      _player.stream.buffering.listen((buffering) {
-        if (_isDisposed) return;
-        if (mounted) {
-          setState(() {
-            _isBuffering = buffering;
-          });
-        }
-      }),
-      _player.stream.playing.listen((playing) {
-        if (_isDisposed) return;
-        _startHideControlsTimer();
-      }),
-      _player.stream.completed.listen((completed) {
-        if (_isDisposed) return;
-        if (completed) {
-          unawaited(_handlePlaybackCompleted());
-        }
-      }),
-      _player.stream.subtitle.listen((subtitle) {
-        if (_isDisposed) return;
-        if (mounted) {
-          setState(() {
-            _subtitle = subtitle;
-          });
-        }
-      }),
-    ]);
-  }
-
-  int _nextMediaOpenGeneration() {
-    _mediaOpenGeneration += 1;
-    return _mediaOpenGeneration;
-  }
-
-  bool _canUsePlayer([int? generation]) {
-    return mounted &&
-        !_isDisposed &&
-        (generation == null || generation == _mediaOpenGeneration);
-  }
-
-  Future<void> _openMedia(int generation) async {
-    await _session.refreshCurrentItem();
-    if (!_canUsePlayer(generation)) return;
-
-    final resumePosition = _resumePosition();
-
-    debugPrint('正在播放直链: ${LibmpvLogBuffer.sanitize(_session.currentUrl)}');
-    await _applyPlayerSettings(generation);
-    if (!_canUsePlayer(generation)) return;
-
-    await _applySubtitleStyleMode(generation);
-    if (!_canUsePlayer(generation)) return;
-
-    final media = Media(
-      _session.currentUrl,
-      httpHeaders: {'User-Agent': 'MochiPlayer/1.0.0'},
-      start: resumePosition,
-    );
-
-    try {
-      await _player.open(media, play: true);
-      if (!_canUsePlayer(generation)) return;
-
-      await _applySubtitleStyleMode(generation);
-      if (!_canUsePlayer(generation)) return;
-
-      await _restoreProgressIfNeeded(resumePosition, generation);
-      if (!_canUsePlayer(generation)) return;
-
-      _startProgressSaveTimer();
-      _startHideControlsTimer();
-    } catch (error) {
-      debugPrint('打开媒体失败: ${LibmpvLogBuffer.sanitize(error.toString())}');
-      _dumpLibmpvLogs();
-      if (_canUsePlayer(generation)) {
-        final message = LibmpvLogBuffer.sanitize(error.toString());
-        setState(() {
-          _playerError = message;
-        });
-      }
-    }
-  }
-
-  Future<void> _applyPlayerSettings([int? generation]) async {
-    if (!_canUsePlayer(generation)) return;
-
-    final platform = _player.platform;
-    if (platform is! NativePlayer) return;
-
-    final properties = <String, String>{
-      'cache': 'yes',
-      'cache-pause': 'yes',
-      'cache-pause-wait': '3',
-      'cache-secs': _playbackSettings.playbackReadaheadSeconds.toString(),
-      'demuxer-readahead-secs': _playbackSettings.playbackReadaheadSeconds
-          .toString(),
-      'demuxer-max-bytes': _playbackSettings.playbackCacheMaxBytes.toString(),
-      'demuxer-max-back-bytes': (_playbackSettings.playbackCacheMaxBytes ~/ 4)
-          .toString(),
-      'hwdec': _playbackSettings.enableHardwareAcceleration ? 'auto' : 'no',
-      'slang': _playbackSettings.normalizedSubtitleLanguagePriority,
-      'vo-profile': 'high-quality',
-    };
-
-    for (final entry in properties.entries) {
-      if (!_canUsePlayer(generation)) return;
-      try {
-        await platform.setProperty(entry.key, entry.value);
-      } catch (error) {
-        debugPrint('应用播放器设置失败 ${entry.key}=${entry.value}: $error');
-      }
-    }
-  }
-
-  Future<void> _applySubtitleStyleMode([int? generation]) async {
-    if (!_canUsePlayer(generation)) return;
-
-    final platform = _player.platform;
-    if (platform is! NativePlayer) return;
-
-    final preserveEmbeddedStyle = !_overrideEmbeddedSubtitleStyle;
-    final value = preserveEmbeddedStyle ? 'yes' : 'no';
-    final properties = <String, String>{
-      'sub-ass': value,
-      'sub-visibility': value,
-      'secondary-sub-visibility': value,
-    };
-
-    for (final entry in properties.entries) {
-      if (!_canUsePlayer(generation)) return;
-      try {
-        await platform.setProperty(entry.key, entry.value);
-      } catch (error) {
-        debugPrint('应用字幕样式模式失败 ${entry.key}=${entry.value}: $error');
-      }
-    }
-  }
-
-  void _handlePlayerError(String error) {
-    if (_isDisposed) return;
-
-    final message = LibmpvLogBuffer.sanitize(error);
-    if (mounted) {
-      setState(() {
-        _playerError = message;
-      });
-    }
-  }
-
-  void _dumpLibmpvLogs() {
-    final entries = _libmpvLogs.snapshot();
-    if (entries.isEmpty) {
-      debugPrint('libmpv 日志上下文为空');
-      return;
-    }
-
-    debugPrint('libmpv 最近 ${entries.length} 条日志：');
-    for (final entry in entries) {
-      debugPrint(entry);
-    }
-  }
-
-  void _startProgressSaveTimer() {
-    if (_isDisposed) return;
-
-    _progressSaveTimer?.cancel();
-    _progressSaveTimer = Timer.periodic(_progressSaveInterval, (_) {
-      unawaited(_saveProgress());
-    });
-  }
-
-  Duration? _resumePosition() {
-    return PlaybackResumePolicy.positionFor(
-      _currentItem,
-      hasRestoredPosition: _hasRestoredPosition,
-    );
-  }
-
-  Future<void> _restoreProgressIfNeeded(
-    Duration? resumePosition,
-    int generation,
-  ) async {
-    if (_hasRestoredPosition || resumePosition == null) return;
-    if (!_canUsePlayer(generation)) return;
-
-    _hasRestoredPosition = true;
-    await _player.seek(resumePosition);
-    unawaited(
-      Future<void>.delayed(const Duration(milliseconds: 500), () async {
-        if (!_canUsePlayer(generation)) return;
-        final currentPosition = _player.state.position;
-        final isStillNearStart =
-            currentPosition.inMilliseconds <
-            resumePosition.inMilliseconds - 2000;
-        if (isStillNearStart && _canUsePlayer(generation)) {
-          await _player.seek(resumePosition);
-        }
-      }),
-    );
-    _showResumePositionNotice(resumePosition);
-  }
-
-  Future<void> _saveProgress({
-    bool force = false,
-    bool allowDisposed = false,
-  }) async {
-    if (_isDisposed && !allowDisposed) return;
-
-    final positionMs = _player.state.position.inMilliseconds;
-    final durationMs = _player.state.duration.inMilliseconds;
-    if (positionMs <= 0 && durationMs <= 0) return;
-
-    try {
-      await _session.saveProgress(
-        positionMs: positionMs,
-        durationMs: durationMs,
-        force: force,
-      );
-    } catch (error) {
-      debugPrint('保存播放进度失败: $error');
-    }
-  }
-
-  Future<void> _handlePlaybackCompleted() async {
-    if (_isDisposed) return;
-
-    await _saveProgress(force: true);
-    if (_isDisposed) return;
-
-    if (_hasNext) {
-      await _playQueueOffset(1);
-    }
-  }
-
-  Future<void> _playQueueOffset(int offset) async {
-    if (_isDisposed || _session.isSwitching) return;
-
-    final generation = _nextMediaOpenGeneration();
-
-    if (_canUsePlayer(generation)) {
-      setState(() {
-        _isBuffering = true;
-        _playerError = null;
-        _showResumeNotice = false;
-      });
-    }
-
-    final move = await _session.moveBy(
-      offset,
-      positionMs: _player.state.position.inMilliseconds,
-      durationMs: _player.state.duration.inMilliseconds,
-    );
-    if (!_canUsePlayer(generation)) {
-      return;
-    }
-
-    if (move == null) {
-      if (mounted) setState(() => _isBuffering = false);
-      return;
-    }
-
-    if (!move.isReady) {
-      setState(() {
-        _isBuffering = false;
-        _playerError = '获取播放链接失败: ${move.item.fileName}';
-      });
-      return;
-    }
-
-    _resumeNoticeTimer?.cancel();
-    setState(() {
-      _isBuffering = false;
-      _hasRestoredPosition = false;
-      _didAutoSelectSubtitle = false;
-      _showResumeNotice = false;
-      _resumePositionLabel = null;
-      _playerError = null;
-      _subtitle = [];
-      _audioTracks = const [];
-      _subtitleTracks = const [];
-      _selectedAudioTrack = const AudioTrack('auto', null, null);
-      _selectedSubtitleTrack = const SubtitleTrack('auto', null, null);
-    });
-
-    await _openMedia(generation);
-  }
-
-  Future<void> _ensureInitialWindowFullScreenCaptured() {
-    return _initialWindowFullScreenCapture ??= () async {
-      _windowWasFullScreenOnOpen = await windowManager.isFullScreen();
-    }();
-  }
-
-  @override
-  void onWindowEnterFullScreen() {
-    // Native fullscreen can also be triggered from macOS chrome. Keep that
-    // separate from the player fullscreen button.
-  }
-
-  @override
-  void onWindowLeaveFullScreen() {
-    if (!_isFullScreen || !_playerUsedWindowFullScreen || !mounted) return;
-    setState(() {
-      _isFullScreen = false;
-      _playerUsedWindowFullScreen = false;
-    });
-  }
-
-  List<SubtitleTrack> _normalizeSubtitleTracks(List<SubtitleTrack> tracks) {
-    final orderedTracks = [
-      const SubtitleTrack('auto', null, null),
-      const SubtitleTrack('no', null, null),
-      ...tracks,
-    ];
-    final result = <SubtitleTrack>[];
-    for (final track in orderedTracks) {
-      if (!result.contains(track)) {
-        result.add(track);
-      }
-    }
-    return result;
-  }
-
-  List<AudioTrack> _normalizeAudioTracks(List<AudioTrack> tracks) {
-    final orderedTracks = [const AudioTrack('auto', null, null), ...tracks];
-    final result = <AudioTrack>[];
-    for (final track in orderedTracks) {
-      if (!result.contains(track)) {
-        result.add(track);
-      }
-    }
-    return result;
-  }
-
-  Future<bool> _setAudioTrack(AudioTrack track) async {
-    if (_isDisposed) return false;
-
-    if (mounted) {
-      setState(() {
-        _selectedAudioTrack = track;
-      });
-    }
-    try {
-      await _player.setAudioTrack(track);
-    } catch (error) {
-      debugPrint('切换音轨失败: $error');
-      return false;
-    }
-    if (_isDisposed) return false;
-
-    _startHideControlsTimer();
-    return true;
-  }
-
-  bool _isSubtitleTrackAuto(SubtitleTrack track) =>
-      track.id == 'auto' && !track.uri && !track.data;
-
-  bool _isSubtitleTrackOff(SubtitleTrack track) =>
-      track.id == 'no' && !track.uri && !track.data;
-
-  bool _isAudioTrackOff(AudioTrack track) => track.id == 'no' && !track.uri;
-
-  void _autoSelectSubtitle(List<SubtitleTrack> tracks) {
-    final availableTracks = tracks
-        .where(
-          (track) =>
-              !_isSubtitleTrackAuto(track) && !_isSubtitleTrackOff(track),
-        )
-        .toList();
-    if (availableTracks.isEmpty) return;
-
-    SubtitleTrack? targetTrack;
-
-    final preferences = _languagePreferences(
-      _playbackSettings.normalizedSubtitleLanguagePriority,
-    );
-    for (final preference in preferences) {
-      for (final track in availableTracks) {
-        if (_trackMatchesLanguage(
-          language: track.language,
-          title: track.title,
-          preference: preference,
-        )) {
-          targetTrack = track;
-          break;
-        }
-      }
-      if (targetTrack != null) break;
-    }
-
-    if (targetTrack != null) {
-      unawaited(_setSubtitleTrack(targetTrack));
-    }
-  }
-
-  List<String> _languagePreferences(String value) {
-    return value
-        .split(',')
-        .map((item) => item.trim().toLowerCase())
-        .where((item) => item.isNotEmpty)
-        .toList();
-  }
-
-  bool _trackMatchesLanguage({
-    required String? language,
-    required String? title,
-    required String preference,
-  }) {
-    final normalizedPreference = preference.toLowerCase();
-    final text = [language, title].whereType<String>().join(' ').toLowerCase();
-
-    if (text.contains(normalizedPreference)) return true;
-
-    if (_isChineseLanguage(normalizedPreference)) {
-      return text.contains('zh') ||
-          text.contains('chi') ||
-          text.contains('zho') ||
-          text.contains('chs') ||
-          text.contains('cht') ||
-          text.contains('中文') ||
-          text.contains('简') ||
-          text.contains('繁');
-    }
-
-    if (normalizedPreference == 'ja' || normalizedPreference == 'jpn') {
-      return text.contains('ja') ||
-          text.contains('jpn') ||
-          text.contains('japanese') ||
-          text.contains('日语') ||
-          text.contains('日文');
-    }
-
-    if (normalizedPreference == 'en' || normalizedPreference == 'eng') {
-      return text.contains('en') ||
-          text.contains('eng') ||
-          text.contains('english') ||
-          text.contains('英语') ||
-          text.contains('英文');
-    }
-
-    return false;
-  }
-
-  bool _isChineseLanguage(String value) {
-    return value == 'zh' ||
-        value == 'chi' ||
-        value == 'zho' ||
-        value == 'chs' ||
-        value == 'cht' ||
-        value.startsWith('zh-');
-  }
-
-  Future<void> _setSubtitleTrack(SubtitleTrack track) async {
-    if (_isDisposed) return;
-
-    _didAutoSelectSubtitle = true;
-    if (mounted) {
-      setState(() {
-        _selectedSubtitleTrack = track;
-      });
-    }
-    try {
-      await _player.setSubtitleTrack(track);
-      await _applySubtitleStyleMode();
-    } catch (error) {
-      debugPrint('切换字幕失败: $error');
-    }
-    if (_isDisposed) return;
-
-    _startHideControlsTimer();
-  }
-
-  void _setSubtitleStyleOverride(bool value) {
-    if (_isDisposed) return;
-    if (_overrideEmbeddedSubtitleStyle == value) return;
-
-    setState(() {
-      _overrideEmbeddedSubtitleStyle = value;
-      _subtitle = [];
-    });
-    unawaited(_applySubtitleStyleMode());
-    _startHideControlsTimer();
-  }
-
-  void _showResumePositionNotice(Duration position) {
-    if (_isDisposed) return;
-
-    _resumeNoticeTimer?.cancel();
-    if (mounted) {
-      setState(() {
-        _showResumeNotice = true;
-        _resumePositionLabel = MediaFormat.clockDuration(position);
-      });
-    }
-    _resumeNoticeTimer = Timer(const Duration(seconds: 6), () {
-      if (mounted) {
-        setState(() {
-          _showResumeNotice = false;
-        });
-      }
-    });
-  }
-
-  void _cycleSubtitleTrack() {
-    if (_isDisposed) return;
-    if (_subtitleTracks.isEmpty) return;
-
-    final currentIndex = _subtitleTracks.indexOf(_selectedSubtitleTrack);
-    final nextIndex = currentIndex < 0
-        ? 0
-        : (currentIndex + 1) % _subtitleTracks.length;
-    unawaited(_setSubtitleTrack(_subtitleTracks[nextIndex]));
-  }
-
-  void _cycleAudioTrack() {
-    if (_isDisposed) return;
-
-    final tracks = _audioTracks
-        .where((track) => !_isAudioTrackOff(track))
-        .toList();
-    if (tracks.isEmpty) return;
-    final currentIndex = tracks.indexOf(_selectedAudioTrack);
-    final nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % tracks.length;
-    unawaited(_setAudioTrack(tracks[nextIndex]));
-  }
-
-  void _adjustVolume(double delta) {
-    if (_isDisposed) return;
-
-    final nextVolume = (_player.state.volume + delta).clamp(0.0, 100.0);
-    _player.setVolume(nextVolume);
-    if (nextVolume > 0) {
-      _lastVolumeBeforeMute = nextVolume;
-    }
-    _startHideControlsTimer();
-  }
-
-  void _toggleMute() {
-    if (_isDisposed) return;
-
-    final currentVolume = _player.state.volume;
-    if (currentVolume > 0) {
-      _lastVolumeBeforeMute = currentVolume;
-      _player.setVolume(0.0);
-    } else {
-      _player.setVolume(
-        _lastVolumeBeforeMute <= 0 ? 100.0 : _lastVolumeBeforeMute,
-      );
-    }
+  void _handleWindowModeChanged() {
+    if (!mounted || _isDisposed) return;
+    setState(() => _controlBarBounds = null);
     _startHideControlsTimer();
   }
 
   void _startHideControlsTimer() {
     if (_isDisposed) return;
-
     _hideControlsTimer?.cancel();
     if (_isPlayerMenuOpen) return;
     _hideControlsTimer = Timer(const Duration(seconds: 3), () {
@@ -763,7 +117,6 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
 
   void _setPlayerMenuVisibility(bool isOpen) {
     if (_isDisposed || _isPlayerMenuOpen == isOpen) return;
-
     _isPlayerMenuOpen = isOpen;
     _hideControlsTimer?.cancel();
     if (isOpen) {
@@ -776,249 +129,75 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   void _setControlBarBounds(Rect bounds) {
-    if (_isDisposed || _isMiniPlayer || _controlBarBounds == bounds) return;
+    if (_isDisposed ||
+        _windowModeController.isMiniPlayer ||
+        _controlBarBounds == bounds) {
+      return;
+    }
     setState(() => _controlBarBounds = bounds);
   }
 
   void _onPointerHover(PointerEvent event) {
     if (_isDisposed) return;
-
-    if (!_isControlsVisible) {
-      setState(() => _isControlsVisible = true);
-    }
+    if (!_isControlsVisible) setState(() => _isControlsVisible = true);
     _startHideControlsTimer();
   }
 
   void _onPointerExit(PointerEvent event) {
     if (_isDisposed || _isPlayerMenuOpen) return;
-
     _hideControlsTimer?.cancel();
-    if (mounted) {
-      setState(() => _isControlsVisible = false);
-    }
+    if (mounted) setState(() => _isControlsVisible = false);
   }
 
-  void _handleKeyEvent(KeyEvent event) async {
-    if (_isDisposed) return;
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (_isDisposed || event is! KeyDownEvent) return KeyEventResult.handled;
 
-    if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.space) {
-        _player.playOrPause();
-      } else if (event.logicalKey == LogicalKeyboardKey.keyK) {
-        _player.playOrPause();
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-        _player.seek(_player.state.position - const Duration(seconds: 10));
-      } else if (event.logicalKey == LogicalKeyboardKey.keyJ) {
-        _player.seek(_player.state.position - const Duration(seconds: 10));
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        _player.seek(_player.state.position + const Duration(seconds: 10));
-      } else if (event.logicalKey == LogicalKeyboardKey.keyL) {
-        _player.seek(_player.state.position + const Duration(seconds: 10));
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-        _adjustVolume(5);
-      } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-        _adjustVolume(-5);
-      } else if (event.logicalKey == LogicalKeyboardKey.keyM) {
-        _toggleMute();
-      } else if (event.logicalKey == LogicalKeyboardKey.keyF) {
-        _toggleFullScreen();
-      } else if (event.logicalKey == LogicalKeyboardKey.keyC) {
-        _cycleSubtitleTrack();
-      } else if (event.logicalKey == LogicalKeyboardKey.keyA) {
-        _cycleAudioTrack();
-      } else if (event.logicalKey == LogicalKeyboardKey.escape) {
-        if (_isFullScreen) {
-          unawaited(_exitPlayerFullScreen());
-        }
-      }
+    final player = _playbackController.player;
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.keyK) {
+      player.playOrPause();
+    } else if (key == LogicalKeyboardKey.arrowLeft ||
+        key == LogicalKeyboardKey.keyJ) {
+      player.seek(player.state.position - const Duration(seconds: 10));
+    } else if (key == LogicalKeyboardKey.arrowRight ||
+        key == LogicalKeyboardKey.keyL) {
+      player.seek(player.state.position + const Duration(seconds: 10));
+    } else if (key == LogicalKeyboardKey.arrowUp) {
+      _playbackController.adjustVolume(5);
+    } else if (key == LogicalKeyboardKey.arrowDown) {
+      _playbackController.adjustVolume(-5);
+    } else if (key == LogicalKeyboardKey.keyM) {
+      _playbackController.toggleMute();
+    } else if (key == LogicalKeyboardKey.keyF) {
+      _windowModeController.toggleFullScreen();
+    } else if (key == LogicalKeyboardKey.keyC) {
+      _playbackController.cycleSubtitleTrack();
+    } else if (key == LogicalKeyboardKey.keyA) {
+      _playbackController.cycleAudioTrack();
+    } else if (key == LogicalKeyboardKey.escape &&
+        _windowModeController.isFullScreen) {
+      unawaited(_windowModeController.exitFullScreen());
     }
-  }
-
-  void _toggleFullScreen() {
-    if (_isDisposed || _fullScreenTransition != null) return;
-
-    _fullScreenTransition = _togglePlayerFullScreen().whenComplete(() {
-      _fullScreenTransition = null;
-    });
-    unawaited(_fullScreenTransition);
-  }
-
-  Future<void> _togglePlayerFullScreen() async {
-    if (_isMiniPlayer) {
-      await _exitMiniPlayer();
-      if (_isDisposed) return;
-    }
-
-    if (_isFullScreen) {
-      await _exitPlayerFullScreen();
-    } else {
-      await _enterPlayerFullScreen();
-    }
-  }
-
-  void _toggleMiniPlayer() {
-    if (_isDisposed || _miniPlayerTransition != null) return;
-
-    _miniPlayerTransition =
-        (_isMiniPlayer ? _exitMiniPlayer() : _enterMiniPlayer()).whenComplete(
-          () => _miniPlayerTransition = null,
-        );
-    unawaited(_miniPlayerTransition);
-  }
-
-  void _toggleMiniPlayerAlwaysOnTop() {
-    if (_isDisposed || !_isMiniPlayer || _miniAlwaysOnTopTransition != null) {
-      return;
-    }
-
-    final nextValue = !_isMiniPlayerAlwaysOnTop;
-    _miniAlwaysOnTopTransition = () async {
-      await windowManager.setAlwaysOnTop(nextValue);
-      if (mounted) {
-        setState(() => _isMiniPlayerAlwaysOnTop = nextValue);
-      }
-    }().whenComplete(() => _miniAlwaysOnTopTransition = null);
-    unawaited(_miniAlwaysOnTopTransition);
-  }
-
-  Future<void> _enterMiniPlayer() async {
-    await _fullScreenTransition;
-    if (_isDisposed) return;
-
-    if (_isFullScreen) {
-      await _exitPlayerFullScreen();
-      if (_isDisposed) return;
-    }
-
-    _windowWasMaximizedBeforeMiniPlayer = await windowManager.isMaximized();
-    if (_windowWasMaximizedBeforeMiniPlayer) {
-      await windowManager.unmaximize();
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-    }
-    if (_isDisposed) return;
-
-    final currentBounds = await windowManager.getBounds();
-    _windowBoundsBeforeMiniPlayer = currentBounds;
-    _windowWasAlwaysOnTopBeforeMiniPlayer = await windowManager.isAlwaysOnTop();
-    await AppWindowControls.setMiniPlayerMode(true);
-
-    final targetPosition = Offset(
-      (currentBounds.right - _miniPlayerSize.width).clamp(0.0, double.infinity),
-      (currentBounds.bottom - _miniPlayerSize.height).clamp(
-        0.0,
-        double.infinity,
-      ),
-    );
-    await windowManager.setMinimumSize(_miniPlayerMinimumSize);
-    await windowManager.setBounds(
-      targetPosition & _miniPlayerSize,
-      animate: true,
-    );
-    await windowManager.setAlwaysOnTop(true);
-
-    if (!mounted) return;
-    setState(() {
-      _isMiniPlayer = true;
-      _isMiniPlayerAlwaysOnTop = true;
-      _controlBarBounds = null;
-    });
-    _startHideControlsTimer();
-  }
-
-  Future<void> _exitMiniPlayer({bool updateState = true}) async {
-    if (!_isMiniPlayer && _windowBoundsBeforeMiniPlayer == null) return;
-
-    await _miniAlwaysOnTopTransition;
-    final previousBounds = _windowBoundsBeforeMiniPlayer;
-    _windowBoundsBeforeMiniPlayer = null;
-    await windowManager.setAlwaysOnTop(_windowWasAlwaysOnTopBeforeMiniPlayer);
-    if (previousBounds != null) {
-      await windowManager.setBounds(previousBounds, animate: true);
-    }
-    await windowManager.setMinimumSize(_regularMinimumWindowSize);
-    if (_windowWasMaximizedBeforeMiniPlayer) {
-      await windowManager.maximize();
-    }
-
-    _windowWasMaximizedBeforeMiniPlayer = false;
-    _isMiniPlayer = false;
-    _isMiniPlayerAlwaysOnTop = false;
-    _controlBarBounds = null;
-    await AppWindowControls.setMiniPlayerMode(false);
-    if (updateState && mounted) {
-      setState(() {});
-      _startHideControlsTimer();
-    }
-  }
-
-  Future<void> _enterPlayerFullScreen() async {
-    if (_isDisposed) return;
-
-    if (mounted && !_isFullScreen) {
-      setState(() => _isFullScreen = true);
-    }
-
-    await _ensureInitialWindowFullScreenCaptured();
-    if (_isDisposed) return;
-
-    final windowIsFullScreen = await windowManager.isFullScreen();
-    if (_isDisposed) return;
-
-    if (!windowIsFullScreen) {
-      _playerUsedWindowFullScreen = true;
-      await windowManager.setFullScreen(true);
-    } else {
-      _playerUsedWindowFullScreen = false;
-    }
-  }
-
-  Future<void> _exitPlayerFullScreen({bool updateState = true}) async {
-    _isFullScreen = false;
-    if (updateState && mounted) {
-      setState(() {});
-    }
-
-    await _ensureInitialWindowFullScreenCaptured();
-    final shouldRestoreWindow =
-        _playerUsedWindowFullScreen && !_windowWasFullScreenOnOpen;
-
-    _playerUsedWindowFullScreen = false;
-
-    if (shouldRestoreWindow) {
-      await windowManager.setFullScreen(false);
-    }
+    return KeyEventResult.handled;
   }
 
   Future<void> _handleBackPressed() async {
-    await _fullScreenTransition;
-    await _miniPlayerTransition;
-    await _exitMiniPlayer();
-    await _exitPlayerFullScreen();
-    if (mounted) {
-      Navigator.of(context).maybePop();
-    }
+    await _windowModeController.leavePlayerModes();
+    if (mounted) Navigator.of(context).maybePop();
   }
 
   @override
   void dispose() {
     _isDisposed = true;
-    _nextMediaOpenGeneration();
-
-    unawaited(_saveProgress(force: true, allowDisposed: true));
-    unawaited(() async {
-      await _miniPlayerTransition;
-      await _exitMiniPlayer(updateState: false);
-      await _fullScreenTransition;
-      await _exitPlayerFullScreen(updateState: false);
-    }());
-    windowManager.removeListener(this);
     _hideControlsTimer?.cancel();
-    _progressSaveTimer?.cancel();
-    _resumeNoticeTimer?.cancel();
-    for (final subscription in _subscriptions) {
-      subscription.cancel();
-    }
-    _player.dispose();
+    _playbackController.removeListener(_handlePlaybackChanged);
+    _playbackController.dispose();
+    _windowModeController.removeListener(_handleWindowModeChanged);
+    unawaited(
+      _windowModeController.restoreWindow().whenComplete(
+        _windowModeController.dispose,
+      ),
+    );
     _focusNode.dispose();
     super.dispose();
   }
@@ -1034,10 +213,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
       body: Focus(
         focusNode: _focusNode,
         autofocus: true,
-        onKeyEvent: (node, event) {
-          _handleKeyEvent(event);
-          return KeyEventResult.handled;
-        },
+        onKeyEvent: _handleKeyEvent,
         child: MouseRegion(
           onHover: _onPointerHover,
           onExit: _onPointerExit,
@@ -1045,7 +221,7 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
             fit: StackFit.expand,
             children: [
               Video(
-                controller: _videoController,
+                controller: _playbackController.videoController,
                 controls: (state) => const SizedBox.shrink(),
                 subtitleViewConfiguration: const SubtitleViewConfiguration(
                   style: TextStyle(fontSize: 0, color: Colors.transparent),
@@ -1059,11 +235,11 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                     if (_isControlsVisible) _startHideControlsTimer();
                     FocusScope.of(context).requestFocus(_focusNode);
                   },
-                  onDoubleTap: _toggleFullScreen,
-                  child: Container(color: Colors.transparent),
+                  onDoubleTap: _windowModeController.toggleFullScreen,
+                  child: const ColoredBox(color: Colors.transparent),
                 ),
               ),
-              if (_isBuffering)
+              if (_playbackController.isBuffering)
                 const Center(
                   child: SizedBox(
                     width: 44,
@@ -1071,39 +247,41 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                     child: CircularProgressIndicator(strokeWidth: 3),
                   ),
                 ),
-              if (_playerError != null)
+              if (_playbackController.playerError case final error?)
                 Positioned(
                   left: 24,
                   right: 24,
                   top: 72,
                   child: _PlayerMessage(
                     icon: Icons.error_outline_rounded,
-                    message: _playerError!,
+                    message: error,
                     actionLabel: '关闭',
-                    onAction: () => setState(() => _playerError = null),
+                    onAction: _playbackController.clearError,
                   ),
                 ),
-              if (_showResumeNotice && _playerError == null)
+              if (_playbackController.showResumeNotice &&
+                  _playbackController.playerError == null)
                 Positioned(
                   left: 24,
                   right: 24,
                   top: 72,
                   child: _PlayerMessage(
                     icon: Icons.history_rounded,
-                    message: '已从 ${_resumePositionLabel ?? '上次进度'} 继续播放',
+                    message:
+                        '已从 ${_playbackController.resumePositionLabel ?? '上次进度'} 继续播放',
                   ),
                 ),
-              if (_overrideEmbeddedSubtitleStyle)
+              if (_playbackController.overrideEmbeddedSubtitleStyle)
                 Positioned.fill(
                   child: PlayerSubtitleAvoidingControls(
                     controlsVisible: _isControlsVisible,
-                    isMiniPlayer: _isMiniPlayer,
+                    isMiniPlayer: _windowModeController.isMiniPlayer,
                     controlBarBounds: _controlBarBounds,
                     child: IgnorePointer(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          for (final line in _subtitle)
+                          for (final line in _playbackController.subtitle)
                             Text(
                               line,
                               textAlign: TextAlign.center,
@@ -1130,44 +308,42 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
                   ),
                 ),
               PlayerControls(
-                player: _player,
+                player: _playbackController.player,
                 title: _displayTitle,
                 secondaryTitle: _displaySecondaryTitle,
                 isVisible: _isControlsVisible,
-                isFullScreen: _isFullScreen,
-                isMiniPlayer: _isMiniPlayer,
-                isMiniPlayerAlwaysOnTop: _isMiniPlayerAlwaysOnTop,
-                onBack: () {
-                  unawaited(_handleBackPressed());
-                },
-                onToggleFullScreen: _toggleFullScreen,
-                onPrevious: _hasPrevious
-                    ? () {
-                        unawaited(_playQueueOffset(-1));
-                      }
+                isFullScreen: _windowModeController.isFullScreen,
+                isMiniPlayer: _windowModeController.isMiniPlayer,
+                isMiniPlayerAlwaysOnTop:
+                    _windowModeController.isMiniPlayerAlwaysOnTop,
+                onBack: () => unawaited(_handleBackPressed()),
+                onToggleFullScreen: _windowModeController.toggleFullScreen,
+                onPrevious: _playbackController.hasPrevious
+                    ? () => unawaited(_playbackController.playQueueOffset(-1))
                     : null,
-                onNext: _hasNext
-                    ? () {
-                        unawaited(_playQueueOffset(1));
-                      }
+                onNext: _playbackController.hasNext
+                    ? () => unawaited(_playbackController.playQueueOffset(1))
                     : null,
-                onPip: _toggleMiniPlayer,
-                onToggleMiniPlayerAlwaysOnTop: _toggleMiniPlayerAlwaysOnTop,
+                onPip: _windowModeController.toggleMiniPlayer,
+                onToggleMiniPlayerAlwaysOnTop:
+                    _windowModeController.toggleMiniPlayerAlwaysOnTop,
                 onControlBarBoundsChanged: _setControlBarBounds,
-                audioTracks: _audioTracks,
-                selectedAudioTrack: _selectedAudioTrack,
+                audioTracks: _playbackController.audioTracks,
+                selectedAudioTrack: _playbackController.selectedAudioTrack,
                 onAudioSelected: (track) {
-                  unawaited(_setAudioTrack(track));
+                  unawaited(_playbackController.setAudioTrack(track));
                 },
-                subtitleTracks: _subtitleTracks,
-                selectedSubtitleTrack: _selectedSubtitleTrack,
-                overrideEmbeddedSubtitleStyle: _overrideEmbeddedSubtitleStyle,
-                onSubtitleStyleOverrideChanged: _setSubtitleStyleOverride,
+                subtitleTracks: _playbackController.subtitleTracks,
+                selectedSubtitleTrack:
+                    _playbackController.selectedSubtitleTrack,
+                overrideEmbeddedSubtitleStyle:
+                    _playbackController.overrideEmbeddedSubtitleStyle,
+                onSubtitleStyleOverrideChanged:
+                    _playbackController.setSubtitleStyleOverride,
                 onMenuVisibilityChanged: _setPlayerMenuVisibility,
                 onSubtitleSelected: (track) {
-                  unawaited(_setSubtitleTrack(track));
+                  unawaited(_playbackController.setSubtitleTrack(track));
                 },
-                // 🟢 传入回调，重置计时器
                 onInteraction: _startHideControlsTimer,
               ),
             ],

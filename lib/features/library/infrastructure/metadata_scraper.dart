@@ -263,46 +263,31 @@ class MetadataScraper {
     int seasonNum,
     List<MediaFileEntity> seasonFiles,
   ) async {
-    // 检查/保存季元数据
     final seasonKey = '${showTmdbId}_s$seasonNum';
+    final season = await _tmdb.fetchSeason(
+      tvId,
+      seasonNum,
+      showTmdbId: showTmdbId,
+    );
+    if (season == null) return;
+
     if (await _db.getSeasonByKey(seasonKey) == null) {
-      final seasonMeta = await _tmdb.fetchSeason(
-        tvId,
-        seasonNum,
-        showTmdbId: showTmdbId,
-      );
-      if (seasonMeta != null) {
-        await _db.saveSeasonMetadata(seasonMeta);
-      }
+      await _db.saveSeasonMetadata(season.season);
     }
-
-    // 获取单集详情列表
-    final seasonRaw = await _tmdb.fetchSeasonRaw(tvId, seasonNum);
-    if (seasonRaw == null) return;
-
-    final episodesList = seasonRaw['episodes'] as List? ?? [];
-
-    // 建立 episode_number -> episodeData 映射
-    final epMap = <int, Map<String, dynamic>>{};
-    for (final ep in episodesList) {
-      final num = ep['episode_number'] as int?;
-      if (num != null) epMap[num] = ep;
-    }
+    final episodesByNumber = {
+      for (final episode in season.episodes) episode.episodeNumber: episode,
+    };
 
     for (final file in seasonFiles) {
       final epNum = file.parsedEpisode;
-      if (epNum == null || !epMap.containsKey(epNum)) continue;
+      final episode = episodesByNumber[epNum];
+      if (episode == null) continue;
 
-      final epData = epMap[epNum]!;
-      final epMeta = _tmdb.parseEpisodeEntity(epData, showTmdbId, seasonNum);
-
-      // 检查/保存单集
-      if (await _db.getEpisodeByTmdbId(epMeta.tmdbId) == null) {
-        await _db.saveEpisodeMetadata(epMeta);
+      if (await _db.getEpisodeByTmdbId(episode.tmdbId) == null) {
+        await _db.saveEpisodeMetadata(episode);
       }
 
-      // 关联文件
-      file.tmdbId = epMeta.tmdbId;
+      file.tmdbId = episode.tmdbId;
       await _db.saveMediaFile(file);
     }
   }

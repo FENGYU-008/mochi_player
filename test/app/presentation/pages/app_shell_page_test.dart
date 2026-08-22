@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mochi_player/app/presentation/pages/app_shell_page.dart';
+import 'package:mochi_player/app/routing/app_router.dart';
 import 'package:mochi_player/app/presentation/widgets/sidebar.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
+import 'package:mochi_player/core/domain/media/movie.dart';
 import 'package:mochi_player/features/home/application/trending_media_provider.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
@@ -14,6 +15,8 @@ void main() {
   testWidgets('shows the selected destination inside the content navigator', (
     tester,
   ) async {
+    final router = createAppRouter();
+    addTearDown(router.dispose);
     await tester.pumpWidget(
       MultiProvider(
         providers: [
@@ -25,9 +28,9 @@ void main() {
           ),
           ChangeNotifierProvider(create: (_) => TrendingMediaProvider()),
         ],
-        child: MaterialApp(
+        child: MaterialApp.router(
           theme: AppTheme.lightTheme,
-          home: const AppShellPage(),
+          routerConfig: router,
         ),
       ),
     );
@@ -85,6 +88,46 @@ void main() {
       tester.state<ScrollableState>(restoredScrollable).position.pixels,
       closeTo(offsetBeforeSwitch, 0.1),
     );
+  });
+
+  testWidgets('preserves each destination navigation stack', (tester) async {
+    final router = createAppRouter();
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AppSettingsProvider()),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => FileBrowserProvider()),
+          ChangeNotifierProvider<MediaLibraryProvider>(
+            create: (_) => _TestMediaLibraryProvider(),
+          ),
+          ChangeNotifierProvider(create: (_) => TrendingMediaProvider()),
+        ],
+        child: MaterialApp.router(
+          theme: AppTheme.lightTheme,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('电影'));
+    await tester.pumpAndSettle();
+    router.push(
+      '/movies/media',
+      extra: const Movie(tmdbId: '1', title: '测试电影'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('测试电影'), findsWidgets);
+
+    await tester.tap(find.text('首页'));
+    await tester.pumpAndSettle();
+    expect(find.text('媒体库为空').hitTestable(), findsOneWidget);
+
+    await tester.tap(find.text('电影'));
+    await tester.pumpAndSettle();
+    expect(find.text('测试电影'), findsWidgets);
   });
 }
 

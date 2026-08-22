@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:mochi_player/app/routing/app_route_paths.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/view_models/media_detail_view_model.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_detail/cast_list.dart';
@@ -11,9 +13,7 @@ import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
 void openMediaDetailPage(BuildContext context, LibraryItem item) {
-  Navigator.of(
-    context,
-  ).push(AppPageRoute<void>(builder: (context) => MediaDetailPage(item: item)));
+  context.push(AppRoutePaths.mediaDetail(context), extra: item);
 }
 
 class MediaDetailPage extends StatelessWidget {

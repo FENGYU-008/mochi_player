@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import 'package:mochi_player/app/routing/app_route_paths.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/presentation/widgets/continue_watching_card.dart';
@@ -10,11 +12,7 @@ import 'package:mochi_player/features/library/presentation/widgets/library_item_
 enum LibrarySection { continueWatching, movies, tvShows, recentlyAdded }
 
 void openLibrarySectionPage(BuildContext context, LibrarySection section) {
-  Navigator.of(context).push(
-    AppPageRoute<void>(
-      builder: (context) => LibrarySectionPage(section: section),
-    ),
-  );
+  context.push(AppRoutePaths.librarySection(section.name));
 }
 
 class LibrarySectionPage extends StatefulWidget {
