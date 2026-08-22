@@ -4,6 +4,7 @@ void main() {
   _parsesCommonEpisodeFilenames();
   _usesSeasonFolders();
   _infersSeasonOneForEpisodeOnlyFiles();
+  _usesParentTitleForTaggedEpisodeOnlyFiles();
   _usesMovieFolderTitleAndYear();
   _parsesShortMovieTitlesWithTechnicalTags();
 }
@@ -91,6 +92,22 @@ void _infersSeasonOneForEpisodeOnlyFiles() {
   _expectEquals(result.season, 1, 'season');
   _expectEquals(result.episode, 1, 'episode');
   _expectEquals(result.isEpisode, true, 'isEpisode');
+}
+
+void _usesParentTitleForTaggedEpisodeOnlyFiles() {
+  for (var episode = 1; episode <= 6; episode++) {
+    final episodeLabel = episode.toString().padLeft(2, '0');
+    final fileName = '【tvzongheba】E$episodeLabel.mkv';
+    final result = FilenameParser.parse(
+      fileName: fileName,
+      filePath: '/dav/quark/来自：分享/街头餐厅斗士/$fileName',
+    );
+
+    _expectEquals(result.title, '街头餐厅斗士', 'title');
+    _expectEquals(result.season, 1, 'season');
+    _expectEquals(result.episode, episode, 'episode');
+    _expectEquals(result.isEpisode, true, 'isEpisode');
+  }
 }
 
 void _usesMovieFolderTitleAndYear() {

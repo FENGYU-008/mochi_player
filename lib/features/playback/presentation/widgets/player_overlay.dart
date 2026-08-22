@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
 /// 播放器顶部信息栏和底部控制栏共用的布局规格。
-class PlayerChromeLayout {
-  const PlayerChromeLayout._();
+class PlayerOverlayLayout {
+  const PlayerOverlayLayout._();
 
   static const double topBarHeight = 60;
   static const double topButtonHeight = 36;
@@ -33,7 +33,7 @@ class PlayerChromeLayout {
 }
 
 /// Shared glass material for every floating control in the player.
-abstract final class PlayerChromeGlass {
+abstract final class PlayerOverlayGlass {
   static const background = Color(0x52000000);
   static const border = Color(0x2EFFFFFF);
   static const blur = 18.0;
@@ -120,7 +120,7 @@ class _SubtitleAvoidanceLayoutDelegate extends SingleChildLayoutDelegate {
       y = controls.top - _controlGap - childSize.height;
     }
 
-    final preferredMinimumY = PlayerChromeLayout.topBarHeight + AppSpacing.md;
+    final preferredMinimumY = PlayerOverlayLayout.topBarHeight + AppSpacing.md;
     final minimumY = bottomPosition < preferredMinimumY
         ? bottomPosition
         : preferredMinimumY;
@@ -155,13 +155,13 @@ class PlayerTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final leftInset = PlayerChromeLayout.topLeftInset(
+    final leftInset = PlayerOverlayLayout.topLeftInset(
       platform: Theme.of(context).platform,
       isFullScreen: isFullScreen,
     );
 
     return SizedBox(
-      height: PlayerChromeLayout.topBarHeight,
+      height: PlayerOverlayLayout.topBarHeight,
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -254,12 +254,12 @@ class _PlayerBackButton extends StatelessWidget {
     return SizedBox(
       key: const ValueKey('player-back-button'),
       width: 38,
-      height: PlayerChromeLayout.topButtonHeight,
+      height: PlayerOverlayLayout.topButtonHeight,
       child: AppGlassSurface(
         borderRadius: radius,
-        color: PlayerChromeGlass.background,
-        borderColor: PlayerChromeGlass.border,
-        blur: PlayerChromeGlass.blur,
+        color: PlayerOverlayGlass.background,
+        borderColor: PlayerOverlayGlass.border,
+        blur: PlayerOverlayGlass.blur,
         child: AppClickableArea(
           onTap: onPressed,
           borderRadius: radius,
@@ -305,7 +305,7 @@ class _PlayerBottomControlBarState extends State<PlayerBottomControlBar> {
     final horizontalRoom = ((windowSize.width - panelWidth) / 2 - AppSpacing.md)
         .clamp(0.0, double.infinity);
     final upwardRoom =
-        (windowSize.height - PlayerChromeLayout.topBarHeight - 96).clamp(
+        (windowSize.height - PlayerOverlayLayout.topBarHeight - 96).clamp(
           0.0,
           double.infinity,
         );
@@ -337,7 +337,7 @@ class _PlayerBottomControlBarState extends State<PlayerBottomControlBar> {
   @override
   Widget build(BuildContext context) {
     final windowSize = MediaQuery.sizeOf(context);
-    final panelWidth = PlayerChromeLayout.bottomPanelWidth(windowSize.width);
+    final panelWidth = PlayerOverlayLayout.bottomPanelWidth(windowSize.width);
     final horizontalPadding = windowSize.width <= 1000
         ? AppSpacing.md
         : AppSpacing.xl;
@@ -362,9 +362,9 @@ class _PlayerBottomControlBarState extends State<PlayerBottomControlBar> {
                   borderRadius: const BorderRadius.all(
                     Radius.circular(AppRadii.large),
                   ),
-                  color: PlayerChromeGlass.background,
-                  borderColor: PlayerChromeGlass.border,
-                  blur: PlayerChromeGlass.blur,
+                  color: PlayerOverlayGlass.background,
+                  borderColor: PlayerOverlayGlass.border,
+                  blur: PlayerOverlayGlass.blur,
                   child: Stack(
                     children: [
                       Positioned.fill(
@@ -430,9 +430,9 @@ class PlayerMiniControls extends StatelessWidget {
     return AppGlassSurface(
       key: const ValueKey('player-mini-controls'),
       borderRadius: const BorderRadius.all(Radius.circular(AppRadii.full)),
-      color: PlayerChromeGlass.background,
-      borderColor: PlayerChromeGlass.border,
-      blur: PlayerChromeGlass.blur,
+      color: PlayerOverlayGlass.background,
+      borderColor: PlayerOverlayGlass.border,
+      blur: PlayerOverlayGlass.blur,
       padding: const EdgeInsets.all(3),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -504,7 +504,7 @@ class PlayerControlButton extends StatelessWidget {
     super.key,
     required this.child,
     required this.onPressed,
-    this.width = PlayerChromeLayout.controlHeight,
+    this.width = PlayerOverlayLayout.controlHeight,
     this.tooltip,
   });
 
@@ -512,7 +512,7 @@ class PlayerControlButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final button = AppClickableArea(
       width: width,
-      height: PlayerChromeLayout.controlHeight,
+      height: PlayerOverlayLayout.controlHeight,
       onTap: onPressed,
       borderRadius: const BorderRadius.all(Radius.circular(AppRadii.control)),
       hoverColor: const Color(0x1FFFFFFF),
@@ -532,7 +532,7 @@ class PlayerMenuButtonSurface extends StatefulWidget {
   const PlayerMenuButtonSurface({
     super.key,
     required this.child,
-    this.width = PlayerChromeLayout.controlHeight,
+    this.width = PlayerOverlayLayout.controlHeight,
   });
 
   @override
@@ -556,7 +556,7 @@ class _PlayerMenuButtonSurfaceState extends State<PlayerMenuButtonSurface> {
         curve: Curves.easeOutCubic,
         builder: (context, progress, child) => Container(
           width: widget.width,
-          height: PlayerChromeLayout.controlHeight,
+          height: PlayerOverlayLayout.controlHeight,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Color.lerp(hoverColor.withAlpha(0), hoverColor, progress),

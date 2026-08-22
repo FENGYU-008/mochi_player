@@ -91,28 +91,28 @@ class FilenameParser {
 
   // 季集号: S01E05, S01.E05, Season 1 Episode 5
   static final _seasonEpisodePattern = RegExp(
-    r'(?:^|[.\s_\[\(])(?:S|Season\s?)(\d{1,2})[.\s_]?(?:E|Episode\s?)(\d{1,3})(?:$|[.\s_\]\)])?',
+    r'(?:^|[.\s_\[\(\]\)【】])(?:S|Season\s?)(\d{1,2})[.\s_]?(?:E|Episode\s?)(\d{1,3})(?:$|[.\s_\]\)【】])?',
     caseSensitive: false,
   );
 
   // 单季: S01, Season 1, 第一季
   static final _seasonOnlyPattern = RegExp(
-    r'(?:^|[.\s_\-\[\(])(?:S|Season\s?)(\d{1,2})(?:季|$|[.\s_\-\]\)])',
+    r'(?:^|[.\s_\-\[\(\]\)【】])(?:S|Season\s?)(\d{1,2})(?:季|$|[.\s_\-\]\)【】])',
     caseSensitive: false,
   );
 
   static final _chineseSeasonPattern = RegExp(
-    r'(?:^|[.\s_\-\[\(])第([一二两三四五六七八九十\d]{1,3})季(?:$|[.\s_\-\]\)])?',
+    r'(?:^|[.\s_\-\[\(\]\)【】])第([一二两三四五六七八九十\d]{1,3})季(?:$|[.\s_\-\]\)【】])?',
   );
 
   // 单集: E01, EP01, 第1集, 01
   static final _episodeOnlyPattern = RegExp(
-    r'(?:^|[.\s_\-\[\(])(?:E|EP|Episode\s?)(\d{1,3})(?:$|[.\s_\-\]\)])',
+    r'(?:^|[.\s_\-\[\(\]\)【】])(?:E|EP|Episode\s?)(\d{1,3})(?:$|[.\s_\-\]\)【】])',
     caseSensitive: false,
   );
 
   static final _chineseEpisodePattern = RegExp(
-    r'(?:^|[.\s_\-\[\(])第?([一二两三四五六七八九十百\d]{1,3})(?:集|话)(?:$|[.\s_\-\]\)])?',
+    r'(?:^|[.\s_\-\[\(\]\)【】])第?([一二两三四五六七八九十百\d]{1,3})(?:集|话)(?:$|[.\s_\-\]\)【】])?',
   );
 
   static final _bareEpisodePattern = RegExp(r'^\s*0*(\d{1,3})\s*$');

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:media_kit/media_kit.dart';
 
-import 'package:mochi_player/features/playback/presentation/widgets/player_chrome.dart';
+import 'package:mochi_player/features/playback/presentation/widgets/player_overlay.dart';
 import 'package:mochi_player/features/playback/presentation/widgets/player_popup_menu.dart';
 
 class PlayerControls extends StatefulWidget {
@@ -129,7 +129,7 @@ class _PlayerControlsState extends State<PlayerControls> {
   Widget _withVisibility(Widget child) {
     return AnimatedOpacity(
       opacity: widget.isVisible ? 1 : 0,
-      duration: PlayerChromeLayout.visibilityDuration,
+      duration: PlayerOverlayLayout.visibilityDuration,
       curve: Curves.easeInOut,
       child: IgnorePointer(ignoring: !widget.isVisible, child: child),
     );

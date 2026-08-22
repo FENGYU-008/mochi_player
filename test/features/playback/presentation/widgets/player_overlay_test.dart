@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
-import 'package:mochi_player/features/playback/presentation/widgets/player_chrome.dart';
+import 'package:mochi_player/features/playback/presentation/widgets/player_overlay.dart';
 
 void main() {
   testWidgets('places the back button after macOS window controls', (
@@ -43,9 +43,9 @@ void main() {
         glass.borderRadius,
         const BorderRadius.all(Radius.circular(AppRadii.control)),
       );
-      expect(glass.color, PlayerChromeGlass.background);
-      expect(glass.borderColor, PlayerChromeGlass.border);
-      expect(glass.blur, PlayerChromeGlass.blur);
+      expect(glass.color, PlayerOverlayGlass.background);
+      expect(glass.borderColor, PlayerOverlayGlass.border);
+      expect(glass.blur, PlayerOverlayGlass.blur);
     } finally {
       await tester.pumpWidget(const SizedBox.shrink());
       debugDefaultTargetPlatformOverride = null;
@@ -54,11 +54,11 @@ void main() {
 
   test('uses the same leading content inset on Windows and macOS', () {
     expect(
-      PlayerChromeLayout.topLeftInset(
+      PlayerOverlayLayout.topLeftInset(
         platform: TargetPlatform.windows,
         isFullScreen: false,
       ),
-      PlayerChromeLayout.topLeftInset(
+      PlayerOverlayLayout.topLeftInset(
         platform: TargetPlatform.macOS,
         isFullScreen: false,
       ),
@@ -98,7 +98,7 @@ void main() {
               progress: SizedBox(key: ValueKey('progress'), height: 10),
               controls: SizedBox(
                 key: ValueKey('controls'),
-                height: PlayerChromeLayout.controlHeight,
+                height: PlayerOverlayLayout.controlHeight,
               ),
             ),
           ),
@@ -111,9 +111,9 @@ void main() {
       expect(tester.getSize(panel).height, 64);
       expect(tester.getBottomRight(panel).dy, 700 - AppSpacing.md);
       final glass = tester.widget<AppGlassSurface>(panel);
-      expect(glass.color, PlayerChromeGlass.background);
-      expect(glass.borderColor, PlayerChromeGlass.border);
-      expect(glass.blur, PlayerChromeGlass.blur);
+      expect(glass.color, PlayerOverlayGlass.background);
+      expect(glass.borderColor, PlayerOverlayGlass.border);
+      expect(glass.blur, PlayerOverlayGlass.blur);
       expect(
         tester.getTopLeft(find.byKey(const ValueKey('progress'))).dy,
         lessThan(tester.getTopLeft(find.byKey(const ValueKey('controls'))).dy),
@@ -169,9 +169,9 @@ void main() {
   });
 
   test('uses a compact width in regular and mini-player windows', () {
-    expect(PlayerChromeLayout.bottomPanelWidth(1200), 696);
-    expect(PlayerChromeLayout.bottomPanelWidth(480), 448);
-    expect(PlayerChromeLayout.bottomPanelWidth(2400), 1040);
+    expect(PlayerOverlayLayout.bottomPanelWidth(1200), 696);
+    expect(PlayerOverlayLayout.bottomPanelWidth(480), 448);
+    expect(PlayerOverlayLayout.bottomPanelWidth(2400), 1040);
   });
 
   test('scales subtitle text continuously with the player viewport', () {

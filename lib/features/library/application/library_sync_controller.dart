@@ -7,8 +7,9 @@ import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
 import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/library/application/media_library_catalog.dart';
 import 'package:mochi_player/features/library/infrastructure/filename_parser.dart';
-import 'package:mochi_player/features/library/infrastructure/library_scanner.dart';
+import 'package:mochi_player/features/library/infrastructure/media_file_metadata_mapper.dart';
 import 'package:mochi_player/features/library/infrastructure/metadata_scraper.dart';
+import 'package:mochi_player/features/library/infrastructure/webdav_media_scanner.dart';
 
 /// Coordinates database loading, WebDAV scans and TMDB metadata scraping.
 class LibrarySyncController extends ChangeNotifier {
@@ -18,20 +19,21 @@ class LibrarySyncController extends ChangeNotifier {
     TmdbService? tmdbService,
     MetadataScraper? metadataScraper,
     WebDavService Function()? webDavServiceFactory,
-    LibraryScanner Function(WebDavService service)? scannerFactory,
+    WebDavMediaScanner Function(WebDavService service)? webDavScannerFactory,
   }) : _catalog = catalog,
        _db = database ?? DatabaseService(),
        _tmdbService = tmdbService ?? TmdbService(),
        _metadataScraper = metadataScraper ?? MetadataScraper(),
        _webDavServiceFactory = webDavServiceFactory ?? WebDavService.new,
-       _scannerFactory = scannerFactory ?? LibraryScanner.new;
+       _webDavScannerFactory = webDavScannerFactory ?? WebDavMediaScanner.new;
 
   final MediaLibraryCatalog _catalog;
   final DatabaseService _db;
   final TmdbService _tmdbService;
   final MetadataScraper _metadataScraper;
   final WebDavService Function() _webDavServiceFactory;
-  final LibraryScanner Function(WebDavService service) _scannerFactory;
+  final WebDavMediaScanner Function(WebDavService service)
+  _webDavScannerFactory;
   final _logger = Logger(printer: PrettyPrinter(methodCount: 0));
 
   bool _isScanning = false;
@@ -126,28 +128,7 @@ class LibrarySyncController extends ChangeNotifier {
           fileName: file.fileName,
           filePath: file.path,
         );
-        final existingTmdbId = file.tmdbId?.trim();
-        final parsedTmdbId = parsed.tmdbId?.trim();
-        file.parsedTitle = parsed.title;
-        file.parsedYear = parsed.year;
-        file.parsedSeason = parsed.season;
-        file.parsedEpisode = parsed.episode;
-        file.mediaType = _determineMediaType(parsed);
-        file.tmdbId = parsedTmdbId != null && parsedTmdbId.isNotEmpty
-            ? parsedTmdbId
-            : existingTmdbId != null && existingTmdbId.isNotEmpty
-            ? existingTmdbId
-            : null;
-        file.container = parsed.container;
-        file.height = parsed.height;
-        file.videoCodec = parsed.videoCodec;
-        file.audioCodec = parsed.audioCodec;
-        file.audioChannels = parsed.audioChannels;
-        file.isHdr = parsed.isHdr;
-        file.hdrFormat = parsed.hdrFormat;
-        file.versionLabel = parsed.versionLabel.isNotEmpty
-            ? parsed.versionLabel
-            : null;
+        MediaFileMetadataMapper.updateEntity(file, parsed);
       }
       await _db.saveMediaFiles(_catalog.mediaFiles);
       _catalog.markMediaCatalogChanged();
@@ -250,7 +231,7 @@ class LibrarySyncController extends ChangeNotifier {
     required String rootPath,
     required bool removeMissingFiles,
   }) async {
-    final scanner = _scannerFactory(webDavService);
+    final scanner = _webDavScannerFactory(webDavService);
     var newCount = 0;
     var removedCount = 0;
     final scannedPaths = <String>{};
@@ -318,14 +299,6 @@ class LibrarySyncController extends ChangeNotifier {
     } else {
       _catalog.tvShows.add(show);
     }
-  }
-
-  entity.StoredMediaType _determineMediaType(ParsedMediaFilename parsed) {
-    if (parsed.season != null || parsed.episode != null) {
-      return entity.StoredMediaType.episode;
-    }
-    if (parsed.title.isNotEmpty) return entity.StoredMediaType.movie;
-    return entity.StoredMediaType.unknown;
   }
 }
 

@@ -46,7 +46,7 @@ class WebDavService implements WebDavFileSystem {
 
   /// 读取目录内容，返回原始 WebDAV 文件列表
   ///
-  /// 这是核心方法，被 LibraryScanner 和 FileBrowserProvider 使用
+  /// 这是核心方法，被 WebDavMediaScanner 和 FileBrowserProvider 使用
   @override
   Future<List<webdav.File>> readDir(String path) async {
     if (_client == null) {

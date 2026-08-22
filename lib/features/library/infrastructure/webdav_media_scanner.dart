@@ -4,20 +4,18 @@ import 'package:webdav_client/webdav_client.dart' as webdav;
 import 'package:mochi_player/core/infrastructure/database/entities/entities.dart';
 import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/library/infrastructure/filename_parser.dart';
+import 'package:mochi_player/features/library/infrastructure/media_file_metadata_mapper.dart';
 import 'package:mochi_player/core/domain/media/media_file_kind.dart';
 
-/// 媒体库扫描器
+/// Scans a WebDAV file tree and emits parsed video-file entities.
 ///
-/// 职责：
-/// - 递归扫描 WebDAV 目录
-/// - 解析文件名提取元信息
-/// - 输出 MediaFileEntity 流
-class LibraryScanner {
+/// Database reconciliation and TMDB scraping belong to LibrarySyncController.
+class WebDavMediaScanner {
   final WebDavFileSystem _webDavService;
   final _logger = Logger(printer: PrettyPrinter(methodCount: 0));
   bool _hadReadError = false;
 
-  LibraryScanner(this._webDavService);
+  WebDavMediaScanner(this._webDavService);
 
   bool get hadReadError => _hadReadError;
 
@@ -39,49 +37,18 @@ class LibraryScanner {
         filePath: filePath,
       );
 
-      // 创建 MediaFileEntity 并填充所有解析信息
-      final entity = MediaFileEntity()
-        // 基础信息
-        ..path = filePath
-        ..fileName = fileName
-        ..parsedTitle = parsed.title
-        ..parsedYear = parsed.year
-        ..parsedSeason = parsed.season
-        ..parsedEpisode = parsed.episode
-        ..mediaType = _determineMediaType(parsed)
-        // TMDB ID（如果路径中包含 {tmdbid-xxx}）
-        ..tmdbId = parsed.tmdbId
-        // 技术信息（从文件名解析）
-        ..size = file.size ?? 0
-        ..container = parsed.container
-        ..height = parsed.height
-        ..videoCodec = parsed.videoCodec
-        ..audioCodec = parsed.audioCodec
-        ..audioChannels = parsed.audioChannels
-        ..isHdr = parsed.isHdr
-        ..hdrFormat = parsed.hdrFormat
-        ..versionLabel = parsed.versionLabel.isNotEmpty
-            ? parsed.versionLabel
-            : null;
+      final entity = MediaFileMetadataMapper.createEntity(
+        path: filePath,
+        fileName: fileName,
+        size: file.size ?? 0,
+        metadata: parsed,
+      );
 
       fileCount++;
       yield entity;
     }
 
     _logger.i("✅ 媒体库扫描完成，发现 $fileCount 个文件");
-  }
-
-  /// 判断媒体类型
-  StoredMediaType _determineMediaType(ParsedMediaFilename parsed) {
-    // 有季号或集号的是剧集
-    if (parsed.season != null || parsed.episode != null) {
-      return StoredMediaType.episode;
-    }
-    // 有标题且没有季/集信息的是电影
-    if (parsed.title.isNotEmpty) {
-      return StoredMediaType.movie;
-    }
-    return StoredMediaType.unknown;
   }
 
   /// 递归列出所有文件
