@@ -6,6 +6,7 @@ import 'package:mochi_player/core/infrastructure/database/entities/entities.dart
     as entity;
 import 'package:mochi_player/core/infrastructure/database/media_entity_mapper.dart';
 import 'package:mochi_player/features/library/application/library_sync_controller.dart';
+import 'package:mochi_player/features/library/application/library_search_matcher.dart';
 import 'package:mochi_player/features/library/application/media_card_view_data.dart';
 import 'package:mochi_player/features/library/application/media_library_catalog.dart';
 import 'package:mochi_player/features/library/application/media_library_queries.dart';
@@ -54,6 +55,21 @@ class MediaLibraryProvider extends ChangeNotifier {
   List<MediaFile> getPlaybackQueue(MediaFile currentFile) =>
       _queries.getPlaybackQueue(currentFile);
   LibraryItem? getRandomHeroItem() => _queries.getRandomHeroItem();
+
+  List<LibraryItem> searchLibrary(String query) =>
+      LibrarySearchMatcher.libraryItems<LibraryItem>([
+        ...movies,
+        ...tvShows,
+      ], query);
+
+  List<Movie> searchMovies(String query) =>
+      LibrarySearchMatcher.libraryItems(movies, query);
+
+  List<TVShow> searchTVShows(String query) =>
+      LibrarySearchMatcher.libraryItems(tvShows, query);
+
+  List<MediaCardViewData> searchFavorites(String query) =>
+      LibrarySearchMatcher.mediaCards(favoriteItems, query);
 
   Future<void> loadFromDatabase() => _syncController.loadFromDatabase();
   Future<void> refreshLibraryMetadata() =>

@@ -64,6 +64,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
 
   bool _handleKeyEvent(KeyEvent event) {
     if (event is KeyDownEvent) {
+      if (!TickerMode.of(context)) return false;
       final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? true;
       if (!isCurrentRoute) return false;
 

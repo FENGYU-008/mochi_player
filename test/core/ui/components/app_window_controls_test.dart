@@ -154,7 +154,7 @@ void main() {
         _testApp(
           const SizedBox(
             width: 800,
-            child: AppHeader(title: '文件浏览', searchWidth: 240),
+            child: AppHeader(title: '文件浏览', showSearch: true, searchWidth: 240),
           ),
         ),
       );

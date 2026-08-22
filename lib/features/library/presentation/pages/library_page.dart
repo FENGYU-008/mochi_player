@@ -4,13 +4,15 @@ import 'package:mochi_player/features/library/application/media_library_provider
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/presentation/widgets/library_item_poster_card.dart';
+import 'package:mochi_player/features/library/presentation/widgets/media_poster_grid.dart';
 
 enum LibraryCategory { movies, series, favorites }
 
 class LibraryPage extends StatefulWidget {
   final LibraryCategory category;
+  final String searchQuery;
 
-  const LibraryPage({super.key, required this.category});
+  const LibraryPage({super.key, required this.category, this.searchQuery = ''});
 
   @override
   State<LibraryPage> createState() => _LibraryPageState();
@@ -74,10 +76,10 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Widget _buildMovieGrid(BuildContext context, MediaLibraryProvider provider) {
-    final items = provider.movies;
+    final items = provider.searchMovies(widget.searchQuery);
 
     if (items.isEmpty) {
-      return _buildEmptyState('电影');
+      return _buildEmptyState('电影', hasQuery: _hasSearchQuery);
     }
 
     return _buildGridView(
@@ -89,10 +91,10 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Widget _buildTVShowGrid(BuildContext context, MediaLibraryProvider provider) {
-    final items = provider.tvShows;
+    final items = provider.searchTVShows(widget.searchQuery);
 
     if (items.isEmpty) {
-      return _buildEmptyState('剧集');
+      return _buildEmptyState('剧集', hasQuery: _hasSearchQuery);
     }
 
     return _buildGridView(
@@ -107,10 +109,10 @@ class _LibraryPageState extends State<LibraryPage> {
     BuildContext context,
     MediaLibraryProvider provider,
   ) {
-    final items = provider.favoriteItems;
+    final items = provider.searchFavorites(widget.searchQuery);
 
     if (items.isEmpty) {
-      return _buildEmptyState('收藏');
+      return _buildEmptyState('收藏', hasQuery: _hasSearchQuery);
     }
 
     return _buildGridView(
@@ -140,39 +142,21 @@ class _LibraryPageState extends State<LibraryPage> {
     required int itemCount,
     required Widget Function(BuildContext, int) itemBuilder,
   }) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        double width = constraints.maxWidth;
-        double contentWidth = width - 80;
-
-        const double desiredItemWidth = 180;
-        int crossAxisCount = (contentWidth / desiredItemWidth).round();
-        if (crossAxisCount < 3) crossAxisCount = 3;
-
-        return GridView.builder(
-          key: PageStorageKey<String>('library-${widget.category.name}'),
-          controller: _scrollController,
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.page,
-            100,
-            AppSpacing.page,
-            AppSpacing.page,
-          ),
-          itemCount: itemCount,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            childAspectRatio: 0.57,
-            crossAxisSpacing: 24,
-            mainAxisSpacing: 32,
-          ),
-          itemBuilder: itemBuilder,
-        );
-      },
+    return MediaPosterGrid<int>(
+      items: List.generate(itemCount, (index) => index),
+      itemBuilder: (context, index) => itemBuilder(context, index),
+      storageKey: 'library-${widget.category.name}',
+      controller: _scrollController,
     );
   }
 
-  Widget _buildEmptyState(String category) {
-    return AppEmptyState(title: '没有找到$category', description: '请先扫描媒体库以发现资源');
+  bool get _hasSearchQuery => widget.searchQuery.trim().isNotEmpty;
+
+  Widget _buildEmptyState(String category, {required bool hasQuery}) {
+    return AppEmptyState(
+      title: hasQuery ? '没有匹配的$category' : '没有找到$category',
+      description: hasQuery ? '请尝试其他关键词' : '请先扫描媒体库以发现资源',
+    );
   }
 }
 

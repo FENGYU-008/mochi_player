@@ -32,7 +32,7 @@ class AppHeader extends StatelessWidget {
     this.onBack,
     this.subtitle,
     this.actions = const [],
-    this.showSearch = true,
+    this.showSearch = false,
     this.searchHint = '搜索...',
     this.onSearchChanged,
     this.searchWidth = 240,

@@ -16,18 +16,18 @@ class AppDestinationRootPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (destination) {
       AppDestination.home => const _HomeDestinationPage(),
-      AppDestination.movies => const _DestinationPageFrame(
+      AppDestination.movies => const _LibraryDestinationPage(
         destination: AppDestination.movies,
-        child: LibraryPage(category: LibraryCategory.movies),
+        category: LibraryCategory.movies,
       ),
-      AppDestination.series => const _DestinationPageFrame(
+      AppDestination.series => const _LibraryDestinationPage(
         destination: AppDestination.series,
-        child: LibraryPage(category: LibraryCategory.series),
+        category: LibraryCategory.series,
       ),
       AppDestination.fileBrowser => const FileBrowserPage(),
-      AppDestination.favorites => const _DestinationPageFrame(
+      AppDestination.favorites => const _LibraryDestinationPage(
         destination: AppDestination.favorites,
-        child: LibraryPage(category: LibraryCategory.favorites),
+        category: LibraryCategory.favorites,
       ),
       AppDestination.settings => const SettingsPage(),
     };
@@ -43,6 +43,7 @@ class _HomeDestinationPage extends StatefulWidget {
 
 class _HomeDestinationPageState extends State<_HomeDestinationPage> {
   double _scrollOffset = 0;
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +53,7 @@ class _HomeDestinationPageState extends State<_HomeDestinationPage> {
       children: [
         Positioned.fill(
           child: HomeContent(
+            searchQuery: _searchQuery,
             onScroll: (offset) {
               if (offset == _scrollOffset) return;
               setState(() => _scrollOffset = offset);
@@ -65,6 +67,12 @@ class _HomeDestinationPageState extends State<_HomeDestinationPage> {
           height: AppHeader.height,
           child: AppHeader(
             title: AppDestination.home.title,
+            showSearch: true,
+            searchHint: '搜索媒体库…',
+            onSearchChanged: (query) {
+              if (query == _searchQuery) return;
+              setState(() => _searchQuery = query);
+            },
             opacity: headerOpacity,
             ignoreWhenTransparent: true,
           ),
@@ -74,26 +82,58 @@ class _HomeDestinationPageState extends State<_HomeDestinationPage> {
   }
 }
 
-class _DestinationPageFrame extends StatelessWidget {
-  const _DestinationPageFrame({required this.destination, required this.child});
+class _LibraryDestinationPage extends StatefulWidget {
+  const _LibraryDestinationPage({
+    required this.destination,
+    required this.category,
+  });
 
   final AppDestination destination;
-  final Widget child;
+  final LibraryCategory category;
+
+  @override
+  State<_LibraryDestinationPage> createState() =>
+      _LibraryDestinationPageState();
+}
+
+class _LibraryDestinationPageState extends State<_LibraryDestinationPage> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(child: child),
-        if (destination.showsHeader)
+        Positioned.fill(
+          child: LibraryPage(
+            category: widget.category,
+            searchQuery: _searchQuery,
+          ),
+        ),
+        if (widget.destination.showsHeader)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             height: AppHeader.height,
-            child: AppHeader(title: destination.title),
+            child: AppHeader(
+              title: widget.destination.title,
+              showSearch: true,
+              searchHint: _searchHint(widget.category),
+              onSearchChanged: (query) {
+                if (query == _searchQuery) return;
+                setState(() => _searchQuery = query);
+              },
+            ),
           ),
       ],
     );
+  }
+
+  String _searchHint(LibraryCategory category) {
+    return switch (category) {
+      LibraryCategory.movies => '搜索电影…',
+      LibraryCategory.series => '搜索剧集…',
+      LibraryCategory.favorites => '搜索收藏…',
+    };
   }
 }

@@ -7,6 +7,7 @@ import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/features/library/application/media_card_view_data.dart';
 import 'package:mochi_player/features/library/presentation/widgets/continue_watching_card.dart';
 import 'package:mochi_player/features/library/presentation/widgets/library_item_poster_card.dart';
+import 'package:mochi_player/features/library/presentation/widgets/media_poster_grid.dart';
 import 'package:provider/provider.dart';
 
 import 'package:mochi_player/features/home/presentation/widgets/hero_section.dart';
@@ -14,8 +15,9 @@ import 'package:mochi_player/features/home/presentation/widgets/trending_categor
 
 class HomeContent extends StatefulWidget {
   final void Function(double offset)? onScroll;
+  final String searchQuery;
 
-  const HomeContent({super.key, this.onScroll});
+  const HomeContent({super.key, this.onScroll, this.searchQuery = ''});
 
   @override
   State<HomeContent> createState() => _HomeContentState();
@@ -52,6 +54,10 @@ class _HomeContentState extends State<HomeContent> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.searchQuery.trim().isNotEmpty) {
+      return _buildSearchResults(context);
+    }
+
     final hasTrendingContent = context.select<TrendingMediaProvider, bool>(
       (provider) => provider.hasContent,
     );
@@ -180,6 +186,30 @@ class _HomeContentState extends State<HomeContent> {
             // 底部留白
             const SliverToBoxAdapter(child: SizedBox(height: 40)),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSearchResults(BuildContext context) {
+    return Selector<MediaLibraryProvider, _LibraryContentRevision>(
+      selector: (context, provider) => _LibraryContentRevision(
+        mediaCatalogRevision: provider.mediaCatalogRevision,
+        metadataRevision: provider.metadataRevision,
+      ),
+      builder: (context, revision, child) {
+        final items = context.read<MediaLibraryProvider>().searchLibrary(
+          widget.searchQuery,
+        );
+        if (items.isEmpty) {
+          return const AppEmptyState(title: '没有匹配的媒体', description: '请尝试其他关键词');
+        }
+
+        return MediaPosterGrid<LibraryItem>(
+          items: items,
+          itemBuilder: (context, item) => LibraryItemPosterCard(item: item),
+          storageKey: 'home-search-results',
+          topPadding: AppHeader.height + AppSpacing.xxl,
         );
       },
     );
