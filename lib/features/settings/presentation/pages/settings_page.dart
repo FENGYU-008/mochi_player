@@ -97,6 +97,7 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           Positioned.fill(
             child: ListView(
+              key: const PageStorageKey<String>('settings-scroll'),
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.page,
                 AppHeader.height + AppSpacing.xxl,

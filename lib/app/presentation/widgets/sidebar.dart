@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mochi_player/app/presentation/navigation/app_destination.dart';
 import 'package:mochi_player/core/ui/components/layout/app_clickable_area.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/theme/app_icons.dart';
 import 'package:window_manager/window_manager.dart';
 
 class _SidebarMetrics {
@@ -20,13 +20,13 @@ class _SidebarMetrics {
 }
 
 class Sidebar extends StatelessWidget {
-  final int selectedIndex;
-  final Function(int) onItemSelected;
+  final AppDestination selectedDestination;
+  final ValueChanged<AppDestination> onDestinationSelected;
 
   const Sidebar({
     super.key,
-    required this.selectedIndex,
-    required this.onItemSelected,
+    required this.selectedDestination,
+    required this.onDestinationSelected,
   });
 
   @override
@@ -56,20 +56,20 @@ class Sidebar extends StatelessWidget {
 
           _buildSectionTitle("媒体库", context),
           _buildGroup([
-            _ItemConfig(AppIcons.libraryHome, "首页", 0),
-            _ItemConfig(AppIcons.movies, "电影", 1),
-            _ItemConfig(AppIcons.series, "剧集", 2),
+            AppDestination.home,
+            AppDestination.movies,
+            AppDestination.series,
           ]),
 
           const SizedBox(height: _SidebarMetrics.sectionGap),
 
           _buildSectionTitle("来源", context),
-          _buildGroup([_ItemConfig(AppIcons.fileBrowser, "文件浏览", 3)]),
+          _buildGroup([AppDestination.fileBrowser]),
 
           const SizedBox(height: _SidebarMetrics.sectionGap),
 
           _buildSectionTitle("列表", context),
-          _buildGroup([_ItemConfig(AppIcons.favorites, "收藏", 4)]),
+          _buildGroup([AppDestination.favorites]),
 
           const Spacer(),
           Divider(height: 1, color: theme.dividerColor),
@@ -79,11 +79,9 @@ class Sidebar extends StatelessWidget {
               horizontal: _SidebarMetrics.horizontalInset,
             ),
             child: _SidebarItem(
-              icon: AppIcons.settings,
-              title: "设置",
-              index: 5,
-              selectedIndex: selectedIndex,
-              onTap: onItemSelected,
+              destination: AppDestination.settings,
+              selectedDestination: selectedDestination,
+              onTap: onDestinationSelected,
             ),
           ),
           const SizedBox(height: 20),
@@ -109,20 +107,18 @@ class Sidebar extends StatelessWidget {
     );
   }
 
-  Widget _buildGroup(List<_ItemConfig> items) {
+  Widget _buildGroup(List<AppDestination> destinations) {
     return Column(
-      children: items.map((item) {
+      children: destinations.map((destination) {
         return Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: _SidebarMetrics.horizontalInset,
             vertical: _SidebarMetrics.itemVerticalGap,
           ),
           child: _SidebarItem(
-            icon: item.icon,
-            title: item.title,
-            index: item.index,
-            selectedIndex: selectedIndex,
-            onTap: onItemSelected,
+            destination: destination,
+            selectedDestination: selectedDestination,
+            onTap: onDestinationSelected,
           ),
         );
       }).toList(),
@@ -130,40 +126,28 @@ class Sidebar extends StatelessWidget {
   }
 }
 
-class _ItemConfig {
-  final IconData icon;
-  final String title;
-  final int index;
-
-  _ItemConfig(this.icon, this.title, this.index);
-}
-
 class _SidebarItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final int index;
-  final int selectedIndex;
-  final Function(int) onTap;
+  final AppDestination destination;
+  final AppDestination selectedDestination;
+  final ValueChanged<AppDestination> onTap;
 
   const _SidebarItem({
-    required this.icon,
-    required this.title,
-    required this.index,
-    required this.selectedIndex,
+    required this.destination,
+    required this.selectedDestination,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isSelected = selectedIndex == index;
+    final isSelected = selectedDestination == destination;
     final primary = AppColors.primary(context);
     final selectedBackground = AppColors.selectedSurface(context);
     final restingForeground = theme.textTheme.titleMedium!.color!;
     final foregroundColor = isSelected ? primary : restingForeground;
 
     return AppClickableArea(
-      onTap: () => onTap(index),
+      onTap: () => onTap(destination),
       height: _SidebarMetrics.itemHeight,
       padding: const EdgeInsets.symmetric(
         horizontal: _SidebarMetrics.itemHorizontalPadding,
@@ -176,13 +160,13 @@ class _SidebarItem extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            icon,
+            destination.icon,
             size: _SidebarMetrics.itemIconSize,
             color: foregroundColor,
           ),
           const SizedBox(width: _SidebarMetrics.itemIconLabelGap),
           Text(
-            title,
+            destination.title,
             style: TextStyle(
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,

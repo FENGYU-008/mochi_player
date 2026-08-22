@@ -9,59 +9,18 @@ import 'package:mochi_player/features/library/presentation/widgets/library_item_
 /// Section 类型
 enum LibrarySection { continueWatching, movies, tvShows, recentlyAdded }
 
-typedef OpenLibrarySection = void Function(LibrarySection section);
-
 void openLibrarySectionPage(BuildContext context, LibrarySection section) {
-  final scope = LibrarySectionNavigationScope.maybeOf(context);
-  if (scope != null) {
-    scope.openLibrarySection(section);
-    return;
-  }
-
   Navigator.of(context).push(
-    MaterialPageRoute<void>(
+    AppPageRoute<void>(
       builder: (context) => LibrarySectionPage(section: section),
     ),
   );
 }
 
-class LibrarySectionNavigationScope extends InheritedWidget {
-  final OpenLibrarySection openLibrarySection;
-
-  const LibrarySectionNavigationScope({
-    super.key,
-    required this.openLibrarySection,
-    required super.child,
-  });
-
-  static LibrarySectionNavigationScope? maybeOf(BuildContext context) {
-    final widget = context
-        .getElementForInheritedWidgetOfExactType<
-          LibrarySectionNavigationScope
-        >()
-        ?.widget;
-    return widget is LibrarySectionNavigationScope ? widget : null;
-  }
-
-  @override
-  bool updateShouldNotify(LibrarySectionNavigationScope oldWidget) {
-    return openLibrarySection != oldWidget.openLibrarySection;
-  }
-}
-
 class LibrarySectionPage extends StatefulWidget {
   final LibrarySection section;
-  final VoidCallback? onBack;
-  final double initialScrollOffset;
-  final ValueChanged<double>? onScrollOffsetChanged;
 
-  const LibrarySectionPage({
-    super.key,
-    required this.section,
-    this.onBack,
-    this.initialScrollOffset = 0,
-    this.onScrollOffsetChanged,
-  });
+  const LibrarySectionPage({super.key, required this.section});
 
   @override
   State<LibrarySectionPage> createState() => _LibrarySectionPageState();
@@ -73,27 +32,13 @@ class _LibrarySectionPageState extends State<LibrarySectionPage> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController(
-      initialScrollOffset: widget.initialScrollOffset,
-    );
-    _scrollController.addListener(_onScroll);
+    _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
-    _saveScrollOffset();
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _onScroll() {
-    _saveScrollOffset();
-  }
-
-  void _saveScrollOffset() {
-    if (!_scrollController.hasClients) return;
-    widget.onScrollOffsetChanged?.call(_scrollController.offset);
   }
 
   @override
@@ -116,7 +61,6 @@ class _LibrarySectionPageState extends State<LibrarySectionPage> {
             child: AppHeader(
               title: _sectionTitle(widget.section),
               showBackButton: true,
-              onBack: widget.onBack,
             ),
           ),
         ],

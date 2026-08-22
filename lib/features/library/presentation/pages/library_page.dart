@@ -5,17 +5,12 @@ import 'package:mochi_player/features/library/presentation/pages/media_detail_pa
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/presentation/widgets/library_item_poster_card.dart';
 
-class LibraryPage extends StatefulWidget {
-  final String category;
-  final double initialScrollOffset;
-  final ValueChanged<double>? onScrollOffsetChanged;
+enum LibraryCategory { movies, series, favorites }
 
-  const LibraryPage({
-    super.key,
-    required this.category,
-    this.initialScrollOffset = 0,
-    this.onScrollOffsetChanged,
-  });
+class LibraryPage extends StatefulWidget {
+  final LibraryCategory category;
+
+  const LibraryPage({super.key, required this.category});
 
   @override
   State<LibraryPage> createState() => _LibraryPageState();
@@ -27,23 +22,13 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController(
-      initialScrollOffset: widget.initialScrollOffset,
-    );
-    _scrollController.addListener(_saveScrollOffset);
+    _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
-    _saveScrollOffset();
-    _scrollController.removeListener(_saveScrollOffset);
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _saveScrollOffset() {
-    if (!_scrollController.hasClients) return;
-    widget.onScrollOffsetChanged?.call(_scrollController.offset);
   }
 
   @override
@@ -65,40 +50,26 @@ class _LibraryPageState extends State<LibraryPage> {
 
         final provider = context.read<MediaLibraryProvider>();
 
-        // 根据 category 选择显示内容
-        Widget content;
-        switch (widget.category) {
-          case 'Movies':
-            content = _buildMovieGrid(context, provider);
-            break;
-          case 'TV Shows':
-            content = _buildTVShowGrid(context, provider);
-            break;
-          case 'Favorites':
-            content = _buildFavoritesGrid(context, provider);
-            break;
-          default:
-            content = _buildUncategorizedGrid(context, provider);
-        }
-
-        return content;
+        return switch (widget.category) {
+          LibraryCategory.movies => _buildMovieGrid(context, provider),
+          LibraryCategory.series => _buildTVShowGrid(context, provider),
+          LibraryCategory.favorites => _buildFavoritesGrid(context, provider),
+        };
       },
     );
   }
 
   int _contentRevisionFor(MediaLibraryProvider provider) {
     switch (widget.category) {
-      case 'Movies':
-      case 'TV Shows':
+      case LibraryCategory.movies:
+      case LibraryCategory.series:
         return provider.metadataRevision;
-      case 'Favorites':
+      case LibraryCategory.favorites:
         return Object.hash(
           provider.mediaCatalogRevision,
           provider.metadataRevision,
           provider.favoriteRevision,
         );
-      default:
-        return provider.mediaCatalogRevision;
     }
   }
 
@@ -165,33 +136,6 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildUncategorizedGrid(
-    BuildContext context,
-    MediaLibraryProvider provider,
-  ) {
-    final items = provider.uncategorized;
-
-    if (items.isEmpty) {
-      return _buildEmptyState('未分类资源');
-    }
-
-    return _buildGridView(
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final file = items[index];
-        return MediaPosterCard(
-          title: file.parsedTitle,
-          subtitle: file.parsedYear?.toString(),
-          posterUrl: null,
-          rating: 0.0,
-          tmdbId: null,
-          cardType: MediaCardType.poster,
-          onTap: () {},
-        );
-      },
-    );
-  }
-
   Widget _buildGridView({
     required int itemCount,
     required Widget Function(BuildContext, int) itemBuilder,
@@ -206,7 +150,7 @@ class _LibraryPageState extends State<LibraryPage> {
         if (crossAxisCount < 3) crossAxisCount = 3;
 
         return GridView.builder(
-          key: PageStorageKey<String>('library-${widget.category}'),
+          key: PageStorageKey<String>('library-${widget.category.name}'),
           controller: _scrollController,
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.page,

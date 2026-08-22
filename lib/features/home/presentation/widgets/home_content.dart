@@ -13,25 +13,9 @@ import 'package:mochi_player/features/home/presentation/widgets/hero_section.dar
 import 'package:mochi_player/features/home/presentation/widgets/trending_category_card.dart';
 
 class HomeContent extends StatefulWidget {
-  /// 回调函数，用于通知父组件滚动偏移量
   final void Function(double offset)? onScroll;
-  final double initialScrollOffset;
-  final double initialContinueWatchingOffset;
-  final double initialRecentlyAddedOffset;
-  final ValueChanged<double>? onScrollOffsetChanged;
-  final ValueChanged<double>? onContinueWatchingOffsetChanged;
-  final ValueChanged<double>? onRecentlyAddedOffsetChanged;
 
-  const HomeContent({
-    super.key,
-    this.onScroll,
-    this.initialScrollOffset = 0,
-    this.initialContinueWatchingOffset = 0,
-    this.initialRecentlyAddedOffset = 0,
-    this.onScrollOffsetChanged,
-    this.onContinueWatchingOffsetChanged,
-    this.onRecentlyAddedOffsetChanged,
-  });
+  const HomeContent({super.key, this.onScroll});
 
   @override
   State<HomeContent> createState() => _HomeContentState();
@@ -45,50 +29,21 @@ class _HomeContentState extends State<HomeContent> {
   @override
   void initState() {
     super.initState();
-    _mainScrollController = ScrollController(
-      initialScrollOffset: widget.initialScrollOffset,
-    );
-    _continueWatchingCtrl = ScrollController(
-      initialScrollOffset: widget.initialContinueWatchingOffset,
-    );
-    _recentlyAddedCtrl = ScrollController(
-      initialScrollOffset: widget.initialRecentlyAddedOffset,
-    );
+    _mainScrollController = ScrollController();
+    _continueWatchingCtrl = ScrollController();
+    _recentlyAddedCtrl = ScrollController();
     _mainScrollController.addListener(_onScroll);
-    _continueWatchingCtrl.addListener(_onContinueWatchingScroll);
-    _recentlyAddedCtrl.addListener(_onRecentlyAddedScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onScroll());
   }
 
   void _onScroll() {
     if (!_mainScrollController.hasClients) return;
-    final offset = _mainScrollController.offset;
-    widget.onScroll?.call(offset);
-    widget.onScrollOffsetChanged?.call(offset);
-  }
-
-  void _saveMainScrollOffset() {
-    if (!_mainScrollController.hasClients) return;
-    widget.onScrollOffsetChanged?.call(_mainScrollController.offset);
-  }
-
-  void _onContinueWatchingScroll() {
-    if (!_continueWatchingCtrl.hasClients) return;
-    widget.onContinueWatchingOffsetChanged?.call(_continueWatchingCtrl.offset);
-  }
-
-  void _onRecentlyAddedScroll() {
-    if (!_recentlyAddedCtrl.hasClients) return;
-    widget.onRecentlyAddedOffsetChanged?.call(_recentlyAddedCtrl.offset);
+    widget.onScroll?.call(_mainScrollController.offset);
   }
 
   @override
   void dispose() {
-    _saveMainScrollOffset();
-    _onContinueWatchingScroll();
-    _onRecentlyAddedScroll();
     _mainScrollController.removeListener(_onScroll);
-    _continueWatchingCtrl.removeListener(_onContinueWatchingScroll);
-    _recentlyAddedCtrl.removeListener(_onRecentlyAddedScroll);
     _mainScrollController.dispose();
     _continueWatchingCtrl.dispose();
     _recentlyAddedCtrl.dispose();
@@ -118,6 +73,7 @@ class _HomeContentState extends State<HomeContent> {
         }
 
         return CustomScrollView(
+          key: const PageStorageKey('home-main-scroll'),
           controller: _mainScrollController,
           slivers: [
             // Hero Section (无 padding，直接到顶部)
@@ -292,6 +248,7 @@ class _HomeContentState extends State<HomeContent> {
         controller: _continueWatchingCtrl,
         bottomPadding: textSectionHeight,
         child: ListView.builder(
+          key: const PageStorageKey('home-continue-watching-scroll'),
           controller: _continueWatchingCtrl,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
           scrollDirection: Axis.horizontal,
@@ -322,6 +279,7 @@ class _HomeContentState extends State<HomeContent> {
         controller: _recentlyAddedCtrl,
         bottomPadding: textSectionHeight,
         child: ListView.builder(
+          key: const PageStorageKey('home-recently-added-scroll'),
           controller: _recentlyAddedCtrl,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
           scrollDirection: Axis.horizontal,

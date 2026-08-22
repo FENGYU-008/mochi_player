@@ -127,8 +127,7 @@ class PlaybackLauncher {
 
     final playerUrl = directLink;
     if (playerUrl != null) {
-      Navigator.push(
-        context,
+      Navigator.of(context, rootNavigator: true).push(
         MaterialPageRoute(
           builder: (context) => PlayerPage(
             videoItem: file,
@@ -159,6 +158,7 @@ class PlaybackLauncher {
   ) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         final theme = Theme.of(sheetContext);

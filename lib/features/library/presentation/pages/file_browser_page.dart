@@ -181,6 +181,9 @@ class _FileBrowserBody extends StatelessWidget {
       children: [
         Expanded(
           child: GridView.builder(
+            key: PageStorageKey<String>(
+              'file-browser-grid:${state.currentPath}',
+            ),
             padding: EdgeInsets.zero,
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 138,
@@ -207,28 +210,14 @@ class _FileBrowserBody extends StatelessWidget {
   }
 
   Widget _buildList() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const summarySpace = 34.0;
-        final naturalHeight =
-            FileBrowserList.headerHeight +
-            state.items.length * FileBrowserList.rowHeight;
-        final surfaceHeight = naturalHeight.clamp(
-          0.0,
-          constraints.maxHeight - summarySpace,
-        );
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: surfaceHeight,
-              child: FileBrowserList(items: state.items, onItemTap: onItemTap),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _buildSummary(),
-          ],
-        );
-      },
+    return FileBrowserListSection(
+      items: state.items,
+      totalItemCount: state.totalItemCount,
+      isFiltered: state.hasSearchQuery,
+      onItemTap: onItemTap,
+      scrollStorageKey: PageStorageKey<String>(
+        'file-browser-list:${state.currentPath}',
+      ),
     );
   }
 

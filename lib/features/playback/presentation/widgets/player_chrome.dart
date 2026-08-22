@@ -32,6 +32,13 @@ class PlayerChromeLayout {
   }
 }
 
+/// Shared glass material for every floating control in the player.
+abstract final class PlayerChromeGlass {
+  static const background = Color(0x52000000);
+  static const border = Color(0x2EFFFFFF);
+  static const blur = 18.0;
+}
+
 /// 根据当前播放器视口缩放 Mochi 字幕字号。
 abstract final class PlayerSubtitleSizing {
   static const Size _referenceViewport = Size(1200, 700);
@@ -155,89 +162,86 @@ class PlayerTopBar extends StatelessWidget {
 
     return SizedBox(
       height: PlayerChromeLayout.topBarHeight,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xC9000000), Color(0x82000000), Color(0x00000000)],
-            stops: [0, 0.72, 1],
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: leftInset,
+            right: AppSpacing.xxl,
+            top: AppSpacing.sm,
           ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: leftInset,
-              right: AppSpacing.xxl,
-              top: AppSpacing.sm,
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _PlayerBackButton(onPressed: onBack),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 9),
-                    child: Row(
-                      children: [
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _PlayerBackButton(onPressed: onBack),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 9),
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            height: 1.2,
+                            fontWeight: FontWeight.w600,
+                            shadows: _topBarTextShadows,
+                          ),
+                        ),
+                      ),
+                      if (secondaryTitle case final value?
+                          when value.isNotEmpty) ...[
+                        const SizedBox(width: AppSpacing.md),
                         Flexible(
                           child: Text(
-                            title,
+                            value,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
+                              color: Colors.white70,
+                              fontSize: 13,
                               height: 1.2,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w500,
+                              shadows: _topBarTextShadows,
                             ),
                           ),
                         ),
-                        if (secondaryTitle case final value?
-                            when value.isNotEmpty) ...[
-                          const SizedBox(width: AppSpacing.md),
-                          Flexible(
-                            child: Text(
-                              value,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 13,
-                                height: 1.2,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
-                    ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: AppSpacing.xxl),
-                Padding(
-                  padding: const EdgeInsets.only(top: 9),
-                  child: Text(
-                    systemTime,
-                    key: const ValueKey('player-system-time'),
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 13,
-                      height: 1.2,
-                      fontFeatures: [FontFeature.tabularFigures()],
-                    ),
+              ),
+              const SizedBox(width: AppSpacing.xxl),
+              Padding(
+                padding: const EdgeInsets.only(top: 9),
+                child: Text(
+                  systemTime,
+                  key: const ValueKey('player-system-time'),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    height: 1.2,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                    shadows: _topBarTextShadows,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
+
+const _topBarTextShadows = [
+  Shadow(color: Color(0xB3000000), blurRadius: 8, offset: Offset(0, 1)),
+];
 
 class _PlayerBackButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -253,9 +257,9 @@ class _PlayerBackButton extends StatelessWidget {
       height: PlayerChromeLayout.topButtonHeight,
       child: AppGlassSurface(
         borderRadius: radius,
-        color: const Color(0x52000000),
-        borderColor: const Color(0x2EFFFFFF),
-        blur: 18,
+        color: PlayerChromeGlass.background,
+        borderColor: PlayerChromeGlass.border,
+        blur: PlayerChromeGlass.blur,
         child: AppClickableArea(
           onTap: onPressed,
           borderRadius: radius,
@@ -358,9 +362,9 @@ class _PlayerBottomControlBarState extends State<PlayerBottomControlBar> {
                   borderRadius: const BorderRadius.all(
                     Radius.circular(AppRadii.large),
                   ),
-                  color: const Color(0x80000000),
-                  borderColor: const Color(0x1AFFFFFF),
-                  blur: 16,
+                  color: PlayerChromeGlass.background,
+                  borderColor: PlayerChromeGlass.border,
+                  blur: PlayerChromeGlass.blur,
                   child: Stack(
                     children: [
                       Positioned.fill(
@@ -426,9 +430,9 @@ class PlayerMiniControls extends StatelessWidget {
     return AppGlassSurface(
       key: const ValueKey('player-mini-controls'),
       borderRadius: const BorderRadius.all(Radius.circular(AppRadii.full)),
-      color: const Color(0x70000000),
-      borderColor: const Color(0x1FFFFFFF),
-      blur: 14,
+      color: PlayerChromeGlass.background,
+      borderColor: PlayerChromeGlass.border,
+      blur: PlayerChromeGlass.blur,
       padding: const EdgeInsets.all(3),
       child: Row(
         mainAxisSize: MainAxisSize.min,

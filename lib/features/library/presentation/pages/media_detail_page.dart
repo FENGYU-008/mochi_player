@@ -10,47 +10,16 @@ import 'package:mochi_player/features/playback/presentation/playback_launcher.da
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
-typedef OpenMediaDetail = void Function(LibraryItem item);
-
 void openMediaDetailPage(BuildContext context, LibraryItem item) {
-  final scope = MediaDetailNavigationScope.maybeOf(context);
-  if (scope != null) {
-    scope.openMediaDetail(item);
-    return;
-  }
-
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(builder: (context) => MediaDetailPage(item: item)),
-  );
-}
-
-class MediaDetailNavigationScope extends InheritedWidget {
-  final OpenMediaDetail openMediaDetail;
-
-  const MediaDetailNavigationScope({
-    super.key,
-    required this.openMediaDetail,
-    required super.child,
-  });
-
-  static MediaDetailNavigationScope? maybeOf(BuildContext context) {
-    final widget = context
-        .getElementForInheritedWidgetOfExactType<MediaDetailNavigationScope>()
-        ?.widget;
-    return widget is MediaDetailNavigationScope ? widget : null;
-  }
-
-  @override
-  bool updateShouldNotify(MediaDetailNavigationScope oldWidget) {
-    return openMediaDetail != oldWidget.openMediaDetail;
-  }
+  Navigator.of(
+    context,
+  ).push(AppPageRoute<void>(builder: (context) => MediaDetailPage(item: item)));
 }
 
 class MediaDetailPage extends StatelessWidget {
   final LibraryItem item;
-  final VoidCallback? onBack;
 
-  const MediaDetailPage({super.key, required this.item, this.onBack});
+  const MediaDetailPage({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +34,7 @@ class MediaDetailPage extends StatelessWidget {
             left: 0,
             right: 0,
             height: AppHeader.height,
-            child: AppHeader(
-              title: viewModel.title,
-              showBackButton: true,
-              onBack: onBack,
-            ),
+            child: AppHeader(title: viewModel.title, showBackButton: true),
           ),
         ],
       ),

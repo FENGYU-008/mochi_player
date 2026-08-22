@@ -43,6 +43,9 @@ void main() {
         glass.borderRadius,
         const BorderRadius.all(Radius.circular(AppRadii.control)),
       );
+      expect(glass.color, PlayerChromeGlass.background);
+      expect(glass.borderColor, PlayerChromeGlass.border);
+      expect(glass.blur, PlayerChromeGlass.blur);
     } finally {
       await tester.pumpWidget(const SizedBox.shrink());
       debugDefaultTargetPlatformOverride = null;
@@ -108,8 +111,9 @@ void main() {
       expect(tester.getSize(panel).height, 64);
       expect(tester.getBottomRight(panel).dy, 700 - AppSpacing.md);
       final glass = tester.widget<AppGlassSurface>(panel);
-      expect(glass.color, const Color(0x80000000));
-      expect(glass.blur, 16);
+      expect(glass.color, PlayerChromeGlass.background);
+      expect(glass.borderColor, PlayerChromeGlass.border);
+      expect(glass.blur, PlayerChromeGlass.blur);
       expect(
         tester.getTopLeft(find.byKey(const ValueKey('progress'))).dy,
         lessThan(tester.getTopLeft(find.byKey(const ValueKey('controls'))).dy),

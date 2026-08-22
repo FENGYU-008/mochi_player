@@ -10,11 +10,13 @@ class FileBrowserList extends StatelessWidget {
 
   final List<FileBrowserEntry> items;
   final ValueChanged<FileBrowserEntry> onItemTap;
+  final PageStorageKey<String> scrollStorageKey;
 
   const FileBrowserList({
     super.key,
     required this.items,
     required this.onItemTap,
+    required this.scrollStorageKey,
   });
 
   @override
@@ -32,6 +34,7 @@ class FileBrowserList extends StatelessWidget {
           Divider(height: 1, color: AppColors.separator(context)),
           Expanded(
             child: ListView.separated(
+              key: scrollStorageKey,
               padding: EdgeInsets.zero,
               itemCount: items.length,
               separatorBuilder: (context, index) => Divider(
@@ -56,6 +59,71 @@ class FileBrowserList extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class FileBrowserListSection extends StatelessWidget {
+  static const double _summarySpace = 34;
+  static const double _minimumListHeight =
+      _summarySpace + FileBrowserList.headerHeight;
+
+  final List<FileBrowserEntry> items;
+  final int totalItemCount;
+  final bool isFiltered;
+  final ValueChanged<FileBrowserEntry> onItemTap;
+  final PageStorageKey<String> scrollStorageKey;
+
+  const FileBrowserListSection({
+    super.key,
+    required this.items,
+    required this.totalItemCount,
+    required this.isFiltered,
+    required this.onItemTap,
+    required this.scrollStorageKey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final naturalHeight =
+        FileBrowserList.headerHeight + items.length * FileBrowserList.rowHeight;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxHeight < _summarySpace) {
+          return const SizedBox.shrink();
+        }
+        if (constraints.maxHeight < _minimumListHeight) {
+          return FileBrowserSummary(
+            items: items,
+            totalItemCount: totalItemCount,
+            isFiltered: isFiltered,
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              fit: FlexFit.loose,
+              child: SizedBox(
+                height: naturalHeight,
+                child: FileBrowserList(
+                  items: items,
+                  onItemTap: onItemTap,
+                  scrollStorageKey: scrollStorageKey,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            FileBrowserSummary(
+              items: items,
+              totalItemCount: totalItemCount,
+              isFiltered: isFiltered,
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -844,9 +844,6 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   }
 
   Future<void> _togglePlayerFullScreen() async {
-    await Future.delayed(const Duration(milliseconds: 120));
-    if (_isDisposed) return;
-
     if (_isMiniPlayer) {
       await _exitMiniPlayer();
       if (_isDisposed) return;
@@ -957,6 +954,10 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
   Future<void> _enterPlayerFullScreen() async {
     if (_isDisposed) return;
 
+    if (mounted && !_isFullScreen) {
+      setState(() => _isFullScreen = true);
+    }
+
     await _ensureInitialWindowFullScreenCaptured();
     if (_isDisposed) return;
 
@@ -969,27 +970,22 @@ class _PlayerPageState extends State<PlayerPage> with WindowListener {
     } else {
       _playerUsedWindowFullScreen = false;
     }
-
-    if (!mounted) return;
-    setState(() {
-      _isFullScreen = true;
-    });
   }
 
   Future<void> _exitPlayerFullScreen({bool updateState = true}) async {
+    _isFullScreen = false;
+    if (updateState && mounted) {
+      setState(() {});
+    }
+
     await _ensureInitialWindowFullScreenCaptured();
     final shouldRestoreWindow =
         _playerUsedWindowFullScreen && !_windowWasFullScreenOnOpen;
 
     _playerUsedWindowFullScreen = false;
 
-    if (shouldRestoreWindow && await windowManager.isFullScreen()) {
+    if (shouldRestoreWindow) {
       await windowManager.setFullScreen(false);
-    }
-
-    _isFullScreen = false;
-    if (updateState && mounted) {
-      setState(() {});
     }
   }
 
