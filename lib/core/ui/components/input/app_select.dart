@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mochi_player/core/ui/components/overlays/app_menu_button.dart';
+import 'package:mochi_player/core/ui/components/overlay/app_menu_button.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_icons.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/core/ui/components/forms/app_form_row.dart';
-import 'package:mochi_player/core/ui/components/forms/app_slider.dart';
+import 'package:mochi_player/core/ui/components/input/app_form_row.dart';
+import 'package:mochi_player/core/ui/components/input/app_slider.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_typography.dart';

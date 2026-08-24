@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mochi_player/core/ui/components/overlays/app_popup_menu.dart';
+import 'package:mochi_player/core/ui/components/overlay/app_popup_menu.dart';
 
 /// Compact text-editing menu shared by the application's text fields.
 class AppTextContextMenu extends StatelessWidget {

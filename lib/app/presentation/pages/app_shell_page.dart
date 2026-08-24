@@ -55,34 +55,39 @@ class _AppShellPageState extends State<AppShellPage> {
             onDestinationSelected: _selectDestination,
           ),
           Expanded(
-            child: ColoredBox(
-              color: theme.scaffoldBackgroundColor,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Positioned.fill(child: widget.navigationShell),
-                  Selector<MediaLibraryProvider, _LibraryActivityState>(
-                    selector: (context, provider) => _LibraryActivityState(
-                      message: provider.libraryActivityMessage,
-                      progress: provider.scrapeProgress,
-                    ),
-                    builder: (context, activity, child) {
-                      final message = activity.message;
-                      if (message == null) return const SizedBox.shrink();
+            child: AppMessageHost(
+              top: AppHeader.height + AppSpacing.sm,
+              child: ColoredBox(
+                color: theme.scaffoldBackgroundColor,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Positioned.fill(child: widget.navigationShell),
+                    Selector<MediaLibraryProvider, _LibraryActivityState>(
+                      selector: (context, provider) => _LibraryActivityState(
+                        message: provider.libraryActivityMessage,
+                        progress: provider.scrapeProgress,
+                      ),
+                      builder: (context, activity, child) {
+                        final message = activity.message;
+                        if (message == null) return const SizedBox.shrink();
 
-                      return Positioned(
-                        top: AppHeader.height + 10,
-                        left: AppSpacing.page,
-                        right: AppSpacing.page,
-                        child: AppActivityBanner(
-                          message: message,
-                          progress: activity.progress,
-                          tone: AppActivityBannerTone.progress,
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                        return Positioned(
+                          top: AppHeader.height + 10,
+                          left: AppSpacing.page,
+                          right: AppSpacing.page,
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: AppProgressNotice(
+                              message: message,
+                              progress: activity.progress,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

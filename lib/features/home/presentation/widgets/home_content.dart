@@ -72,9 +72,10 @@ class _HomeContentState extends State<HomeContent> {
         }
 
         if (!shellState.hasHomeContent) {
-          return const AppEmptyState(
+          return const AppResult(
+            status: AppResultStatus.empty,
             title: '媒体库为空',
-            description: '请先扫描媒体库以发现资源',
+            subtitle: '请先扫描媒体库以发现资源',
           );
         }
 
@@ -202,7 +203,11 @@ class _HomeContentState extends State<HomeContent> {
           widget.searchQuery,
         );
         if (items.isEmpty) {
-          return const AppEmptyState(title: '没有匹配的媒体', description: '请尝试其他关键词');
+          return const AppResult(
+            status: AppResultStatus.empty,
+            title: '没有匹配的媒体',
+            subtitle: '请尝试其他关键词',
+          );
         }
 
         return MediaPosterGrid<LibraryItem>(

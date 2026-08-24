@@ -38,12 +38,9 @@ class _SettingsPageState extends State<SettingsPage> {
       AppSettings.defaultEnableHardwareAcceleration;
   double _subtitleFontSize = AppSettings.defaultSubtitleFontSize;
   Timer? _saveDebounce;
-  Timer? _feedbackTimer;
   bool _autoSaveInFlight = false;
   bool _autoSavePending = false;
   bool _runtimeApplyPending = false;
-  String? _feedbackMessage;
-  AppActivityBannerTone? _feedbackTone;
 
   List<TextEditingController> get _settingsControllers => [
     _webDavUrlController,
@@ -73,7 +70,6 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void dispose() {
     _saveDebounce?.cancel();
-    _feedbackTimer?.cancel();
     for (final controller in _settingsControllers) {
       controller.removeListener(_scheduleAutoSave);
     }
@@ -135,39 +131,6 @@ class _SettingsPageState extends State<SettingsPage> {
             right: 0,
             height: AppHeader.height,
             child: AppHeader(title: '设置', showSearch: false),
-          ),
-          Positioned(
-            left: AppSpacing.page,
-            right: AppSpacing.page,
-            top: AppHeader.height + AppSpacing.sm,
-            child: IgnorePointer(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                transitionBuilder: (child, animation) {
-                  final offset =
-                      Tween<Offset>(
-                        begin: const Offset(0, 0.16),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutCubic,
-                        ),
-                      );
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(position: offset, child: child),
-                  );
-                },
-                child: _feedbackMessage == null
-                    ? const SizedBox.shrink(key: ValueKey('no-feedback'))
-                    : AppActivityBanner(
-                        key: ValueKey(_feedbackMessage),
-                        message: _feedbackMessage!,
-                        tone: _feedbackTone ?? AppActivityBannerTone.info,
-                      ),
-              ),
-            ),
           ),
         ],
       ),
@@ -475,27 +438,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  void _showFeedback(
-    String message,
-    AppActivityBannerTone tone, {
-    Duration duration = const Duration(seconds: 3),
-  }) {
-    if (!mounted) return;
-
-    _feedbackTimer?.cancel();
-    setState(() {
-      _feedbackMessage = message;
-      _feedbackTone = tone;
-    });
-    _feedbackTimer = Timer(duration, () {
-      if (!mounted) return;
-      setState(() {
-        _feedbackMessage = null;
-        _feedbackTone = null;
-      });
-    });
-  }
-
   Future<void> _testWebDavConnection() async {
     final didSave = await _persistSettings(applyRuntime: true);
     if (!didSave || !mounted) return;
@@ -504,10 +446,11 @@ class _SettingsPageState extends State<SettingsPage> {
     final isConnected = await settingsProvider.testWebDavConnection();
     if (!mounted) return;
 
-    _showFeedback(
-      isConnected ? 'OpenList WebDAV 连接成功' : 'OpenList WebDAV 连接失败',
-      isConnected ? AppActivityBannerTone.success : AppActivityBannerTone.error,
-    );
+    if (isConnected) {
+      AppMessage.success('OpenList WebDAV 连接成功');
+    } else {
+      AppMessage.error('OpenList WebDAV 连接失败');
+    }
   }
 
   Future<void> _testTmdbConnection() async {
@@ -518,14 +461,15 @@ class _SettingsPageState extends State<SettingsPage> {
     final isConnected = await settingsProvider.testTmdbConnection();
     if (!mounted) return;
 
-    _showFeedback(
-      isConnected ? 'TMDB 连接成功' : 'TMDB 连接失败',
-      isConnected ? AppActivityBannerTone.success : AppActivityBannerTone.error,
-    );
+    if (isConnected) {
+      AppMessage.success('TMDB 连接成功');
+    } else {
+      AppMessage.error('TMDB 连接失败');
+    }
   }
 
   Future<void> _confirmRescrapeLibrary() async {
-    final confirmed = await showAppConfirmDialog(
+    final confirmed = await AppModal.confirm(
       context: context,
       title: '补全媒体库元数据？',
       message:
@@ -543,7 +487,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final mediaLibraryProvider = context.read<MediaLibraryProvider>();
 
     if (!settingsProvider.hasTmdbApiKey) {
-      _showFeedback('补全元数据前请先设置 TMDB API 密钥', AppActivityBannerTone.error);
+      AppMessage.error('补全元数据前请先设置 TMDB API 密钥');
       return;
     }
 
@@ -551,16 +495,15 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
 
     final error = mediaLibraryProvider.error;
-    _showFeedback(
-      error ?? '已从 WebDAV 根目录补全媒体库元数据',
-      error == null
-          ? AppActivityBannerTone.success
-          : AppActivityBannerTone.error,
-    );
+    if (error == null) {
+      AppMessage.success('已从 WebDAV 根目录补全媒体库元数据');
+    } else {
+      AppMessage.error(error);
+    }
   }
 
   Future<void> _confirmClearLibrary() async {
-    final confirmed = await showAppConfirmDialog(
+    final confirmed = await AppModal.confirm(
       context: context,
       title: '清空媒体库？',
       message: '这会清空本地扫描文件、元数据、播放进度和收藏，不会删除 WebDAV 上的文件。',
@@ -576,7 +519,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await mediaLibraryProvider.clearLibrary();
     if (!mounted) return;
 
-    _showFeedback('媒体库已清空', AppActivityBannerTone.success);
+    AppMessage.success('媒体库已清空');
   }
 
   Future<bool> _persistSettings({
@@ -610,7 +553,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final error = settingsProvider.error;
     if (error != null) {
-      _showFeedback(error, AppActivityBannerTone.error);
+      AppMessage.error(error);
       return false;
     }
 

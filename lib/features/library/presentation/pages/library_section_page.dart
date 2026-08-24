@@ -90,7 +90,11 @@ class _SectionPageContent extends StatelessWidget {
         }
 
         if (snapshot.error != null) {
-          return AppErrorState(message: '错误：${snapshot.error}');
+          return AppResult(
+            status: AppResultStatus.error,
+            title: '内容加载失败',
+            subtitle: snapshot.error,
+          );
         }
 
         final provider = context.read<MediaLibraryProvider>();
@@ -119,7 +123,11 @@ class _SectionPageContent extends StatelessWidget {
   Widget _buildSection<T>(List<T> items, Widget Function(T item) itemBuilder) {
     if (items.isEmpty) {
       final title = _sectionTitle(section);
-      return AppEmptyState(title: '$title为空', description: '请先扫描媒体库以发现资源');
+      return AppResult(
+        status: AppResultStatus.empty,
+        title: '$title为空',
+        subtitle: '请先扫描媒体库以发现资源',
+      );
     }
 
     return _buildGrid(items, itemBuilder);

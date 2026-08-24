@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/core/ui/components/forms/app_form_row.dart';
-import 'package:mochi_player/core/ui/components/forms/app_switch.dart';
+import 'package:mochi_player/core/ui/components/input/app_form_row.dart';
+import 'package:mochi_player/core/ui/components/input/app_switch.dart';
 
 class AppFormSwitchRow extends StatelessWidget {
   final String title;

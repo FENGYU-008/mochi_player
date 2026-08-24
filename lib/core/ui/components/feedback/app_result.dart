@@ -1,0 +1,120 @@
+import 'package:flutter/material.dart';
+
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:mochi_player/core/ui/theme/app_radii.dart';
+import 'package:mochi_player/core/ui/theme/app_spacing.dart';
+
+enum AppResultStatus { empty, info, error }
+
+class AppResult extends StatelessWidget {
+  final AppResultStatus status;
+  final String title;
+  final String? subtitle;
+  final Widget? icon;
+  final Widget? extra;
+
+  const AppResult({
+    super.key,
+    required this.status,
+    required this.title,
+    this.subtitle,
+    this.icon,
+    this.extra,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final appearance = _ResultAppearance.resolve(context, status);
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              icon ?? _DefaultResultIcon(appearance: appearance),
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.textPrimary(context),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  subtitle!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textSecondary(context),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    height: 1.55,
+                  ),
+                ),
+              ],
+              if (extra != null) ...[
+                const SizedBox(height: AppSpacing.xl),
+                extra!,
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DefaultResultIcon extends StatelessWidget {
+  final _ResultAppearance appearance;
+
+  const _DefaultResultIcon({required this.appearance});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 68,
+      height: 68,
+      decoration: BoxDecoration(
+        color: appearance.color.withAlpha(20),
+        borderRadius: BorderRadius.circular(AppRadii.surface),
+        border: Border.all(color: appearance.color.withAlpha(42)),
+      ),
+      alignment: Alignment.center,
+      child: Icon(appearance.icon, size: 32, color: appearance.color),
+    );
+  }
+}
+
+class _ResultAppearance {
+  final IconData icon;
+  final Color color;
+
+  const _ResultAppearance({required this.icon, required this.color});
+
+  factory _ResultAppearance.resolve(
+    BuildContext context,
+    AppResultStatus status,
+  ) {
+    return switch (status) {
+      AppResultStatus.empty => _ResultAppearance(
+        icon: Icons.inbox_outlined,
+        color: AppColors.textSecondary(context),
+      ),
+      AppResultStatus.info => _ResultAppearance(
+        icon: Icons.info_outline_rounded,
+        color: AppColors.primary(context),
+      ),
+      AppResultStatus.error => _ResultAppearance(
+        icon: Icons.close_rounded,
+        color: Theme.of(context).colorScheme.error,
+      ),
+    };
+  }
+}

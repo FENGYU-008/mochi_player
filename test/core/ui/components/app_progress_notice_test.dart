@@ -11,10 +11,7 @@ void main() {
         theme: AppTheme.lightTheme,
         home: const DefaultTextStyle(
           style: TextStyle(decoration: TextDecoration.underline),
-          child: AppActivityBanner(
-            message: '正在获取播放链接…',
-            tone: AppActivityBannerTone.progress,
-          ),
+          child: AppProgressNotice(message: '正在获取播放链接…'),
         ),
       ),
     );
@@ -23,7 +20,7 @@ void main() {
         .widget<DefaultTextStyle>(
           find
               .descendant(
-                of: find.byType(AppActivityBanner),
+                of: find.byType(AppProgressNotice),
                 matching: find.byType(DefaultTextStyle),
               )
               .last,
@@ -31,5 +28,12 @@ void main() {
         .style;
 
     expect(mergedStyle.decoration, TextDecoration.none);
+    expect(
+      find.descendant(
+        of: find.byType(AppProgressNotice),
+        matching: find.byType(Align),
+      ),
+      findsNothing,
+    );
   });
 }

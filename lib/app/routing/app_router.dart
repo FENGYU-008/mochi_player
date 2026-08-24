@@ -139,7 +139,11 @@ MaterialPage<void> _errorPage(GoRouterState state, String message) {
   return MaterialPage<void>(
     key: state.pageKey,
     child: Scaffold(
-      body: Center(child: AppErrorState(message: message)),
+      body: AppResult(
+        status: AppResultStatus.error,
+        title: '页面无法打开',
+        subtitle: message,
+      ),
     ),
   );
 }

@@ -47,7 +47,11 @@ class _LibraryPageState extends State<LibraryPage> {
         }
 
         if (snapshot.error != null) {
-          return AppErrorState(message: '错误：${snapshot.error}');
+          return AppResult(
+            status: AppResultStatus.error,
+            title: '媒体库加载失败',
+            subtitle: snapshot.error,
+          );
         }
 
         final provider = context.read<MediaLibraryProvider>();
@@ -153,9 +157,10 @@ class _LibraryPageState extends State<LibraryPage> {
   bool get _hasSearchQuery => widget.searchQuery.trim().isNotEmpty;
 
   Widget _buildEmptyState(String category, {required bool hasQuery}) {
-    return AppEmptyState(
+    return AppResult(
+      status: AppResultStatus.empty,
       title: hasQuery ? '没有匹配的$category' : '没有找到$category',
-      description: hasQuery ? '请尝试其他关键词' : '请先扫描媒体库以发现资源',
+      subtitle: hasQuery ? '请尝试其他关键词' : '请先扫描媒体库以发现资源',
     );
   }
 }

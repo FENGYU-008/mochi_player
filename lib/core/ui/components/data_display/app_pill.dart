@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mochi_player/core/ui/components/buttons/app_action_button.dart';
+import 'package:mochi_player/core/ui/components/basic/app_action_button.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';

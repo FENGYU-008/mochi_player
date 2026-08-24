@@ -155,21 +155,52 @@ class _FileBrowserBody extends StatelessWidget {
             onRefresh: provider.refresh,
           ),
           const SizedBox(height: AppSpacing.xxl),
-          Expanded(child: _buildContent()),
+          Expanded(child: _buildContent(context)),
         ],
       ),
     );
   }
 
-  Widget _buildContent() {
-    if (!state.hasWebDavConfig) return _emptyState(state.error);
+  Widget _buildContent(BuildContext context) {
+    if (!state.hasWebDavConfig) {
+      return AppResult(
+        status: AppResultStatus.info,
+        title: '尚未配置 OpenList',
+        subtitle: state.error ?? '请先在设置中完成连接配置',
+        icon: Icon(
+          Icons.settings_outlined,
+          size: 44,
+          color: AppColors.primary(context),
+        ),
+      );
+    }
     if (state.isLoading || state.shouldLoadInitialPath) {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.items.isEmpty) {
-      return _emptyState(
-        state.hasSearchQuery ? '没有匹配的文件' : state.error,
-        searchEmpty: state.hasSearchQuery,
+      if (state.hasSearchQuery) {
+        return AppResult(
+          status: AppResultStatus.empty,
+          title: '没有匹配的文件',
+          subtitle: '请尝试其他关键词',
+          icon: Icon(
+            Icons.search_off_rounded,
+            size: 44,
+            color: AppColors.textSecondary(context),
+          ),
+        );
+      }
+      if (state.error != null) {
+        return AppResult(
+          status: AppResultStatus.error,
+          title: '文件加载失败',
+          subtitle: state.error,
+        );
+      }
+      return const AppResult(
+        status: AppResultStatus.empty,
+        title: '此文件夹为空',
+        icon: Icon(Icons.folder_off_outlined, size: 44),
       );
     }
     if (state.viewMode == FileBrowserViewMode.grid) return _buildGrid();
@@ -227,17 +258,6 @@ class _FileBrowserBody extends StatelessWidget {
     totalItemCount: state.totalItemCount,
     isFiltered: state.hasSearchQuery,
   );
-
-  Widget _emptyState(String? error, {bool searchEmpty = false}) {
-    return AppEmptyState(
-      title: error ?? '此文件夹为空',
-      icon: searchEmpty
-          ? Icons.search_off_rounded
-          : error == null
-          ? Icons.folder_off_outlined
-          : Icons.settings_outlined,
-    );
-  }
 }
 
 class _FileBrowserState {

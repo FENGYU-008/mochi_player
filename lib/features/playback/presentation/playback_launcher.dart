@@ -108,14 +108,10 @@ class PlaybackLauncher {
     String? failureMessage,
     List<MediaFile> playlist = const [],
   }) async {
-    AppActivityBannerController? loadingBanner;
+    AppMessageHandle? loadingBanner;
     final loadingDelay = Timer(const Duration(milliseconds: 180), () {
       if (!context.mounted) return;
-      loadingBanner = showAppActivityBanner(
-        context: context,
-        message: loadingMessage ?? '正在获取播放链接…',
-        tone: AppActivityBannerTone.progress,
-      );
+      loadingBanner = AppMessage.loading(loadingMessage ?? '正在获取播放链接…');
     });
 
     String? directLink;
@@ -144,12 +140,7 @@ class PlaybackLauncher {
   }
 
   static void _showError(BuildContext context, String message) {
-    showAppActivityBanner(
-      context: context,
-      message: message,
-      tone: AppActivityBannerTone.error,
-      duration: const Duration(seconds: 3),
-    );
+    if (context.mounted) AppMessage.error(message);
   }
 
   /// 版本选择弹窗
