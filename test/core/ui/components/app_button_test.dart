@@ -3,22 +3,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
 void main() {
-  testWidgets('AppActionButton keeps selected overlay colors neutral', (
-    tester,
-  ) async {
+  testWidgets('keeps selected overlay button colors neutral', (tester) async {
     const accent = Color(0xFFB45F73);
 
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.lightTheme,
         home: Scaffold(
-          body: AppActionButton(
+          body: AppButton(
             onPressed: _noop,
             icon: Icons.favorite,
             iconColor: accent,
             label: '已收藏',
             variant: AppButtonVariant.secondary,
-            appearance: AppControlAppearance.overlay,
+            appearance: AppAppearance.overlay,
             selected: true,
             accentColor: accent,
           ),
@@ -28,7 +26,7 @@ void main() {
 
     final container = tester.widget<Container>(
       find.descendant(
-        of: find.byType(AppActionButton),
+        of: find.byType(AppButton),
         matching: find.byType(Container),
       ),
     );
@@ -43,6 +41,30 @@ void main() {
       tester.widget<Text>(find.text('已收藏')).style?.color,
       Colors.white.withAlpha(235),
     );
+  });
+
+  testWidgets('supports an icon-only button through the same API', (
+    tester,
+  ) async {
+    var pressed = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: AppButton.icon(
+            onPressed: () => pressed = true,
+            icon: Icons.visibility_outlined,
+            tooltip: '显示',
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(AppButton), findsOneWidget);
+    expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+    await tester.tap(find.byType(AppButton));
+    expect(pressed, isTrue);
   });
 }
 

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'package:mochi_player/core/ui/components/input/app_search_bar.dart';
-import 'package:mochi_player/core/ui/components/basic/app_icon_button.dart';
+import 'package:mochi_player/core/ui/components/basic/app_button.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
@@ -48,7 +48,7 @@ class AppHeader extends StatelessWidget {
     final effectiveLeading =
         leading ??
         (showBackButton
-            ? AppIconButton(
+            ? AppButton.icon(
                 onPressed: onBack ?? () => Navigator.of(context).maybePop(),
                 icon: Icons.arrow_back_rounded,
                 tooltip: '返回',

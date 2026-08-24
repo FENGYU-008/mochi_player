@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/media_card_view_data.dart';
+import 'package:mochi_player/features/library/presentation/widgets/media_card.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 
 class ContinueWatchingCard extends StatelessWidget {
@@ -10,15 +10,13 @@ class ContinueWatchingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MediaPosterCard(
+    return MediaCard(
       title: item.title,
       subtitle: item.subtitle,
-      posterUrl: item.imageUrl,
+      imageUrl: item.imageUrl,
       rating: item.rating,
-      tmdbId: item.file.tmdbId,
-      cardType: MediaCardType.backdrop,
+      artworkType: MediaArtworkType.backdrop,
       progress: item.file.progress,
-      showProgress: true,
       onTap: () => PlaybackLauncher.playFile(
         context,
         item.file,

@@ -34,15 +34,15 @@ class FavoriteButton extends StatelessWidget {
     }
 
     if (showLabel) {
-      return AppActionButton(
+      return AppButton(
         onPressed: toggleFavorite,
         icon: icon,
         iconColor: usesOverlayAppearance && isFavorite ? favoriteColor : null,
         label: isFavorite ? '已收藏' : '加入收藏',
         variant: AppButtonVariant.secondary,
         appearance: usesOverlayAppearance
-            ? AppControlAppearance.overlay
-            : AppControlAppearance.adaptive,
+            ? AppAppearance.overlay
+            : AppAppearance.standard,
         selected: isFavorite,
         accentColor: favoriteColor,
         height: 36,
@@ -56,14 +56,14 @@ class FavoriteButton extends StatelessWidget {
         : isFavorite
         ? favoriteColor.withAlpha(24)
         : AppColors.hoverSurface(context);
-    return AppIconButton(
+    return AppButton.icon(
       onPressed: toggleFavorite,
       icon: icon,
       tooltip: isFavorite ? "取消收藏" : "加入收藏",
       selected: isFavorite,
       appearance: usesOverlayAppearance
-          ? AppControlAppearance.overlay
-          : AppControlAppearance.adaptive,
+          ? AppAppearance.overlay
+          : AppAppearance.standard,
       selectedColor: favoriteColor,
       foregroundColor: baseColor,
       backgroundColor: backgroundColor,

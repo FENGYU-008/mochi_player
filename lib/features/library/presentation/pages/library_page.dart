@@ -4,6 +4,7 @@ import 'package:mochi_player/features/library/application/media_library_provider
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/presentation/widgets/library_item_poster_card.dart';
+import 'package:mochi_player/features/library/presentation/widgets/media_card.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_poster_grid.dart';
 
 enum LibraryCategory { movies, series, favorites }
@@ -124,13 +125,12 @@ class _LibraryPageState extends State<LibraryPage> {
       itemBuilder: (context, index) {
         final item = items[index];
 
-        return MediaPosterCard(
+        return MediaCard(
           title: item.title,
           subtitle: item.subtitle,
-          posterUrl: item.imageUrl,
+          imageUrl: item.imageUrl,
           rating: item.rating,
-          tmdbId: item.file.tmdbId,
-          cardType: MediaCardType.poster,
+          artworkType: MediaArtworkType.poster,
           onTap: () {
             final libraryItem = item.libraryItem;
             if (libraryItem != null) {

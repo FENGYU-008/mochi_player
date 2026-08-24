@@ -1,83 +1,56 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
 
-/// 卡片类型枚举
-enum MediaCardType {
-  /// 竖版海报 (2:3 比例)
-  poster,
+enum MediaArtworkType { poster, backdrop }
 
-  /// 横版背景图 (16:9 比例)
-  backdrop,
-}
-
-/// 通用媒体海报卡片
-/// 用于显示电影/剧集元数据，支持竖版海报和横版背景图
-class MediaPosterCard extends StatefulWidget {
-  /// 标题
-  final String title;
-
-  /// 副标题（年份、季数、当前集数等）
-  final String? subtitle;
-
-  /// 图片 URL（海报或背景图）
-  final String? posterUrl;
-
-  /// 评分 (0.0-10.0)
-  final double rating;
-
-  /// TMDB ID
-  final String? tmdbId;
-
-  /// 点击回调
-  final VoidCallback? onTap;
-
-  /// 卡片类型
-  final MediaCardType cardType;
-
-  /// 播放进度 (0.0-1.0)
-  final double? progress;
-
-  /// 是否显示进度条
-  final bool showProgress;
-
-  const MediaPosterCard({
+/// Displays media artwork and its compact library metadata.
+class MediaCard extends StatefulWidget {
+  const MediaCard({
     super.key,
     required this.title,
     this.subtitle,
-    this.posterUrl,
-    this.rating = 0.0,
-    this.tmdbId,
+    this.imageUrl,
+    this.rating = 0,
     this.onTap,
-    this.cardType = MediaCardType.poster,
+    this.artworkType = MediaArtworkType.poster,
     this.progress,
-    this.showProgress = false,
   });
 
+  final String title;
+  final String? subtitle;
+  final String? imageUrl;
+  final double rating;
+  final VoidCallback? onTap;
+  final MediaArtworkType artworkType;
+  final double? progress;
+
   @override
-  State<MediaPosterCard> createState() => _MediaPosterCardState();
+  State<MediaCard> createState() => _MediaCardState();
 }
 
-class _MediaPosterCardState extends State<MediaPosterCard> {
+class _MediaCardState extends State<MediaCard> {
   bool _isHovering = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final customTheme = theme.extension<AppThemeExtension>()!;
+    final enabled = widget.onTap != null;
+    final shadowColor = theme.extension<AppThemeExtension>()!.cardShadowColor;
 
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      cursor: SystemMouseCursors.click,
+      onEnter: enabled ? (_) => setState(() => _isHovering = true) : null,
+      onExit: enabled ? (_) => setState(() => _isHovering = false) : null,
+      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
       child: GestureDetector(
         onTap: widget.onTap,
         child: TweenAnimationBuilder<double>(
-          tween: Tween(end: _isHovering ? 1 : 0),
+          tween: Tween(end: enabled && _isHovering ? 1 : 0),
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutQuart,
           builder: (context, hoverProgress, child) {
@@ -85,22 +58,21 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 图片区域
                 Expanded(
                   child: Container(
                     transform: Matrix4.identity()
                       ..scaleByDouble(
                         1 + (0.025 * hoverProgress),
                         1 + (0.025 * hoverProgress),
-                        1.0,
-                        1.0,
+                        1,
+                        1,
                       ),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(AppRadii.card),
                       boxShadow: [
                         BoxShadow(
-                          color: customTheme.cardShadowColor.withAlpha(
+                          color: shadowColor.withAlpha(
                             (4 + (6 * hoverProgress)).round(),
                           ),
                           blurRadius: 3 + (37 * hoverProgress),
@@ -112,24 +84,22 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
                       borderRadius: BorderRadius.circular(AppRadii.card),
                       child: Stack(
                         children: [
-                          // 图片
                           Positioned.fill(child: _buildImage(theme)),
-                          // 评分徽章 (左上角)
                           if (widget.rating > 0)
                             Positioned(
-                              top: 8,
-                              left: 8,
-                              child: _buildRatingBadge(theme),
+                              top: AppSpacing.xs,
+                              left: AppSpacing.xs,
+                              child: _RatingBadge(rating: widget.rating),
                             ),
-                          // 进度条 (底部)
-                          if (widget.showProgress && widget.progress != null)
+                          if (widget.progress != null)
                             Positioned(
                               bottom: 0,
                               left: 0,
                               right: 0,
-                              child: _buildProgressBar(theme),
+                              child: _PlaybackProgress(
+                                progress: widget.progress!,
+                              ),
                             ),
-                          // 悬停高光
                           Positioned.fill(
                             child: Opacity(
                               opacity: 0.05 * hoverProgress,
@@ -144,7 +114,6 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.compact),
-                // 标题
                 Text(
                   widget.title,
                   maxLines: 1,
@@ -159,21 +128,17 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
                     ),
                   ),
                 ),
-                // 始终保留副标题槽位，避免缺少副标题时图片区域被 Expanded 拉高。
                 const SizedBox(height: AppSpacing.xxs),
-                Visibility(
+                Visibility.maintain(
                   visible: widget.subtitle != null,
-                  maintainState: true,
-                  maintainAnimation: true,
-                  maintainSize: true,
                   child: Text(
                     widget.subtitle ?? '\u00A0',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
                       color: theme.textTheme.bodyMedium!.color!.withAlpha(153),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -184,55 +149,59 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
     );
   }
 
-  /// 构建图片
   Widget _buildImage(ThemeData theme) {
-    if (widget.posterUrl != null && widget.posterUrl!.isNotEmpty) {
-      return CachedNetworkImage(
-        cacheManager: TmdbImageCacheManager.instance,
-        imageUrl: widget.posterUrl!,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          color: theme.canvasColor.withAlpha(128),
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-        errorWidget: (context, url, error) => _buildPlaceholder(theme),
-      );
-    }
-    return _buildPlaceholder(theme);
+    final imageUrl = widget.imageUrl;
+    if (imageUrl == null || imageUrl.isEmpty) return _buildPlaceholder();
+
+    return CachedNetworkImage(
+      cacheManager: TmdbImageCacheManager.instance,
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => ColoredBox(
+        color: theme.canvasColor.withAlpha(128),
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      errorWidget: (context, url, error) => _buildPlaceholder(),
+    );
   }
 
-  /// 构建占位图
-  Widget _buildPlaceholder(ThemeData theme) {
-    return Container(
-      color: Colors.grey[800],
+  Widget _buildPlaceholder() {
+    return ColoredBox(
+      color: Colors.grey.shade800,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            widget.cardType == MediaCardType.backdrop
+            widget.artworkType == MediaArtworkType.backdrop
                 ? Icons.videocam
                 : Icons.movie,
             color: Colors.white54,
             size: 48,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.xs),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             child: Text(
               widget.title,
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
-              textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  /// 构建评分徽章
-  Widget _buildRatingBadge(ThemeData theme) {
+class _RatingBadge extends StatelessWidget {
+  const _RatingBadge({required this.rating});
+
+  final double rating;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
@@ -245,7 +214,7 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
           const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
           const SizedBox(width: 3),
           Text(
-            widget.rating.toStringAsFixed(1),
+            rating.toStringAsFixed(1),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 12,
@@ -256,18 +225,24 @@ class _MediaPosterCardState extends State<MediaPosterCard> {
       ),
     );
   }
+}
 
-  /// 构建进度条
-  Widget _buildProgressBar(ThemeData theme) {
+class _PlaybackProgress extends StatelessWidget {
+  const _PlaybackProgress({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       height: 4,
-      decoration: BoxDecoration(color: Colors.black.withAlpha(115)),
+      color: Colors.black.withAlpha(115),
       child: FractionallySizedBox(
         alignment: Alignment.centerLeft,
-        widthFactor: widget.progress ?? 0,
-        child: Container(
+        widthFactor: progress.clamp(0, 1),
+        child: DecoratedBox(
           decoration: BoxDecoration(
-            color: theme.primaryColor,
+            color: AppColors.primary(context),
             borderRadius: const BorderRadius.only(
               topRight: Radius.circular(2),
               bottomRight: Radius.circular(2),

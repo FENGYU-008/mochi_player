@@ -652,7 +652,7 @@ class _VisibilityToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppIconButton(
+    return AppButton.icon(
       tooltip: visible ? '隐藏' : '显示',
       onPressed: onPressed,
       foregroundColor: AppColors.textSecondary(context),
@@ -683,7 +683,7 @@ class _SettingsActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppActionButton(
+    return AppButton(
       onPressed: onPressed,
       icon: icon,
       label: label,

@@ -2,30 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
+import 'package:mochi_player/features/library/presentation/widgets/media_card.dart';
 
 class LibraryItemPosterCard extends StatelessWidget {
   final LibraryItem item;
-  final MediaCardType cardType;
+  final MediaArtworkType artworkType;
   final VoidCallback? onTap;
 
   const LibraryItemPosterCard({
     super.key,
     required this.item,
-    this.cardType = MediaCardType.poster,
+    this.artworkType = MediaArtworkType.poster,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return MediaPosterCard(
+    return MediaCard(
       title: item.title,
       subtitle: _subtitle(item),
-      posterUrl: cardType == MediaCardType.backdrop
+      imageUrl: artworkType == MediaArtworkType.backdrop
           ? item.backdropUrl
           : item.posterUrl,
       rating: item.rating,
-      tmdbId: item.tmdbId,
-      cardType: cardType,
+      artworkType: artworkType,
       onTap: onTap ?? () => openMediaDetailPage(context, item),
     );
   }

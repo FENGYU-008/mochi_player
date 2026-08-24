@@ -1,8 +1,7 @@
-export 'components/basic/app_action_button.dart';
+export 'components/basic/app_button.dart';
 export 'components/basic/app_clickable_area.dart';
-export 'components/basic/app_icon_button.dart';
-export 'components/data_display/app_pill.dart';
-export 'components/data_display/media_poster_card.dart';
+export 'components/basic/app_appearance.dart';
+export 'components/data_display/app_tag.dart';
 export 'components/feedback/app_message.dart';
 export 'components/feedback/app_modal.dart';
 export 'components/feedback/app_progress_notice.dart';

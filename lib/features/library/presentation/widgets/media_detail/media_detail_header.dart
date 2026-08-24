@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/view_models/media_detail_view_model.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_detail/favorite_button.dart';
+import 'package:mochi_player/features/library/presentation/widgets/media_rating_tag.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
@@ -305,35 +306,27 @@ class _MetadataStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = <Widget>[];
     if (viewModel.rating > 0) {
-      items.add(
-        AppPill(
-          text: viewModel.rating.toStringAsFixed(1),
-          icon: Icons.star_rounded,
-          rating: true,
-        ),
-      );
+      items.add(MediaRatingTag(rating: viewModel.rating));
     }
     if (viewModel.releaseYear != null) {
       items.add(
-        AppPill(
+        AppTag(
           text: '${viewModel.releaseYear}',
-          appearance: AppControlAppearance.overlay,
+          appearance: AppAppearance.overlay,
         ),
       );
     }
     final certification = viewModel.certification;
     if (certification != null && certification.isNotEmpty) {
-      items.add(
-        AppPill(text: certification, appearance: AppControlAppearance.overlay),
-      );
+      items.add(AppTag(text: certification, appearance: AppAppearance.overlay));
     }
     if (viewModel.isTVShow) {
       final seasons = viewModel.seasons.length;
       if (seasons > 0) {
         items.add(
-          AppPill(
+          AppTag(
             text: MediaFormat.seasonCount(seasons),
-            appearance: AppControlAppearance.overlay,
+            appearance: AppAppearance.overlay,
           ),
         );
       }
@@ -342,8 +335,7 @@ class _MetadataStrip extends StatelessWidget {
       viewModel.genres
           .take(3)
           .map(
-            (genre) =>
-                AppPill(text: genre, appearance: AppControlAppearance.overlay),
+            (genre) => AppTag(text: genre, appearance: AppAppearance.overlay),
           ),
     );
 
@@ -364,7 +356,7 @@ class _ActionRow extends StatelessWidget {
       runSpacing: 10,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        AppActionButton(
+        AppButton(
           onPressed: action.enabled ? action.onPressed : null,
           icon: Icons.play_arrow_rounded,
           label: action.label,

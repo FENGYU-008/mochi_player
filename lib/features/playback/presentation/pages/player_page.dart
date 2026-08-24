@@ -396,11 +396,11 @@ class _PlayerMessage extends StatelessWidget {
             ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(width: 12),
-              AppActionButton(
+              AppButton(
                 onPressed: onAction,
                 label: actionLabel!,
                 variant: AppButtonVariant.secondary,
-                appearance: AppControlAppearance.overlay,
+                appearance: AppAppearance.overlay,
                 height: 32,
                 borderRadius: 10,
                 padding: const EdgeInsets.symmetric(horizontal: 10),

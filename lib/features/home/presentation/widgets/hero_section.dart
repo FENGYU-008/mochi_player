@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
+import 'package:mochi_player/features/library/presentation/widgets/media_rating_tag.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
@@ -148,28 +149,17 @@ class HeroSection extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         // 评分
-        if (rating > 0)
-          AppPill(
-            text: rating.toStringAsFixed(1),
-            icon: Icons.star_rounded,
-            rating: true,
-          ),
+        if (rating > 0) MediaRatingTag(rating: rating),
 
         // 年份
         if (year != null)
-          AppPill(
-            text: year.toString(),
-            appearance: AppControlAppearance.overlay,
-          ),
+          AppTag(text: year.toString(), appearance: AppAppearance.overlay),
 
         // 类型标签
         ...genres
             .take(3)
             .map(
-              (genre) => AppPill(
-                text: genre,
-                appearance: AppControlAppearance.overlay,
-              ),
+              (genre) => AppTag(text: genre, appearance: AppAppearance.overlay),
             ),
       ],
     );
@@ -178,7 +168,7 @@ class HeroSection extends StatelessWidget {
   Widget _buildActionButtons(BuildContext context) {
     return Row(
       children: [
-        AppActionButton(
+        AppButton(
           onPressed: () => _handlePlay(context),
           icon: Icons.play_arrow_rounded,
           label: '播放',
@@ -187,12 +177,12 @@ class HeroSection extends StatelessWidget {
         ),
         const SizedBox(width: 12),
 
-        AppActionButton(
+        AppButton(
           onPressed: () => _handleMoreInfo(context),
           icon: Icons.info_outline_rounded,
           label: '详情',
           variant: AppButtonVariant.secondary,
-          appearance: AppControlAppearance.overlay,
+          appearance: AppAppearance.overlay,
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 22),
         ),
