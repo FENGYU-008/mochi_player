@@ -65,4 +65,45 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('accounts for dividers when sizing a short list', (tester) async {
+    final items = List.generate(
+      2,
+      (index) => FileBrowserEntry(
+        path: '/folder-$index',
+        name: 'folder-$index',
+        kind: MediaFileKind.directory,
+        size: 0,
+        modifiedAt: null,
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: SizedBox(
+          width: 600,
+          height: 400,
+          child: FileBrowserListSection(
+            items: items,
+            totalItemCount: items.length,
+            isFiltered: false,
+            onItemTap: (_) {},
+            scrollStorageKey: const PageStorageKey<String>('test-file-browser-list'),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byType(FileBrowserList)).height,
+      FileBrowserList.headerHeight +
+          2 * FileBrowserList.borderWidth +
+          FileBrowserList.dividerHeight +
+          items.length * FileBrowserList.rowHeight +
+          FileBrowserList.dividerHeight,
+    );
+    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+    expect(scrollable.position.maxScrollExtent, 0);
+  });
 }

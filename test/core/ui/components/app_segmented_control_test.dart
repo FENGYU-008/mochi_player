@@ -103,6 +103,35 @@ void main() {
     expect(areas.every((area) => area.onTap == null), isTrue);
   });
 
+  testWidgets('toolbar appearance uses neutral toolbar surfaces', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: AppSegmentedControl<int>(
+            value: 0,
+            appearance: AppSegmentedControlAppearance.toolbar,
+            options: const [
+              AppSegmentedOption.icon(value: 0, label: '列表视图', icon: Icons.view_list_outlined),
+              AppSegmentedOption.icon(value: 1, label: '网格视图', icon: Icons.grid_view_outlined),
+            ],
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    final context = tester.element(find.byType(AppSegmentedControl<int>));
+    final areas = tester.widgetList<AppClickableArea>(
+      find.descendant(
+        of: find.byType(AppSegmentedControl<int>),
+        matching: find.byType(AppClickableArea),
+      ),
+    );
+    expect(areas.first.backgroundColor, AppColors.hoverSurface(context));
+    expect(areas.last.backgroundColor, Colors.transparent);
+  });
+
   testWidgets('icon options keep labels for tooltip and semantics', (
     tester,
   ) async {

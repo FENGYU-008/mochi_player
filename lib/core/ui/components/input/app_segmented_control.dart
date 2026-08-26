@@ -5,6 +5,8 @@ import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
+enum AppSegmentedControlAppearance { standard, toolbar }
+
 class AppSegmentedOption<T> {
   final T value;
   final String label;
@@ -22,13 +24,22 @@ class AppSegmentedControl<T> extends StatelessWidget {
   final T value;
   final List<AppSegmentedOption<T>> options;
   final ValueChanged<T>? onChanged;
+  final AppSegmentedControlAppearance appearance;
 
-  const AppSegmentedControl({super.key, required this.value, required this.options, this.onChanged});
+  const AppSegmentedControl({
+    super.key,
+    required this.value,
+    required this.options,
+    this.onChanged,
+    this.appearance = AppSegmentedControlAppearance.standard,
+  });
 
   @override
   Widget build(BuildContext context) {
     assert(options.length >= 2, 'A segmented control needs at least 2 options.');
-    final borderColor = AppColors.separator(context);
+    final isToolbar = appearance == AppSegmentedControlAppearance.toolbar;
+    final borderColor = isToolbar ? AppColors.selectBorder(context) : AppColors.separator(context);
+    final backgroundColor = isToolbar ? AppColors.selectControlSurface(context) : AppColors.elevatedSurface(context);
     final enabled = onChanged != null;
     return AnimatedOpacity(
       duration: AppControlMetrics.stateAnimationDuration,
@@ -39,7 +50,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadii.control),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: AppColors.elevatedSurface(context),
+              color: backgroundColor,
               borderRadius: BorderRadius.circular(AppRadii.control),
               border: Border.all(color: borderColor),
             ),
@@ -51,6 +62,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
                       option: options[index],
                       selected: options[index].value == value,
                       onPressed: enabled ? () => onChanged!(options[index].value) : null,
+                      appearance: appearance,
                     ),
                   ),
                   if (index != options.length - 1)
@@ -69,15 +81,22 @@ class _SegmentButton<T> extends StatelessWidget {
   final AppSegmentedOption<T> option;
   final bool selected;
   final VoidCallback? onPressed;
+  final AppSegmentedControlAppearance appearance;
 
-  const _SegmentButton({required this.option, required this.selected, required this.onPressed});
+  const _SegmentButton({
+    required this.option,
+    required this.selected,
+    required this.onPressed,
+    required this.appearance,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isToolbar = appearance == AppSegmentedControlAppearance.toolbar;
     final primary = AppColors.primary(context);
-    final selectedSurface = AppColors.selectedSurface(context);
+    final selectedSurface = isToolbar ? AppColors.hoverSurface(context) : AppColors.selectedSurface(context);
     final restingForeground = AppColors.textPrimary(context).withAlpha(220);
-    final foreground = selected ? primary : restingForeground;
+    final foreground = selected && !isToolbar ? primary : restingForeground;
 
     final button = Semantics(
       container: true,

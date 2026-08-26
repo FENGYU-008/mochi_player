@@ -71,7 +71,7 @@ class _DefaultResultIcon extends StatelessWidget {
       width: 68,
       height: 68,
       decoration: BoxDecoration(
-        color: appearance.color.withAlpha(20),
+        color: appearance.backgroundColor,
         borderRadius: BorderRadius.circular(AppRadii.surface),
         border: Border.all(color: appearance.color.withAlpha(42)),
       ),
@@ -84,14 +84,27 @@ class _DefaultResultIcon extends StatelessWidget {
 class _ResultAppearance {
   final IconData icon;
   final Color color;
+  final Color backgroundColor;
 
-  const _ResultAppearance({required this.icon, required this.color});
+  const _ResultAppearance({required this.icon, required this.color, required this.backgroundColor});
 
   factory _ResultAppearance.resolve(BuildContext context, AppResultStatus status) {
     return switch (status) {
-      AppResultStatus.empty => _ResultAppearance(icon: Icons.inbox_outlined, color: AppColors.textSecondary(context)),
-      AppResultStatus.info => _ResultAppearance(icon: Icons.info_outline_rounded, color: AppColors.primary(context)),
-      AppResultStatus.error => _ResultAppearance(icon: Icons.close_rounded, color: Theme.of(context).colorScheme.error),
+      AppResultStatus.empty => _ResultAppearance(
+        icon: Icons.inbox_outlined,
+        color: AppColors.textSecondary(context),
+        backgroundColor: AppColors.elevatedSurface(context),
+      ),
+      AppResultStatus.info => _ResultAppearance(
+        icon: Icons.info_outline_rounded,
+        color: AppColors.primary(context),
+        backgroundColor: AppColors.elevatedSurface(context),
+      ),
+      AppResultStatus.error => _ResultAppearance(
+        icon: Icons.close_rounded,
+        color: Theme.of(context).colorScheme.error,
+        backgroundColor: AppColors.elevatedSurface(context),
+      ),
     };
   }
 }

@@ -67,6 +67,9 @@ class AppInput extends StatefulWidget {
 
 class _AppInputState extends State<AppInput> {
   static const double _inputHeight = 26;
+  static const double _searchTextTopPadding = 4;
+  static const _searchTextStyle = TextStyle(fontSize: 14, height: 1);
+  static const _searchStrutStyle = StrutStyle(fontSize: 14, height: 1, leading: 0, forceStrutHeight: true);
 
   late FocusNode _focusNode;
   late bool _ownsFocusNode;
@@ -124,7 +127,7 @@ class _AppInputState extends State<AppInput> {
     final primary = AppColors.primary(context);
     final textColor = widget.enabled ? AppColors.textPrimary(context) : AppColors.textSecondary(context);
     final inputBackground = AppColors.inputBackground(context);
-    final searchBackground = AppColors.searchBackground(context);
+    final controlBackground = AppColors.elevatedSurface(context);
     final focusedBorder = primary.withAlpha(isSearch ? 204 : 215);
     final restingBorder = isSearch
         ? Colors.transparent
@@ -132,11 +135,11 @@ class _AppInputState extends State<AppInput> {
         ? focusedBorder.withAlpha(0)
         : AppColors.separator(context).withAlpha(90);
     final restingBackground = isSearch
-        ? searchBackground
+        ? controlBackground
         : widget.enabled
         ? inputBackground.withAlpha(0)
         : AppColors.subtleSurface(context);
-    final focusedBackground = isSearch ? searchBackground : inputBackground;
+    final focusedBackground = isSearch ? controlBackground : inputBackground;
     final borderRadius = BorderRadius.circular(isSearch ? AppRadii.surface : AppRadii.small);
 
     return TweenAnimationBuilder<double>(
@@ -186,13 +189,20 @@ class _AppInputState extends State<AppInput> {
                 cursorHeight: 14,
                 textAlign: widget.textAlign,
                 textAlignVertical: TextAlignVertical.center,
-                padding: EdgeInsets.zero,
+                // The top-only padding shifts the visual center of CJK glyphs
+                // down by 2 px while keeping the field's line box centered.
+                // It also moves the cursor by the same amount.
+                padding: EdgeInsets.only(top: isSearch ? _searchTextTopPadding : 0),
+                // Keep the line box compact and deterministic. Without a
+                // strut, the fallback font used for CJK placeholder text can
+                // introduce asymmetric leading that looks vertically offset.
+                strutStyle: isSearch ? _searchStrutStyle : null,
                 placeholder: widget.placeholder,
                 placeholderStyle: isSearch
-                    ? TextStyle(color: AppColors.searchHint(context), fontSize: 14)
+                    ? _searchTextStyle.copyWith(color: AppColors.searchHint(context))
                     : AppTypography.formValue.copyWith(color: AppColors.textSecondary(context)),
                 style: isSearch
-                    ? TextStyle(fontSize: 14, color: textColor)
+                    ? _searchTextStyle.copyWith(color: textColor)
                     : AppTypography.formValue.copyWith(color: textColor),
                 // CupertinoTextField paints its own disabled background when
                 // decoration is null. AppInput owns the complete surface, so

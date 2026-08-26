@@ -6,6 +6,8 @@ import 'package:mochi_player/features/library/presentation/widgets/file_browser_
 class FileBrowserList extends StatelessWidget {
   static const double headerHeight = 47;
   static const double rowHeight = 64;
+  static const double dividerHeight = 1;
+  static const double borderWidth = 1;
 
   final List<FileBrowserEntry> items;
   final ValueChanged<FileBrowserEntry> onItemTap;
@@ -19,7 +21,7 @@ class FileBrowserList extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.inputBackground(context),
         borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.separator(context)),
+        border: Border.all(color: AppColors.separator(context), width: borderWidth),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -76,7 +78,12 @@ class FileBrowserListSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final naturalHeight = FileBrowserList.headerHeight + items.length * FileBrowserList.rowHeight;
+    final naturalHeight =
+        FileBrowserList.headerHeight +
+        2 * FileBrowserList.borderWidth +
+        FileBrowserList.dividerHeight +
+        items.length * FileBrowserList.rowHeight +
+        (items.length - 1).clamp(0, items.length).toDouble() * FileBrowserList.dividerHeight;
 
     return LayoutBuilder(
       builder: (context, constraints) {

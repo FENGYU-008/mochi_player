@@ -198,7 +198,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 obscureText: !_showWebDavPassword,
                 label: '密码',
                 onFocusLost: _commitNetworkSettings,
-                trailing: _VisibilityToggle(
+                inputSuffix: _VisibilityToggle(
                   visible: _showWebDavPassword,
                   onPressed: () {
                     setState(() {
@@ -234,7 +234,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 obscureText: !_showTmdbApiKey,
                 label: 'API 密钥',
                 onFocusLost: _commitNetworkSettings,
-                trailing: _VisibilityToggle(
+                inputSuffix: _VisibilityToggle(
                   visible: _showTmdbApiKey,
                   onPressed: () {
                     setState(() {
@@ -596,12 +596,22 @@ class _VisibilityToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppButton.icon(
-      tooltip: visible ? '隐藏' : '显示',
-      onPressed: onPressed,
-      variant: AppButtonVariant.ghost,
-      size: AppButtonSize.compact,
-      icon: visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+    return Tooltip(
+      message: visible ? '隐藏' : '显示',
+      child: AppClickableArea(
+        width: 22,
+        height: 22,
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(AppRadii.small),
+        hoverColor: AppColors.hoverSurface(context),
+        child: Center(
+          child: Icon(
+            visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            size: 16,
+            color: AppColors.textSecondary(context),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -268,6 +268,16 @@ void main() {
     expect(find.byType(AppInput), findsOneWidget);
     expect(find.byIcon(CupertinoIcons.search), findsOneWidget);
     expect(tester.getSize(find.byType(AppSearchInput)).width, 280);
+
+    final textField = tester.widget<CupertinoTextField>(
+      find.byType(CupertinoTextField),
+    );
+    expect(textField.textAlignVertical, TextAlignVertical.center);
+    expect(textField.padding, const EdgeInsets.only(top: 4));
+    expect(textField.style?.height, 1);
+    expect(textField.placeholderStyle?.height, 1);
+    expect(textField.strutStyle?.forceStrutHeight, isTrue);
+    expect(textField.strutStyle?.height, 1);
   });
 
   testWidgets('search input focuses itself with Ctrl+K', (tester) async {
@@ -289,5 +299,40 @@ void main() {
 
     await tester.sendKeyUpEvent(LogicalKeyboardKey.keyK);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+  });
+
+  testWidgets('places a suffix inside the standard input boundary', (
+    tester,
+  ) async {
+    final controller = TextEditingController();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: SizedBox(
+            width: 240,
+            child: AppInput(
+              controller: controller,
+              suffix: const SizedBox(
+                key: ValueKey('input_suffix'),
+                width: 22,
+                height: 22,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final inputRect = tester.getRect(find.byType(AppInput));
+    final suffixRect = tester.getRect(
+      find.byKey(const ValueKey('input_suffix')),
+    );
+    expect(suffixRect.right, lessThanOrEqualTo(inputRect.right));
+    expect(suffixRect.center.dy, inputRect.center.dy);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    controller.dispose();
   });
 }

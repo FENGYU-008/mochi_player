@@ -15,6 +15,7 @@ class SettingsTextField extends StatelessWidget {
     this.enabled = true,
     this.obscureText = false,
     this.keyboardType,
+    this.inputSuffix,
     this.trailing,
     this.suffixText,
     this.maxWidth = AppControlMetrics.defaultFieldWidth,
@@ -27,6 +28,7 @@ class SettingsTextField extends StatelessWidget {
   final bool enabled;
   final bool obscureText;
   final TextInputType? keyboardType;
+  final Widget? inputSuffix;
   final Widget? trailing;
   final String? suffixText;
   final double maxWidth;
@@ -53,6 +55,7 @@ class SettingsTextField extends StatelessWidget {
                   keyboardType: keyboardType,
                   onFocusLost: onFocusLost,
                   textAlign: suffixText == null ? TextAlign.start : TextAlign.end,
+                  suffix: inputSuffix,
                 ),
               ),
               if (suffixText != null) ...[

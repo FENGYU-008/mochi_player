@@ -42,5 +42,39 @@ void main() {
     expect(find.text('连接被拒绝'), findsOneWidget);
     expect(find.text('重试'), findsOneWidget);
     expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+    final context = tester.element(find.byType(AppResult));
+    expect(_resultIconBackgrounds(tester), contains(AppColors.elevatedSurface(context)));
   });
+
+  testWidgets('uses the neutral background for an empty-state icon', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const AppResult(status: AppResultStatus.empty, title: '没有内容'),
+      ),
+    );
+
+    final context = tester.element(find.byType(AppResult));
+    expect(_resultIconBackgrounds(tester), contains(AppColors.elevatedSurface(context)));
+  });
+
+  testWidgets('uses the shared control background for an info-state icon', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const AppResult(status: AppResultStatus.info, title: '提示'),
+      ),
+    );
+
+    final context = tester.element(find.byType(AppResult));
+    expect(_resultIconBackgrounds(tester), contains(AppColors.elevatedSurface(context)));
+  });
+}
+
+Iterable<Color?> _resultIconBackgrounds(WidgetTester tester) {
+  return tester
+      .widgetList<Container>(find.byType(Container))
+      .map((container) => container.decoration)
+      .whereType<BoxDecoration>()
+      .map((decoration) => decoration.color);
 }

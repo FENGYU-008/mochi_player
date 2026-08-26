@@ -54,6 +54,7 @@ class FileBrowserToolbar extends StatelessWidget {
           child: AppSegmentedControl<FileBrowserViewMode>(
             value: viewMode,
             onChanged: onViewModeChanged,
+            appearance: AppSegmentedControlAppearance.toolbar,
             options: const [
               AppSegmentedOption.icon(value: FileBrowserViewMode.list, label: '列表视图', icon: AppIcons.list),
               AppSegmentedOption.icon(value: FileBrowserViewMode.grid, label: '网格视图', icon: AppIcons.grid),
