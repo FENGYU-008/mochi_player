@@ -59,7 +59,7 @@ void main() {
     final sliderTheme = tester.widget<SliderTheme>(find.byType(SliderTheme));
     expect(
       sliderTheme.data.overlayShape!.getPreferredSize(true, false),
-      const Size.square(AppControlMetrics.sliderHoverHitRadius * 2),
+      const Size.square(32),
     );
     expect(sliderTheme.data.showValueIndicator, ShowValueIndicator.never);
     expect(tester.takeException(), isNull);
@@ -176,7 +176,7 @@ Offset _thumbPosition(
   double max = 100,
 }) {
   final rect = tester.getRect(find.byType(AppSlider));
-  const inset = AppControlMetrics.sliderThumbHoverRadius;
+  const inset = 9.0;
   final progress = (value - min) / (max - min);
   return Offset(
     rect.left + inset + (rect.width - inset * 2) * progress,

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
-import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/presentation/widgets/library_item_poster_card.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_card.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_poster_grid.dart';
+import 'package:provider/provider.dart';
 
 enum LibraryCategory { movies, series, favorites }
 

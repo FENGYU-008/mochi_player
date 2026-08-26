@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/core/ui/app_ui.dart';
-import 'package:mochi_player/features/library/presentation/widgets/file_browser_list_row.dart';
 import 'package:mochi_player/features/library/domain/file_browser_entry.dart';
+import 'package:mochi_player/features/library/presentation/widgets/file_browser_list_row.dart';
 
 class FileBrowserList extends StatelessWidget {
   static const double headerHeight = 47;

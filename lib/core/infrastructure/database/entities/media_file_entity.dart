@@ -1,6 +1,6 @@
 import 'package:isar/isar.dart';
-import 'package:mochi_player/core/infrastructure/database/entities/stored_watch_status.dart';
 import 'package:mochi_player/core/infrastructure/database/entities/stored_media_type.dart';
+import 'package:mochi_player/core/infrastructure/database/entities/stored_watch_status.dart';
 
 part 'media_file_entity.g.dart';
 

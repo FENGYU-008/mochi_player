@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
@@ -73,7 +72,10 @@ class _MenuOptionRowState extends State<MenuOptionRow> {
             color: enabled && _hovered ? AppColors.hoverSurface(context) : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadii.small),
           ),
-          child: widget.child,
+          child: DefaultTextStyle.merge(
+            style: TextStyle(color: enabled ? AppColors.textPrimary(context) : AppColors.textSecondary(context)),
+            child: widget.child,
+          ),
         ),
       ),
     );

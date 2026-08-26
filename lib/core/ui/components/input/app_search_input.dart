@@ -1,9 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:mochi_player/core/ui/components/input/app_input.dart';
-import 'package:mochi_player/core/ui/theme/app_theme.dart';
+import 'package:mochi_player/core/ui/theme/app_colors.dart';
 
 /// A search-specific composition of [AppInput].
 class AppSearchInput extends StatefulWidget {
@@ -93,8 +92,6 @@ class _AppSearchInputState extends State<AppSearchInput> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final appTheme = theme.extension<AppThemeExtension>()!;
-
     return RepaintBoundary(
       child: AppInput.search(
         controller: _controller,
@@ -104,7 +101,7 @@ class _AppSearchInputState extends State<AppSearchInput> {
         prefix: Icon(
           CupertinoIcons.search,
           size: 18,
-          color: _hasFocus ? theme.textTheme.bodyMedium?.color : appTheme.searchBarIconColor,
+          color: _hasFocus ? theme.textTheme.bodyMedium?.color : AppColors.searchIcon(context),
         ),
         suffix: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
@@ -155,20 +152,19 @@ class _ShortcutKeyCap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appTheme = Theme.of(context).extension<AppThemeExtension>()!;
     return Container(
       width: label.length > 1 ? 28 : 22,
       height: 22,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: appTheme.keyCapColor,
+        color: AppColors.keyCapBackground(context),
         borderRadius: BorderRadius.circular(5),
         boxShadow: [BoxShadow(color: Colors.black.withAlpha(26), offset: const Offset(0, 1), blurRadius: 1)],
         border: Border.all(color: Colors.black.withAlpha(13)),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: appTheme.keyCapTextColor),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.keyCapForeground(context)),
       ),
     );
   }

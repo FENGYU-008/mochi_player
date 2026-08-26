@@ -1,11 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-import 'package:mochi_player/core/ui/theme/app_theme.dart';
 
 enum MediaArtworkType { poster, backdrop }
 
@@ -41,7 +39,7 @@ class _MediaCardState extends State<MediaCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final enabled = widget.onTap != null;
-    final shadowColor = theme.extension<AppThemeExtension>()!.cardShadowColor;
+    final shadowColor = AppColors.cardShadow(context);
 
     return MouseRegion(
       onEnter: enabled ? (_) => setState(() => _isHovering = true) : null,

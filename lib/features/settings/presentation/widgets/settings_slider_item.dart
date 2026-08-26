@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/core/ui/components/input/app_slider.dart';
 import 'package:mochi_player/core/ui/components/input/form/app_form_item.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
 class SettingsSliderItem extends StatelessWidget {
+  static const double _valueWidth = 36;
+
   const SettingsSliderItem({
     super.key,
     required this.label,
@@ -52,7 +52,7 @@ class SettingsSliderItem extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: AppControlMetrics.sliderValueWidth,
+            width: _valueWidth,
             child: Text(
               displayValue,
               textAlign: TextAlign.end,

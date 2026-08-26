@@ -1,5 +1,5 @@
-import 'package:webdav_client/webdav_client.dart' as webdav;
 import 'package:logger/logger.dart';
+import 'package:webdav_client/webdav_client.dart' as webdav;
 
 abstract interface class WebDavFileSystem {
   bool get isInitialized;

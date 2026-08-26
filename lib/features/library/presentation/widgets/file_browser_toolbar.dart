@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 

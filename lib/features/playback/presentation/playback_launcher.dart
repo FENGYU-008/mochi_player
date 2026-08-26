@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:mochi_player/app/routing/app_route_paths.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
-import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/core/infrastructure/openlist/openlist_playback_service.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/playback/presentation/player_route_data.dart';
+import 'package:provider/provider.dart';
 
 class PlaybackLauncher {
   static void playFile(
@@ -168,7 +168,7 @@ class PlaybackLauncher {
                 separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (ctx, index) {
                   final file = versions[index];
-                  final label = MediaFilePresentation.versionTitle(file);
+                  final label = MediaFileLabels.versionTitle(file);
                   return ListTile(
                     leading: Icon(Icons.movie_outlined, color: theme.colorScheme.primary),
                     title: Text(
@@ -176,7 +176,7 @@ class PlaybackLauncher {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
-                      MediaFilePresentation.versionSubtitle(file, includeContainer: false),
+                      MediaFileLabels.versionSubtitle(file, includeContainer: false),
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                     onTap: () {

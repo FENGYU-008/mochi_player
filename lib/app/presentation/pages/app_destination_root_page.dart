@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/app/presentation/navigation/app_destination.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/home/presentation/widgets/home_content.dart';

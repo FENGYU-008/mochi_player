@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 
 typedef AppSliderValueFormatter = String Function(double value);
 
 class AppSlider extends StatelessWidget {
+  static const double _trackHeight = 3;
+  static const double _thumbRadius = 6;
+  static const double _hoverThumbRadius = 9;
+  static const double _tooltipHitRadius = 16;
+  static const double _tooltipGap = 10;
+
   const AppSlider({
     super.key,
     required this.value,
@@ -32,10 +36,6 @@ class AppSlider extends StatelessWidget {
   final AppSliderValueFormatter? tooltipFormatter;
   final SemanticFormatterCallback? semanticFormatterCallback;
 
-  static const double _thumbRadius = AppControlMetrics.sliderThumbRadius;
-  static const double _hoverThumbRadius = AppControlMetrics.sliderThumbHoverRadius;
-  static const double _tooltipHitRadius = AppControlMetrics.sliderHoverHitRadius;
-
   @override
   Widget build(BuildContext context) {
     final primary = AppColors.primary(context);
@@ -46,7 +46,7 @@ class AppSlider extends StatelessWidget {
 
     return SliderTheme(
       data: SliderTheme.of(context).copyWith(
-        trackHeight: AppControlMetrics.sliderTrackHeight,
+        trackHeight: _trackHeight,
         activeTrackColor: primary,
         inactiveTrackColor: AppColors.separator(context),
         disabledActiveTrackColor: primary.withAlpha(90),
@@ -59,6 +59,7 @@ class AppSlider extends StatelessWidget {
           hoverRadius: _hoverThumbRadius,
           centerColor: thumbCenterColor,
           tooltipBackground: tooltipBackground,
+          tooltipGap: _tooltipGap,
         ),
         valueIndicatorTextStyle: const TextStyle(
           color: Colors.white,
@@ -122,10 +123,12 @@ class _SliderTooltipPainter {
     required double opacity,
     required TextPainter labelPainter,
     required Color background,
+    required double hoverRadius,
+    required double tooltipGap,
   }) {
     if (opacity == 0) return;
     final width = (labelPainter.width + 20).clamp(_minimumWidth, 120.0).toDouble();
-    final tip = center.translate(0, -AppControlMetrics.sliderThumbHoverRadius - AppControlMetrics.sliderTooltipGap);
+    final tip = center.translate(0, -hoverRadius - tooltipGap);
     final bubbleRect = Rect.fromLTWH(tip.dx - width / 2, tip.dy - _arrowHeight - _height, width, _height);
     final bubble = Path()
       ..addRRect(RRect.fromRectAndRadius(bubbleRect, const Radius.circular(8)))
@@ -181,12 +184,14 @@ class _AppSliderThumbShape extends SliderComponentShape {
     required this.hoverRadius,
     required this.centerColor,
     required this.tooltipBackground,
+    required this.tooltipGap,
   });
 
   final double radius;
   final double hoverRadius;
   final Color centerColor;
   final Color tooltipBackground;
+  final double tooltipGap;
 
   @override
   Size getPreferredSize(bool isEnabled, bool isDiscrete) {
@@ -221,6 +226,8 @@ class _AppSliderThumbShape extends SliderComponentShape {
       opacity: interactionProgress,
       labelPainter: labelPainter,
       background: tooltipBackground,
+      hoverRadius: hoverRadius,
+      tooltipGap: tooltipGap,
     );
 
     if (interactionProgress > 0) {

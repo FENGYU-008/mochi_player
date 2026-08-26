@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mochi_player/app/presentation/widgets/windows_window_buttons.dart';
+import 'package:mochi_player/core/platform/window_controls_layout.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
 void main() {

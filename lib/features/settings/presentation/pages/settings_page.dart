@@ -2,17 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
-import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
-import 'package:mochi_player/features/settings/application/theme_provider.dart';
-import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/home/application/trending_media_provider.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
+import 'package:mochi_player/features/settings/application/theme_provider.dart';
+import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_section.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_slider_item.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_switch_item.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_text_field.dart';
+import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

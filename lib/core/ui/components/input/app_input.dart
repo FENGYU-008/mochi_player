@@ -1,13 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:mochi_player/core/ui/components/input/internal/app_text_context_menu.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-import 'package:mochi_player/core/ui/theme/app_theme.dart';
 import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
 enum _AppInputVariant { standard, search }
@@ -68,6 +66,8 @@ class AppInput extends StatefulWidget {
 }
 
 class _AppInputState extends State<AppInput> {
+  static const double _inputHeight = 26;
+
   late FocusNode _focusNode;
   late bool _ownsFocusNode;
   bool _wasFocused = false;
@@ -81,9 +81,13 @@ class _AppInputState extends State<AppInput> {
   @override
   void didUpdateWidget(AppInput oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.focusNode == widget.focusNode) return;
-    _detachFocusNode();
-    _attachFocusNode(widget.focusNode);
+    if (oldWidget.focusNode != widget.focusNode) {
+      _detachFocusNode();
+      _attachFocusNode(widget.focusNode);
+    }
+    if (oldWidget.enabled && !widget.enabled && _focusNode.hasFocus) {
+      _focusNode.unfocus();
+    }
   }
 
   @override
@@ -95,6 +99,9 @@ class _AppInputState extends State<AppInput> {
   void _attachFocusNode(FocusNode? focusNode) {
     _ownsFocusNode = focusNode == null;
     _focusNode = focusNode ?? FocusNode();
+    if (!widget.enabled && _focusNode.hasFocus) {
+      _focusNode.unfocus();
+    }
     _wasFocused = _focusNode.hasFocus;
     _focusNode.addListener(_handleFocusChange);
   }
@@ -113,12 +120,11 @@ class _AppInputState extends State<AppInput> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isSearch = widget._variant == _AppInputVariant.search;
     final primary = AppColors.primary(context);
-    final textColor = AppColors.textPrimary(context);
+    final textColor = widget.enabled ? AppColors.textPrimary(context) : AppColors.textSecondary(context);
     final inputBackground = AppColors.inputBackground(context);
-    final searchBackground = theme.extension<AppThemeExtension>()!.searchBarColor;
+    final searchBackground = AppColors.searchBackground(context);
     final focusedBorder = primary.withAlpha(isSearch ? 204 : 215);
     final restingBorder = isSearch
         ? Colors.transparent
@@ -129,7 +135,7 @@ class _AppInputState extends State<AppInput> {
         ? searchBackground
         : widget.enabled
         ? inputBackground.withAlpha(0)
-        : inputBackground.withAlpha(85);
+        : AppColors.subtleSurface(context);
     final focusedBackground = isSearch ? searchBackground : inputBackground;
     final borderRadius = BorderRadius.circular(isSearch ? AppRadii.surface : AppRadii.small);
 
@@ -139,7 +145,7 @@ class _AppInputState extends State<AppInput> {
       curve: Curves.easeOut,
       builder: (context, focusProgress, child) {
         return SizedBox(
-          height: isSearch ? 35 : AppControlMetrics.inputHeight,
+          height: isSearch ? 35 : _inputHeight,
           child: ClipRRect(
             borderRadius: borderRadius,
             clipBehavior: Clip.antiAlias,
@@ -183,12 +189,15 @@ class _AppInputState extends State<AppInput> {
                 padding: EdgeInsets.zero,
                 placeholder: widget.placeholder,
                 placeholderStyle: isSearch
-                    ? TextStyle(color: theme.extension<AppThemeExtension>()!.searchBarHintColor, fontSize: 14)
+                    ? TextStyle(color: AppColors.searchHint(context), fontSize: 14)
                     : AppTypography.formValue.copyWith(color: AppColors.textSecondary(context)),
                 style: isSearch
                     ? TextStyle(fontSize: 14, color: textColor)
                     : AppTypography.formValue.copyWith(color: textColor),
-                decoration: null,
+                // CupertinoTextField paints its own disabled background when
+                // decoration is null. AppInput owns the complete surface, so
+                // keep the inner field transparent in every state.
+                decoration: const BoxDecoration(color: Colors.transparent),
               ),
             ),
             if (widget.suffix != null) ...[

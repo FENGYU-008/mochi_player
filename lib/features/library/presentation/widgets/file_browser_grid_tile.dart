@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/core/ui/components/basic/app_clickable_area.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-import 'package:mochi_player/features/library/presentation/widgets/file_browser_entry_display.dart';
 import 'package:mochi_player/features/library/domain/file_browser_entry.dart';
+import 'package:mochi_player/features/library/presentation/widgets/file_browser_entry_display.dart';
 
 class FileBrowserGridTile extends StatelessWidget {
   final FileBrowserEntry item;

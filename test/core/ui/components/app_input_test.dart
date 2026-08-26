@@ -8,6 +8,100 @@ import 'package:mochi_player/core/ui/components/input/internal/app_text_context_
 import 'package:mochi_player/core/ui/components/overlay/internal/menu_parts.dart';
 
 void main() {
+  testWidgets('uses a subtle neutral surface when disabled in dark mode', (
+    tester,
+  ) async {
+    final controller = TextEditingController(text: 'http://127.0.0.1:7897');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.darkTheme,
+        home: Scaffold(
+          body: SizedBox(
+            width: 320,
+            child: AppInput(controller: controller, enabled: false),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byType(AppInput));
+    final surfaces = tester
+        .widgetList<DecoratedBox>(
+          find.descendant(
+            of: find.byType(AppInput),
+            matching: find.byType(DecoratedBox),
+          ),
+        )
+        .map((box) => box.decoration)
+        .whereType<BoxDecoration>();
+    expect(
+      surfaces.any(
+        (surface) => surface.color == AppColors.subtleSurface(context),
+      ),
+      isTrue,
+    );
+
+    final textField = tester.widget<CupertinoTextField>(
+      find.byType(CupertinoTextField),
+    );
+    expect(textField.decoration?.color, Colors.transparent);
+    expect(textField.style?.color, AppColors.textSecondary(context));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    controller.dispose();
+  });
+
+  testWidgets('releases focus and selection highlight when disabled', (
+    tester,
+  ) async {
+    final controller = TextEditingController(text: 'http://127.0.0.1:7897');
+    final focusNode = FocusNode();
+    var enabled = true;
+    late StateSetter updateHost;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.darkTheme,
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              updateHost = setState;
+              return SizedBox(
+                width: 320,
+                child: AppInput(
+                  controller: controller,
+                  focusNode: focusNode,
+                  enabled: enabled,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    focusNode.requestFocus();
+    controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: controller.text.length,
+    );
+    await tester.pump();
+    expect(focusNode.hasFocus, isTrue);
+
+    updateHost(() => enabled = false);
+    await tester.pumpAndSettle();
+
+    expect(focusNode.hasFocus, isFalse);
+    final editable = tester.widget<EditableText>(find.byType(EditableText));
+    expect(editable.selectionColor, isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    controller.dispose();
+    focusNode.dispose();
+  });
+
   testWidgets('uses the width provided by its parent', (tester) async {
     final controller = TextEditingController();
 
@@ -121,6 +215,41 @@ void main() {
     expect(find.byType(MenuOptionRow), findsWidgets);
     await mouse.removePointer();
 
+    await tester.pumpWidget(const SizedBox.shrink());
+    controller.dispose();
+  });
+
+  testWidgets('password context menu always exposes paste and select all', (
+    tester,
+  ) async {
+    final controller = TextEditingController(text: 'secret');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.darkTheme,
+        home: Scaffold(
+          body: AppInput(controller: controller, obscureText: true),
+        ),
+      ),
+    );
+
+    final mouse = await tester.createGesture(
+      kind: PointerDeviceKind.mouse,
+      buttons: kSecondaryMouseButton,
+    );
+    final inputCenter = tester.getCenter(find.byType(CupertinoTextField));
+    await mouse.addPointer(location: inputCenter);
+    await mouse.down(inputCenter);
+    await mouse.up();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppTextContextMenu), findsOneWidget);
+    expect(find.text('粘贴'), findsOneWidget);
+    expect(find.text('全选'), findsOneWidget);
+    expect(find.text('剪切'), findsNothing);
+    expect(find.text('复制'), findsNothing);
+
+    await mouse.removePointer();
     await tester.pumpWidget(const SizedBox.shrink());
     controller.dispose();
   });

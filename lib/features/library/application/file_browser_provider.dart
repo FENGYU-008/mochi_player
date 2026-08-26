@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'package:webdav_client/webdav_client.dart' as webdav;
-
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/media/media_file_kind.dart';
 import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/library/domain/file_browser_entry.dart';
+import 'package:webdav_client/webdav_client.dart' as webdav;
 
 enum FileBrowserViewMode { grid, list }
 

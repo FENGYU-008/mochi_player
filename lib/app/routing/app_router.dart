@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:mochi_player/app/presentation/navigation/app_destination.dart';
 import 'package:mochi_player/app/presentation/pages/app_destination_root_page.dart';
 import 'package:mochi_player/app/presentation/pages/app_shell_page.dart';

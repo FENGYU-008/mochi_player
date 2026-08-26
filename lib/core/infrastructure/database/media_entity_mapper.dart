@@ -1,5 +1,5 @@
-import 'package:mochi_player/core/infrastructure/database/entities/entities.dart' as entity;
 import 'package:mochi_player/core/domain/media/models.dart';
+import 'package:mochi_player/core/infrastructure/database/entities/entities.dart' as entity;
 
 /// Entity ↔ Domain 模型转换器
 class MediaEntityMapper {

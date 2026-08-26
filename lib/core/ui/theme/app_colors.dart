@@ -18,6 +18,12 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
   final Color selectControlSurface;
   final Color selectBorder;
   final Color mediaHoverOverlay;
+  final Color searchBackground;
+  final Color searchHint;
+  final Color searchIcon;
+  final Color keyCapBackground;
+  final Color keyCapForeground;
+  final Color cardShadow;
 
   const AppColorSchemeExtension({
     required this.textPrimary,
@@ -36,6 +42,12 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
     required this.selectControlSurface,
     required this.selectBorder,
     required this.mediaHoverOverlay,
+    required this.searchBackground,
+    required this.searchHint,
+    required this.searchIcon,
+    required this.keyCapBackground,
+    required this.keyCapForeground,
+    required this.cardShadow,
   });
 
   @override
@@ -56,6 +68,12 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
     Color? selectControlSurface,
     Color? selectBorder,
     Color? mediaHoverOverlay,
+    Color? searchBackground,
+    Color? searchHint,
+    Color? searchIcon,
+    Color? keyCapBackground,
+    Color? keyCapForeground,
+    Color? cardShadow,
   }) {
     return AppColorSchemeExtension(
       textPrimary: textPrimary ?? this.textPrimary,
@@ -74,6 +92,12 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
       selectControlSurface: selectControlSurface ?? this.selectControlSurface,
       selectBorder: selectBorder ?? this.selectBorder,
       mediaHoverOverlay: mediaHoverOverlay ?? this.mediaHoverOverlay,
+      searchBackground: searchBackground ?? this.searchBackground,
+      searchHint: searchHint ?? this.searchHint,
+      searchIcon: searchIcon ?? this.searchIcon,
+      keyCapBackground: keyCapBackground ?? this.keyCapBackground,
+      keyCapForeground: keyCapForeground ?? this.keyCapForeground,
+      cardShadow: cardShadow ?? this.cardShadow,
     );
   }
 
@@ -97,6 +121,12 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
       selectControlSurface: Color.lerp(selectControlSurface, other.selectControlSurface, t)!,
       selectBorder: Color.lerp(selectBorder, other.selectBorder, t)!,
       mediaHoverOverlay: Color.lerp(mediaHoverOverlay, other.mediaHoverOverlay, t)!,
+      searchBackground: Color.lerp(searchBackground, other.searchBackground, t)!,
+      searchHint: Color.lerp(searchHint, other.searchHint, t)!,
+      searchIcon: Color.lerp(searchIcon, other.searchIcon, t)!,
+      keyCapBackground: Color.lerp(keyCapBackground, other.keyCapBackground, t)!,
+      keyCapForeground: Color.lerp(keyCapForeground, other.keyCapForeground, t)!,
+      cardShadow: Color.lerp(cardShadow, other.cardShadow, t)!,
     );
   }
 }
@@ -165,4 +195,16 @@ class AppColors {
   static Color selectBorder(BuildContext context) => _scheme(context).selectBorder;
 
   static Color mediaHoverOverlay(BuildContext context) => _scheme(context).mediaHoverOverlay;
+
+  static Color searchBackground(BuildContext context) => _scheme(context).searchBackground;
+
+  static Color searchHint(BuildContext context) => _scheme(context).searchHint;
+
+  static Color searchIcon(BuildContext context) => _scheme(context).searchIcon;
+
+  static Color keyCapBackground(BuildContext context) => _scheme(context).keyCapBackground;
+
+  static Color keyCapForeground(BuildContext context) => _scheme(context).keyCapForeground;
+
+  static Color cardShadow(BuildContext context) => _scheme(context).cardShadow;
 }

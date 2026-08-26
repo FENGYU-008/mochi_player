@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
-import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 
 class AppSwitch extends StatelessWidget {
+  static const double _width = 38;
+  static const double _height = 24;
+
   final bool value;
   final ValueChanged<bool>? onChanged;
 
@@ -12,8 +14,8 @@ class AppSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: AppControlMetrics.switchWidth,
-      height: AppControlMetrics.switchHeight,
+      width: _width,
+      height: _height,
       child: FittedBox(
         fit: BoxFit.contain,
         child: CupertinoSwitch(

@@ -1,5 +1,5 @@
-import 'package:mochi_player/core/domain/media/watch_status.dart';
 import 'package:mochi_player/core/domain/media/media_type.dart';
+import 'package:mochi_player/core/domain/media/watch_status.dart';
 
 /// 媒体文件 Domain Model
 class MediaFile {

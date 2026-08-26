@@ -5,17 +5,17 @@ import 'package:go_router/go_router.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:mochi_player/app/presentation/widgets/windows_window_buttons.dart';
 import 'package:mochi_player/app/routing/app_router.dart';
-import 'package:mochi_player/core/platform/window_controls_controller.dart';
-import 'package:mochi_player/core/ui/theme/window_controls_layout.dart';
-import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
-import 'package:mochi_player/features/home/application/trending_media_provider.dart';
-import 'package:mochi_player/features/library/application/media_library_provider.dart';
-import 'package:mochi_player/features/settings/application/theme_provider.dart';
-import 'package:mochi_player/core/ui/theme/app_theme.dart';
 import 'package:mochi_player/core/infrastructure/database/database_service.dart';
+import 'package:mochi_player/core/platform/window_controls_controller.dart';
+import 'package:mochi_player/core/platform/window_controls_layout.dart';
+import 'package:mochi_player/core/ui/theme/app_theme.dart';
+import 'package:mochi_player/features/home/application/trending_media_provider.dart';
+import 'package:mochi_player/features/library/application/file_browser_provider.dart';
+import 'package:mochi_player/features/library/application/media_library_provider.dart';
+import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
+import 'package:mochi_player/features/settings/application/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

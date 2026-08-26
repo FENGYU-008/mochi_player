@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/core/ui/components/data_display/app_tag.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 

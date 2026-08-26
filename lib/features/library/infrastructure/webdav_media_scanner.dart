@@ -1,11 +1,10 @@
 import 'package:logger/logger.dart';
-import 'package:webdav_client/webdav_client.dart' as webdav;
-
+import 'package:mochi_player/core/domain/media/media_file_kind.dart';
 import 'package:mochi_player/core/infrastructure/database/entities/entities.dart';
 import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/library/infrastructure/filename_parser.dart';
 import 'package:mochi_player/features/library/infrastructure/media_file_metadata_mapper.dart';
-import 'package:mochi_player/core/domain/media/media_file_kind.dart';
+import 'package:webdav_client/webdav_client.dart' as webdav;
 
 /// Scans a WebDAV file tree and emits parsed video-file entities.
 ///

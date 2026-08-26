@@ -1,9 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-import 'package:window_manager/window_manager.dart';
-
 import 'package:mochi_player/core/platform/window_controls_controller.dart';
+import 'package:window_manager/window_manager.dart';
 
 /// Manages the desktop window modes used only by the playback experience.
 ///

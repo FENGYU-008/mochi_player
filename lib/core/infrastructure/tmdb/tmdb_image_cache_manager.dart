@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-
 import 'package:mochi_player/core/infrastructure/tmdb/proxy_config.dart';
 
 class TmdbImageCacheManager {

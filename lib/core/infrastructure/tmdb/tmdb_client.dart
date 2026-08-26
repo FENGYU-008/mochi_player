@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:logger/logger.dart';
-
 import 'package:mochi_player/core/infrastructure/tmdb/proxy_config.dart';
 
 class TmdbClient {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:mochi_player/core/platform/window_controls_layout.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
 /// 播放器顶部信息栏和底部控制栏共用的布局规格。

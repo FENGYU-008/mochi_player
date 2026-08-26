@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-
 import 'package:mochi_player/app/routing/app_route_paths.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/view_models/media_detail_view_model.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_detail/cast_list.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_detail/episode_list.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_detail/media_detail_header.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
-import 'package:mochi_player/core/domain/media/models.dart';
-import 'package:mochi_player/core/ui/app_ui.dart';
+import 'package:provider/provider.dart';
 
 void openMediaDetailPage(BuildContext context, LibraryItem item) {
   context.push(AppRoutePaths.mediaDetail(context), extra: item);
@@ -228,14 +227,14 @@ class _VersionRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  MediaFilePresentation.playableVersionTitle(file),
+                  MediaFileLabels.playableVersionTitle(file),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  MediaFilePresentation.playableVersionDetails(file),
+                  MediaFileLabels.playableVersionDetails(file),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 11, color: theme.textTheme.bodySmall?.color),

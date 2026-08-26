@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:window_manager/window_manager.dart';
-
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
+import 'package:window_manager/window_manager.dart';
 
 /// Custom minimize, maximize and close buttons for the borderless Windows app.
 class WindowsWindowButtons extends StatefulWidget {

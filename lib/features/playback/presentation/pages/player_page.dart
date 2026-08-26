@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:provider/provider.dart';
-
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/media/media_type.dart';
 import 'package:mochi_player/core/platform/window_controls_controller.dart';
@@ -12,10 +10,11 @@ import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/playback/presentation/controllers/player_playback_controller.dart';
 import 'package:mochi_player/features/playback/presentation/controllers/player_window_mode_controller.dart';
-import 'package:mochi_player/features/playback/presentation/widgets/player_overlay.dart';
 import 'package:mochi_player/features/playback/presentation/widgets/player_controls.dart';
+import 'package:mochi_player/features/playback/presentation/widgets/player_overlay.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/settings/domain/app_settings.dart';
+import 'package:provider/provider.dart';
 
 class PlayerPage extends StatefulWidget {
   final MediaFile videoItem;

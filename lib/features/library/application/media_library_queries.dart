@@ -1,7 +1,7 @@
 import 'package:mochi_player/core/domain/media/models.dart';
+import 'package:mochi_player/core/formatters/media_format.dart';
 import 'package:mochi_player/core/infrastructure/database/entities/entities.dart' as entity;
 import 'package:mochi_player/core/infrastructure/database/media_entity_mapper.dart';
-import 'package:mochi_player/core/ui/formatters/media_format.dart';
 import 'package:mochi_player/features/library/application/media_card_view_data.dart';
 import 'package:mochi_player/features/library/application/media_library_catalog.dart';
 

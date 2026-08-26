@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:mochi_player/app/presentation/navigation/app_destination.dart';
 
 abstract final class AppRoutePaths {

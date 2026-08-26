@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/core/ui/components/basic/app_appearance.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
@@ -39,7 +38,7 @@ class AppTag extends StatelessWidget {
         color:
             backgroundColor ??
             (usesOverlayAppearance ? Colors.white.withAlpha(42) : AppColors.elevatedSurface(context)),
-        borderRadius: BorderRadius.circular(AppRadii.chip),
+        borderRadius: BorderRadius.circular(AppRadii.tag),
         border: outlined
             ? Border.all(
                 color:

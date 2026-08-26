@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/home/application/trending_media_provider.dart';
+import 'package:mochi_player/features/home/presentation/widgets/hero_section.dart';
+import 'package:mochi_player/features/home/presentation/widgets/trending_category_card.dart';
+import 'package:mochi_player/features/library/application/media_card_view_data.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/library/presentation/pages/library_section_page.dart';
-import 'package:mochi_player/core/domain/media/models.dart';
-import 'package:mochi_player/features/library/application/media_card_view_data.dart';
 import 'package:mochi_player/features/library/presentation/widgets/continue_watching_card.dart';
 import 'package:mochi_player/features/library/presentation/widgets/library_item_poster_card.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_poster_grid.dart';
 import 'package:provider/provider.dart';
-
-import 'package:mochi_player/features/home/presentation/widgets/hero_section.dart';
-import 'package:mochi_player/features/home/presentation/widgets/trending_category_card.dart';
 
 class HomeContent extends StatefulWidget {
   final void Function(double offset)? onScroll;

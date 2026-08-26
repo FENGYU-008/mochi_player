@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
-import 'package:mochi_player/core/ui/app_ui.dart';
+import 'package:mochi_player/core/formatters/media_format.dart';
 import 'package:mochi_player/features/library/presentation/pages/media_detail_page.dart';
 import 'package:mochi_player/features/library/presentation/widgets/media_card.dart';
 

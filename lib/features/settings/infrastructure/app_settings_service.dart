@@ -1,5 +1,5 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mochi_player/features/settings/domain/app_settings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppSettingsService {
   static const _webDavUrlKey = 'webdav_url';

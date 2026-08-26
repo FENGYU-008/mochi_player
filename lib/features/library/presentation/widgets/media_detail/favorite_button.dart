@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
+import 'package:mochi_player/features/library/application/media_library_provider.dart';
+import 'package:provider/provider.dart';
 
 class FavoriteButton extends StatelessWidget {
   final String tmdbId;

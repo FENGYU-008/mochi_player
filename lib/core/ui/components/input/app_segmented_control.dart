@@ -17,6 +17,8 @@ class AppSegmentedOption<T> {
 }
 
 class AppSegmentedControl<T> extends StatelessWidget {
+  static const double _height = 32;
+
   final T value;
   final List<AppSegmentedOption<T>> options;
   final ValueChanged<T>? onChanged;
@@ -32,7 +34,7 @@ class AppSegmentedControl<T> extends StatelessWidget {
       duration: AppControlMetrics.stateAnimationDuration,
       opacity: enabled ? 1 : 0.5,
       child: SizedBox(
-        height: AppControlMetrics.segmentedHeight,
+        height: _height,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(AppRadii.control),
           child: DecoratedBox(

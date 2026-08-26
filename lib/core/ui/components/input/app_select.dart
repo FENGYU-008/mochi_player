@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:mochi_player/core/ui/components/overlay/app_dropdown.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
@@ -16,6 +15,8 @@ class AppSelectOption<T> {
 }
 
 class AppSelect<T> extends StatelessWidget {
+  static const double _height = 32;
+
   final T? value;
   final String placeholder;
   final List<AppSelectOption<T>> options;
@@ -38,7 +39,7 @@ class AppSelect<T> extends StatelessWidget {
           child: AppDropdown<T>(
             menuWidth: menuWidth,
             trigger: SizedBox(
-              height: AppControlMetrics.selectHeight,
+              height: _height,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: AppColors.selectControlSurface(context),
