@@ -279,12 +279,12 @@ class _HomeContentState extends State<HomeContent> {
 
     return SizedBox(
       height: listHeight,
-      child: AppHorizontalScrollView(
+      child: AppHorizontalScroller(
         controller: _continueWatchingCtrl,
-        bottomPadding: textSectionHeight,
-        child: ListView.builder(
+        controlsBottomInset: textSectionHeight,
+        contentBuilder: (context, controller) => ListView.builder(
           key: const PageStorageKey('home-continue-watching-scroll'),
-          controller: _continueWatchingCtrl,
+          controller: controller,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
           scrollDirection: Axis.horizontal,
           itemCount: items.length,
@@ -310,12 +310,12 @@ class _HomeContentState extends State<HomeContent> {
 
     return SizedBox(
       height: listHeight,
-      child: AppHorizontalScrollView(
+      child: AppHorizontalScroller(
         controller: _recentlyAddedCtrl,
-        bottomPadding: textSectionHeight,
-        child: ListView.builder(
+        controlsBottomInset: textSectionHeight,
+        contentBuilder: (context, controller) => ListView.builder(
           key: const PageStorageKey('home-recently-added-scroll'),
-          controller: _recentlyAddedCtrl,
+          controller: controller,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
           scrollDirection: Axis.horizontal,
           itemCount: items.length,

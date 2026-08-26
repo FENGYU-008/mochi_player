@@ -172,8 +172,7 @@ class HeroSection extends StatelessWidget {
           onPressed: () => _handlePlay(context),
           icon: Icons.play_arrow_rounded,
           label: '播放',
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          size: AppButtonSize.regular,
         ),
         const SizedBox(width: 12),
 
@@ -183,8 +182,7 @@ class HeroSection extends StatelessWidget {
           label: '详情',
           variant: AppButtonVariant.secondary,
           appearance: AppAppearance.overlay,
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 22),
+          size: AppButtonSize.regular,
         ),
       ],
     );

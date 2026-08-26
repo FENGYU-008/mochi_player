@@ -1,24 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/core/ui/components/input/app_form_row.dart';
-import 'package:mochi_player/core/ui/components/input/app_text_field.dart';
+
+import 'package:mochi_player/core/ui/components/input/app_input.dart';
+import 'package:mochi_player/core/ui/components/input/form/app_form_item.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
-class AppFormTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final IconData? icon;
-  final bool enabled;
-  final bool obscureText;
-  final TextInputType? keyboardType;
-  final Widget? trailing;
-  final String? suffixText;
-  final double maxWidth;
-  final VoidCallback? onFocusLost;
-
-  const AppFormTextField({
+class SettingsTextField extends StatelessWidget {
+  const SettingsTextField({
     super.key,
     required this.controller,
     required this.label,
@@ -32,10 +22,20 @@ class AppFormTextField extends StatelessWidget {
     this.onFocusLost,
   });
 
+  final TextEditingController controller;
+  final String label;
+  final IconData? icon;
+  final bool enabled;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final Widget? trailing;
+  final String? suffixText;
+  final double maxWidth;
+  final VoidCallback? onFocusLost;
+
   @override
   Widget build(BuildContext context) {
-    final secondaryColor = AppColors.textSecondary(context);
-    return AppFormRow(
+    return AppFormItem(
       icon: icon,
       label: label,
       enabled: enabled,
@@ -47,7 +47,7 @@ class AppFormTextField extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Expanded(
-                child: AppTextField(
+                child: AppInput(
                   controller: controller,
                   enabled: enabled,
                   obscureText: obscureText,
@@ -56,7 +56,6 @@ class AppFormTextField extends StatelessWidget {
                   textAlign: suffixText == null
                       ? TextAlign.start
                       : TextAlign.end,
-                  maxWidth: double.infinity,
                 ),
               ),
               if (suffixText != null) ...[
@@ -64,7 +63,7 @@ class AppFormTextField extends StatelessWidget {
                 Text(
                   suffixText!,
                   style: AppTypography.formSuffix.copyWith(
-                    color: secondaryColor,
+                    color: AppColors.textSecondary(context),
                   ),
                 ),
               ],

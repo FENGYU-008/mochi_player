@@ -5,50 +5,18 @@ import 'package:window_manager/window_manager.dart';
 
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 
-/// macOS 原生窗口按钮与 Windows 自绘按钮共用的左上角布局规格。
-abstract final class AppWindowChromeMetrics {
-  static const double leadingInset = 8;
-  static const double leadingContentInset = 104;
-}
+/// Custom minimize, maximize and close buttons for the borderless Windows app.
+class WindowsWindowButtons extends StatefulWidget {
+  const WindowsWindowButtons({super.key});
 
-/// Windows 无边框窗口使用的最小化、最大化和关闭按钮。
-///
-/// macOS 继续使用系统原生的交通灯按钮，其他平台不显示此组件。
-class AppWindowControls extends StatefulWidget {
-  static const _nativeChannel = MethodChannel('mochi_player/window_controls');
-  static final ValueNotifier<bool> _miniPlayerMode = ValueNotifier(false);
-
-  static const double buttonSize = 28;
-  static const double buttonGap = 2;
-  static const double height = 60;
-  static const double width = buttonSize * 3 + buttonGap * 2;
-
-  const AppWindowControls({super.key});
-
-  static bool get isVisible =>
+  static bool get isSupported =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
 
-  static Future<void> positionNativeWindowButtons() async {
-    if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS) return;
-    await _nativeChannel.invokeMethod<void>('positionNativeWindowButtons');
-  }
-
-  static Future<void> setMiniPlayerMode(bool enabled) async {
-    if (_miniPlayerMode.value != enabled) {
-      _miniPlayerMode.value = enabled;
-    }
-    if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS) return;
-    await _nativeChannel.invokeMethod<void>(
-      'setNativeWindowButtonsVisible',
-      !enabled,
-    );
-  }
-
   @override
-  State<AppWindowControls> createState() => _AppWindowControlsState();
+  State<WindowsWindowButtons> createState() => _WindowsWindowButtonsState();
 }
 
-class _AppWindowControlsState extends State<AppWindowControls>
+class _WindowsWindowButtonsState extends State<WindowsWindowButtons>
     with WindowListener {
   bool _isMaximized = false;
   bool _isFullScreen = false;
@@ -56,23 +24,17 @@ class _AppWindowControlsState extends State<AppWindowControls>
   @override
   void initState() {
     super.initState();
-    AppWindowControls._miniPlayerMode.addListener(_handleModeChanged);
     windowManager.addListener(this);
-    _syncMaximizedState();
+    _syncWindowState();
   }
 
   @override
   void dispose() {
-    AppWindowControls._miniPlayerMode.removeListener(_handleModeChanged);
     windowManager.removeListener(this);
     super.dispose();
   }
 
-  void _handleModeChanged() {
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _syncMaximizedState() async {
+  Future<void> _syncWindowState() async {
     final states = await Future.wait([
       windowManager.isMaximized(),
       windowManager.isFullScreen(),
@@ -117,35 +79,33 @@ class _AppWindowControlsState extends State<AppWindowControls>
 
   @override
   Widget build(BuildContext context) {
-    if (!AppWindowControls.isVisible ||
-        _isFullScreen ||
-        AppWindowControls._miniPlayerMode.value) {
+    if (!WindowsWindowButtons.isSupported || _isFullScreen) {
       return const SizedBox.shrink();
     }
 
     return SizedBox(
-      width: AppWindowControls.width,
-      height: AppWindowControls.height,
+      width: _buttonGroupWidth,
+      height: _buttonAreaHeight,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _WindowControlButton(
+          _WindowButton(
             label: '最小化',
-            glyph: _WindowControlGlyph.minimize,
+            glyph: _WindowButtonGlyph.minimize,
             onPressed: windowManager.minimize,
           ),
-          const SizedBox(width: AppWindowControls.buttonGap),
-          _WindowControlButton(
+          const SizedBox(width: _buttonGap),
+          _WindowButton(
             label: _isMaximized ? '还原' : '最大化',
             glyph: _isMaximized
-                ? _WindowControlGlyph.restore
-                : _WindowControlGlyph.maximize,
+                ? _WindowButtonGlyph.restore
+                : _WindowButtonGlyph.maximize,
             onPressed: _toggleMaximized,
           ),
-          const SizedBox(width: AppWindowControls.buttonGap),
-          _WindowControlButton(
+          const SizedBox(width: _buttonGap),
+          _WindowButton(
             label: '关闭',
-            glyph: _WindowControlGlyph.close,
+            glyph: _WindowButtonGlyph.close,
             isClose: true,
             onPressed: windowManager.close,
           ),
@@ -155,27 +115,28 @@ class _AppWindowControlsState extends State<AppWindowControls>
   }
 }
 
-enum _WindowControlGlyph { minimize, maximize, restore, close }
+enum _WindowButtonGlyph { minimize, maximize, restore, close }
 
-class _WindowControlButton extends StatefulWidget {
-  final String label;
-  final _WindowControlGlyph glyph;
-  final bool isClose;
-  final VoidCallback onPressed;
-
-  const _WindowControlButton({
+class _WindowButton extends StatefulWidget {
+  const _WindowButton({
     required this.label,
     required this.glyph,
     required this.onPressed,
     this.isClose = false,
   });
 
+  final String label;
+  final _WindowButtonGlyph glyph;
+  final bool isClose;
+  final VoidCallback onPressed;
+
   @override
-  State<_WindowControlButton> createState() => _WindowControlButtonState();
+  State<_WindowButton> createState() => _WindowButtonState();
 }
 
-class _WindowControlButtonState extends State<_WindowControlButton> {
+class _WindowButtonState extends State<_WindowButton> {
   bool _isHovering = false;
+  bool _isFocused = false;
 
   @override
   Widget build(BuildContext context) {
@@ -187,41 +148,56 @@ class _WindowControlButtonState extends State<_WindowControlButton> {
     final hoverColor = widget.isClose
         ? accent.withAlpha(34)
         : AppColors.hoverSurface(context);
+    final highlighted = _isHovering || _isFocused;
 
     return Semantics(
       button: true,
       label: widget.label,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.basic,
-        onEnter: (_) => setState(() => _isHovering = true),
-        onExit: (_) => setState(() => _isHovering = false),
+      onTap: widget.onPressed,
+      excludeSemantics: true,
+      child: FocusableActionDetector(
+        mouseCursor: SystemMouseCursors.basic,
+        onShowHoverHighlight: (value) => setState(() => _isHovering = value),
+        onShowFocusHighlight: (value) => setState(() => _isFocused = value),
+        shortcuts: const {
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              widget.onPressed();
+              return null;
+            },
+          ),
+        },
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: widget.onPressed,
           child: TweenAnimationBuilder<double>(
-            tween: Tween(end: _isHovering ? 1 : 0),
+            tween: Tween(end: highlighted ? 1 : 0),
             duration: const Duration(milliseconds: 100),
             curve: Curves.easeOutCubic,
-            builder: (context, hoverProgress, child) => Container(
-              width: AppWindowControls.buttonSize,
-              height: AppWindowControls.buttonSize,
+            builder: (context, highlightProgress, child) => Container(
+              width: _buttonSize,
+              height: _buttonSize,
               decoration: BoxDecoration(
                 color: Color.lerp(
                   hoverColor.withAlpha(0),
                   hoverColor,
-                  hoverProgress,
+                  highlightProgress,
                 ),
                 borderRadius: BorderRadius.circular(9),
               ),
               alignment: Alignment.center,
               child: CustomPaint(
                 size: const Size.square(12),
-                painter: _WindowControlGlyphPainter(
+                painter: _WindowButtonGlyphPainter(
                   glyph: widget.glyph,
                   color: Color.lerp(
                     restingForeground,
                     hoverForeground,
-                    hoverProgress,
+                    highlightProgress,
                   )!,
                 ),
               ),
@@ -233,11 +209,11 @@ class _WindowControlButtonState extends State<_WindowControlButton> {
   }
 }
 
-class _WindowControlGlyphPainter extends CustomPainter {
-  final _WindowControlGlyph glyph;
-  final Color color;
+class _WindowButtonGlyphPainter extends CustomPainter {
+  const _WindowButtonGlyphPainter({required this.glyph, required this.color});
 
-  const _WindowControlGlyphPainter({required this.glyph, required this.color});
+  final _WindowButtonGlyph glyph;
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -249,13 +225,13 @@ class _WindowControlGlyphPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round;
 
     switch (glyph) {
-      case _WindowControlGlyph.minimize:
+      case _WindowButtonGlyph.minimize:
         canvas.drawLine(
           Offset(2, size.height - 3),
           Offset(size.width - 2, size.height - 3),
           paint,
         );
-      case _WindowControlGlyph.maximize:
+      case _WindowButtonGlyph.maximize:
         canvas.drawRRect(
           RRect.fromRectAndRadius(
             Rect.fromLTWH(2, 2, size.width - 4, size.height - 4),
@@ -263,7 +239,7 @@ class _WindowControlGlyphPainter extends CustomPainter {
           ),
           paint,
         );
-      case _WindowControlGlyph.restore:
+      case _WindowButtonGlyph.restore:
         final backWindow = Path()
           ..moveTo(4, 2)
           ..lineTo(size.width - 2, 2)
@@ -276,7 +252,7 @@ class _WindowControlGlyphPainter extends CustomPainter {
           ),
           paint,
         );
-      case _WindowControlGlyph.close:
+      case _WindowButtonGlyph.close:
         canvas.drawLine(
           const Offset(2, 2),
           Offset(size.width - 2, size.height - 2),
@@ -291,7 +267,12 @@ class _WindowControlGlyphPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _WindowControlGlyphPainter oldDelegate) {
+  bool shouldRepaint(covariant _WindowButtonGlyphPainter oldDelegate) {
     return oldDelegate.glyph != glyph || oldDelegate.color != color;
   }
 }
+
+const double _buttonSize = 28;
+const double _buttonGap = 2;
+const double _buttonAreaHeight = 60;
+const double _buttonGroupWidth = _buttonSize * 3 + _buttonGap * 2;

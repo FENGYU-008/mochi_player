@@ -67,14 +67,17 @@ class _HomeDestinationPageState extends State<_HomeDestinationPage> {
           height: AppHeader.height,
           child: AppHeader(
             title: AppDestination.home.title,
-            showSearch: true,
-            searchHint: '搜索媒体库…',
-            onSearchChanged: (query) {
-              if (query == _searchQuery) return;
-              setState(() => _searchQuery = query);
-            },
-            opacity: headerOpacity,
-            ignoreWhenTransparent: true,
+            trailing: SizedBox(
+              width: 240,
+              child: AppSearchInput(
+                placeholder: '搜索媒体库…',
+                onChanged: (query) {
+                  if (query == _searchQuery) return;
+                  setState(() => _searchQuery = query);
+                },
+              ),
+            ),
+            visibility: headerOpacity,
           ),
         ),
       ],
@@ -117,12 +120,16 @@ class _LibraryDestinationPageState extends State<_LibraryDestinationPage> {
             height: AppHeader.height,
             child: AppHeader(
               title: widget.destination.title,
-              showSearch: true,
-              searchHint: _searchHint(widget.category),
-              onSearchChanged: (query) {
-                if (query == _searchQuery) return;
-                setState(() => _searchQuery = query);
-              },
+              trailing: SizedBox(
+                width: 240,
+                child: AppSearchInput(
+                  placeholder: _searchHint(widget.category),
+                  onChanged: (query) {
+                    if (query == _searchQuery) return;
+                    setState(() => _searchQuery = query);
+                  },
+                ),
+              ),
             ),
           ),
       ],

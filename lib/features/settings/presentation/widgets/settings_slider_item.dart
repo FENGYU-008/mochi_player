@@ -1,37 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/core/ui/components/input/app_form_row.dart';
+
 import 'package:mochi_player/core/ui/components/input/app_slider.dart';
+import 'package:mochi_player/core/ui/components/input/form/app_form_item.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
-class AppFormSliderRow extends StatelessWidget {
+class SettingsSliderItem extends StatelessWidget {
+  const SettingsSliderItem({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    this.step,
+    required this.displayValue,
+    required this.onChanged,
+    this.onChangeEnd,
+    this.icon,
+    this.enabled = true,
+  });
+
   final String label;
   final IconData? icon;
   final double value;
   final double min;
   final double max;
-  final int divisions;
+  final double? step;
   final String displayValue;
   final bool enabled;
   final ValueChanged<double> onChanged;
-
-  const AppFormSliderRow({
-    super.key,
-    required this.label,
-    this.icon,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.divisions,
-    required this.displayValue,
-    required this.onChanged,
-    this.enabled = true,
-  });
+  final ValueChanged<double>? onChangeEnd;
 
   @override
   Widget build(BuildContext context) {
-    return AppFormRow(
+    return AppFormItem(
       icon: icon,
       label: label,
       enabled: enabled,
@@ -42,8 +45,10 @@ class AppFormSliderRow extends StatelessWidget {
               value: value,
               min: min,
               max: max,
-              divisions: divisions,
+              step: step,
+              tooltipFormatter: (_) => displayValue,
               onChanged: enabled ? onChanged : null,
+              onChangeEnd: enabled ? onChangeEnd : null,
             ),
           ),
           SizedBox(

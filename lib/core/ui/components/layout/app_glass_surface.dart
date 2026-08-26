@@ -15,12 +15,12 @@ class AppGlassSurface extends StatelessWidget {
   const AppGlassSurface({
     super.key,
     required this.child,
+    required this.color,
+    required this.borderColor,
+    required this.blur,
     this.borderRadius = const BorderRadius.all(
       Radius.circular(AppRadii.surface),
     ),
-    this.color = const Color(0x33FFFFFF),
-    this.borderColor = const Color(0x33FFFFFF),
-    this.blur = 14,
     this.padding,
   });
 

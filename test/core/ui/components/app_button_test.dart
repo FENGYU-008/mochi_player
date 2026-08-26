@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
@@ -13,7 +14,6 @@ void main() {
           body: AppButton(
             onPressed: _noop,
             icon: Icons.favorite,
-            iconColor: accent,
             label: '已收藏',
             variant: AppButtonVariant.secondary,
             appearance: AppAppearance.overlay,
@@ -65,6 +65,30 @@ void main() {
     expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
     await tester.tap(find.byType(AppButton));
     expect(pressed, isTrue);
+  });
+
+  testWidgets('supports desktop keyboard activation', (tester) async {
+    var pressed = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: AppButton(
+            onPressed: () => pressed++,
+            label: '确定',
+            size: AppButtonSize.compact,
+          ),
+        ),
+      ),
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    expect(pressed, 1);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    expect(pressed, 2);
   });
 }
 

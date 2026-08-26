@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
+/// Groups related form items on one visually connected surface.
 class AppFormGroup extends StatelessWidget {
-  final List<Widget> children;
-
   const AppFormGroup({super.key, required this.children});
+
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
@@ -15,12 +17,13 @@ class AppFormGroup extends StatelessWidget {
       AppColors.subtleSurface(context),
       Theme.of(context).scaffoldBackgroundColor,
     );
+
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(AppRadii.card),
-        border: Border.all(color: AppColors.separator(context).withAlpha(105)),
+        border: Border.all(color: separator),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

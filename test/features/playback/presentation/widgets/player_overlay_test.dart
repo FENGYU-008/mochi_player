@@ -27,7 +27,7 @@ void main() {
       final backButton = find.byKey(const ValueKey('player-back-button'));
       expect(
         tester.getTopLeft(backButton).dx,
-        AppWindowChromeMetrics.leadingContentInset,
+        WindowControlsLayout.leadingContentInset,
       );
       expect(tester.getSize(backButton), const Size(38, 36));
       expect(find.text('进击的巨人'), findsOneWidget);

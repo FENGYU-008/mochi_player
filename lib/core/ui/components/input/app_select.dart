@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mochi_player/core/ui/components/overlay/app_menu_button.dart';
+import 'package:mochi_player/core/ui/components/overlay/app_dropdown.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_icons.dart';
@@ -19,79 +19,78 @@ class AppSelect<T> extends StatelessWidget {
   final T? value;
   final String placeholder;
   final List<AppSelectOption<T>> options;
-  final ValueChanged<T>? onSelected;
-  final bool enabled;
-  final double height;
-  final double borderRadius;
-  final double width;
+  final ValueChanged<T>? onChanged;
 
   const AppSelect({
     super.key,
     required this.value,
     required this.options,
-    required this.onSelected,
+    this.onChanged,
     this.placeholder = '选择',
-    this.enabled = true,
-    this.height = AppControlMetrics.selectHeight,
-    this.borderRadius = AppRadii.control,
-    this.width = 96,
   });
 
   @override
   Widget build(BuildContext context) {
     final selectedLabel = _labelFor(value) ?? placeholder;
     final foreground = AppColors.textPrimary(context).withAlpha(230);
-    final isEnabled = enabled && onSelected != null;
+    final isEnabled = onChanged != null;
 
-    return AnimatedOpacity(
-      duration: AppControlMetrics.stateAnimationDuration,
-      opacity: isEnabled ? 1 : 0.5,
-      child: AppMenuButton<T>(
-        tooltip: '',
-        selectedValue: value,
-        menuWidth: width,
-        onSelected: isEnabled ? onSelected : null,
-        options: options
-            .map(
-              (option) =>
-                  AppMenuOption<T>(value: option.value, label: option.label),
-            )
-            .toList(),
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppColors.selectControlSurface(context),
-              borderRadius: BorderRadius.circular(borderRadius),
-              border: Border.all(color: AppColors.selectBorder(context)),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.compact,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      selectedLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.controlLabel.copyWith(
-                        color: foreground,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final menuWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : 160.0;
+        return AnimatedOpacity(
+          duration: AppControlMetrics.stateAnimationDuration,
+          opacity: isEnabled ? 1 : 0.5,
+          child: AppDropdown<T>(
+            menuWidth: menuWidth,
+            trigger: SizedBox(
+              height: AppControlMetrics.selectHeight,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.selectControlSurface(context),
+                  borderRadius: BorderRadius.circular(AppRadii.control),
+                  border: Border.all(color: AppColors.selectBorder(context)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.compact,
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Icon(AppIcons.chevronDown, size: 13, color: foreground),
-                ],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          selectedLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.controlLabel.copyWith(
+                            color: foreground,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Icon(AppIcons.chevronDown, size: 13, color: foreground),
+                    ],
+                  ),
+                ),
               ),
             ),
+            selectedValue: value,
+            onSelected: onChanged,
+            options: options
+                .map(
+                  (option) => AppDropdownOption<T>(
+                    value: option.value,
+                    label: option.label,
+                  ),
+                )
+                .toList(),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

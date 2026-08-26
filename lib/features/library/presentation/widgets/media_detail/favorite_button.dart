@@ -21,7 +21,6 @@ class FavoriteButton extends StatelessWidget {
       (provider) => provider.isFavorite(tmdbId),
     );
     final usesOverlayAppearance = overrideColor != null;
-    final baseColor = overrideColor ?? AppColors.textPrimary(context);
     final favoriteColor = AppColors.favorite(context);
     final icon = isFavorite
         ? Icons.favorite_rounded
@@ -37,7 +36,6 @@ class FavoriteButton extends StatelessWidget {
       return AppButton(
         onPressed: toggleFavorite,
         icon: icon,
-        iconColor: usesOverlayAppearance && isFavorite ? favoriteColor : null,
         label: isFavorite ? '已收藏' : '加入收藏',
         variant: AppButtonVariant.secondary,
         appearance: usesOverlayAppearance
@@ -45,17 +43,10 @@ class FavoriteButton extends StatelessWidget {
             : AppAppearance.standard,
         selected: isFavorite,
         accentColor: favoriteColor,
-        height: 36,
-        borderRadius: 10,
-        padding: const EdgeInsets.symmetric(horizontal: 15),
+        size: AppButtonSize.regular,
       );
     }
 
-    final backgroundColor = usesOverlayAppearance
-        ? Colors.white.withAlpha(isFavorite ? 54 : 34)
-        : isFavorite
-        ? favoriteColor.withAlpha(24)
-        : AppColors.hoverSurface(context);
     return AppButton.icon(
       onPressed: toggleFavorite,
       icon: icon,
@@ -64,11 +55,8 @@ class FavoriteButton extends StatelessWidget {
       appearance: usesOverlayAppearance
           ? AppAppearance.overlay
           : AppAppearance.standard,
-      selectedColor: favoriteColor,
-      foregroundColor: baseColor,
-      backgroundColor: backgroundColor,
-      size: 44,
-      iconSize: 22,
+      accentColor: favoriteColor,
+      size: AppButtonSize.large,
     );
   }
 }

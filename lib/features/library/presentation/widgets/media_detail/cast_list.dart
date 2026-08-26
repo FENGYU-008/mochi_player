@@ -44,11 +44,11 @@ class _CastListState extends State<CastList> {
         const SizedBox(height: 12),
         SizedBox(
           height: 140,
-          child: AppHorizontalScrollView(
+          child: AppHorizontalScroller(
             controller: _scrollController,
-            bottomPadding: 58,
-            child: ListView.separated(
-              controller: _scrollController,
+            controlsBottomInset: 58,
+            contentBuilder: (context, controller) => ListView.separated(
+              controller: controller,
               scrollDirection: Axis.horizontal,
               itemCount: widget.viewModel.cast.length,
               separatorBuilder: (_, _) => const SizedBox(width: 20),

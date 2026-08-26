@@ -37,20 +37,17 @@ class FileBrowserToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        AppToolbarGroup(
+        _ToolbarGroup(
           children: [
-            AppToolbarButton(
+            _ToolbarIconButton(
               icon: AppIcons.back,
               tooltip: '后退',
               onPressed: canGoBack ? onBack : null,
-              showBorder: false,
             ),
-            const AppToolbarDivider(),
-            AppToolbarButton(
+            _ToolbarIconButton(
               icon: AppIcons.forward,
               tooltip: '前进',
               onPressed: canGoForward ? onForward : null,
-              showBorder: false,
             ),
           ],
         ),
@@ -68,30 +65,34 @@ class FileBrowserToolbar extends StatelessWidget {
           onChanged: onSortChanged,
         ),
         const SizedBox(width: AppSpacing.compact),
-        AppToolbarGroup(
-          children: [
-            AppToolbarButton(
-              icon: AppIcons.list,
-              tooltip: '列表视图',
-              selected: viewMode == FileBrowserViewMode.list,
-              onPressed: () => onViewModeChanged(FileBrowserViewMode.list),
-              showBorder: false,
-            ),
-            const AppToolbarDivider(),
-            AppToolbarButton(
-              icon: AppIcons.grid,
-              tooltip: '网格视图',
-              selected: viewMode == FileBrowserViewMode.grid,
-              onPressed: () => onViewModeChanged(FileBrowserViewMode.grid),
-              showBorder: false,
-            ),
-          ],
+        SizedBox(
+          width: _viewModeControlWidth,
+          child: AppSegmentedControl<FileBrowserViewMode>(
+            value: viewMode,
+            onChanged: onViewModeChanged,
+            options: const [
+              AppSegmentedOption.icon(
+                value: FileBrowserViewMode.list,
+                label: '列表视图',
+                icon: AppIcons.list,
+              ),
+              AppSegmentedOption.icon(
+                value: FileBrowserViewMode.grid,
+                label: '网格视图',
+                icon: AppIcons.grid,
+              ),
+            ],
+          ),
         ),
         const SizedBox(width: AppSpacing.compact),
-        AppToolbarButton(
-          icon: AppIcons.refresh,
-          tooltip: '刷新目录',
-          onPressed: onRefresh,
+        _ToolbarGroup(
+          children: [
+            _ToolbarIconButton(
+              icon: AppIcons.refresh,
+              tooltip: '刷新目录',
+              onPressed: onRefresh,
+            ),
+          ],
         ),
       ],
     );
@@ -185,20 +186,10 @@ class _FileSortButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppToolbarGroup(
+    return _ToolbarGroup(
       children: [
-        AppMenuButton<FileSortField>(
-          tooltip: '排序：$_label，$_directionLabel',
-          selectedValue: field,
-          onSelected: (value) =>
-              onChanged(value, value == field ? !ascending : true),
-          options: const [
-            AppMenuOption(value: FileSortField.name, label: '名称'),
-            AppMenuOption(value: FileSortField.size, label: '大小'),
-            AppMenuOption(value: FileSortField.modifiedAt, label: '修改时间'),
-          ],
-          menuWidth: 126,
-          child: SizedBox(
+        AppDropdown<FileSortField>(
+          trigger: SizedBox(
             height: 34,
             child: Padding(
               padding: const EdgeInsets.only(left: 9, right: 7),
@@ -224,8 +215,89 @@ class _FileSortButton extends StatelessWidget {
               ),
             ),
           ),
+          tooltip: '排序：$_label，$_directionLabel',
+          selectedValue: field,
+          onSelected: (value) =>
+              onChanged(value, value == field ? !ascending : true),
+          options: const [
+            AppDropdownOption(value: FileSortField.name, label: '名称'),
+            AppDropdownOption(value: FileSortField.size, label: '大小'),
+            AppDropdownOption(value: FileSortField.modifiedAt, label: '修改时间'),
+          ],
+          menuWidth: 126,
         ),
       ],
     );
   }
 }
+
+class _ToolbarGroup extends StatelessWidget {
+  const _ToolbarGroup({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: _toolbarHeight,
+      decoration: BoxDecoration(
+        color: AppColors.selectControlSurface(context),
+        borderRadius: BorderRadius.circular(AppRadii.surface),
+        border: Border.all(color: AppColors.selectBorder(context)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < children.length; index++) ...[
+            if (index != 0)
+              SizedBox(
+                width: 1,
+                height: _toolbarHeight,
+                child: ColoredBox(color: AppColors.separator(context)),
+              ),
+            children[index],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ToolbarIconButton extends StatelessWidget {
+  const _ToolbarIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: AppClickableArea(
+        onTap: onPressed,
+        width: _toolbarButtonWidth,
+        height: _toolbarHeight,
+        borderRadius: BorderRadius.zero,
+        backgroundColor: Colors.transparent,
+        hoverColor: AppColors.hoverSurface(context),
+        child: Icon(
+          icon,
+          size: 18,
+          color: onPressed == null
+              ? AppColors.textSecondary(context).withAlpha(90)
+              : AppColors.textPrimary(context),
+        ),
+      ),
+    );
+  }
+}
+
+const double _toolbarHeight = 34;
+const double _toolbarButtonWidth = 36;
+const double _viewModeControlWidth = 74;

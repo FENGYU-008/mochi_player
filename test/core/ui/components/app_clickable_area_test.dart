@@ -1,14 +1,14 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 
 void main() {
-  testWidgets('uses hover color spaces for transparent areas and borders', (
+  testWidgets('uses the hover color space for transparent areas', (
     tester,
   ) async {
     const areaKey = Key('clickable-area');
-    const hoverBorderColor = Color(0xFF3A3A3C);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -21,8 +21,6 @@ void main() {
                 onTap: () {},
                 borderRadius: BorderRadius.zero,
                 hoverColor: AppColors.hoverSurface(context),
-                borderColor: Colors.transparent,
-                hoverBorderColor: hoverBorderColor,
                 child: const SizedBox(width: 80, height: 40),
               ),
             ),
@@ -42,51 +40,6 @@ void main() {
     final decoration = container.decoration! as BoxDecoration;
 
     expect(decoration.color, hoverColor.withAlpha(0));
-    expect(
-      (decoration.border! as Border).top.color,
-      hoverBorderColor.withAlpha(0),
-    );
-  });
-
-  testWidgets('supports a hover border without a resting border', (
-    tester,
-  ) async {
-    const areaKey = Key('hover-border-only-area');
-    const hoverBorderColor = Color(0xFF7065A8);
-
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: AppClickableArea(
-            key: areaKey,
-            onTap: _noop,
-            borderRadius: BorderRadius.zero,
-            hoverColor: Colors.transparent,
-            hoverBorderColor: hoverBorderColor,
-            child: SizedBox(width: 80, height: 40),
-          ),
-        ),
-      ),
-    );
-
-    Color borderColor() {
-      final container = tester.widget<Container>(
-        find.descendant(
-          of: find.byKey(areaKey),
-          matching: find.byType(Container),
-        ),
-      );
-      return (container.decoration! as BoxDecoration).border!.top.color;
-    }
-
-    expect(borderColor(), hoverBorderColor.withAlpha(0));
-
-    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
-    await gesture.addPointer(location: Offset.zero);
-    await gesture.moveTo(tester.getCenter(find.byKey(areaKey)));
-    await tester.pumpAndSettle();
-    expect(borderColor(), hoverBorderColor);
-    await gesture.removePointer();
   });
 
   testWidgets('keeps the hover color unchanged while pressed', (tester) async {
@@ -190,6 +143,27 @@ void main() {
 
     await gesture.removePointer();
   });
-}
 
-void _noop() {}
+  testWidgets('supports desktop keyboard activation', (tester) async {
+    var activations = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppClickableArea(
+            onTap: () => activations++,
+            borderRadius: BorderRadius.zero,
+            hoverColor: Colors.black12,
+            child: const SizedBox(width: 80, height: 40),
+          ),
+        ),
+      ),
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+
+    expect(activations, 2);
+  });
+}

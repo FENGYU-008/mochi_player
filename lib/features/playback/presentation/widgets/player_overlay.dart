@@ -26,7 +26,7 @@ class PlayerOverlayLayout {
     if (isFullScreen) return AppSpacing.xxl;
     return switch (platform) {
       TargetPlatform.macOS ||
-      TargetPlatform.windows => AppWindowChromeMetrics.leadingContentInset,
+      TargetPlatform.windows => WindowControlsLayout.leadingContentInset,
       _ => AppSpacing.xxl,
     };
   }

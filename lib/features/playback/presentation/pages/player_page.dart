@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/media/media_type.dart';
+import 'package:mochi_player/core/platform/window_controls_controller.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/playback/presentation/controllers/player_playback_controller.dart';
@@ -83,8 +84,9 @@ class _PlayerPageState extends State<PlayerPage> {
       initialUrl: widget.url,
       onPlaybackActivity: _startHideControlsTimer,
     )..addListener(_handlePlaybackChanged);
-    _windowModeController = PlayerWindowModeController()
-      ..addListener(_handleWindowModeChanged);
+    _windowModeController = PlayerWindowModeController(
+      windowControlsController: context.read<WindowControlsController>(),
+    )..addListener(_handleWindowModeChanged);
 
     unawaited(_playbackController.initialize());
     unawaited(_windowModeController.initialize());
@@ -401,9 +403,7 @@ class _PlayerMessage extends StatelessWidget {
                 label: actionLabel!,
                 variant: AppButtonVariant.secondary,
                 appearance: AppAppearance.overlay,
-                height: 32,
-                borderRadius: 10,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                size: AppButtonSize.compact,
               ),
             ],
           ],

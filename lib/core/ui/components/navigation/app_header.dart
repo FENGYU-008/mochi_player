@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'package:mochi_player/core/ui/components/input/app_search_bar.dart';
 import 'package:mochi_player/core/ui/components/basic/app_button.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
@@ -12,58 +11,46 @@ class AppHeader extends StatelessWidget {
   static const double height = 60;
 
   final String title;
-  final Widget? leading;
-  final bool showBackButton;
+  final bool _showBackButton;
   final VoidCallback? onBack;
-  final String? subtitle;
-  final List<Widget> actions;
-  final bool showSearch;
-  final String searchHint;
-  final ValueChanged<String>? onSearchChanged;
-  final double searchWidth;
-  final double opacity;
-  final bool ignoreWhenTransparent;
+  final Widget? trailing;
+  final double visibility;
 
   const AppHeader({
     super.key,
     required this.title,
-    this.leading,
-    this.showBackButton = false,
+    this.trailing,
+    this.visibility = 1,
+  }) : _showBackButton = false,
+       onBack = null;
+
+  const AppHeader.back({
+    super.key,
+    required this.title,
     this.onBack,
-    this.subtitle,
-    this.actions = const [],
-    this.showSearch = false,
-    this.searchHint = '搜索...',
-    this.onSearchChanged,
-    this.searchWidth = 240,
-    this.opacity = 1,
-    this.ignoreWhenTransparent = false,
-  });
+    this.trailing,
+    this.visibility = 1,
+  }) : _showBackButton = true;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final clampedOpacity = opacity.clamp(0.0, 1.0).toDouble();
+    final clampedVisibility = visibility.clamp(0.0, 1.0).toDouble();
     final backgroundColor = AppColors.headerBackground(context);
-    final effectiveLeading =
-        leading ??
-        (showBackButton
-            ? AppButton.icon(
-                onPressed: onBack ?? () => Navigator.of(context).maybePop(),
-                icon: Icons.arrow_back_rounded,
-                tooltip: '返回',
-                foregroundColor: AppColors.textPrimary(context),
-                backgroundColor: AppColors.hoverSurface(context),
-                size: 36,
-                iconSize: 20,
-              )
-            : null);
+    final backButton = _showBackButton
+        ? AppButton.icon(
+            onPressed: onBack ?? () => Navigator.of(context).maybePop(),
+            icon: Icons.arrow_back_rounded,
+            tooltip: '返回',
+            size: AppButtonSize.regular,
+          )
+        : null;
 
     return IgnorePointer(
-      ignoring: ignoreWhenTransparent && clampedOpacity < 0.1,
+      ignoring: clampedVisibility < 0.1,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 150),
-        opacity: clampedOpacity,
+        opacity: clampedVisibility,
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onPanStart: (_) => windowManager.startDragging(),
@@ -80,7 +67,7 @@ class AppHeader extends StatelessWidget {
                   border: Border(
                     bottom: BorderSide(
                       color: theme.dividerColor.withAlpha(
-                        (255 * clampedOpacity).round(),
+                        (255 * clampedVisibility).round(),
                       ),
                       width: 1,
                     ),
@@ -88,61 +75,25 @@ class AppHeader extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    if (effectiveLeading != null) ...[
-                      effectiveLeading,
+                    if (backButton != null) ...[
+                      backButton,
                       const SizedBox(width: 14),
                     ],
                     Expanded(
-                      child: subtitle == null
-                          ? Text(
-                              title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: theme.textTheme.bodyMedium?.color,
-                              ),
-                            )
-                          : Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  subtitle!,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: theme.textTheme.titleMedium?.color,
-                                  ),
-                                ),
-                                Text(
-                                  title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: theme.textTheme.bodyMedium?.color,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                    if (actions.isNotEmpty) ...[
-                      const SizedBox(width: 16),
-                      for (var index = 0; index < actions.length; index++) ...[
-                        if (index > 0) const SizedBox(width: 8),
-                        actions[index],
-                      ],
-                    ],
-                    if (showSearch) ...[
-                      const SizedBox(width: 20),
-                      AppSearchBar(
-                        hintText: searchHint,
-                        onChanged: onSearchChanged,
-                        width: searchWidth,
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: theme.textTheme.bodyMedium?.color,
+                        ),
                       ),
+                    ),
+                    if (trailing != null) ...[
+                      const SizedBox(width: 20),
+                      trailing!,
                     ],
                   ],
                 ),

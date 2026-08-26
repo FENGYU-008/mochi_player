@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
-import 'package:mochi_player/core/ui/components/overlay/app_popup_menu.dart';
+import 'package:mochi_player/core/ui/components/overlay/internal/menu_parts.dart';
 
-/// Compact text-editing menu shared by the application's text fields.
+/// Internal adapter from Flutter text-editing actions to the application menu.
 class AppTextContextMenu extends StatelessWidget {
-  static const _screenMargin = 8.0;
-  static const _menuWidth = 136.0;
-
-  final TextSelectionToolbarAnchors anchors;
-  final List<ContextMenuButtonItem> buttonItems;
-
   const AppTextContextMenu({
     super.key,
     required this.anchors,
     required this.buttonItems,
   });
+
+  static const _screenMargin = 8.0;
+  static const _menuWidth = 136.0;
+
+  final TextSelectionToolbarAnchors anchors;
+  final List<ContextMenuButtonItem> buttonItems;
 
   static Widget buildForEditableText(
     BuildContext context,
@@ -43,15 +43,12 @@ class AppTextContextMenu extends StatelessWidget {
         ),
         child: SizedBox(
           width: _menuWidth,
-          child: AppPopupMenuPanel(
+          child: MenuPanel(
             children: [
               for (final item in buttonItems)
-                AppPopupMenuItem(
+                MenuOptionRow(
                   onPressed: item.onPressed,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(_labelFor(item)),
-                  ),
+                  child: Text(_labelFor(item)),
                 ),
             ],
           ),
@@ -60,7 +57,7 @@ class AppTextContextMenu extends StatelessWidget {
     );
   }
 
-  String _labelFor(ContextMenuButtonItem item) {
+  static String _labelFor(ContextMenuButtonItem item) {
     return switch (item.type) {
       ContextMenuButtonType.cut => '剪切',
       ContextMenuButtonType.copy => '复制',

@@ -3,13 +3,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:mochi_player/app/presentation/widgets/windows_window_buttons.dart';
 import 'package:mochi_player/app/routing/app_router.dart';
+import 'package:mochi_player/core/platform/window_controls_controller.dart';
+import 'package:mochi_player/core/ui/theme/window_controls_layout.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/home/application/trending_media_provider.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/settings/application/theme_provider.dart';
 import 'package:mochi_player/core/ui/theme/app_theme.dart';
-import 'package:mochi_player/core/ui/components/navigation/app_window_controls.dart';
 import 'package:mochi_player/core/infrastructure/database/database_service.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -25,6 +27,7 @@ void main() async {
 
   final appSettingsProvider = AppSettingsProvider();
   await appSettingsProvider.load();
+  final windowControlsController = WindowControlsController();
 
   final windowOptions = WindowOptions(
     size: const Size(1200, 800),
@@ -41,7 +44,7 @@ void main() async {
     await windowManager.show();
     await windowManager.focus();
     if (Platform.isMacOS) {
-      await AppWindowControls.positionNativeWindowButtons();
+      await windowControlsController.positionNativeWindowButtons();
     }
   });
 
@@ -49,6 +52,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: appSettingsProvider),
+        ChangeNotifierProvider.value(value: windowControlsController),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => FileBrowserProvider()),
         ChangeNotifierProvider(create: (_) => MediaLibraryProvider()),
@@ -67,6 +71,7 @@ class MochiPlayerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final windowControlsController = context.watch<WindowControlsController>();
 
     return MaterialApp.router(
       routerConfig: router,
@@ -84,11 +89,12 @@ class MochiPlayerApp extends StatelessWidget {
         return Stack(
           children: [
             Positioned.fill(child: child ?? const SizedBox.shrink()),
-            if (AppWindowControls.isVisible)
+            if (WindowsWindowButtons.isSupported &&
+                !windowControlsController.isMiniPlayer)
               const Positioned(
                 top: 0,
-                left: AppWindowChromeMetrics.leadingInset,
-                child: AppWindowControls(),
+                left: WindowControlsLayout.leadingInset,
+                child: WindowsWindowButtons(),
               ),
           ],
         );

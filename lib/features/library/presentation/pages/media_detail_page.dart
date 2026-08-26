@@ -34,7 +34,7 @@ class MediaDetailPage extends StatelessWidget {
             left: 0,
             right: 0,
             height: AppHeader.height,
-            child: AppHeader(title: viewModel.title, showBackButton: true),
+            child: AppHeader.back(title: viewModel.title),
           ),
         ],
       ),
@@ -146,14 +146,16 @@ class _MovieMediaInfoSection extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         if (files.isEmpty)
-          SizedBox(
+          Container(
             width: double.infinity,
-            child: AppPanel(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Text(
-                '未找到可播放的本地文件',
-                style: TextStyle(color: theme.textTheme.bodySmall?.color),
-              ),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            decoration: BoxDecoration(
+              color: AppColors.subtleSurface(context),
+              borderRadius: BorderRadius.circular(AppRadii.control),
+            ),
+            child: Text(
+              '未找到可播放的本地文件',
+              style: TextStyle(color: theme.textTheme.bodySmall?.color),
             ),
           )
         else

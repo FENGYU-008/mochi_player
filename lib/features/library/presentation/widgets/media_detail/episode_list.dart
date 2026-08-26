@@ -368,19 +368,20 @@ class _EpisodeHeader extends StatelessWidget {
                 color: theme.textTheme.bodyLarge?.color,
               ),
             ),
-            AppSelect<Season>(
-              value: selectedSeason,
-              placeholder: '选择季',
+            SizedBox(
               width: 92,
-              height: 32,
-              options: [
-                for (final season in sortedSeasons)
-                  AppSelectOption(
-                    value: season,
-                    label: '第 ${season.seasonNumber} 季',
-                  ),
-              ],
-              onSelected: onSeasonSelected,
+              child: AppSelect<Season>(
+                value: selectedSeason,
+                placeholder: '选择季',
+                options: [
+                  for (final season in sortedSeasons)
+                    AppSelectOption(
+                      value: season,
+                      label: '第 ${season.seasonNumber} 季',
+                    ),
+                ],
+                onChanged: onSeasonSelected,
+              ),
             ),
           ],
         ),

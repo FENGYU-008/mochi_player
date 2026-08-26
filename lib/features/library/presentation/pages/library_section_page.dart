@@ -56,10 +56,7 @@ class _LibrarySectionPageState extends State<LibrarySectionPage> {
             left: 0,
             right: 0,
             height: AppHeader.height,
-            child: AppHeader(
-              title: _sectionTitle(widget.section),
-              showBackButton: true,
-            ),
+            child: AppHeader.back(title: _sectionTitle(widget.section)),
           ),
         ],
       ),

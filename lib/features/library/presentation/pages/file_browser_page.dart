@@ -29,10 +29,13 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
         children: [
           AppHeader(
             title: '文件浏览',
-            showSearch: true,
-            searchHint: '搜索当前目录…',
-            onSearchChanged: provider.setSearchQuery,
-            searchWidth: 300,
+            trailing: SizedBox(
+              width: 300,
+              child: AppSearchInput(
+                placeholder: '搜索当前目录…',
+                onChanged: provider.setSearchQuery,
+              ),
+            ),
           ),
           Expanded(
             child:

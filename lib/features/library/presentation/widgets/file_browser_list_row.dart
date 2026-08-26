@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:mochi_player/core/ui/components/basic/app_clickable_area.dart';
-import 'package:mochi_player/core/ui/components/overlay/app_menu_button.dart';
+import 'package:mochi_player/core/ui/components/overlay/app_dropdown.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_icons.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
@@ -86,21 +86,8 @@ class FileBrowserListRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.lg),
           SizedBox(
             width: 38,
-            child: AppMenuButton<_FileBrowserItemAction>(
-              tooltip: '更多操作',
-              onSelected: _handleAction,
-              options: [
-                if (item.isDirectory || item.isPlayable)
-                  AppMenuOption(
-                    value: _FileBrowserItemAction.open,
-                    label: item.isDirectory ? '打开' : '播放',
-                  ),
-                const AppMenuOption(
-                  value: _FileBrowserItemAction.copyPath,
-                  label: '复制路径',
-                ),
-              ],
-              child: SizedBox(
+            child: AppDropdown<_FileBrowserItemAction>(
+              trigger: SizedBox(
                 width: 38,
                 height: 34,
                 child: Icon(
@@ -108,6 +95,19 @@ class FileBrowserListRow extends StatelessWidget {
                   color: AppColors.textSecondary(context),
                 ),
               ),
+              tooltip: '更多操作',
+              onSelected: _handleAction,
+              options: [
+                if (item.isDirectory || item.isPlayable)
+                  AppDropdownOption(
+                    value: _FileBrowserItemAction.open,
+                    label: item.isDirectory ? '打开' : '播放',
+                  ),
+                const AppDropdownOption(
+                  value: _FileBrowserItemAction.copyPath,
+                  label: '复制路径',
+                ),
+              ],
             ),
           ),
         ],

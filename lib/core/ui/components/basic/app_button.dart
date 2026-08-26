@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:mochi_player/core/ui/components/basic/app_appearance.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
+import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
-enum AppButtonVariant { primary, secondary }
+enum AppButtonVariant { primary, secondary, ghost }
+
+enum AppButtonSize { compact, regular, large }
 
 /// The shared application button API for labeled and icon-only actions.
 class AppButton extends StatefulWidget {
@@ -14,78 +18,45 @@ class AppButton extends StatefulWidget {
     required this.onPressed,
     required this.label,
     IconData? icon,
-    this.textStyle,
-    this.iconColor,
     this.variant = AppButtonVariant.primary,
     this.appearance = AppAppearance.standard,
+    this.size = AppButtonSize.large,
     this.destructive = false,
     this.selected = false,
     this.accentColor,
     this.busy = false,
-    this.height = 44,
-    this.borderRadius = AppRadii.surface,
-    this.padding = const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
   }) : _leadingIcon = icon,
        _onlyIcon = null,
-       tooltip = null,
-       selectedColor = null,
-       foregroundColor = null,
-       backgroundColor = null,
-       hoverBackgroundColor = null,
-       borderColor = null,
-       size = 40,
-       iconSize = 19;
+       tooltip = null;
 
   const AppButton.icon({
     super.key,
     required this.onPressed,
     required IconData icon,
     this.tooltip,
+    this.variant = AppButtonVariant.secondary,
     this.selected = false,
     this.appearance = AppAppearance.standard,
-    this.selectedColor,
-    this.foregroundColor,
-    this.backgroundColor,
-    this.hoverBackgroundColor,
-    this.borderColor,
-    this.size = 40,
-    this.iconSize = 20,
+    this.size = AppButtonSize.regular,
+    this.accentColor,
   }) : label = '',
        _leadingIcon = null,
        _onlyIcon = icon,
-       textStyle = null,
-       iconColor = null,
-       variant = AppButtonVariant.secondary,
        destructive = false,
-       accentColor = null,
-       busy = false,
-       height = 40,
-       borderRadius = AppRadii.full,
-       padding = EdgeInsets.zero;
+       busy = false;
 
   final VoidCallback? onPressed;
   final String label;
   final IconData? _leadingIcon;
   final IconData? _onlyIcon;
   final String? tooltip;
-  final TextStyle? textStyle;
-  final Color? iconColor;
   final AppButtonVariant variant;
   final AppAppearance appearance;
+  final AppButtonSize size;
   final bool destructive;
   final bool selected;
   final Color? accentColor;
   final bool busy;
-  final double height;
-  final double borderRadius;
-  final EdgeInsetsGeometry padding;
-  final Color? selectedColor;
-  final Color? foregroundColor;
-  final Color? backgroundColor;
-  final Color? hoverBackgroundColor;
-  final Color? borderColor;
-  final double size;
-  final double iconSize;
 
   bool get _iconOnly => _onlyIcon != null;
 
@@ -95,20 +66,42 @@ class AppButton extends StatefulWidget {
 
 class _AppButtonState extends State<AppButton> {
   bool _isHovering = false;
+  bool _isFocused = false;
 
   bool get _enabled => widget.onPressed != null && !widget.busy;
 
   @override
   Widget build(BuildContext context) {
-    final button = MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      cursor: _enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      child: GestureDetector(
-        onTap: _enabled ? widget.onPressed : null,
-        child: widget._iconOnly
-            ? _buildIconButton(context)
-            : _buildLabeledButton(context),
+    final button = Semantics(
+      button: true,
+      enabled: _enabled,
+      onTap: _enabled ? widget.onPressed : null,
+      child: FocusableActionDetector(
+        enabled: _enabled,
+        mouseCursor: _enabled
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        onShowHoverHighlight: (value) => setState(() => _isHovering = value),
+        onShowFocusHighlight: (value) => setState(() => _isFocused = value),
+        shortcuts: const {
+          SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+          SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+        },
+        actions: {
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              if (_enabled) widget.onPressed?.call();
+              return null;
+            },
+          ),
+        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _enabled ? widget.onPressed : null,
+          child: widget._iconOnly
+              ? _buildIconButton(context)
+              : _buildLabeledButton(context),
+        ),
       ),
     );
 
@@ -119,6 +112,7 @@ class _AppButtonState extends State<AppButton> {
 
   Widget _buildLabeledButton(BuildContext context) {
     final isPrimary = widget.variant == AppButtonVariant.primary;
+    final metrics = _AppButtonMetrics.forSize(widget.size);
     final actionColor = widget.destructive
         ? Colors.redAccent
         : widget.accentColor ?? AppColors.primary(context);
@@ -127,6 +121,7 @@ class _AppButtonState extends State<AppButton> {
       context: context,
       actionColor: actionColor,
       isPrimary: isPrimary,
+      isGhost: widget.variant == AppButtonVariant.ghost,
       isDestructive: widget.destructive,
       isOverlay: widget.appearance == AppAppearance.overlay,
       isSelected: widget.selected,
@@ -141,13 +136,15 @@ class _AppButtonState extends State<AppButton> {
       duration: const Duration(milliseconds: 120),
       opacity: _enabled ? 1 : 0.45,
       child: TweenAnimationBuilder<double>(
-        tween: Tween(end: _isHovering && _enabled ? 1 : 0),
+        tween: Tween(end: (_isHovering || _isFocused) && _enabled ? 1 : 0),
         duration: const Duration(milliseconds: 140),
         curve: Curves.easeOut,
         builder: (context, hoverProgress, child) {
           return Container(
-            height: widget.height,
-            padding: widget.padding,
+            height: metrics.buttonHeight,
+            padding: EdgeInsets.symmetric(
+              horizontal: metrics.horizontalPadding,
+            ),
             decoration: BoxDecoration(
               color: _enabled
                   ? Color.lerp(
@@ -156,7 +153,7 @@ class _AppButtonState extends State<AppButton> {
                       hoverProgress,
                     )
                   : palette.disabledBackground,
-              borderRadius: BorderRadius.circular(widget.borderRadius),
+              borderRadius: BorderRadius.circular(metrics.borderRadius),
               border: Border.all(
                 color: Color.lerp(
                   palette.restingBorder,
@@ -185,8 +182,8 @@ class _AppButtonState extends State<AppButton> {
           children: [
             if (widget.busy)
               SizedBox(
-                width: 18,
-                height: 18,
+                width: metrics.iconSize,
+                height: metrics.iconSize,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   color: palette.foreground,
@@ -195,21 +192,14 @@ class _AppButtonState extends State<AppButton> {
             else if (widget._leadingIcon != null)
               Icon(
                 widget._leadingIcon,
-                size: widget.iconSize,
-                color: widget.iconColor ?? palette.foreground,
+                size: metrics.iconSize,
+                color: widget.selected ? actionColor : palette.foreground,
               ),
             if (widget.busy || widget._leadingIcon != null)
               const SizedBox(width: AppSpacing.xs),
             Text(
               widget.label,
-              style:
-                  widget.textStyle?.copyWith(color: palette.foreground) ??
-                  TextStyle(
-                    color: palette.foreground,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    height: 1,
-                  ),
+              style: metrics.labelStyle.copyWith(color: palette.foreground),
             ),
           ],
         ),
@@ -218,40 +208,39 @@ class _AppButtonState extends State<AppButton> {
   }
 
   Widget _buildIconButton(BuildContext context) {
-    final selectedColor = widget.selectedColor ?? AppColors.primary(context);
+    final metrics = _AppButtonMetrics.forSize(widget.size);
+    final selectedColor = widget.accentColor ?? AppColors.primary(context);
     final foreground = widget.selected
         ? selectedColor
-        : widget.foregroundColor ??
-              AppColors.textPrimary(context).withAlpha(214);
+        : widget.appearance == AppAppearance.overlay
+        ? Colors.white.withAlpha(235)
+        : AppColors.textPrimary(context).withAlpha(214);
     final usesOverlayAppearance = widget.appearance == AppAppearance.overlay;
-    final restingBackground =
-        widget.backgroundColor ??
-        (widget.selected
-            ? selectedColor.withAlpha(22)
-            : usesOverlayAppearance
-            ? Colors.white.withAlpha(34)
-            : AppColors.hoverSurface(context));
-    final hoverBackground =
-        widget.hoverBackgroundColor ??
-        widget.backgroundColor ??
-        (widget.selected
-            ? selectedColor.withAlpha(34)
-            : usesOverlayAppearance
-            ? Colors.white.withAlpha(50)
-            : Color.alphaBlend(
-                AppColors.hoverSurface(context),
-                restingBackground,
-              ));
-    final borderColor =
-        widget.borderColor ??
-        (widget.selected
-            ? selectedColor.withAlpha(90)
-            : usesOverlayAppearance
-            ? Colors.white.withAlpha(56)
-            : AppColors.separator(context));
+    final isGhost = widget.variant == AppButtonVariant.ghost;
+    final restingBackground = isGhost
+        ? Colors.transparent
+        : usesOverlayAppearance
+        ? Colors.white.withAlpha(widget.selected ? 54 : 34)
+        : widget.selected
+        ? selectedColor.withAlpha(24)
+        : AppColors.hoverSurface(context);
+    final hoverBackground = isGhost
+        ? AppColors.hoverSurface(context)
+        : usesOverlayAppearance
+        ? Colors.white.withAlpha(widget.selected ? 66 : 50)
+        : widget.selected
+        ? selectedColor.withAlpha(34)
+        : Color.alphaBlend(AppColors.hoverSurface(context), restingBackground);
+    final borderColor = isGhost
+        ? Colors.transparent
+        : widget.selected
+        ? selectedColor.withAlpha(90)
+        : usesOverlayAppearance
+        ? Colors.white.withAlpha(56)
+        : AppColors.separator(context);
 
     return TweenAnimationBuilder<double>(
-      tween: Tween(end: _isHovering && _enabled ? 1 : 0),
+      tween: Tween(end: (_isHovering || _isFocused) && _enabled ? 1 : 0),
       duration: const Duration(milliseconds: 140),
       curve: Curves.easeOut,
       builder: (context, hoverProgress, child) {
@@ -261,8 +250,8 @@ class _AppButtonState extends State<AppButton> {
           hoverProgress,
         )!;
         return Container(
-          width: widget.size,
-          height: widget.size,
+          width: metrics.iconButtonSize,
+          height: metrics.iconButtonSize,
           decoration: BoxDecoration(
             color: _enabled ? background : background.withAlpha(80),
             shape: BoxShape.circle,
@@ -271,9 +260,62 @@ class _AppButtonState extends State<AppButton> {
           child: child,
         );
       },
-      child: Icon(widget._onlyIcon, size: widget.iconSize, color: foreground),
+      child: Icon(widget._onlyIcon, size: metrics.iconSize, color: foreground),
     );
   }
+}
+
+class _AppButtonMetrics {
+  const _AppButtonMetrics({
+    required this.buttonHeight,
+    required this.iconButtonSize,
+    required this.iconSize,
+    required this.horizontalPadding,
+    required this.borderRadius,
+    required this.labelStyle,
+  });
+
+  final double buttonHeight;
+  final double iconButtonSize;
+  final double iconSize;
+  final double horizontalPadding;
+  final double borderRadius;
+  final TextStyle labelStyle;
+
+  factory _AppButtonMetrics.forSize(AppButtonSize size) => switch (size) {
+    AppButtonSize.compact => const _AppButtonMetrics(
+      buttonHeight: 30,
+      iconButtonSize: 28,
+      iconSize: 16,
+      horizontalPadding: AppSpacing.md,
+      borderRadius: AppRadii.control,
+      labelStyle: AppTypography.controlLabel,
+    ),
+    AppButtonSize.regular => const _AppButtonMetrics(
+      buttonHeight: 36,
+      iconButtonSize: 36,
+      iconSize: 19,
+      horizontalPadding: AppSpacing.xl,
+      borderRadius: AppRadii.surface,
+      labelStyle: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        height: 1,
+      ),
+    ),
+    AppButtonSize.large => const _AppButtonMetrics(
+      buttonHeight: 44,
+      iconButtonSize: 44,
+      iconSize: 22,
+      horizontalPadding: AppSpacing.xl,
+      borderRadius: AppRadii.surface,
+      labelStyle: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w700,
+        height: 1,
+      ),
+    ),
+  };
 }
 
 class _AppButtonPalette {
@@ -297,6 +339,7 @@ class _AppButtonPalette {
     required BuildContext context,
     required Color actionColor,
     required bool isPrimary,
+    required bool isGhost,
     required bool isDestructive,
     required bool isOverlay,
     required bool isSelected,
@@ -309,6 +352,16 @@ class _AppButtonPalette {
         hoverBackground: actionColor,
         disabledBackground: actionColor.withAlpha(90),
         foreground: Colors.white,
+        restingBorder: Colors.transparent,
+        hoverBorder: Colors.transparent,
+      );
+    }
+    if (isGhost) {
+      return _AppButtonPalette(
+        restingBackground: Colors.transparent,
+        hoverBackground: AppColors.hoverSurface(context),
+        disabledBackground: Colors.transparent,
+        foreground: AppColors.textPrimary(context).withAlpha(220),
         restingBorder: Colors.transparent,
         hoverBorder: Colors.transparent,
       );

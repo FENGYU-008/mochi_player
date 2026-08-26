@@ -360,8 +360,7 @@ class _ActionRow extends StatelessWidget {
           onPressed: action.enabled ? action.onPressed : null,
           icon: Icons.play_arrow_rounded,
           label: action.label,
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          size: AppButtonSize.regular,
         ),
         FavoriteButton(
           tmdbId: viewModel.tmdbId,

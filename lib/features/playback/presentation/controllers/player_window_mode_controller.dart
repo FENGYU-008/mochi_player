@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'package:mochi_player/core/ui/components/navigation/app_window_controls.dart';
+import 'package:mochi_player/core/platform/window_controls_controller.dart';
 
 /// Manages the desktop window modes used only by the playback experience.
 ///
@@ -29,11 +29,13 @@ class PlayerWindowModeController extends ChangeNotifier with WindowListener {
   Future<void>? _miniPlayerTransition;
   Future<void>? _miniAlwaysOnTopTransition;
 
+  final WindowControlsController windowControlsController;
+
   bool get isFullScreen => _isFullScreen;
   bool get isMiniPlayer => _isMiniPlayer;
   bool get isMiniPlayerAlwaysOnTop => _isMiniPlayerAlwaysOnTop;
 
-  PlayerWindowModeController() {
+  PlayerWindowModeController({required this.windowControlsController}) {
     windowManager.addListener(this);
   }
 
@@ -128,7 +130,7 @@ class PlayerWindowModeController extends ChangeNotifier with WindowListener {
     final currentBounds = await windowManager.getBounds();
     _windowBoundsBeforeMiniPlayer = currentBounds;
     _windowWasAlwaysOnTopBeforeMiniPlayer = await windowManager.isAlwaysOnTop();
-    await AppWindowControls.setMiniPlayerMode(true);
+    await windowControlsController.setMiniPlayerMode(true);
 
     final targetPosition = Offset(
       (currentBounds.right - _miniPlayerSize.width).clamp(0.0, double.infinity),
@@ -168,7 +170,7 @@ class PlayerWindowModeController extends ChangeNotifier with WindowListener {
     _windowWasMaximizedBeforeMiniPlayer = false;
     _isMiniPlayer = false;
     _isMiniPlayerAlwaysOnTop = false;
-    await AppWindowControls.setMiniPlayerMode(false);
+    await windowControlsController.setMiniPlayerMode(false);
     if (notify && !_isDisposed) notifyListeners();
   }
 

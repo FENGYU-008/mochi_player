@@ -6,7 +6,6 @@ import 'package:mochi_player/core/ui/components/basic/app_button.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
-import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
 abstract final class AppModal {
   static Future<bool?> confirm({
@@ -186,10 +185,7 @@ class _ModalCard extends StatelessWidget {
                         onPressed: onCancel,
                         label: cancelLabel,
                         variant: AppButtonVariant.secondary,
-                        height: 34,
-                        borderRadius: AppRadii.control,
-                        padding: EdgeInsets.zero,
-                        textStyle: AppTypography.controlLabel,
+                        size: AppButtonSize.compact,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
@@ -199,10 +195,7 @@ class _ModalCard extends StatelessWidget {
                         onPressed: onConfirm,
                         label: confirmLabel,
                         destructive: destructive,
-                        height: 34,
-                        borderRadius: AppRadii.control,
-                        padding: EdgeInsets.zero,
-                        textStyle: AppTypography.controlLabel,
+                        size: AppButtonSize.compact,
                       ),
                     ),
                   ],

@@ -1,35 +1,73 @@
 import 'package:flutter/material.dart';
+
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 
-class AppSlider extends StatelessWidget {
-  final double value;
-  final double min;
-  final double max;
-  final int? divisions;
-  final ValueChanged<double>? onChanged;
+typedef AppSliderValueFormatter = String Function(double value);
 
+class AppSlider extends StatelessWidget {
   const AppSlider({
     super.key,
     required this.value,
     required this.min,
     required this.max,
-    this.divisions,
+    this.step,
     this.onChanged,
+    this.onChangeStart,
+    this.onChangeEnd,
+    this.tooltipFormatter,
+    this.semanticFormatterCallback,
   });
+
+  final double value;
+  final double min;
+  final double max;
+
+  /// Distance between selectable values. When omitted, the slider is
+  /// continuous.
+  final double? step;
+  final ValueChanged<double>? onChanged;
+  final ValueChanged<double>? onChangeStart;
+  final ValueChanged<double>? onChangeEnd;
+  final AppSliderValueFormatter? tooltipFormatter;
+  final SemanticFormatterCallback? semanticFormatterCallback;
+
+  static const double _thumbRadius = AppControlMetrics.sliderThumbRadius;
+  static const double _hoverThumbRadius =
+      AppControlMetrics.sliderThumbHoverRadius;
+  static const double _tooltipHitRadius =
+      AppControlMetrics.sliderHoverHitRadius;
 
   @override
   Widget build(BuildContext context) {
+    final primary = AppColors.primary(context);
+    final thumbCenterColor = AppColors.elevatedSurface(context);
+    final tooltipBackground = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF3A3A3C)
+        : const Color(0xFF252527);
+
     return SliderTheme(
       data: SliderTheme.of(context).copyWith(
         trackHeight: AppControlMetrics.sliderTrackHeight,
-        activeTrackColor: AppColors.primary(context),
+        activeTrackColor: primary,
         inactiveTrackColor: AppColors.separator(context),
-        thumbColor: AppColors.primary(context),
-        overlayShape: SliderComponentShape.noOverlay,
-        thumbShape: const RoundSliderThumbShape(
-          enabledThumbRadius: AppControlMetrics.sliderThumbRadius,
-          disabledThumbRadius: 6,
+        disabledActiveTrackColor: primary.withAlpha(90),
+        disabledInactiveTrackColor: AppColors.separator(context).withAlpha(120),
+        thumbColor: primary,
+        disabledThumbColor: AppColors.textSecondary(context),
+        overlayShape: const _SliderHoverOverlayShape(radius: _tooltipHitRadius),
+        thumbShape: _AppSliderThumbShape(
+          radius: _thumbRadius,
+          hoverRadius: _hoverThumbRadius,
+          centerColor: thumbCenterColor,
+          tooltipBackground: tooltipBackground,
+        ),
+        valueIndicatorTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          height: 1,
+          decoration: TextDecoration.none,
         ),
         activeTickMarkColor: Colors.transparent,
         inactiveTickMarkColor: Colors.transparent,
@@ -39,9 +77,199 @@ class AppSlider extends StatelessWidget {
         value: value,
         min: min,
         max: max,
-        divisions: divisions,
+        divisions: _divisionCount,
+        label: _formattedValue(value),
+        onChangeStart: onChanged == null ? null : onChangeStart,
         onChanged: onChanged,
+        onChangeEnd: onChanged == null ? null : onChangeEnd,
+        semanticFormatterCallback:
+            semanticFormatterCallback ?? tooltipFormatter ?? _formatValue,
       ),
     );
+  }
+
+  String _formattedValue(double currentValue) {
+    return tooltipFormatter?.call(currentValue) ?? _formatValue(currentValue);
+  }
+
+  int? get _divisionCount {
+    final resolvedStep = step;
+    if (resolvedStep == null) return null;
+    if (resolvedStep <= 0) {
+      throw ArgumentError.value(resolvedStep, 'step', '必须大于 0');
+    }
+
+    final intervalCount = (max - min) / resolvedStep;
+    final roundedIntervalCount = intervalCount.round();
+    if (roundedIntervalCount <= 0 ||
+        (intervalCount - roundedIntervalCount).abs() > 1e-9) {
+      throw ArgumentError.value(resolvedStep, 'step', '必须能够整除 max - min');
+    }
+    return roundedIntervalCount;
+  }
+
+  String _formatValue(double value) {
+    if (value == value.roundToDouble()) return value.round().toString();
+    return value
+        .toStringAsFixed(2)
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
+  }
+}
+
+class _SliderTooltipPainter {
+  static const double _minimumWidth = 42;
+  static const double _height = 28;
+  static const double _arrowWidth = 12;
+  static const double _arrowHeight = 6;
+
+  static void paint(
+    Canvas canvas, {
+    required Offset center,
+    required double opacity,
+    required TextPainter labelPainter,
+    required Color background,
+  }) {
+    if (opacity == 0) return;
+    final width = (labelPainter.width + 20)
+        .clamp(_minimumWidth, 120.0)
+        .toDouble();
+    final tip = center.translate(
+      0,
+      -AppControlMetrics.sliderThumbHoverRadius -
+          AppControlMetrics.sliderTooltipGap,
+    );
+    final bubbleRect = Rect.fromLTWH(
+      tip.dx - width / 2,
+      tip.dy - _arrowHeight - _height,
+      width,
+      _height,
+    );
+    final bubble = Path()
+      ..addRRect(RRect.fromRectAndRadius(bubbleRect, const Radius.circular(8)))
+      ..moveTo(tip.dx - _arrowWidth / 2, bubbleRect.bottom)
+      ..lineTo(tip.dx + _arrowWidth / 2, bubbleRect.bottom)
+      ..lineTo(tip.dx, tip.dy)
+      ..close();
+    final bounds = bubbleRect
+        .inflate(16)
+        .expandToInclude(Rect.fromCircle(center: tip, radius: _arrowWidth));
+    final needsOpacityLayer = opacity < 1;
+    if (needsOpacityLayer) {
+      canvas.saveLayer(
+        bounds,
+        Paint()..color = Colors.white.withValues(alpha: opacity),
+      );
+    }
+    canvas.drawShadow(bubble, Colors.black.withAlpha(70), 8, true);
+    canvas.drawPath(bubble, Paint()..color = background);
+    labelPainter.paint(
+      canvas,
+      Offset(
+        bubbleRect.center.dx - labelPainter.width / 2,
+        bubbleRect.center.dy - labelPainter.height / 2,
+      ),
+    );
+    if (needsOpacityLayer) canvas.restore();
+  }
+}
+
+class _SliderHoverOverlayShape extends SliderComponentShape {
+  const _SliderHoverOverlayShape({required this.radius});
+
+  final double radius;
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
+    return Size.fromRadius(radius);
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {}
+}
+
+class _AppSliderThumbShape extends SliderComponentShape {
+  const _AppSliderThumbShape({
+    required this.radius,
+    required this.hoverRadius,
+    required this.centerColor,
+    required this.tooltipBackground,
+  });
+
+  final double radius;
+  final double hoverRadius;
+  final Color centerColor;
+  final Color tooltipBackground;
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
+    return Size.fromRadius(hoverRadius);
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final activeColor = sliderTheme.thumbColor ?? Colors.transparent;
+    final disabledColor = sliderTheme.disabledThumbColor ?? activeColor;
+    final color = Color.lerp(
+      disabledColor,
+      activeColor,
+      enableAnimation.value,
+    )!;
+    final interactionProgress = Curves.easeOut.transform(
+      activationAnimation.value,
+    );
+    final animatedRadius =
+        radius + (hoverRadius - radius) * interactionProgress;
+    final canvas = context.canvas;
+
+    _SliderTooltipPainter.paint(
+      canvas,
+      center: center,
+      opacity: interactionProgress,
+      labelPainter: labelPainter,
+      background: tooltipBackground,
+    );
+
+    if (interactionProgress > 0) {
+      canvas.drawCircle(
+        center,
+        hoverRadius + 4,
+        Paint()..color = color.withAlpha((35 * interactionProgress).round()),
+      );
+    }
+    canvas.drawCircle(center, animatedRadius, Paint()..color = color);
+    if (interactionProgress > 0) {
+      canvas.drawCircle(
+        center,
+        (hoverRadius - 4) * interactionProgress,
+        Paint()..color = centerColor,
+      );
+    }
   }
 }

@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
+
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 import 'package:mochi_player/core/ui/theme/app_control_metrics.dart';
 import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 import 'package:mochi_player/core/ui/theme/app_typography.dart';
 
-class AppFormRow extends StatelessWidget {
+/// Lays out one label, optional description, and its input control.
+class AppFormItem extends StatelessWidget {
+  const AppFormItem({
+    super.key,
+    required this.label,
+    required this.control,
+    this.icon,
+    this.subtitle,
+    this.enabled = true,
+    this.expandControl = true,
+    this.labelWidth = AppControlMetrics.labelWidth,
+    this.height,
+  });
+
   final IconData? icon;
   final String label;
   final String? subtitle;
@@ -13,18 +27,6 @@ class AppFormRow extends StatelessWidget {
   final bool expandControl;
   final double? labelWidth;
   final double? height;
-
-  const AppFormRow({
-    super.key,
-    this.icon,
-    required this.label,
-    required this.control,
-    this.subtitle,
-    this.enabled = true,
-    this.expandControl = true,
-    this.labelWidth = AppControlMetrics.labelWidth,
-    this.height,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +37,7 @@ class AppFormRow extends StatelessWidget {
         (subtitle == null
             ? AppControlMetrics.rowHeight
             : AppControlMetrics.descriptiveRowHeight);
-    final labelContent = _FormRowLabel(
+    final labelContent = _FormItemLabel(
       label: label,
       subtitle: subtitle,
       textColor: enabled ? textColor : secondaryColor,
@@ -75,18 +77,18 @@ class AppFormRow extends StatelessWidget {
   }
 }
 
-class _FormRowLabel extends StatelessWidget {
-  final String label;
-  final String? subtitle;
-  final Color textColor;
-  final Color secondaryColor;
-
-  const _FormRowLabel({
+class _FormItemLabel extends StatelessWidget {
+  const _FormItemLabel({
     required this.label,
     required this.subtitle,
     required this.textColor,
     required this.secondaryColor,
   });
+
+  final String label;
+  final String? subtitle;
+  final Color textColor;
+  final Color secondaryColor;
 
   @override
   Widget build(BuildContext context) {

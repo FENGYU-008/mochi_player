@@ -3,7 +3,7 @@ abstract final class AppControlMetrics {
   static const double descriptiveRowHeight = 58;
 
   static const double inputHeight = 26;
-  static const double selectHeight = 26;
+  static const double selectHeight = 32;
   static const double segmentedHeight = 32;
   static const double compactButtonHeight = 30;
 
@@ -19,7 +19,10 @@ abstract final class AppControlMetrics {
   static const double switchHeight = 24;
 
   static const double sliderTrackHeight = 3;
-  static const double sliderThumbRadius = 7;
+  static const double sliderThumbRadius = 6;
+  static const double sliderThumbHoverRadius = 9;
+  static const double sliderHoverHitRadius = 16;
+  static const double sliderTooltipGap = 10;
   static const double sliderValueWidth = 36;
 
   static const Duration stateAnimationDuration = Duration(milliseconds: 120);

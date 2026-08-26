@@ -10,6 +10,9 @@ import 'package:mochi_player/features/library/application/file_browser_provider.
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_section.dart';
+import 'package:mochi_player/features/settings/presentation/widgets/settings_slider_item.dart';
+import 'package:mochi_player/features/settings/presentation/widgets/settings_switch_item.dart';
+import 'package:mochi_player/features/settings/presentation/widgets/settings_text_field.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -130,7 +133,7 @@ class _SettingsPageState extends State<SettingsPage> {
             left: 0,
             right: 0,
             height: AppHeader.height,
-            child: AppHeader(title: '设置', showSearch: false),
+            child: AppHeader(title: '设置'),
           ),
         ],
       ),
@@ -145,31 +148,36 @@ class _SettingsPageState extends State<SettingsPage> {
           title: '外观',
           child: AppFormGroup(
             children: [
-              AppFormRow(
+              AppFormItem(
                 label: '界面主题',
                 subtitle: '选择应用使用的明暗外观',
                 labelWidth: null,
-                control: AppSegmentedControl<ThemeMode>(
-                  value: themeMode,
-                  maxWidth: 300,
-                  segments: const [
-                    AppSegment(
-                      value: ThemeMode.light,
-                      label: '浅色',
-                      icon: Icons.light_mode_outlined,
+                control: Align(
+                  alignment: Alignment.centerRight,
+                  child: SizedBox(
+                    width: 300,
+                    child: AppSegmentedControl<ThemeMode>(
+                      value: themeMode,
+                      options: const [
+                        AppSegmentedOption(
+                          value: ThemeMode.light,
+                          label: '浅色',
+                          icon: Icons.light_mode_outlined,
+                        ),
+                        AppSegmentedOption(
+                          value: ThemeMode.dark,
+                          label: '深色',
+                          icon: Icons.dark_mode_outlined,
+                        ),
+                        AppSegmentedOption(
+                          value: ThemeMode.system,
+                          label: '跟随系统',
+                          icon: Icons.computer_rounded,
+                        ),
+                      ],
+                      onChanged: context.read<ThemeProvider>().setTheme,
                     ),
-                    AppSegment(
-                      value: ThemeMode.dark,
-                      label: '深色',
-                      icon: Icons.dark_mode_outlined,
-                    ),
-                    AppSegment(
-                      value: ThemeMode.system,
-                      label: '跟随系统',
-                      icon: Icons.computer_rounded,
-                    ),
-                  ],
-                  onChanged: context.read<ThemeProvider>().setTheme,
+                  ),
                 ),
               ),
             ],
@@ -187,18 +195,18 @@ class _SettingsPageState extends State<SettingsPage> {
           title: 'OpenList',
           child: AppFormGroup(
             children: [
-              AppFormTextField(
+              SettingsTextField(
                 controller: _webDavUrlController,
                 keyboardType: TextInputType.url,
                 label: 'OpenList 服务器地址',
                 onFocusLost: _commitNetworkSettings,
               ),
-              AppFormTextField(
+              SettingsTextField(
                 controller: _webDavUsernameController,
                 label: '用户名',
                 onFocusLost: _commitNetworkSettings,
               ),
-              AppFormTextField(
+              SettingsTextField(
                 controller: _webDavPasswordController,
                 obscureText: !_showWebDavPassword,
                 label: '密码',
@@ -212,7 +220,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
               ),
-              AppFormRow(
+              AppFormItem(
                 label: '连接状态',
                 subtitle: '通过 WebDAV 检查目录访问是否可用',
                 labelWidth: null,
@@ -237,7 +245,7 @@ class _SettingsPageState extends State<SettingsPage> {
           title: 'TMDB',
           child: AppFormGroup(
             children: [
-              AppFormTextField(
+              SettingsTextField(
                 controller: _tmdbApiKeyController,
                 obscureText: !_showTmdbApiKey,
                 label: 'API 密钥',
@@ -251,14 +259,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
               ),
-              AppFormTextField(
+              SettingsTextField(
                 controller: _tmdbApiBaseUrlController,
                 keyboardType: TextInputType.url,
                 label: 'API 地址',
                 onFocusLost: _commitNetworkSettings,
               ),
-              AppFormSwitchRow(
-                title: '使用 TMDB 代理',
+              SettingsSwitchItem(
+                label: '使用 TMDB 代理',
                 subtitle: '用于 TMDB API 和图片下载',
                 value: _tmdbProxyEnabled,
                 onChanged: (value) {
@@ -268,14 +276,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   _scheduleAutoSave(applyRuntime: true, immediate: true);
                 },
               ),
-              AppFormTextField(
+              SettingsTextField(
                 controller: _tmdbProxyUrlController,
                 enabled: _tmdbProxyEnabled,
                 keyboardType: TextInputType.url,
                 label: 'HTTP 代理',
                 onFocusLost: _commitNetworkSettings,
               ),
-              AppFormRow(
+              AppFormItem(
                 label: '连接状态',
                 subtitle: '检查当前 TMDB 配置是否可用',
                 labelWidth: null,
@@ -297,22 +305,22 @@ class _SettingsPageState extends State<SettingsPage> {
       title: '播放',
       child: AppFormGroup(
         children: [
-          AppFormTextField(
+          SettingsTextField(
             controller: _playbackCacheSizeMbController,
             keyboardType: TextInputType.number,
             label: '缓存大小',
             suffixText: 'MB',
             maxWidth: 120,
           ),
-          AppFormTextField(
+          SettingsTextField(
             controller: _playbackReadaheadSecondsController,
             keyboardType: TextInputType.number,
             label: '预读',
             suffixText: '秒',
             maxWidth: 120,
           ),
-          AppFormSwitchRow(
-            title: '硬件解码',
+          SettingsSwitchItem(
+            label: '硬件解码',
             value: _enableHardwareAcceleration,
             onChanged: (value) {
               setState(() {
@@ -321,20 +329,24 @@ class _SettingsPageState extends State<SettingsPage> {
               _scheduleAutoSave();
             },
           ),
-          AppFormTextField(
+          SettingsTextField(
             controller: _subtitleLanguagePriorityController,
             label: '默认字幕语言',
           ),
-          AppFormSliderRow(
+          SettingsSliderItem(
             label: '字幕大小',
             value: _subtitleFontSize,
             min: 18,
             max: 40,
-            divisions: 22,
             displayValue: _subtitleFontSize.round().toString(),
             onChanged: (value) {
               setState(() {
                 _subtitleFontSize = value;
+              });
+            },
+            onChangeEnd: (value) {
+              setState(() {
+                _subtitleFontSize = value.roundToDouble();
               });
               _scheduleAutoSave();
             },
@@ -352,7 +364,7 @@ class _SettingsPageState extends State<SettingsPage> {
           title: '媒体库',
           child: AppFormGroup(
             children: [
-              AppFormRow(
+              AppFormItem(
                 label: '补全元数据',
                 subtitle: '同步 WebDAV，并为缺少信息的媒体重新匹配',
                 labelWidth: null,
@@ -364,7 +376,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   busy: isBusy,
                 ),
               ),
-              AppFormRow(
+              AppFormItem(
                 label: '清空媒体库',
                 subtitle: '删除本地索引、元数据、播放进度和收藏',
                 labelWidth: null,
@@ -655,12 +667,8 @@ class _VisibilityToggle extends StatelessWidget {
     return AppButton.icon(
       tooltip: visible ? '隐藏' : '显示',
       onPressed: onPressed,
-      foregroundColor: AppColors.textSecondary(context),
-      backgroundColor: Colors.transparent,
-      hoverBackgroundColor: AppColors.hoverSurface(context),
-      borderColor: Colors.transparent,
-      iconSize: 18,
-      size: 28,
+      variant: AppButtonVariant.ghost,
+      size: AppButtonSize.compact,
       icon: visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
     );
   }
@@ -690,10 +698,7 @@ class _SettingsActionButton extends StatelessWidget {
       destructive: destructive,
       busy: busy,
       variant: AppButtonVariant.secondary,
-      height: AppControlMetrics.compactButtonHeight,
-      borderRadius: AppRadii.control,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      textStyle: AppTypography.controlLabel,
+      size: AppButtonSize.compact,
     );
   }
 }
