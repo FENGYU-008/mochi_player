@@ -86,17 +86,13 @@ class _HomeDestinationPageState extends State<_HomeDestinationPage> {
 }
 
 class _LibraryDestinationPage extends StatefulWidget {
-  const _LibraryDestinationPage({
-    required this.destination,
-    required this.category,
-  });
+  const _LibraryDestinationPage({required this.destination, required this.category});
 
   final AppDestination destination;
   final LibraryCategory category;
 
   @override
-  State<_LibraryDestinationPage> createState() =>
-      _LibraryDestinationPageState();
+  State<_LibraryDestinationPage> createState() => _LibraryDestinationPageState();
 }
 
 class _LibraryDestinationPageState extends State<_LibraryDestinationPage> {
@@ -107,10 +103,7 @@ class _LibraryDestinationPageState extends State<_LibraryDestinationPage> {
     return Stack(
       children: [
         Positioned.fill(
-          child: LibraryPage(
-            category: widget.category,
-            searchQuery: _searchQuery,
-          ),
+          child: LibraryPage(category: widget.category, searchQuery: _searchQuery),
         ),
         if (widget.destination.showsHeader)
           Positioned(

@@ -11,17 +11,9 @@ class AppSegmentedOption<T> {
   final IconData? icon;
   final bool _iconOnly;
 
-  const AppSegmentedOption({
-    required this.value,
-    required this.label,
-    this.icon,
-  }) : _iconOnly = false;
+  const AppSegmentedOption({required this.value, required this.label, this.icon}) : _iconOnly = false;
 
-  const AppSegmentedOption.icon({
-    required this.value,
-    required this.label,
-    required this.icon,
-  }) : _iconOnly = true;
+  const AppSegmentedOption.icon({required this.value, required this.label, required this.icon}) : _iconOnly = true;
 }
 
 class AppSegmentedControl<T> extends StatelessWidget {
@@ -29,19 +21,11 @@ class AppSegmentedControl<T> extends StatelessWidget {
   final List<AppSegmentedOption<T>> options;
   final ValueChanged<T>? onChanged;
 
-  const AppSegmentedControl({
-    super.key,
-    required this.value,
-    required this.options,
-    this.onChanged,
-  });
+  const AppSegmentedControl({super.key, required this.value, required this.options, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    assert(
-      options.length >= 2,
-      'A segmented control needs at least 2 options.',
-    );
+    assert(options.length >= 2, 'A segmented control needs at least 2 options.');
     final borderColor = AppColors.separator(context);
     final enabled = onChanged != null;
     return AnimatedOpacity(
@@ -64,16 +48,11 @@ class AppSegmentedControl<T> extends StatelessWidget {
                     child: _SegmentButton<T>(
                       option: options[index],
                       selected: options[index].value == value,
-                      onPressed: enabled
-                          ? () => onChanged!(options[index].value)
-                          : null,
+                      onPressed: enabled ? () => onChanged!(options[index].value) : null,
                     ),
                   ),
                   if (index != options.length - 1)
-                    SizedBox(
-                      height: 20,
-                      child: VerticalDivider(width: 1, color: borderColor),
-                    ),
+                    SizedBox(height: 20, child: VerticalDivider(width: 1, color: borderColor)),
                 ],
               ],
             ),
@@ -89,11 +68,7 @@ class _SegmentButton<T> extends StatelessWidget {
   final bool selected;
   final VoidCallback? onPressed;
 
-  const _SegmentButton({
-    required this.option,
-    required this.selected,
-    required this.onPressed,
-  });
+  const _SegmentButton({required this.option, required this.selected, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -115,16 +90,12 @@ class _SegmentButton<T> extends StatelessWidget {
         height: double.infinity,
         borderRadius: BorderRadius.zero,
         backgroundColor: selected ? selectedSurface : Colors.transparent,
-        hoverColor: selected
-            ? Colors.transparent
-            : AppColors.hoverSurface(context),
+        hoverColor: selected ? Colors.transparent : AppColors.hoverSurface(context),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (option.icon != null)
-              Icon(option.icon, size: 16, color: foreground),
-            if (option.icon != null && !option._iconOnly)
-              const SizedBox(width: AppControlMetrics.iconLabelGap),
+            if (option.icon != null) Icon(option.icon, size: 16, color: foreground),
+            if (option.icon != null && !option._iconOnly) const SizedBox(width: AppControlMetrics.iconLabelGap),
             if (!option._iconOnly)
               Text(
                 option.label,
@@ -139,10 +110,6 @@ class _SegmentButton<T> extends StatelessWidget {
     );
 
     if (!option._iconOnly) return button;
-    return Tooltip(
-      message: option.label,
-      excludeFromSemantics: true,
-      child: button,
-    );
+    return Tooltip(message: option.label, excludeFromSemantics: true, child: button);
   }
 }

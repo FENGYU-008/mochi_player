@@ -18,8 +18,7 @@ class FileBrowserProvider extends ChangeNotifier {
   final WebDavFileSystem _fileSystem;
   final _logger = Logger(printer: PrettyPrinter(methodCount: 0));
 
-  FileBrowserProvider({WebDavFileSystem? fileSystem})
-    : _fileSystem = fileSystem ?? WebDavService();
+  FileBrowserProvider({WebDavFileSystem? fileSystem}) : _fileSystem = fileSystem ?? WebDavService();
 
   // === 状态变量 ===
   List<FileBrowserEntry> _items = [];
@@ -37,26 +36,32 @@ class FileBrowserProvider extends ChangeNotifier {
 
   // === Getters ===
   List<FileBrowserEntry> get items => _items;
+
   bool get isLoading => _isLoading;
+
   bool get hasLoaded => _hasLoaded;
+
   String get currentPath => _currentPath;
+
   String? get error => _error;
+
   bool get canGoBack => _pathHistory.isNotEmpty;
+
   bool get canGoForward => _forwardHistory.isNotEmpty;
+
   FileBrowserViewMode get viewMode => _viewMode;
+
   FileSortField get sortField => _sortField;
+
   bool get sortAscending => _sortAscending;
+
   String get searchQuery => _searchQuery;
 
   List<FileBrowserEntry> get visibleItems {
     final normalizedQuery = _searchQuery.trim().toLowerCase();
     final result = normalizedQuery.isEmpty
         ? List<FileBrowserEntry>.of(_items)
-        : _items
-              .where(
-                (item) => item.name.toLowerCase().contains(normalizedQuery),
-              )
-              .toList();
+        : _items.where((item) => item.name.toLowerCase().contains(normalizedQuery)).toList();
     result.sort(_compareItems);
     return result;
   }
@@ -99,10 +104,7 @@ class FileBrowserProvider extends ChangeNotifier {
       final files = await _fileSystem.readDir(path);
       if (requestGeneration != _requestGeneration) return;
 
-      _items = files
-          .where(_isVisibleEntry)
-          .map((file) => _mapFile(file, path))
-          .toList();
+      _items = files.where(_isVisibleEntry).map((file) => _mapFile(file, path)).toList();
 
       _currentPath = path;
       _hasLoaded = true;
@@ -130,9 +132,7 @@ class FileBrowserProvider extends ChangeNotifier {
     final isDir = file.isDir ?? false;
     final name = file.name ?? '未知文件';
     // 构造完整路径
-    String fullPath = parentPath.endsWith('/')
-        ? '$parentPath$name'
-        : '$parentPath/$name';
+    String fullPath = parentPath.endsWith('/') ? '$parentPath$name' : '$parentPath/$name';
     if (isDir && !fullPath.endsWith('/')) {
       fullPath += '/';
     }
@@ -204,9 +204,7 @@ class FileBrowserProvider extends ChangeNotifier {
     if (folderComparison != 0) return folderComparison;
 
     final comparison = switch (_sortField) {
-      FileSortField.name => a.name.toLowerCase().compareTo(
-        b.name.toLowerCase(),
-      ),
+      FileSortField.name => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
       FileSortField.size => a.size.compareTo(b.size),
       FileSortField.modifiedAt => _modifiedAt(a).compareTo(_modifiedAt(b)),
     };
@@ -220,8 +218,7 @@ class FileBrowserProvider extends ChangeNotifier {
     return aIsFolder ? -1 : 1;
   }
 
-  DateTime _modifiedAt(FileBrowserEntry item) =>
-      item.modifiedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+  DateTime _modifiedAt(FileBrowserEntry item) => item.modifiedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void dispose() {

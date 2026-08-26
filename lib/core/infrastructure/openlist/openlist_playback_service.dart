@@ -6,8 +6,7 @@ import 'package:logger/logger.dart';
 /// Authentication and token refresh live here independently from WebDAV
 /// directory access because they use a different protocol and lifecycle.
 class OpenListPlaybackService {
-  static final OpenListPlaybackService _instance =
-      OpenListPlaybackService._internal();
+  static final OpenListPlaybackService _instance = OpenListPlaybackService._internal();
 
   factory OpenListPlaybackService() => _instance;
 
@@ -72,11 +71,7 @@ class OpenListPlaybackService {
       final data = response.data;
       final payload = data is Map ? data['data'] : null;
       final token = payload is Map ? payload['token'] : null;
-      if (response.statusCode == 200 &&
-          data is Map &&
-          data['code'] == 200 &&
-          token is String &&
-          token.isNotEmpty) {
+      if (response.statusCode == 200 && data is Map && data['code'] == 200 && token is String && token.isNotEmpty) {
         _token = token;
         return true;
       }

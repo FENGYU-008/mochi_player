@@ -18,9 +18,7 @@ class AppGlassSurface extends StatelessWidget {
     required this.color,
     required this.borderColor,
     required this.blur,
-    this.borderRadius = const BorderRadius.all(
-      Radius.circular(AppRadii.surface),
-    ),
+    this.borderRadius = const BorderRadius.all(Radius.circular(AppRadii.surface)),
     this.padding,
   });
 
@@ -36,9 +34,7 @@ class AppGlassSurface extends StatelessWidget {
             borderRadius: borderRadius,
             border: Border.all(color: borderColor),
           ),
-          child: padding == null
-              ? child
-              : Padding(padding: padding!, child: child),
+          child: padding == null ? child : Padding(padding: padding!, child: child),
         ),
       ),
     );

@@ -9,21 +9,14 @@ class LibraryItemPosterCard extends StatelessWidget {
   final MediaArtworkType artworkType;
   final VoidCallback? onTap;
 
-  const LibraryItemPosterCard({
-    super.key,
-    required this.item,
-    this.artworkType = MediaArtworkType.poster,
-    this.onTap,
-  });
+  const LibraryItemPosterCard({super.key, required this.item, this.artworkType = MediaArtworkType.poster, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return MediaCard(
       title: item.title,
       subtitle: _subtitle(item),
-      imageUrl: artworkType == MediaArtworkType.backdrop
-          ? item.backdropUrl
-          : item.posterUrl,
+      imageUrl: artworkType == MediaArtworkType.backdrop ? item.backdropUrl : item.posterUrl,
       rating: item.rating,
       artworkType: artworkType,
       onTap: onTap ?? () => openMediaDetailPage(context, item),

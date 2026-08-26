@@ -7,12 +7,7 @@ import 'package:mochi_player/core/ui/theme/app_theme.dart';
 
 /// A search-specific composition of [AppInput].
 class AppSearchInput extends StatefulWidget {
-  const AppSearchInput({
-    super.key,
-    this.placeholder = '搜索...',
-    this.onChanged,
-    this.focusNode,
-  });
+  const AppSearchInput({super.key, this.placeholder = '搜索...', this.onChanged, this.focusNode});
 
   final String placeholder;
   final ValueChanged<String>? onChanged;
@@ -83,8 +78,7 @@ class _AppSearchInputState extends State<AppSearchInput> {
     if (!(ModalRoute.of(context)?.isCurrent ?? true)) return false;
 
     if (event.logicalKey == LogicalKeyboardKey.keyK &&
-        (HardwareKeyboard.instance.isMetaPressed ||
-            HardwareKeyboard.instance.isControlPressed)) {
+        (HardwareKeyboard.instance.isMetaPressed || HardwareKeyboard.instance.isControlPressed)) {
       if (!_focusNode.hasFocus) _focusNode.requestFocus();
       return true;
     }
@@ -110,9 +104,7 @@ class _AppSearchInputState extends State<AppSearchInput> {
         prefix: Icon(
           CupertinoIcons.search,
           size: 18,
-          color: _hasFocus
-              ? theme.textTheme.bodyMedium?.color
-              : appTheme.searchBarIconColor,
+          color: _hasFocus ? theme.textTheme.bodyMedium?.color : appTheme.searchBarIconColor,
         ),
         suffix: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
@@ -138,10 +130,7 @@ class _AppSearchInputState extends State<AppSearchInput> {
           key: const ValueKey('clear_button'),
           width: 18,
           height: 18,
-          decoration: BoxDecoration(
-            color: Colors.grey[300]?.withAlpha(128),
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: Colors.grey[300]?.withAlpha(128), shape: BoxShape.circle),
           child: Icon(Icons.close, size: 12, color: Colors.grey[700]),
         ),
       ),
@@ -149,18 +138,12 @@ class _AppSearchInputState extends State<AppSearchInput> {
   }
 
   Widget _buildShortcutHint() {
-    final modifierKey = Theme.of(context).platform == TargetPlatform.macOS
-        ? '⌘'
-        : 'Ctrl';
+    final modifierKey = Theme.of(context).platform == TargetPlatform.macOS ? '⌘' : 'Ctrl';
 
     return Row(
       key: const ValueKey('key_cap_hint'),
       mainAxisSize: MainAxisSize.min,
-      children: [
-        _ShortcutKeyCap(modifierKey),
-        const SizedBox(width: 4),
-        const _ShortcutKeyCap('K'),
-      ],
+      children: [_ShortcutKeyCap(modifierKey), const SizedBox(width: 4), const _ShortcutKeyCap('K')],
     );
   }
 }
@@ -180,22 +163,12 @@ class _ShortcutKeyCap extends StatelessWidget {
       decoration: BoxDecoration(
         color: appTheme.keyCapColor,
         borderRadius: BorderRadius.circular(5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(26),
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withAlpha(26), offset: const Offset(0, 1), blurRadius: 1)],
         border: Border.all(color: Colors.black.withAlpha(13)),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: appTheme.keyCapTextColor,
-        ),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: appTheme.keyCapTextColor),
       ),
     );
   }

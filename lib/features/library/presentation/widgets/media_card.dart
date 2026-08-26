@@ -61,20 +61,13 @@ class _MediaCardState extends State<MediaCard> {
                 Expanded(
                   child: Container(
                     transform: Matrix4.identity()
-                      ..scaleByDouble(
-                        1 + (0.025 * hoverProgress),
-                        1 + (0.025 * hoverProgress),
-                        1,
-                        1,
-                      ),
+                      ..scaleByDouble(1 + (0.025 * hoverProgress), 1 + (0.025 * hoverProgress), 1, 1),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(AppRadii.card),
                       boxShadow: [
                         BoxShadow(
-                          color: shadowColor.withAlpha(
-                            (4 + (6 * hoverProgress)).round(),
-                          ),
+                          color: shadowColor.withAlpha((4 + (6 * hoverProgress)).round()),
                           blurRadius: 3 + (37 * hoverProgress),
                           offset: Offset(0, 1 + (19 * hoverProgress)),
                         ),
@@ -96,16 +89,12 @@ class _MediaCardState extends State<MediaCard> {
                               bottom: 0,
                               left: 0,
                               right: 0,
-                              child: _PlaybackProgress(
-                                progress: widget.progress!,
-                              ),
+                              child: _PlaybackProgress(progress: widget.progress!),
                             ),
                           Positioned.fill(
                             child: Opacity(
                               opacity: 0.05 * hoverProgress,
-                              child: ColoredBox(
-                                color: AppColors.mediaHoverOverlay(context),
-                              ),
+                              child: ColoredBox(color: AppColors.mediaHoverOverlay(context)),
                             ),
                           ),
                         ],
@@ -121,11 +110,7 @@ class _MediaCardState extends State<MediaCard> {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
-                    color: Color.lerp(
-                      titleColor,
-                      titleColor.withAlpha(204),
-                      hoverProgress,
-                    ),
+                    color: Color.lerp(titleColor, titleColor.withAlpha(204), hoverProgress),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xxs),
@@ -135,10 +120,7 @@ class _MediaCardState extends State<MediaCard> {
                     widget.subtitle ?? '\u00A0',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: theme.textTheme.bodyMedium!.color!.withAlpha(153),
-                    ),
+                    style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium!.color!.withAlpha(153)),
                   ),
                 ),
               ],
@@ -172,9 +154,7 @@ class _MediaCardState extends State<MediaCard> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            widget.artworkType == MediaArtworkType.backdrop
-                ? Icons.videocam
-                : Icons.movie,
+            widget.artworkType == MediaArtworkType.backdrop ? Icons.videocam : Icons.movie,
             color: Colors.white54,
             size: 48,
           ),
@@ -215,11 +195,7 @@ class _RatingBadge extends StatelessWidget {
           const SizedBox(width: 3),
           Text(
             rating.toStringAsFixed(1),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -243,10 +219,7 @@ class _PlaybackProgress extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: AppColors.primary(context),
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(2),
-              bottomRight: Radius.circular(2),
-            ),
+            borderRadius: const BorderRadius.only(topRight: Radius.circular(2), bottomRight: Radius.circular(2)),
           ),
         ),
       ),

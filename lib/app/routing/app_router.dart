@@ -13,20 +13,14 @@ import 'package:mochi_player/features/playback/presentation/pages/player_page.da
 import 'package:mochi_player/features/playback/presentation/player_route_data.dart';
 
 GoRouter createAppRouter() {
-  final rootNavigatorKey = GlobalKey<NavigatorState>(
-    debugLabel: 'root-navigator',
-  );
+  final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root-navigator');
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: AppDestination.home.path,
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            AppShellPage(navigationShell: navigationShell),
-        branches: [
-          for (final destination in AppDestination.values)
-            _buildDestinationBranch(destination),
-        ],
+        builder: (context, state, navigationShell) => AppShellPage(navigationShell: navigationShell),
+        branches: [for (final destination in AppDestination.values) _buildDestinationBranch(destination)],
       ),
       GoRoute(
         path: AppRoutePaths.player,
@@ -66,8 +60,7 @@ StatefulShellBranch _buildDestinationBranch(AppDestination destination) {
             GoRoute(
               path: 'section/:section',
               pageBuilder: (context, state) {
-                final section = LibrarySection.values
-                    .asNameMap()[state.pathParameters['section']];
+                final section = LibrarySection.values.asNameMap()[state.pathParameters['section']];
                 if (section == null) {
                   return _errorPage(state, '未知的媒体库分区');
                 }
@@ -99,18 +92,12 @@ StatefulShellBranch _buildDestinationBranch(AppDestination destination) {
 
 bool _supportsMediaDetail(AppDestination destination) {
   return switch (destination) {
-    AppDestination.home ||
-    AppDestination.movies ||
-    AppDestination.series ||
-    AppDestination.favorites => true,
+    AppDestination.home || AppDestination.movies || AppDestination.series || AppDestination.favorites => true,
     AppDestination.fileBrowser || AppDestination.settings => false,
   };
 }
 
-CustomTransitionPage<void> _appTransitionPage({
-  required GoRouterState state,
-  required Widget child,
-}) {
+CustomTransitionPage<void> _appTransitionPage({required GoRouterState state, required Widget child}) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
     transitionDuration: const Duration(milliseconds: 260),
@@ -122,10 +109,7 @@ CustomTransitionPage<void> _appTransitionPage({
         curve: Curves.easeOutQuart,
         reverseCurve: Curves.easeInCubic,
       );
-      final position = Tween<Offset>(
-        begin: const Offset(0.025, 0),
-        end: Offset.zero,
-      ).animate(curvedAnimation);
+      final position = Tween<Offset>(begin: const Offset(0.025, 0), end: Offset.zero).animate(curvedAnimation);
 
       return FadeTransition(
         opacity: curvedAnimation,
@@ -139,11 +123,7 @@ MaterialPage<void> _errorPage(GoRouterState state, String message) {
   return MaterialPage<void>(
     key: state.pageKey,
     child: Scaffold(
-      body: AppResult(
-        status: AppResultStatus.error,
-        title: '页面无法打开',
-        subtitle: message,
-      ),
+      body: AppResult(status: AppResultStatus.error, title: '页面无法打开', subtitle: message),
     ),
   );
 }

@@ -43,9 +43,7 @@ class PlayerPlaybackController extends ChangeNotifier {
     );
     videoController = VideoController(
       player,
-      configuration: VideoControllerConfiguration(
-        enableHardwareAcceleration: settings.enableHardwareAcceleration,
-      ),
+      configuration: VideoControllerConfiguration(enableHardwareAcceleration: settings.enableHardwareAcceleration),
     );
     _bindPlayerStreams();
   }
@@ -75,24 +73,32 @@ class PlayerPlaybackController extends ChangeNotifier {
   List<AudioTrack> _audioTracks = const [];
   List<SubtitleTrack> _subtitleTracks = const [];
   AudioTrack _selectedAudioTrack = const AudioTrack('auto', null, null);
-  SubtitleTrack _selectedSubtitleTrack = const SubtitleTrack(
-    'auto',
-    null,
-    null,
-  );
+  SubtitleTrack _selectedSubtitleTrack = const SubtitleTrack('auto', null, null);
 
   MediaFile get currentItem => _session.currentItem;
+
   bool get hasPrevious => _session.hasPrevious;
+
   bool get hasNext => _session.hasNext;
+
   bool get isBuffering => _isBuffering;
+
   bool get showResumeNotice => _showResumeNotice;
+
   bool get overrideEmbeddedSubtitleStyle => _overrideEmbeddedSubtitleStyle;
+
   String? get playerError => _playerError;
+
   String? get resumePositionLabel => _resumePositionLabel;
+
   List<String> get subtitle => _subtitle;
+
   List<AudioTrack> get audioTracks => _audioTracks;
+
   List<SubtitleTrack> get subtitleTracks => _subtitleTracks;
+
   AudioTrack get selectedAudioTrack => _selectedAudioTrack;
+
   SubtitleTrack get selectedSubtitleTrack => _selectedSubtitleTrack;
 
   Future<void> initialize() => _openMedia(_nextMediaOpenGeneration());
@@ -178,18 +184,14 @@ class PlayerPlaybackController extends ChangeNotifier {
   void cycleSubtitleTrack() {
     if (_isDisposed || _subtitleTracks.isEmpty) return;
     final currentIndex = _subtitleTracks.indexOf(_selectedSubtitleTrack);
-    final nextIndex = currentIndex < 0
-        ? 0
-        : (currentIndex + 1) % _subtitleTracks.length;
+    final nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % _subtitleTracks.length;
     unawaited(setSubtitleTrack(_subtitleTracks[nextIndex]));
   }
 
   void cycleAudioTrack() {
     if (_isDisposed || _audioTracks.isEmpty) return;
     final currentIndex = _audioTracks.indexOf(_selectedAudioTrack);
-    final nextIndex = currentIndex < 0
-        ? 0
-        : (currentIndex + 1) % _audioTracks.length;
+    final nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % _audioTracks.length;
     unawaited(setAudioTrack(_audioTracks[nextIndex]));
   }
 
@@ -208,9 +210,7 @@ class PlayerPlaybackController extends ChangeNotifier {
       _lastVolumeBeforeMute = currentVolume;
       player.setVolume(0);
     } else {
-      player.setVolume(
-        _lastVolumeBeforeMute <= 0 ? 100 : _lastVolumeBeforeMute,
-      );
+      player.setVolume(_lastVolumeBeforeMute <= 0 ? 100 : _lastVolumeBeforeMute);
     }
     onPlaybackActivity?.call();
   }
@@ -231,14 +231,8 @@ class PlayerPlaybackController extends ChangeNotifier {
         if (_isDisposed) return;
         _audioTracks = _normalizeAudioTracks(tracks.audio);
         _subtitleTracks = _normalizeSubtitleTracks(tracks.subtitle);
-        _selectedAudioTrack = _resolveDisplayedAudioTrack(
-          _selectedAudioTrack,
-          _audioTracks,
-        );
-        _selectedSubtitleTrack = _resolveDisplayedSubtitleTrack(
-          _selectedSubtitleTrack,
-          _subtitleTracks,
-        );
+        _selectedAudioTrack = _resolveDisplayedAudioTrack(_selectedAudioTrack, _audioTracks);
+        _selectedSubtitleTrack = _resolveDisplayedSubtitleTrack(_selectedSubtitleTrack, _subtitleTracks);
         notifyListeners();
         if (!_didAutoSelectSubtitle) _autoSelectSubtitle();
       }),
@@ -274,10 +268,7 @@ class PlayerPlaybackController extends ChangeNotifier {
   Future<void> _openMedia(int generation) async {
     await _session.refreshCurrentItem();
     if (!_canUsePlayer(generation)) return;
-    final resumePosition = PlaybackResumePolicy.positionFor(
-      currentItem,
-      hasRestoredPosition: _hasRestoredPosition,
-    );
+    final resumePosition = PlaybackResumePolicy.positionFor(currentItem, hasRestoredPosition: _hasRestoredPosition);
 
     debugPrint('正在播放直链: ${LibmpvLogBuffer.sanitize(_session.currentUrl)}');
     await _applyPlayerSettings(generation);
@@ -319,8 +310,7 @@ class PlayerPlaybackController extends ChangeNotifier {
       'cache-secs': _settings.playbackReadaheadSeconds.toString(),
       'demuxer-readahead-secs': _settings.playbackReadaheadSeconds.toString(),
       'demuxer-max-bytes': _settings.playbackCacheMaxBytes.toString(),
-      'demuxer-max-back-bytes': (_settings.playbackCacheMaxBytes ~/ 4)
-          .toString(),
+      'demuxer-max-back-bytes': (_settings.playbackCacheMaxBytes ~/ 4).toString(),
       'hwdec': _settings.enableHardwareAcceleration ? 'auto' : 'no',
       'slang': _settings.normalizedSubtitleLanguagePriority,
       'vo-profile': 'high-quality',
@@ -339,11 +329,7 @@ class PlayerPlaybackController extends ChangeNotifier {
     if (!_canUsePlayer(generation) || player.platform is! NativePlayer) return;
     final platform = player.platform as NativePlayer;
     final value = _overrideEmbeddedSubtitleStyle ? 'no' : 'yes';
-    final properties = <String, String>{
-      'sub-ass': value,
-      'sub-visibility': value,
-      'secondary-sub-visibility': value,
-    };
+    final properties = <String, String>{'sub-ass': value, 'sub-visibility': value, 'secondary-sub-visibility': value};
     for (final entry in properties.entries) {
       if (!_canUsePlayer(generation)) return;
       try {
@@ -354,10 +340,7 @@ class PlayerPlaybackController extends ChangeNotifier {
     }
   }
 
-  Future<void> _restoreProgressIfNeeded(
-    Duration? resumePosition,
-    int generation,
-  ) async {
+  Future<void> _restoreProgressIfNeeded(Duration? resumePosition, int generation) async {
     if (_hasRestoredPosition || resumePosition == null) return;
     if (!_canUsePlayer(generation)) return;
     _hasRestoredPosition = true;
@@ -366,8 +349,7 @@ class PlayerPlaybackController extends ChangeNotifier {
       Future<void>.delayed(const Duration(milliseconds: 500), () async {
         if (!_canUsePlayer(generation)) return;
         final currentPosition = player.state.position;
-        if (currentPosition.inMilliseconds <
-            resumePosition.inMilliseconds - 2000) {
+        if (currentPosition.inMilliseconds < resumePosition.inMilliseconds - 2000) {
           await player.seek(resumePosition);
         }
       }),
@@ -391,26 +373,16 @@ class PlayerPlaybackController extends ChangeNotifier {
   void _startProgressSaveTimer() {
     if (_isDisposed) return;
     _progressSaveTimer?.cancel();
-    _progressSaveTimer = Timer.periodic(
-      _progressSaveInterval,
-      (_) => unawaited(_saveProgress()),
-    );
+    _progressSaveTimer = Timer.periodic(_progressSaveInterval, (_) => unawaited(_saveProgress()));
   }
 
-  Future<void> _saveProgress({
-    bool force = false,
-    bool allowDisposed = false,
-  }) async {
+  Future<void> _saveProgress({bool force = false, bool allowDisposed = false}) async {
     if (_isDisposed && !allowDisposed) return;
     final positionMs = player.state.position.inMilliseconds;
     final durationMs = player.state.duration.inMilliseconds;
     if (positionMs <= 0 && durationMs <= 0) return;
     try {
-      await _session.saveProgress(
-        positionMs: positionMs,
-        durationMs: durationMs,
-        force: force,
-      );
+      await _session.saveProgress(positionMs: positionMs, durationMs: durationMs, force: force);
     } catch (error) {
       debugPrint('保存播放进度失败: $error');
     }
@@ -453,21 +425,12 @@ class PlayerPlaybackController extends ChangeNotifier {
     return result;
   }
 
-  AudioTrack _resolveDisplayedAudioTrack(
-    AudioTrack selectedTrack,
-    List<AudioTrack> tracks,
-  ) {
+  AudioTrack _resolveDisplayedAudioTrack(AudioTrack selectedTrack, List<AudioTrack> tracks) {
     if (tracks.isEmpty || tracks.contains(selectedTrack)) return selectedTrack;
-    return tracks.firstWhere(
-      (track) => track.isDefault == true,
-      orElse: () => tracks.first,
-    );
+    return tracks.firstWhere((track) => track.isDefault == true, orElse: () => tracks.first);
   }
 
-  SubtitleTrack _resolveDisplayedSubtitleTrack(
-    SubtitleTrack selectedTrack,
-    List<SubtitleTrack> tracks,
-  ) {
+  SubtitleTrack _resolveDisplayedSubtitleTrack(SubtitleTrack selectedTrack, List<SubtitleTrack> tracks) {
     if (tracks.contains(selectedTrack)) return selectedTrack;
     return tracks.firstWhere(
       (track) => !_isSubtitleTrackOff(track) && track.isDefault == true,
@@ -476,9 +439,7 @@ class PlayerPlaybackController extends ChangeNotifier {
   }
 
   void _autoSelectSubtitle() {
-    final availableTracks = _subtitleTracks
-        .where((track) => !_isSubtitleTrackOff(track))
-        .toList();
+    final availableTracks = _subtitleTracks.where((track) => !_isSubtitleTrackOff(track)).toList();
     if (availableTracks.isEmpty) return;
 
     final preferences = _settings.normalizedSubtitleLanguagePriority
@@ -496,22 +457,10 @@ class PlayerPlaybackController extends ChangeNotifier {
   }
 
   bool _trackMatchesLanguage(SubtitleTrack track, String preference) {
-    final text = [
-      track.language,
-      track.title,
-    ].whereType<String>().join(' ').toLowerCase();
+    final text = [track.language, track.title].whereType<String>().join(' ').toLowerCase();
     if (text.contains(preference)) return true;
     if (_isChineseLanguage(preference)) {
-      return const [
-        'zh',
-        'chi',
-        'zho',
-        'chs',
-        'cht',
-        '中文',
-        '简',
-        '繁',
-      ].any(text.contains);
+      return const ['zh', 'chi', 'zho', 'chs', 'cht', '中文', '简', '繁'].any(text.contains);
     }
     if (preference == 'ja' || preference == 'jpn') {
       return const ['ja', 'jpn', 'japanese', '日语', '日文'].any(text.contains);
@@ -523,20 +472,19 @@ class PlayerPlaybackController extends ChangeNotifier {
   }
 
   bool _isChineseLanguage(String value) =>
-      const ['zh', 'chi', 'zho', 'chs', 'cht'].contains(value) ||
-      value.startsWith('zh-');
+      const ['zh', 'chi', 'zho', 'chs', 'cht'].contains(value) || value.startsWith('zh-');
 
-  bool _isSubtitleTrackAuto(SubtitleTrack track) =>
-      track.id == 'auto' && !track.uri && !track.data;
-  bool _isSubtitleTrackOff(SubtitleTrack track) =>
-      track.id == 'no' && !track.uri && !track.data;
+  bool _isSubtitleTrackAuto(SubtitleTrack track) => track.id == 'auto' && !track.uri && !track.data;
+
+  bool _isSubtitleTrackOff(SubtitleTrack track) => track.id == 'no' && !track.uri && !track.data;
+
   bool _isAudioTrackAuto(AudioTrack track) => track.id == 'auto' && !track.uri;
+
   bool _isAudioTrackOff(AudioTrack track) => track.id == 'no' && !track.uri;
 
   int _nextMediaOpenGeneration() => ++_mediaOpenGeneration;
-  bool _canUsePlayer([int? generation]) =>
-      !_isDisposed &&
-      (generation == null || generation == _mediaOpenGeneration);
+
+  bool _canUsePlayer([int? generation]) => !_isDisposed && (generation == null || generation == _mediaOpenGeneration);
 
   void _dumpLibmpvLogs() {
     final entries = _libmpvLogs.snapshot();

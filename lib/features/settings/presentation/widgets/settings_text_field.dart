@@ -53,24 +53,14 @@ class SettingsTextField extends StatelessWidget {
                   obscureText: obscureText,
                   keyboardType: keyboardType,
                   onFocusLost: onFocusLost,
-                  textAlign: suffixText == null
-                      ? TextAlign.start
-                      : TextAlign.end,
+                  textAlign: suffixText == null ? TextAlign.start : TextAlign.end,
                 ),
               ),
               if (suffixText != null) ...[
                 const SizedBox(width: AppControlMetrics.iconLabelGap),
-                Text(
-                  suffixText!,
-                  style: AppTypography.formSuffix.copyWith(
-                    color: AppColors.textSecondary(context),
-                  ),
-                ),
+                Text(suffixText!, style: AppTypography.formSuffix.copyWith(color: AppColors.textSecondary(context))),
               ],
-              if (trailing != null) ...[
-                const SizedBox(width: AppSpacing.xs),
-                trailing!,
-              ],
+              if (trailing != null) ...[const SizedBox(width: AppSpacing.xs), trailing!],
             ],
           ),
         ),

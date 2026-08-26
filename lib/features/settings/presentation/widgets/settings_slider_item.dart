@@ -56,9 +56,7 @@ class SettingsSliderItem extends StatelessWidget {
             child: Text(
               displayValue,
               textAlign: TextAlign.end,
-              style: AppTypography.formValueEmphasis.copyWith(
-                color: AppColors.textPrimary(context),
-              ),
+              style: AppTypography.formValueEmphasis.copyWith(color: AppColors.textPrimary(context)),
             ),
           ),
         ],

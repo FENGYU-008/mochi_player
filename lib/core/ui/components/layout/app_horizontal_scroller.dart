@@ -4,8 +4,7 @@ import 'package:mochi_player/core/ui/components/basic/app_clickable_area.dart';
 import 'package:mochi_player/core/ui/components/layout/app_glass_surface.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 
-typedef AppHorizontalScrollContentBuilder =
-    Widget Function(BuildContext context, ScrollController controller);
+typedef AppHorizontalScrollContentBuilder = Widget Function(BuildContext context, ScrollController controller);
 
 /// Adds desktop previous/next controls to horizontally scrollable content.
 ///
@@ -71,10 +70,8 @@ class _AppHorizontalScrollerState extends State<AppHorizontalScroller> {
     if (!mounted || !widget.controller.hasClients) return;
     final position = widget.controller.position;
     final canScrollBack = position.pixels > _edgeTolerance;
-    final canScrollForward =
-        position.pixels < position.maxScrollExtent - _edgeTolerance;
-    if (_canScrollBack == canScrollBack &&
-        _canScrollForward == canScrollForward) {
+    final canScrollForward = position.pixels < position.maxScrollExtent - _edgeTolerance;
+    if (_canScrollBack == canScrollBack && _canScrollForward == canScrollForward) {
       return;
     }
     setState(() {
@@ -92,15 +89,8 @@ class _AppHorizontalScrollerState extends State<AppHorizontalScroller> {
     if (!widget.controller.hasClients) return;
     final position = widget.controller.position;
     final distance = position.viewportDimension * _viewportScrollFraction;
-    final target = (position.pixels + direction * distance).clamp(
-      position.minScrollExtent,
-      position.maxScrollExtent,
-    );
-    await widget.controller.animateTo(
-      target,
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeOutCubic,
-    );
+    final target = (position.pixels + direction * distance).clamp(position.minScrollExtent, position.maxScrollExtent);
+    await widget.controller.animateTo(target, duration: const Duration(milliseconds: 280), curve: Curves.easeOutCubic);
   }
 
   @override
@@ -145,11 +135,7 @@ class _AppHorizontalScrollerState extends State<AppHorizontalScroller> {
 }
 
 class _ScrollControl extends StatelessWidget {
-  const _ScrollControl({
-    required this.icon,
-    required this.visible,
-    required this.onPressed,
-  });
+  const _ScrollControl({required this.icon, required this.visible, required this.onPressed});
 
   final IconData icon;
   final bool visible;
@@ -172,13 +158,9 @@ class _ScrollControl extends StatelessWidget {
             onTap: visible ? onPressed : null,
             width: _controlSize,
             height: _controlSize,
-            borderRadius: const BorderRadius.all(
-              Radius.circular(AppRadii.full),
-            ),
+            borderRadius: const BorderRadius.all(Radius.circular(AppRadii.full)),
             hoverColor: Colors.white.withAlpha(26),
-            child: Center(
-              child: Icon(icon, color: Colors.white.withAlpha(230), size: 18),
-            ),
+            child: Center(child: Icon(icon, color: Colors.white.withAlpha(230), size: 18)),
           ),
         ),
       ),

@@ -27,10 +27,7 @@ abstract final class MediaFormat {
 
   static String compactDuration(Duration duration) {
     if (duration.inHours > 0) {
-      final minutes = duration.inMinutes
-          .remainder(60)
-          .toString()
-          .padLeft(2, '0');
+      final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
       return '${duration.inHours}h ${minutes}m';
     }
     return '${duration.inMinutes}m';
@@ -59,11 +56,7 @@ abstract final class MediaFilePresentation {
     return parts.isEmpty ? file.fileName : parts.join(' • ');
   }
 
-  static String versionSubtitle(
-    MediaFile file, {
-    bool includeContainer = true,
-    bool includeResumePosition = false,
-  }) {
+  static String versionSubtitle(MediaFile file, {bool includeContainer = true, bool includeResumePosition = false}) {
     final parts = <String>[];
     final codec = file.audioCodec;
     if (codec != null && codec.isNotEmpty) {
@@ -78,13 +71,8 @@ abstract final class MediaFilePresentation {
       parts.add(container.toUpperCase());
     }
     if (file.size > 0) parts.add(MediaFormat.fileSize(file.size));
-    if (includeResumePosition &&
-        file.position > 0 &&
-        file.duration > 0 &&
-        file.progress < 0.95) {
-      parts.add(
-        '从 ${MediaFormat.clockDuration(Duration(milliseconds: file.position))} 继续',
-      );
+    if (includeResumePosition && file.position > 0 && file.duration > 0 && file.progress < 0.95) {
+      parts.add('从 ${MediaFormat.clockDuration(Duration(milliseconds: file.position))} 继续');
     }
     return parts.isEmpty ? file.fileName : parts.join(' • ');
   }
@@ -104,15 +92,10 @@ abstract final class MediaFilePresentation {
       _formattedHdr(file.hdrFormat),
     ].whereType<String>().where((part) => part.isNotEmpty);
     for (final part in technicalParts) {
-      title = title.replaceAll(
-        RegExp(RegExp.escape(part), caseSensitive: false),
-        ' ',
-      );
+      title = title.replaceAll(RegExp(RegExp.escape(part), caseSensitive: false), ' ');
     }
     title = title.replaceAll(RegExp(r'\s+'), ' ').trim();
-    return title.isEmpty
-        ? (file.quality.isNotEmpty ? file.quality : file.fileName)
-        : title;
+    return title.isEmpty ? (file.quality.isNotEmpty ? file.quality : file.fileName) : title;
   }
 
   /// Technical details displayed below a playable version title.

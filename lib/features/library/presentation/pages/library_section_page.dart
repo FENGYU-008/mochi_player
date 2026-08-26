@@ -46,10 +46,7 @@ class _LibrarySectionPageState extends State<LibrarySectionPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: _SectionPageContent(
-              section: widget.section,
-              scrollController: _scrollController,
-            ),
+            child: _SectionPageContent(section: widget.section, scrollController: _scrollController),
           ),
           Positioned(
             top: 0,
@@ -68,10 +65,7 @@ class _SectionPageContent extends StatelessWidget {
   final LibrarySection section;
   final ScrollController scrollController;
 
-  const _SectionPageContent({
-    required this.section,
-    required this.scrollController,
-  });
+  const _SectionPageContent({required this.section, required this.scrollController});
 
   @override
   Widget build(BuildContext context) {
@@ -87,11 +81,7 @@ class _SectionPageContent extends StatelessWidget {
         }
 
         if (snapshot.error != null) {
-          return AppResult(
-            status: AppResultStatus.error,
-            title: '内容加载失败',
-            subtitle: snapshot.error,
-          );
+          return AppResult(status: AppResultStatus.error, title: '内容加载失败', subtitle: snapshot.error);
         }
 
         final provider = context.read<MediaLibraryProvider>();
@@ -104,14 +94,8 @@ class _SectionPageContent extends StatelessWidget {
             provider.recentlyAddedContent,
             (item) => LibraryItemPosterCard(item: item),
           ),
-          LibrarySection.movies => _buildSection(
-            provider.movies,
-            (item) => LibraryItemPosterCard(item: item),
-          ),
-          LibrarySection.tvShows => _buildSection(
-            provider.tvShows,
-            (item) => LibraryItemPosterCard(item: item),
-          ),
+          LibrarySection.movies => _buildSection(provider.movies, (item) => LibraryItemPosterCard(item: item)),
+          LibrarySection.tvShows => _buildSection(provider.tvShows, (item) => LibraryItemPosterCard(item: item)),
         };
       },
     );
@@ -120,32 +104,18 @@ class _SectionPageContent extends StatelessWidget {
   Widget _buildSection<T>(List<T> items, Widget Function(T item) itemBuilder) {
     if (items.isEmpty) {
       final title = _sectionTitle(section);
-      return AppResult(
-        status: AppResultStatus.empty,
-        title: '$title为空',
-        subtitle: '请先扫描媒体库以发现资源',
-      );
+      return AppResult(status: AppResultStatus.empty, title: '$title为空', subtitle: '请先扫描媒体库以发现资源');
     }
 
     return _buildGrid(items, itemBuilder);
   }
 
-  int _contentRevisionFor(
-    MediaLibraryProvider provider,
-    LibrarySection section,
-  ) {
+  int _contentRevisionFor(MediaLibraryProvider provider, LibrarySection section) {
     switch (section) {
       case LibrarySection.continueWatching:
-        return Object.hash(
-          provider.mediaCatalogRevision,
-          provider.metadataRevision,
-          provider.watchProgressRevision,
-        );
+        return Object.hash(provider.mediaCatalogRevision, provider.metadataRevision, provider.watchProgressRevision);
       case LibrarySection.recentlyAdded:
-        return Object.hash(
-          provider.mediaCatalogRevision,
-          provider.metadataRevision,
-        );
+        return Object.hash(provider.mediaCatalogRevision, provider.metadataRevision);
       case LibrarySection.movies:
       case LibrarySection.tvShows:
         return provider.metadataRevision;
@@ -164,12 +134,7 @@ class _SectionPageContent extends StatelessWidget {
         return GridView.builder(
           key: PageStorageKey<String>('library-section-${section.name}'),
           controller: scrollController,
-          padding: EdgeInsets.fromLTRB(
-            40,
-            AppHeader.height + 40,
-            40,
-            isBackdrop ? 44 : 40,
-          ),
+          padding: EdgeInsets.fromLTRB(40, AppHeader.height + 40, 40, isBackdrop ? 44 : 40),
           itemCount: items.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
@@ -210,11 +175,7 @@ class _SectionSnapshot {
   final String? error;
   final int contentRevision;
 
-  const _SectionSnapshot({
-    required this.showInitialLoading,
-    required this.error,
-    required this.contentRevision,
-  });
+  const _SectionSnapshot({required this.showInitialLoading, required this.error, required this.contentRevision});
 
   @override
   bool operator ==(Object other) {

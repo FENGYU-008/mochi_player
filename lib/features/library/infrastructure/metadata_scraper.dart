@@ -53,10 +53,7 @@ class MetadataScraper {
 
   /// 批量刮削文件
   /// 自动区分电影和剧集，处理并发和去重
-  Future<ScrapeResult> scrapeBatch(
-    List<MediaFileEntity> allFiles, {
-    ScrapeProgressCallback? onProgress,
-  }) async {
+  Future<ScrapeResult> scrapeBatch(List<MediaFileEntity> allFiles, {ScrapeProgressCallback? onProgress}) async {
     final result = ScrapeResult();
     if (!_tmdb.isConfigured) {
       _logger.w('⚠️ 未配置 TMDB API Key，跳过元数据刮削');
@@ -87,9 +84,7 @@ class MetadataScraper {
     final tvGroups = <String, _TVShowScrapeGroup>{};
     for (final file in tvFiles) {
       final key = _buildTVGroupKey(file);
-      tvGroups
-          .putIfAbsent(key, () => _TVShowScrapeGroup(file.parsedTitle))
-          .add(file);
+      tvGroups.putIfAbsent(key, () => _TVShowScrapeGroup(file.parsedTitle)).add(file);
     }
 
     final totalCount = movieFiles.length + tvFiles.length;
@@ -130,18 +125,13 @@ class MetadataScraper {
       );
     }, 5);
 
-    _logger.i(
-      '✅ 批量刮削完成: 新增电影 ${result.newMovies.length} 部, 新增剧集 ${result.newTVShows.length} 部',
-    );
+    _logger.i('✅ 批量刮削完成: 新增电影 ${result.newMovies.length} 部, 新增剧集 ${result.newTVShows.length} 部');
     return result;
   }
 
   // ===== 电影处理 =====
 
-  Future<MovieMetadataEntity?> _scrapeMovieSingle(
-    MediaFileEntity file,
-    ScrapeResult result,
-  ) async {
+  Future<MovieMetadataEntity?> _scrapeMovieSingle(MediaFileEntity file, ScrapeResult result) async {
     try {
       MovieMetadataEntity? metadata;
 
@@ -227,10 +217,7 @@ class MetadataScraper {
 
       // 4. 处理季和集
       final tvId = int.parse(metadata.tmdbId);
-      final seasonNumbers = files
-          .map((f) => f.parsedSeason)
-          .whereType<int>()
-          .toSet();
+      final seasonNumbers = files.map((f) => f.parsedSeason).whereType<int>().toSet();
 
       for (final seasonNum in seasonNumbers) {
         await _scrapeSeasonAndEpisodes(
@@ -264,19 +251,13 @@ class MetadataScraper {
     List<MediaFileEntity> seasonFiles,
   ) async {
     final seasonKey = '${showTmdbId}_s$seasonNum';
-    final season = await _tmdb.fetchSeason(
-      tvId,
-      seasonNum,
-      showTmdbId: showTmdbId,
-    );
+    final season = await _tmdb.fetchSeason(tvId, seasonNum, showTmdbId: showTmdbId);
     if (season == null) return;
 
     if (await _db.getSeasonByKey(seasonKey) == null) {
       await _db.saveSeasonMetadata(season.season);
     }
-    final episodesByNumber = {
-      for (final episode in season.episodes) episode.episodeNumber: episode,
-    };
+    final episodesByNumber = {for (final episode in season.episodes) episode.episodeNumber: episode};
 
     for (final file in seasonFiles) {
       final epNum = file.parsedEpisode;
@@ -346,10 +327,7 @@ class MetadataScraper {
   }
 
   String _normalizeGroupKey(String title) {
-    final normalized = title.toLowerCase().replaceAll(
-      RegExp(r'[\s._\-:：，。/\\\(\)\[\]【】]+'),
-      '',
-    );
+    final normalized = title.toLowerCase().replaceAll(RegExp(r'[\s._\-:：，。/\\\(\)\[\]【】]+'), '');
     return normalized.isEmpty ? title.trim().toLowerCase() : normalized;
   }
 
@@ -380,15 +358,11 @@ class MetadataScraper {
     _addTitleVariant(variants, withoutBrackets);
 
     // 中文
-    final zh = RegExp(
-      r'[\u4e00-\u9fff\u3400-\u4dbf：，。！？]+',
-    ).allMatches(title).map((m) => m.group(0)!).join(' ').trim();
+    final zh = RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf：，。！？]+').allMatches(title).map((m) => m.group(0)!).join(' ').trim();
     _addTitleVariant(variants, zh);
 
     // 英文
-    final en = RegExp(
-      r"[A-Za-z][A-Za-z\s\-']+[A-Za-z]",
-    ).allMatches(title).map((m) => m.group(0)!).join(' ').trim();
+    final en = RegExp(r"[A-Za-z][A-Za-z\s\-']+[A-Za-z]").allMatches(title).map((m) => m.group(0)!).join(' ').trim();
     _addTitleVariant(variants, en);
 
     return variants;
@@ -403,16 +377,10 @@ class MetadataScraper {
     if (!exists) variants.add(normalized);
   }
 
-  Future<void> _runWithConcurrency<T>(
-    List<T> tasks,
-    Future<void> Function(T) action,
-    int maxConcurrent,
-  ) async {
+  Future<void> _runWithConcurrency<T>(List<T> tasks, Future<void> Function(T) action, int maxConcurrent) async {
     if (tasks.isEmpty) return;
 
-    final workerCount = tasks.length < maxConcurrent
-        ? tasks.length
-        : maxConcurrent;
+    final workerCount = tasks.length < maxConcurrent ? tasks.length : maxConcurrent;
     var nextIndex = 0;
 
     Future<void> runWorker() async {
@@ -445,8 +413,7 @@ class _TVShowScrapeGroup {
     final currentText = current.trim();
     if (candidateText.isEmpty) return false;
     if (currentText.isEmpty) return true;
-    if (int.tryParse(currentText) != null &&
-        int.tryParse(candidateText) == null) {
+    if (int.tryParse(currentText) != null && int.tryParse(candidateText) == null) {
       return true;
     }
     return candidateText.length > currentText.length;

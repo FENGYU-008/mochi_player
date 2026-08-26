@@ -5,8 +5,7 @@ import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
 
 /// Loads and exposes the non-persistent TMDB collections shown on the home page.
 class TrendingMediaProvider extends ChangeNotifier {
-  TrendingMediaProvider({TmdbService? tmdbService})
-    : _tmdbService = tmdbService ?? TmdbService();
+  TrendingMediaProvider({TmdbService? tmdbService}) : _tmdbService = tmdbService ?? TmdbService();
 
   final TmdbService _tmdbService;
   final _logger = Logger(printer: PrettyPrinter(methodCount: 0));
@@ -17,11 +16,14 @@ class TrendingMediaProvider extends ChangeNotifier {
   bool _isLoading = false;
 
   List<TrendingItem> get movies => _movies;
+
   List<TrendingItem> get tvShows => _tvShows;
+
   List<TrendingItem> get topRated => _topRated;
+
   bool get isLoading => _isLoading;
-  bool get hasContent =>
-      _movies.isNotEmpty || _tvShows.isNotEmpty || _topRated.isNotEmpty;
+
+  bool get hasContent => _movies.isNotEmpty || _tvShows.isNotEmpty || _topRated.isNotEmpty;
 
   Future<void> fetch() async {
     if (_isLoading) return;

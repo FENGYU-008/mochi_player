@@ -6,25 +6,15 @@ import 'package:mochi_player/features/library/application/media_card_view_data.d
 /// Matching stays independent from widgets so every library page uses the
 /// same normalization and ordering rules.
 abstract final class LibrarySearchMatcher {
-  static List<T> libraryItems<T extends LibraryItem>(
-    Iterable<T> items,
-    String query,
-  ) {
+  static List<T> libraryItems<T extends LibraryItem>(Iterable<T> items, String query) {
     return _rank(items, query, _libraryItemScore);
   }
 
-  static List<MediaCardViewData> mediaCards(
-    Iterable<MediaCardViewData> items,
-    String query,
-  ) {
+  static List<MediaCardViewData> mediaCards(Iterable<MediaCardViewData> items, String query) {
     return _rank(items, query, _mediaCardScore);
   }
 
-  static List<T> _rank<T>(
-    Iterable<T> items,
-    String query,
-    int Function(T item, String normalizedQuery) score,
-  ) {
+  static List<T> _rank<T>(Iterable<T> items, String query, int Function(T item, String normalizedQuery) score) {
     final normalizedQuery = _normalize(query);
     final values = items.toList();
     if (normalizedQuery.isEmpty) return values;
@@ -39,25 +29,18 @@ abstract final class LibrarySearchMatcher {
     }
     matches.sort((a, b) {
       final scoreOrder = b.score.compareTo(a.score);
-      return scoreOrder != 0
-          ? scoreOrder
-          : a.originalIndex.compareTo(b.originalIndex);
+      return scoreOrder != 0 ? scoreOrder : a.originalIndex.compareTo(b.originalIndex);
     });
     return matches.map((match) => match.value).toList();
   }
 
   static int _libraryItemScore(LibraryItem item, String normalizedQuery) {
     final score = _textScore(item.title, normalizedQuery, exact: 120);
-    return _max(
-      score,
-      _textScore(item.originalTitle, normalizedQuery, exact: 110),
-    );
+    return _max(score, _textScore(item.originalTitle, normalizedQuery, exact: 110));
   }
 
   static int _mediaCardScore(MediaCardViewData item, String normalizedQuery) {
-    final score = item.libraryItem == null
-        ? 0
-        : _libraryItemScore(item.libraryItem!, normalizedQuery);
+    final score = item.libraryItem == null ? 0 : _libraryItemScore(item.libraryItem!, normalizedQuery);
     return _max(score, _textScore(item.title, normalizedQuery, exact: 120));
   }
 
@@ -71,10 +54,8 @@ abstract final class LibrarySearchMatcher {
     return 0;
   }
 
-  static String _normalize(String value) => value
-      .toLowerCase()
-      .replaceAll(RegExp(r'[\s\u3000._\-:：，。/\\\(\)\[\]【】]+'), '')
-      .trim();
+  static String _normalize(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[\s\u3000._\-:：，。/\\\(\)\[\]【】]+'), '').trim();
 
   static int _max(int a, int b) => a > b ? a : b;
 }

@@ -30,12 +30,7 @@ class MediaPosterGrid<T> extends StatelessWidget {
         return GridView.builder(
           key: PageStorageKey<String>(storageKey),
           controller: controller,
-          padding: EdgeInsets.fromLTRB(
-            AppSpacing.page,
-            topPadding,
-            AppSpacing.page,
-            AppSpacing.page,
-          ),
+          padding: EdgeInsets.fromLTRB(AppSpacing.page, topPadding, AppSpacing.page, AppSpacing.page),
           itemCount: items.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,

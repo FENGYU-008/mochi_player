@@ -22,15 +22,12 @@ extension FileBrowserEntryDisplay on FileBrowserEntry {
 
   String get browserSizeLabel => isDirectory ? '' : MediaFormat.fileSize(size);
 
-  String get browserModifiedAtLabel => modifiedAt == null
-      ? '—'
-      : DateFormat('yyyy-MM-dd HH:mm').format(modifiedAt!);
+  String get browserModifiedAtLabel => modifiedAt == null ? '—' : DateFormat('yyyy-MM-dd HH:mm').format(modifiedAt!);
 
   Color browserIconColor(BuildContext context) {
     return switch (kind) {
       MediaFileKind.video => Theme.of(context).colorScheme.primary,
-      MediaFileKind.directory ||
-      MediaFileKind.other => AppColors.textSecondary(context),
+      MediaFileKind.directory || MediaFileKind.other => AppColors.textSecondary(context),
     };
   }
 }

@@ -55,13 +55,7 @@ class HeroSection extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                     height: 1.1,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(0, 4),
-                        blurRadius: 20,
-                        color: Colors.black54,
-                      ),
-                    ],
+                    shadows: [Shadow(offset: Offset(0, 4), blurRadius: 20, color: Colors.black54)],
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -78,9 +72,7 @@ class HeroSection extends StatelessWidget {
                         fontSize: 15,
                         color: Colors.white.withAlpha(210),
                         height: 1.5,
-                        shadows: const [
-                          Shadow(blurRadius: 10, color: Colors.black54),
-                        ],
+                        shadows: const [Shadow(blurRadius: 10, color: Colors.black54)],
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -103,9 +95,7 @@ class HeroSection extends StatelessWidget {
     if (imageUrl == null || imageUrl.isEmpty) {
       return Container(
         color: const Color(0xFF1C1C1E),
-        child: const Center(
-          child: Icon(Icons.movie, color: Colors.white24, size: 120),
-        ),
+        child: const Center(child: Icon(Icons.movie, color: Colors.white24, size: 120)),
       );
     }
 
@@ -115,8 +105,7 @@ class HeroSection extends StatelessWidget {
       fit: BoxFit.cover,
       alignment: Alignment.topCenter,
       placeholder: (context, url) => Container(color: const Color(0xFF1C1C1E)),
-      errorWidget: (context, url, error) =>
-          Container(color: const Color(0xFF1C1C1E)),
+      errorWidget: (context, url, error) => Container(color: const Color(0xFF1C1C1E)),
     );
   }
 
@@ -152,15 +141,10 @@ class HeroSection extends StatelessWidget {
         if (rating > 0) MediaRatingTag(rating: rating),
 
         // 年份
-        if (year != null)
-          AppTag(text: year.toString(), appearance: AppAppearance.overlay),
+        if (year != null) AppTag(text: year.toString(), appearance: AppAppearance.overlay),
 
         // 类型标签
-        ...genres
-            .take(3)
-            .map(
-              (genre) => AppTag(text: genre, appearance: AppAppearance.overlay),
-            ),
+        ...genres.take(3).map((genre) => AppTag(text: genre, appearance: AppAppearance.overlay)),
       ],
     );
   }

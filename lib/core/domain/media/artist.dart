@@ -5,10 +5,5 @@ class Artist {
   final String? character;
   final String? profileUrl;
 
-  const Artist({
-    this.tmdbId,
-    required this.name,
-    this.character,
-    this.profileUrl,
-  });
+  const Artist({this.tmdbId, required this.name, this.character, this.profileUrl});
 }

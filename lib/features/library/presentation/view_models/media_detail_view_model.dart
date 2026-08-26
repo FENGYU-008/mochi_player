@@ -6,6 +6,7 @@ class MediaDetailViewModel {
   MediaDetailViewModel(this._item);
 
   bool get isMovie => _item is Movie;
+
   bool get isTVShow => _item is TVShow;
 
   String get tmdbId => _item.tmdbId;
@@ -49,6 +50,7 @@ class MediaDetailViewModel {
   }
 
   Movie? get movie => _item is Movie ? _item : null;
+
   TVShow? get tvShow => _item is TVShow ? _item : null;
 
   /// 仅 TVShow 有效

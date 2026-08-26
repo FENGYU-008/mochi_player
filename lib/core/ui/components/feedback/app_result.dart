@@ -13,14 +13,7 @@ class AppResult extends StatelessWidget {
   final Widget? icon;
   final Widget? extra;
 
-  const AppResult({
-    super.key,
-    required this.status,
-    required this.title,
-    this.subtitle,
-    this.icon,
-    this.extra,
-  });
+  const AppResult({super.key, required this.status, required this.title, this.subtitle, this.icon, this.extra});
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +52,7 @@ class AppResult extends StatelessWidget {
                   ),
                 ),
               ],
-              if (extra != null) ...[
-                const SizedBox(height: AppSpacing.xl),
-                extra!,
-              ],
+              if (extra != null) ...[const SizedBox(height: AppSpacing.xl), extra!],
             ],
           ),
         ),
@@ -98,23 +88,11 @@ class _ResultAppearance {
 
   const _ResultAppearance({required this.icon, required this.color});
 
-  factory _ResultAppearance.resolve(
-    BuildContext context,
-    AppResultStatus status,
-  ) {
+  factory _ResultAppearance.resolve(BuildContext context, AppResultStatus status) {
     return switch (status) {
-      AppResultStatus.empty => _ResultAppearance(
-        icon: Icons.inbox_outlined,
-        color: AppColors.textSecondary(context),
-      ),
-      AppResultStatus.info => _ResultAppearance(
-        icon: Icons.info_outline_rounded,
-        color: AppColors.primary(context),
-      ),
-      AppResultStatus.error => _ResultAppearance(
-        icon: Icons.close_rounded,
-        color: Theme.of(context).colorScheme.error,
-      ),
+      AppResultStatus.empty => _ResultAppearance(icon: Icons.inbox_outlined, color: AppColors.textSecondary(context)),
+      AppResultStatus.info => _ResultAppearance(icon: Icons.info_outline_rounded, color: AppColors.primary(context)),
+      AppResultStatus.error => _ResultAppearance(icon: Icons.close_rounded, color: Theme.of(context).colorScheme.error),
     };
   }
 }

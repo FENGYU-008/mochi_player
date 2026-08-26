@@ -9,14 +9,9 @@ class EpisodePlaybackTarget {
   final EpisodePlaybackReason reason;
   final DateTime? activityAt;
 
-  const EpisodePlaybackTarget({
-    required this.file,
-    required this.reason,
-    required this.activityAt,
-  });
+  const EpisodePlaybackTarget({required this.file, required this.reason, required this.activityAt});
 
-  bool get resumesCurrentEpisode =>
-      reason == EpisodePlaybackReason.resumeEpisode;
+  bool get resumesCurrentEpisode => reason == EpisodePlaybackReason.resumeEpisode;
 }
 
 /// Selects the episode a TV show should play according to watch progression.
@@ -26,31 +21,17 @@ class EpisodePlaybackTarget {
 class EpisodePlaybackTargetResolver {
   const EpisodePlaybackTargetResolver._();
 
-  static EpisodePlaybackTarget? resolveForShowPlayback(
-    Iterable<MediaFile> files,
-  ) => _resolve(files, allowReplay: true);
+  static EpisodePlaybackTarget? resolveForShowPlayback(Iterable<MediaFile> files) => _resolve(files, allowReplay: true);
 
-  static EpisodePlaybackTarget? resolveForContinueWatching(
-    Iterable<MediaFile> files,
-  ) => _resolve(files, allowReplay: false);
+  static EpisodePlaybackTarget? resolveForContinueWatching(Iterable<MediaFile> files) =>
+      _resolve(files, allowReplay: false);
 
-  static EpisodePlaybackTarget? _resolve(
-    Iterable<MediaFile> files, {
-    required bool allowReplay,
-  }) {
-    final episodes =
-        files.where((file) => file.mediaType == MediaType.episode).toList()
-          ..sort(_compareEpisodes);
+  static EpisodePlaybackTarget? _resolve(Iterable<MediaFile> files, {required bool allowReplay}) {
+    final episodes = files.where((file) => file.mediaType == MediaType.episode).toList()..sort(_compareEpisodes);
     if (episodes.isEmpty) return null;
 
     final watched =
-        episodes
-            .where(
-              (file) =>
-                  file.watchStatus != WatchStatus.notStarted &&
-                  file.lastWatchedAt != null,
-            )
-            .toList()
+        episodes.where((file) => file.watchStatus != WatchStatus.notStarted && file.lastWatchedAt != null).toList()
           ..sort((a, b) => b.lastWatchedAt!.compareTo(a.lastWatchedAt!));
 
     if (watched.isNotEmpty) {
@@ -66,8 +47,7 @@ class EpisodePlaybackTargetResolver {
       final latestIndex = episodes.indexOf(latest);
       for (var index = latestIndex + 1; index < episodes.length; index++) {
         final candidate = episodes[index];
-        if (_sameEpisode(candidate, latest) ||
-            candidate.watchStatus == WatchStatus.completed) {
+        if (_sameEpisode(candidate, latest) || candidate.watchStatus == WatchStatus.completed) {
           continue;
         }
         return EpisodePlaybackTarget(
@@ -95,14 +75,10 @@ class EpisodePlaybackTargetResolver {
   }
 
   static int _compareEpisodes(MediaFile a, MediaFile b) {
-    final season = (a.parsedSeason ?? 999999).compareTo(
-      b.parsedSeason ?? 999999,
-    );
+    final season = (a.parsedSeason ?? 999999).compareTo(b.parsedSeason ?? 999999);
     if (season != 0) return season;
 
-    final episode = (a.parsedEpisode ?? 999999).compareTo(
-      b.parsedEpisode ?? 999999,
-    );
+    final episode = (a.parsedEpisode ?? 999999).compareTo(b.parsedEpisode ?? 999999);
     if (episode != 0) return episode;
 
     return a.path.toLowerCase().compareTo(b.path.toLowerCase());

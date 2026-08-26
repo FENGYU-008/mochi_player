@@ -32,10 +32,7 @@ class WebDavMediaScanner {
       final fileName = file.name ?? '';
 
       // 解析文件名，提取所有信息
-      final parsed = FilenameParser.parse(
-        fileName: fileName,
-        filePath: filePath,
-      );
+      final parsed = FilenameParser.parse(fileName: fileName, filePath: filePath);
 
       final entity = MediaFileMetadataMapper.createEntity(
         path: filePath,
@@ -60,16 +57,11 @@ class WebDavMediaScanner {
       for (final file in files) {
         final name = file.name;
         if (name == null || name.isEmpty || name.startsWith('.')) continue;
-        if (file.isDir != true &&
-            MediaFileKindResolver.resolve(name) != MediaFileKind.video) {
+        if (file.isDir != true && MediaFileKindResolver.resolve(name) != MediaFileKind.video) {
           continue;
         }
 
-        final itemPath = _joinPath(
-          directoryPath,
-          name,
-          isDirectory: file.isDir == true,
-        );
+        final itemPath = _joinPath(directoryPath, name, isDirectory: file.isDir == true);
 
         if (file.isDir == true) {
           yield* _recursivelyListFiles(itemPath);
@@ -87,16 +79,10 @@ class WebDavMediaScanner {
     final trimmed = path.trim();
     if (trimmed.isEmpty || trimmed == '/') return '/';
     final withLeadingSlash = trimmed.startsWith('/') ? trimmed : '/$trimmed';
-    return withLeadingSlash.endsWith('/')
-        ? withLeadingSlash
-        : '$withLeadingSlash/';
+    return withLeadingSlash.endsWith('/') ? withLeadingSlash : '$withLeadingSlash/';
   }
 
-  String _joinPath(
-    String directoryPath,
-    String name, {
-    required bool isDirectory,
-  }) {
+  String _joinPath(String directoryPath, String name, {required bool isDirectory}) {
     final base = _normalizeDirectoryPath(directoryPath);
     final cleanName = name.replaceAll(RegExp(r'^/+|/+$'), '');
     final path = base == '/' ? '/$cleanName' : '$base$cleanName';

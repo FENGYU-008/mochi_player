@@ -20,24 +20,41 @@ class AppSettingsProvider extends ChangeNotifier {
   String? _error;
 
   AppSettings get settings => _settings;
+
   AppSettings? get appliedRuntimeSettings => _appliedRuntimeSettings;
+
   bool get isLoading => _isLoading;
+
   bool get isSaving => _isSaving;
+
   String? get error => _error;
 
   String get webDavUrl => _settings.webDavUrl;
+
   String get webDavUsername => _settings.webDavUsername;
+
   String get webDavPassword => _settings.webDavPassword;
+
   String get tmdbApiKey => _settings.tmdbApiKey;
+
   String get tmdbApiBaseUrl => _settings.tmdbApiBaseUrl;
+
   String get tmdbProxyUrl => _settings.tmdbProxyUrl;
+
   bool get tmdbProxyEnabled => _settings.tmdbProxyEnabled;
+
   int get playbackCacheSizeMb => _settings.playbackCacheSizeMb;
+
   int get playbackReadaheadSeconds => _settings.playbackReadaheadSeconds;
+
   bool get enableHardwareAcceleration => _settings.enableHardwareAcceleration;
+
   String get subtitleLanguagePriority => _settings.subtitleLanguagePriority;
+
   double get subtitleFontSize => _settings.subtitleFontSize;
+
   bool get hasWebDavConfig => _settings.hasWebDavConfig;
+
   bool get hasTmdbApiKey => _settings.hasTmdbApiKey;
 
   Future<void> load() async {
@@ -118,22 +135,11 @@ class AppSettingsProvider extends ChangeNotifier {
       proxyUrl: _settings.tmdbProxyUrl,
       proxyEnabled: _settings.tmdbProxyEnabled,
     );
-    TmdbImageCacheManager.configure(
-      proxyUrl: _settings.tmdbProxyUrl,
-      proxyEnabled: _settings.tmdbProxyEnabled,
-    );
+    TmdbImageCacheManager.configure(proxyUrl: _settings.tmdbProxyUrl, proxyEnabled: _settings.tmdbProxyEnabled);
 
     if (_settings.hasWebDavConfig) {
-      await WebDavService().init(
-        _settings.webDavUrl,
-        _settings.webDavUsername,
-        _settings.webDavPassword,
-      );
-      OpenListPlaybackService().configure(
-        _settings.webDavUrl,
-        _settings.webDavUsername,
-        _settings.webDavPassword,
-      );
+      await WebDavService().init(_settings.webDavUrl, _settings.webDavUsername, _settings.webDavPassword);
+      OpenListPlaybackService().configure(_settings.webDavUrl, _settings.webDavUsername, _settings.webDavPassword);
     } else {
       WebDavService().clear();
       OpenListPlaybackService().clear();

@@ -50,8 +50,7 @@ class _AppShellPageState extends State<AppShellPage> {
       body: Row(
         children: [
           Sidebar(
-            selectedDestination:
-                AppDestination.values[widget.navigationShell.currentIndex],
+            selectedDestination: AppDestination.values[widget.navigationShell.currentIndex],
             onDestinationSelected: _selectDestination,
           ),
           Expanded(
@@ -78,10 +77,7 @@ class _AppShellPageState extends State<AppShellPage> {
                           right: AppSpacing.page,
                           child: Align(
                             alignment: Alignment.topCenter,
-                            child: AppProgressNotice(
-                              message: message,
-                              progress: activity.progress,
-                            ),
+                            child: AppProgressNotice(message: message, progress: activity.progress),
                           ),
                         );
                       },
@@ -105,9 +101,7 @@ class _LibraryActivityState {
 
   @override
   bool operator ==(Object other) {
-    return other is _LibraryActivityState &&
-        other.message == message &&
-        other.progress == progress;
+    return other is _LibraryActivityState && other.message == message && other.progress == progress;
   }
 
   @override

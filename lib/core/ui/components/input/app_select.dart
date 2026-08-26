@@ -21,13 +21,7 @@ class AppSelect<T> extends StatelessWidget {
   final List<AppSelectOption<T>> options;
   final ValueChanged<T>? onChanged;
 
-  const AppSelect({
-    super.key,
-    required this.value,
-    required this.options,
-    this.onChanged,
-    this.placeholder = '选择',
-  });
+  const AppSelect({super.key, required this.value, required this.options, this.onChanged, this.placeholder = '选择'});
 
   @override
   Widget build(BuildContext context) {
@@ -37,9 +31,7 @@ class AppSelect<T> extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final menuWidth = constraints.hasBoundedWidth
-            ? constraints.maxWidth
-            : 160.0;
+        final menuWidth = constraints.hasBoundedWidth ? constraints.maxWidth : 160.0;
         return AnimatedOpacity(
           duration: AppControlMetrics.stateAnimationDuration,
           opacity: isEnabled ? 1 : 0.5,
@@ -54,9 +46,7 @@ class AppSelect<T> extends StatelessWidget {
                   border: Border.all(color: AppColors.selectBorder(context)),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.compact,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.compact),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -65,10 +55,7 @@ class AppSelect<T> extends StatelessWidget {
                           selectedLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTypography.controlLabel.copyWith(
-                            color: foreground,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: AppTypography.controlLabel.copyWith(color: foreground, fontWeight: FontWeight.w700),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
@@ -80,14 +67,7 @@ class AppSelect<T> extends StatelessWidget {
             ),
             selectedValue: value,
             onSelected: onChanged,
-            options: options
-                .map(
-                  (option) => AppDropdownOption<T>(
-                    value: option.value,
-                    label: option.label,
-                  ),
-                )
-                .toList(),
+            options: options.map((option) => AppDropdownOption<T>(value: option.value, label: option.label)).toList(),
           ),
         );
       },

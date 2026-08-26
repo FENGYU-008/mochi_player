@@ -26,10 +26,7 @@ class LibmpvLogBuffer {
       (match) => _sanitizeUrl(match.group(0)!),
     );
     sanitized = sanitized.replaceAllMapped(
-      RegExp(
-        r'(authorization\s*[:=]\s*)(?:bearer\s+)?([^\s,;]+)',
-        caseSensitive: false,
-      ),
+      RegExp(r'(authorization\s*[:=]\s*)(?:bearer\s+)?([^\s,;]+)', caseSensitive: false),
       (match) => '${match.group(1)}<redacted>',
     );
     return sanitized;

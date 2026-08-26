@@ -33,10 +33,7 @@ class AppFormItem extends StatelessWidget {
     final textColor = AppColors.textPrimary(context);
     final secondaryColor = AppColors.textSecondary(context);
     final resolvedHeight =
-        height ??
-        (subtitle == null
-            ? AppControlMetrics.rowHeight
-            : AppControlMetrics.descriptiveRowHeight);
+        height ?? (subtitle == null ? AppControlMetrics.rowHeight : AppControlMetrics.descriptiveRowHeight);
     final labelContent = _FormItemLabel(
       label: label,
       subtitle: subtitle,
@@ -57,9 +54,7 @@ class AppFormItem extends StatelessWidget {
                 Icon(
                   icon,
                   size: AppControlMetrics.iconSize,
-                  color: enabled
-                      ? secondaryColor
-                      : secondaryColor.withAlpha(100),
+                  color: enabled ? secondaryColor : secondaryColor.withAlpha(100),
                 ),
                 const SizedBox(width: AppControlMetrics.iconLabelGap),
               ],

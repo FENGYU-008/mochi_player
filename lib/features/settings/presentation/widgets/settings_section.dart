@@ -15,11 +15,7 @@ class SettingsSection extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary(context),
-          ),
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
         ),
         const SizedBox(height: AppSpacing.sm),
         child,

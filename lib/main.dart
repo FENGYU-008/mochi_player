@@ -89,13 +89,8 @@ class MochiPlayerApp extends StatelessWidget {
         return Stack(
           children: [
             Positioned.fill(child: child ?? const SizedBox.shrink()),
-            if (WindowsWindowButtons.isSupported &&
-                !windowControlsController.isMiniPlayer)
-              const Positioned(
-                top: 0,
-                left: WindowControlsLayout.leadingInset,
-                child: WindowsWindowButtons(),
-              ),
+            if (WindowsWindowButtons.isSupported && !windowControlsController.isMiniPlayer)
+              const Positioned(top: 0, left: WindowControlsLayout.leadingInset, child: WindowsWindowButtons()),
           ],
         );
       },

@@ -32,19 +32,12 @@ class TmdbClient {
 
   bool get isConfigured => _apiKey.trim().isNotEmpty;
 
-  void configure({
-    String? apiKey,
-    String? apiBaseUrl,
-    String? proxyUrl,
-    bool? proxyEnabled,
-  }) {
+  void configure({String? apiKey, String? apiBaseUrl, String? proxyUrl, bool? proxyEnabled}) {
     final key = apiKey?.trim();
     if (key != null) _apiKey = key.isEmpty ? _defaultApiKey : key;
     final baseUrl = apiBaseUrl?.trim();
     if (baseUrl != null) {
-      _baseUrl = baseUrl.isEmpty
-          ? _defaultBaseUrl
-          : baseUrl.replaceFirst(RegExp(r'/+$'), '');
+      _baseUrl = baseUrl.isEmpty ? _defaultBaseUrl : baseUrl.replaceFirst(RegExp(r'/+$'), '');
     }
     if (proxyUrl != null) _proxyUrl = proxyUrl.trim();
     if (proxyEnabled != null) _proxyEnabled = proxyEnabled;
@@ -64,16 +57,10 @@ class TmdbClient {
     try {
       final response = await _dio.get<dynamic>(
         '$_baseUrl$path',
-        queryParameters: {
-          'api_key': _apiKey,
-          'language': 'zh-CN',
-          ...queryParameters,
-        },
+        queryParameters: {'api_key': _apiKey, 'language': 'zh-CN', ...queryParameters},
       );
       final data = response.data;
-      return response.statusCode == 200 && data is Map<String, dynamic>
-          ? data
-          : null;
+      return response.statusCode == 200 && data is Map<String, dynamic> ? data : null;
     } on DioException catch (error) {
       if (error.response?.statusCode == 404 && notFoundMessage != null) {
         _logger.w('⚠️ $notFoundMessage');
@@ -88,9 +75,7 @@ class TmdbClient {
   }
 
   void _configureHttpClient() {
-    final proxyConfig = _proxyEnabled && _proxyUrl.isNotEmpty
-        ? ProxyConfig.buildHttpProxy(_proxyUrl)
-        : null;
+    final proxyConfig = _proxyEnabled && _proxyUrl.isNotEmpty ? ProxyConfig.buildHttpProxy(_proxyUrl) : null;
     if (_proxyEnabled && _proxyUrl.isNotEmpty && proxyConfig == null) {
       _logger.w('⚠️ TMDB 代理地址无效，已改为直连: $_proxyUrl');
     }
@@ -105,14 +90,11 @@ class TmdbClient {
 
   String _describeError(DioException error) {
     return switch (error.type) {
-      DioExceptionType.connectionTimeout =>
-        '连接超时（${_connectTimeout.inSeconds} 秒），请检查网络或代理',
+      DioExceptionType.connectionTimeout => '连接超时（${_connectTimeout.inSeconds} 秒），请检查网络或代理',
       DioExceptionType.sendTimeout => '发送请求超时（${_sendTimeout.inSeconds} 秒）',
-      DioExceptionType.receiveTimeout =>
-        '等待响应超时（${_receiveTimeout.inSeconds} 秒）',
+      DioExceptionType.receiveTimeout => '等待响应超时（${_receiveTimeout.inSeconds} 秒）',
       DioExceptionType.transformTimeout => '处理响应超时',
-      DioExceptionType.badResponse =>
-        '服务器返回 ${error.response?.statusCode ?? '异常状态'}',
+      DioExceptionType.badResponse => '服务器返回 ${error.response?.statusCode ?? '异常状态'}',
       DioExceptionType.connectionError => '网络连接失败，请检查 DNS、代理或防火墙',
       DioExceptionType.badCertificate => '证书校验失败',
       DioExceptionType.cancel => '请求已取消',

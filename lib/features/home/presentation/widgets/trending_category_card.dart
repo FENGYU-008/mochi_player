@@ -11,12 +11,7 @@ class TrendingCardConfig {
   final String title;
   final String subtitle;
 
-  const TrendingCardConfig({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-  });
+  const TrendingCardConfig({required this.icon, required this.iconColor, required this.title, required this.subtitle});
 }
 
 /// 趋势分类卡片
@@ -82,10 +77,7 @@ class TrendingCategoryCard extends StatelessWidget {
             Container(
               width: 32,
               height: 32,
-              decoration: BoxDecoration(
-                color: config.iconColor.withAlpha(30),
-                borderRadius: BorderRadius.circular(8),
-              ),
+              decoration: BoxDecoration(color: config.iconColor.withAlpha(30), borderRadius: BorderRadius.circular(8)),
               child: Icon(config.icon, color: config.iconColor, size: 18),
             ),
             const SizedBox(width: 12),
@@ -115,11 +107,7 @@ class TrendingCategoryCard extends StatelessWidget {
               ),
             ),
             if (onTap != null)
-              Icon(
-                Icons.chevron_right,
-                color: theme.textTheme.bodySmall?.color?.withAlpha(128),
-                size: 20,
-              ),
+              Icon(Icons.chevron_right, color: theme.textTheme.bodySmall?.color?.withAlpha(128), size: 20),
           ],
         ),
       ),
@@ -129,13 +117,7 @@ class TrendingCategoryCard extends StatelessWidget {
   Widget _buildLoadingState() {
     return const SizedBox(
       height: 200,
-      child: Center(
-        child: SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
+      child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
     );
   }
 
@@ -143,13 +125,7 @@ class TrendingCategoryCard extends StatelessWidget {
     return SizedBox(
       height: 200,
       child: Center(
-        child: Text(
-          '暂无数据',
-          style: TextStyle(
-            color: theme.textTheme.bodySmall?.color?.withAlpha(128),
-            fontSize: 13,
-          ),
-        ),
+        child: Text('暂无数据', style: TextStyle(color: theme.textTheme.bodySmall?.color?.withAlpha(128), fontSize: 13)),
       ),
     );
   }
@@ -162,12 +138,7 @@ class _TrendingListItem extends StatefulWidget {
   final bool showRating;
   final bool isLast;
 
-  const _TrendingListItem({
-    required this.item,
-    required this.rank,
-    required this.showRating,
-    required this.isLast,
-  });
+  const _TrendingListItem({required this.item, required this.rank, required this.showRating, required this.isLast});
 
   @override
   State<_TrendingListItem> createState() => _TrendingListItemState();
@@ -195,10 +166,7 @@ class _TrendingListItemState extends State<_TrendingListItem> {
                 duration: const Duration(milliseconds: 200),
                 opacity: _isHovering ? 1.0 : 0.0,
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: hoverBgColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  decoration: BoxDecoration(color: hoverBgColor, borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ),
@@ -224,11 +192,7 @@ class _TrendingListItemState extends State<_TrendingListItem> {
                   // 海报
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
-                    child: SizedBox(
-                      width: 40,
-                      height: 60,
-                      child: _buildPoster(),
-                    ),
+                    child: SizedBox(width: 40, height: 60, child: _buildPoster()),
                   ),
                   const SizedBox(width: 12),
                   // 信息
@@ -287,11 +251,7 @@ class _TrendingListItemState extends State<_TrendingListItem> {
           const SizedBox(width: 4),
           Text(
             widget.item.rating.toStringAsFixed(1),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.amber[300],
-            ),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.amber[300]),
           ),
         ],
       );
@@ -307,10 +267,7 @@ class _TrendingListItemState extends State<_TrendingListItem> {
 
     return Text(
       parts.join(' • '),
-      style: TextStyle(
-        fontSize: 12,
-        color: theme.textTheme.bodySmall?.color?.withAlpha(153),
-      ),
+      style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color?.withAlpha(153)),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );

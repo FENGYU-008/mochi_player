@@ -58,9 +58,7 @@ class _HomeContentState extends State<HomeContent> {
       return _buildSearchResults(context);
     }
 
-    final hasTrendingContent = context.select<TrendingMediaProvider, bool>(
-      (provider) => provider.hasContent,
-    );
+    final hasTrendingContent = context.select<TrendingMediaProvider, bool>((provider) => provider.hasContent);
     return Selector<MediaLibraryProvider, _HomeShellState>(
       selector: (context, provider) => _HomeShellState(
         showInitialLoading: provider.isLoading && provider.totalFiles == 0,
@@ -72,11 +70,7 @@ class _HomeContentState extends State<HomeContent> {
         }
 
         if (!shellState.hasHomeContent) {
-          return const AppResult(
-            status: AppResultStatus.empty,
-            title: '媒体库为空',
-            subtitle: '请先扫描媒体库以发现资源',
-          );
+          return const AppResult(status: AppResultStatus.empty, title: '媒体库为空', subtitle: '请先扫描媒体库以发现资源');
         }
 
         return CustomScrollView(
@@ -90,12 +84,8 @@ class _HomeContentState extends State<HomeContent> {
                 metadataRevision: provider.metadataRevision,
               ),
               builder: (context, revision, child) {
-                final heroItem = context
-                    .read<MediaLibraryProvider>()
-                    .getRandomHeroItem();
-                return SliverToBoxAdapter(
-                  child: HeroSection(heroItem: heroItem),
-                );
+                final heroItem = context.read<MediaLibraryProvider>().getRandomHeroItem();
+                return SliverToBoxAdapter(child: HeroSection(heroItem: heroItem));
               },
             ),
 
@@ -118,14 +108,9 @@ class _HomeContentState extends State<HomeContent> {
                     _buildSectionHeaderSliver(
                       context,
                       '继续观看',
-                      onSeeAll: () => openLibrarySectionPage(
-                        context,
-                        LibrarySection.continueWatching,
-                      ),
+                      onSeeAll: () => openLibrarySectionPage(context, LibrarySection.continueWatching),
                     ),
-                    SliverToBoxAdapter(
-                      child: _buildContinueWatchingList(continueWatchingItems),
-                    ),
+                    SliverToBoxAdapter(child: _buildContinueWatchingList(continueWatchingItems)),
                     const SliverToBoxAdapter(child: SizedBox(height: 30)),
                   ],
                 );
@@ -139,11 +124,7 @@ class _HomeContentState extends State<HomeContent> {
                 metadataRevision: provider.metadataRevision,
               ),
               builder: (context, revision, child) {
-                final recentlyAddedItems = context
-                    .read<MediaLibraryProvider>()
-                    .recentlyAddedContent
-                    .take(15)
-                    .toList();
+                final recentlyAddedItems = context.read<MediaLibraryProvider>().recentlyAddedContent.take(15).toList();
                 if (recentlyAddedItems.isEmpty) {
                   return const SliverToBoxAdapter(child: SizedBox.shrink());
                 }
@@ -153,14 +134,9 @@ class _HomeContentState extends State<HomeContent> {
                     _buildSectionHeaderSliver(
                       context,
                       '最近添加',
-                      onSeeAll: () => openLibrarySectionPage(
-                        context,
-                        LibrarySection.recentlyAdded,
-                      ),
+                      onSeeAll: () => openLibrarySectionPage(context, LibrarySection.recentlyAdded),
                     ),
-                    SliverToBoxAdapter(
-                      child: _buildRecentlyAddedList(recentlyAddedItems),
-                    ),
+                    SliverToBoxAdapter(child: _buildRecentlyAddedList(recentlyAddedItems)),
                     const SliverToBoxAdapter(child: SizedBox(height: 30)),
                   ],
                 );
@@ -199,15 +175,9 @@ class _HomeContentState extends State<HomeContent> {
         metadataRevision: provider.metadataRevision,
       ),
       builder: (context, revision, child) {
-        final items = context.read<MediaLibraryProvider>().searchLibrary(
-          widget.searchQuery,
-        );
+        final items = context.read<MediaLibraryProvider>().searchLibrary(widget.searchQuery);
         if (items.isEmpty) {
-          return const AppResult(
-            status: AppResultStatus.empty,
-            title: '没有匹配的媒体',
-            subtitle: '请尝试其他关键词',
-          );
+          return const AppResult(status: AppResultStatus.empty, title: '没有匹配的媒体', subtitle: '请尝试其他关键词');
         }
 
         return MediaPosterGrid<LibraryItem>(
@@ -220,25 +190,13 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  SliverToBoxAdapter _buildSectionHeaderSliver(
-    BuildContext context,
-    String title, {
-    VoidCallback? onSeeAll,
-  }) {
+  SliverToBoxAdapter _buildSectionHeaderSliver(BuildContext context, String title, {VoidCallback? onSeeAll}) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.page,
-          0,
-          AppSpacing.page,
-          15,
-        ),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 15),
         child: Row(
           children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const Spacer(),
             if (onSeeAll != null)
               MouseRegion(
@@ -249,18 +207,10 @@ class _HomeContentState extends State<HomeContent> {
                     children: [
                       Text(
                         '查看全部',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey[500]),
                       ),
                       const SizedBox(width: 4),
-                      Icon(
-                        Icons.chevron_right,
-                        size: 16,
-                        color: Colors.grey[400],
-                      ),
+                      Icon(Icons.chevron_right, size: 16, color: Colors.grey[400]),
                     ],
                   ),
                 ),
@@ -392,10 +342,7 @@ class _HomeShellState {
   final bool showInitialLoading;
   final bool hasHomeContent;
 
-  const _HomeShellState({
-    required this.showInitialLoading,
-    required this.hasHomeContent,
-  });
+  const _HomeShellState({required this.showInitialLoading, required this.hasHomeContent});
 
   @override
   bool operator ==(Object other) {
@@ -412,10 +359,7 @@ class _LibraryContentRevision {
   final int mediaCatalogRevision;
   final int metadataRevision;
 
-  const _LibraryContentRevision({
-    required this.mediaCatalogRevision,
-    required this.metadataRevision,
-  });
+  const _LibraryContentRevision({required this.mediaCatalogRevision, required this.metadataRevision});
 
   @override
   bool operator ==(Object other) {
@@ -448,9 +392,5 @@ class _ContinueWatchingRevision {
   }
 
   @override
-  int get hashCode => Object.hash(
-    mediaCatalogRevision,
-    metadataRevision,
-    watchProgressRevision,
-  );
+  int get hashCode => Object.hash(mediaCatalogRevision, metadataRevision, watchProgressRevision);
 }

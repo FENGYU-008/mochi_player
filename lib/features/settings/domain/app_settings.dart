@@ -40,57 +40,36 @@ class AppSettings {
   });
 
   bool get hasWebDavConfig =>
-      webDavUrl.trim().isNotEmpty &&
-      webDavUsername.trim().isNotEmpty &&
-      webDavPassword.isNotEmpty;
+      webDavUrl.trim().isNotEmpty && webDavUsername.trim().isNotEmpty && webDavPassword.isNotEmpty;
 
   bool get hasTmdbApiKey => tmdbApiKey.trim().isNotEmpty;
 
   int get playbackCacheMaxBytes => playbackCacheSizeMb * 1024 * 1024;
 
-  String get normalizedSubtitleLanguagePriority => _normalizeLanguagePriority(
-    subtitleLanguagePriority,
-    defaultSubtitleLanguagePriority,
-  );
+  String get normalizedSubtitleLanguagePriority =>
+      _normalizeLanguagePriority(subtitleLanguagePriority, defaultSubtitleLanguagePriority);
 
   AppSettings withFallbacks(AppSettings fallback) {
     return AppSettings(
       webDavUrl: webDavUrl.trim().isNotEmpty ? webDavUrl : fallback.webDavUrl,
-      webDavUsername: webDavUsername.trim().isNotEmpty
-          ? webDavUsername
-          : fallback.webDavUsername,
-      webDavPassword: webDavPassword.isNotEmpty
-          ? webDavPassword
-          : fallback.webDavPassword,
-      tmdbApiKey: tmdbApiKey.trim().isNotEmpty
-          ? tmdbApiKey
-          : fallback.tmdbApiKey,
-      tmdbApiBaseUrl: tmdbApiBaseUrl.trim().isNotEmpty
-          ? tmdbApiBaseUrl
-          : fallback.tmdbApiBaseUrl,
+      webDavUsername: webDavUsername.trim().isNotEmpty ? webDavUsername : fallback.webDavUsername,
+      webDavPassword: webDavPassword.isNotEmpty ? webDavPassword : fallback.webDavPassword,
+      tmdbApiKey: tmdbApiKey.trim().isNotEmpty ? tmdbApiKey : fallback.tmdbApiKey,
+      tmdbApiBaseUrl: tmdbApiBaseUrl.trim().isNotEmpty ? tmdbApiBaseUrl : fallback.tmdbApiBaseUrl,
       tmdbProxyUrl: tmdbProxyUrl.trim(),
       tmdbProxyEnabled: tmdbProxyEnabled,
-      playbackCacheSizeMb: playbackCacheSizeMb
-          .clamp(minPlaybackCacheSizeMb, maxPlaybackCacheSizeMb)
-          .toInt(),
+      playbackCacheSizeMb: playbackCacheSizeMb.clamp(minPlaybackCacheSizeMb, maxPlaybackCacheSizeMb).toInt(),
       playbackReadaheadSeconds: playbackReadaheadSeconds
           .clamp(minPlaybackReadaheadSeconds, maxPlaybackReadaheadSeconds)
           .toInt(),
       enableHardwareAcceleration: enableHardwareAcceleration,
-      subtitleLanguagePriority: _normalizeLanguagePriority(
-        subtitleLanguagePriority,
-        fallback.subtitleLanguagePriority,
-      ),
+      subtitleLanguagePriority: _normalizeLanguagePriority(subtitleLanguagePriority, fallback.subtitleLanguagePriority),
       subtitleFontSize: subtitleFontSize.clamp(18.0, 40.0).toDouble(),
     );
   }
 
   static String _normalizeLanguagePriority(String value, String fallback) {
-    final parts = value
-        .split(',')
-        .map((part) => part.trim())
-        .where((part) => part.isNotEmpty)
-        .toList();
+    final parts = value.split(',').map((part) => part.trim()).where((part) => part.isNotEmpty).toList();
     if (parts.isEmpty) return fallback;
     return parts.join(',');
   }

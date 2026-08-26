@@ -9,15 +9,13 @@ import 'package:mochi_player/core/ui/theme/app_colors.dart';
 class WindowsWindowButtons extends StatefulWidget {
   const WindowsWindowButtons({super.key});
 
-  static bool get isSupported =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
+  static bool get isSupported => !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
 
   @override
   State<WindowsWindowButtons> createState() => _WindowsWindowButtonsState();
 }
 
-class _WindowsWindowButtonsState extends State<WindowsWindowButtons>
-    with WindowListener {
+class _WindowsWindowButtonsState extends State<WindowsWindowButtons> with WindowListener {
   bool _isMaximized = false;
   bool _isFullScreen = false;
 
@@ -35,10 +33,7 @@ class _WindowsWindowButtonsState extends State<WindowsWindowButtons>
   }
 
   Future<void> _syncWindowState() async {
-    final states = await Future.wait([
-      windowManager.isMaximized(),
-      windowManager.isFullScreen(),
-    ]);
+    final states = await Future.wait([windowManager.isMaximized(), windowManager.isFullScreen()]);
     if (!mounted) return;
     final isMaximized = states[0];
     final isFullScreen = states[1];
@@ -89,26 +84,15 @@ class _WindowsWindowButtonsState extends State<WindowsWindowButtons>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _WindowButton(
-            label: '最小化',
-            glyph: _WindowButtonGlyph.minimize,
-            onPressed: windowManager.minimize,
-          ),
+          _WindowButton(label: '最小化', glyph: _WindowButtonGlyph.minimize, onPressed: windowManager.minimize),
           const SizedBox(width: _buttonGap),
           _WindowButton(
             label: _isMaximized ? '还原' : '最大化',
-            glyph: _isMaximized
-                ? _WindowButtonGlyph.restore
-                : _WindowButtonGlyph.maximize,
+            glyph: _isMaximized ? _WindowButtonGlyph.restore : _WindowButtonGlyph.maximize,
             onPressed: _toggleMaximized,
           ),
           const SizedBox(width: _buttonGap),
-          _WindowButton(
-            label: '关闭',
-            glyph: _WindowButtonGlyph.close,
-            isClose: true,
-            onPressed: windowManager.close,
-          ),
+          _WindowButton(label: '关闭', glyph: _WindowButtonGlyph.close, isClose: true, onPressed: windowManager.close),
         ],
       ),
     );
@@ -118,12 +102,7 @@ class _WindowsWindowButtonsState extends State<WindowsWindowButtons>
 enum _WindowButtonGlyph { minimize, maximize, restore, close }
 
 class _WindowButton extends StatefulWidget {
-  const _WindowButton({
-    required this.label,
-    required this.glyph,
-    required this.onPressed,
-    this.isClose = false,
-  });
+  const _WindowButton({required this.label, required this.glyph, required this.onPressed, this.isClose = false});
 
   final String label;
   final _WindowButtonGlyph glyph;
@@ -142,12 +121,8 @@ class _WindowButtonState extends State<_WindowButton> {
   Widget build(BuildContext context) {
     final accent = AppColors.favorite(context);
     final restingForeground = AppColors.textSecondary(context);
-    final hoverForeground = widget.isClose
-        ? accent
-        : AppColors.textPrimary(context);
-    final hoverColor = widget.isClose
-        ? accent.withAlpha(34)
-        : AppColors.hoverSurface(context);
+    final hoverForeground = widget.isClose ? accent : AppColors.textPrimary(context);
+    final hoverColor = widget.isClose ? accent.withAlpha(34) : AppColors.hoverSurface(context);
     final highlighted = _isHovering || _isFocused;
 
     return Semantics(
@@ -182,11 +157,7 @@ class _WindowButtonState extends State<_WindowButton> {
               width: _buttonSize,
               height: _buttonSize,
               decoration: BoxDecoration(
-                color: Color.lerp(
-                  hoverColor.withAlpha(0),
-                  hoverColor,
-                  highlightProgress,
-                ),
+                color: Color.lerp(hoverColor.withAlpha(0), hoverColor, highlightProgress),
                 borderRadius: BorderRadius.circular(9),
               ),
               alignment: Alignment.center,
@@ -194,11 +165,7 @@ class _WindowButtonState extends State<_WindowButton> {
                 size: const Size.square(12),
                 painter: _WindowButtonGlyphPainter(
                   glyph: widget.glyph,
-                  color: Color.lerp(
-                    restingForeground,
-                    hoverForeground,
-                    highlightProgress,
-                  )!,
+                  color: Color.lerp(restingForeground, hoverForeground, highlightProgress)!,
                 ),
               ),
             ),
@@ -226,17 +193,10 @@ class _WindowButtonGlyphPainter extends CustomPainter {
 
     switch (glyph) {
       case _WindowButtonGlyph.minimize:
-        canvas.drawLine(
-          Offset(2, size.height - 3),
-          Offset(size.width - 2, size.height - 3),
-          paint,
-        );
+        canvas.drawLine(Offset(2, size.height - 3), Offset(size.width - 2, size.height - 3), paint);
       case _WindowButtonGlyph.maximize:
         canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(2, 2, size.width - 4, size.height - 4),
-            const Radius.circular(1),
-          ),
+          RRect.fromRectAndRadius(Rect.fromLTWH(2, 2, size.width - 4, size.height - 4), const Radius.circular(1)),
           paint,
         );
       case _WindowButtonGlyph.restore:
@@ -246,23 +206,12 @@ class _WindowButtonGlyphPainter extends CustomPainter {
           ..lineTo(size.width - 2, size.height - 4);
         canvas.drawPath(backWindow, paint);
         canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(2, 4, size.width - 6, size.height - 6),
-            const Radius.circular(1),
-          ),
+          RRect.fromRectAndRadius(Rect.fromLTWH(2, 4, size.width - 6, size.height - 6), const Radius.circular(1)),
           paint,
         );
       case _WindowButtonGlyph.close:
-        canvas.drawLine(
-          const Offset(2, 2),
-          Offset(size.width - 2, size.height - 2),
-          paint,
-        );
-        canvas.drawLine(
-          Offset(size.width - 2, 2),
-          Offset(2, size.height - 2),
-          paint,
-        );
+        canvas.drawLine(const Offset(2, 2), Offset(size.width - 2, size.height - 2), paint);
+        canvas.drawLine(Offset(size.width - 2, 2), Offset(2, size.height - 2), paint);
     }
   }
 

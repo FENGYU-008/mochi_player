@@ -19,23 +19,12 @@ class AppProgressNotice extends StatelessWidget {
       style: const TextStyle(decoration: TextDecoration.none),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 460),
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          AppSpacing.compact,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.compact, AppSpacing.md, AppSpacing.md),
         decoration: BoxDecoration(
           color: AppColors.activitySurface(context),
           borderRadius: BorderRadius.circular(AppRadii.control),
           border: Border.all(color: theme.dividerColor),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(30),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withAlpha(30), blurRadius: 18, offset: const Offset(0, 10))],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -45,11 +34,7 @@ class AppProgressNotice extends StatelessWidget {
                 SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    value: progress,
-                    color: accentColor,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2, value: progress, color: accentColor),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(

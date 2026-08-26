@@ -23,11 +23,7 @@ class Sidebar extends StatelessWidget {
   final AppDestination selectedDestination;
   final ValueChanged<AppDestination> onDestinationSelected;
 
-  const Sidebar({
-    super.key,
-    required this.selectedDestination,
-    required this.onDestinationSelected,
-  });
+  const Sidebar({super.key, required this.selectedDestination, required this.onDestinationSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -48,18 +44,11 @@ class Sidebar extends StatelessWidget {
           GestureDetector(
             behavior: HitTestBehavior.translucent,
             onPanStart: (_) => windowManager.startDragging(),
-            child: const SizedBox(
-              height: _SidebarMetrics.topDragAreaHeight,
-              width: double.infinity,
-            ),
+            child: const SizedBox(height: _SidebarMetrics.topDragAreaHeight, width: double.infinity),
           ),
 
           _buildSectionTitle("媒体库", context),
-          _buildGroup([
-            AppDestination.home,
-            AppDestination.movies,
-            AppDestination.series,
-          ]),
+          _buildGroup([AppDestination.home, AppDestination.movies, AppDestination.series]),
 
           const SizedBox(height: _SidebarMetrics.sectionGap),
 
@@ -75,9 +64,7 @@ class Sidebar extends StatelessWidget {
           Divider(height: 1, color: theme.dividerColor),
           const SizedBox(height: 10),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: _SidebarMetrics.horizontalInset,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: _SidebarMetrics.horizontalInset),
             child: _SidebarItem(
               destination: AppDestination.settings,
               selectedDestination: selectedDestination,
@@ -96,9 +83,7 @@ class Sidebar extends StatelessWidget {
       child: Text(
         title,
         style: TextStyle(
-          color: Theme.of(
-            context,
-          ).textTheme.titleMedium?.color?.withAlpha((255 * 0.6).round()),
+          color: Theme.of(context).textTheme.titleMedium?.color?.withAlpha((255 * 0.6).round()),
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 0,
@@ -131,11 +116,7 @@ class _SidebarItem extends StatelessWidget {
   final AppDestination selectedDestination;
   final ValueChanged<AppDestination> onTap;
 
-  const _SidebarItem({
-    required this.destination,
-    required this.selectedDestination,
-    required this.onTap,
-  });
+  const _SidebarItem({required this.destination, required this.selectedDestination, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -149,21 +130,13 @@ class _SidebarItem extends StatelessWidget {
     return AppClickableArea(
       onTap: () => onTap(destination),
       height: _SidebarMetrics.itemHeight,
-      padding: const EdgeInsets.symmetric(
-        horizontal: _SidebarMetrics.itemHorizontalPadding,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: _SidebarMetrics.itemHorizontalPadding),
       borderRadius: BorderRadius.circular(_SidebarMetrics.itemRadius),
       backgroundColor: isSelected ? selectedBackground : Colors.transparent,
-      hoverColor: isSelected
-          ? Colors.transparent
-          : AppColors.hoverSurface(context),
+      hoverColor: isSelected ? Colors.transparent : AppColors.hoverSurface(context),
       child: Row(
         children: [
-          Icon(
-            destination.icon,
-            size: _SidebarMetrics.itemIconSize,
-            color: foregroundColor,
-          ),
+          Icon(destination.icon, size: _SidebarMetrics.itemIconSize, color: foregroundColor),
           const SizedBox(width: _SidebarMetrics.itemIconLabelGap),
           Text(
             destination.title,

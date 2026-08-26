@@ -16,21 +16,12 @@ class AppHeader extends StatelessWidget {
   final Widget? trailing;
   final double visibility;
 
-  const AppHeader({
-    super.key,
-    required this.title,
-    this.trailing,
-    this.visibility = 1,
-  }) : _showBackButton = false,
-       onBack = null;
+  const AppHeader({super.key, required this.title, this.trailing, this.visibility = 1})
+    : _showBackButton = false,
+      onBack = null;
 
-  const AppHeader.back({
-    super.key,
-    required this.title,
-    this.onBack,
-    this.trailing,
-    this.visibility = 1,
-  }) : _showBackButton = true;
+  const AppHeader.back({super.key, required this.title, this.onBack, this.trailing, this.visibility = 1})
+    : _showBackButton = true;
 
   @override
   Widget build(BuildContext context) {
@@ -59,26 +50,19 @@ class AppHeader extends StatelessWidget {
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
                 height: height,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.page,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.page),
                 decoration: BoxDecoration(
                   color: backgroundColor,
                   border: Border(
                     bottom: BorderSide(
-                      color: theme.dividerColor.withAlpha(
-                        (255 * clampedVisibility).round(),
-                      ),
+                      color: theme.dividerColor.withAlpha((255 * clampedVisibility).round()),
                       width: 1,
                     ),
                   ),
                 ),
                 child: Row(
                   children: [
-                    if (backButton != null) ...[
-                      backButton,
-                      const SizedBox(width: 14),
-                    ],
+                    if (backButton != null) ...[backButton, const SizedBox(width: 14)],
                     Expanded(
                       child: Text(
                         title,
@@ -91,10 +75,7 @@ class AppHeader extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (trailing != null) ...[
-                      const SizedBox(width: 20),
-                      trailing!,
-                    ],
+                    if (trailing != null) ...[const SizedBox(width: 20), trailing!],
                   ],
                 ),
               ),

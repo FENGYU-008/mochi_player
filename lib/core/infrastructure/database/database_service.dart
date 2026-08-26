@@ -7,7 +7,9 @@ import 'package:mochi_player/core/infrastructure/database/entities/entities.dart
 class DatabaseService {
   // 单例模式
   static final DatabaseService _instance = DatabaseService._internal();
+
   factory DatabaseService() => _instance;
+
   DatabaseService._internal();
 
   final _logger = Logger(printer: PrettyPrinter(methodCount: 0));
@@ -74,43 +76,27 @@ class DatabaseService {
 
   /// 获取收藏的媒体文件
   Future<List<MediaFileEntity>> getFavorites() async {
-    return await _isar.mediaFileEntitys
-        .filter()
-        .isFavoriteEqualTo(true)
-        .findAll();
+    return await _isar.mediaFileEntitys.filter().isFavoriteEqualTo(true).findAll();
   }
 
   /// 获取最近添加的媒体文件
   Future<List<MediaFileEntity>> getRecentlyAdded({int limit = 20}) async {
-    return await _isar.mediaFileEntitys
-        .where()
-        .sortByAddedAtDesc()
-        .limit(limit)
-        .findAll();
+    return await _isar.mediaFileEntitys.where().sortByAddedAtDesc().limit(limit).findAll();
   }
 
   /// 获取某个 TMDB ID 的所有版本
   Future<List<MediaFileEntity>> getVersionsByTmdbId(String tmdbId) async {
-    return await _isar.mediaFileEntitys
-        .filter()
-        .tmdbIdEqualTo(tmdbId)
-        .findAll();
+    return await _isar.mediaFileEntitys.filter().tmdbIdEqualTo(tmdbId).findAll();
   }
 
   /// 更新播放进度
-  Future<void> updateProgress(
-    MediaFileEntity file,
-    int position, {
-    int? duration,
-  }) async {
+  Future<void> updateProgress(MediaFileEntity file, int position, {int? duration}) async {
     if (duration != null && duration > 0) {
       file.duration = duration;
     }
 
     final normalizedPosition = position < 0 ? 0 : position;
-    file.position = file.duration > 0
-        ? normalizedPosition.clamp(0, file.duration).toInt()
-        : normalizedPosition;
+    file.position = file.duration > 0 ? normalizedPosition.clamp(0, file.duration).toInt() : normalizedPosition;
     file.lastWatchedAt = DateTime.now();
 
     // 自动计算观看状态
@@ -126,10 +112,7 @@ class DatabaseService {
   }
 
   /// Sets one or more physical files to the same favorite state atomically.
-  Future<void> setFavorite(
-    List<MediaFileEntity> files, {
-    required bool isFavorite,
-  }) async {
+  Future<void> setFavorite(List<MediaFileEntity> files, {required bool isFavorite}) async {
     if (files.isEmpty) return;
     for (final file in files) {
       file.isFavorite = isFavorite;
@@ -148,10 +131,7 @@ class DatabaseService {
 
   /// 根据 TMDB ID 获取电影元数据
   Future<MovieMetadataEntity?> getMovieByTmdbId(String tmdbId) async {
-    return await _isar.movieMetadataEntitys
-        .filter()
-        .tmdbIdEqualTo(tmdbId)
-        .findFirst();
+    return await _isar.movieMetadataEntitys.filter().tmdbIdEqualTo(tmdbId).findFirst();
   }
 
   /// 获取所有电影元数据
@@ -170,10 +150,7 @@ class DatabaseService {
 
   /// 根据 TMDB ID 获取剧集元数据
   Future<TVShowMetadataEntity?> getTVShowByTmdbId(String tmdbId) async {
-    return await _isar.tVShowMetadataEntitys
-        .filter()
-        .tmdbIdEqualTo(tmdbId)
-        .findFirst();
+    return await _isar.tVShowMetadataEntitys.filter().tmdbIdEqualTo(tmdbId).findFirst();
   }
 
   /// 获取所有剧集元数据
@@ -192,10 +169,7 @@ class DatabaseService {
 
   /// 根据 seasonKey 获取季元数据
   Future<SeasonMetadataEntity?> getSeasonByKey(String seasonKey) async {
-    return await _isar.seasonMetadataEntitys
-        .filter()
-        .seasonKeyEqualTo(seasonKey)
-        .findFirst();
+    return await _isar.seasonMetadataEntitys.filter().seasonKeyEqualTo(seasonKey).findFirst();
   }
 
   /// 获取所有季元数据
@@ -214,10 +188,7 @@ class DatabaseService {
 
   /// 根据 tmdbId 获取集元数据
   Future<EpisodeMetadataEntity?> getEpisodeByTmdbId(String tmdbId) async {
-    return await _isar.episodeMetadataEntitys
-        .filter()
-        .tmdbIdEqualTo(tmdbId)
-        .findFirst();
+    return await _isar.episodeMetadataEntitys.filter().tmdbIdEqualTo(tmdbId).findFirst();
   }
 
   /// 获取所有集元数据

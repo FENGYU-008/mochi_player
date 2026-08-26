@@ -5,13 +5,8 @@ import 'package:mochi_player/core/domain/media/media_file.dart';
 /// Link resolution and player commands intentionally stay outside this class,
 /// so queue state can be tested without Flutter or a media backend.
 class PlaybackQueue {
-  PlaybackQueue({
-    required MediaFile initialItem,
-    required List<MediaFile> items,
-  }) : _items = _deduplicate(items) {
-    _currentIndex = _items.indexWhere(
-      (item) => item.id == initialItem.id || item.path == initialItem.path,
-    );
+  PlaybackQueue({required MediaFile initialItem, required List<MediaFile> items}) : _items = _deduplicate(items) {
+    _currentIndex = _items.indexWhere((item) => item.id == initialItem.id || item.path == initialItem.path);
     if (_currentIndex < 0) {
       _items.insert(0, initialItem);
       _currentIndex = 0;
@@ -22,8 +17,11 @@ class PlaybackQueue {
   late int _currentIndex;
 
   MediaFile get current => _items[_currentIndex];
+
   int get currentIndex => _currentIndex;
+
   bool get hasPrevious => _currentIndex > 0;
+
   bool get hasNext => _currentIndex < _items.length - 1;
 
   MediaFile? itemAtOffset(int offset) {

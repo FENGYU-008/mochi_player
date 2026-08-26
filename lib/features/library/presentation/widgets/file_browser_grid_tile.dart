@@ -16,9 +16,7 @@ class FileBrowserGridTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final subtitle = item.isDirectory
-        ? item.browserTypeLabel
-        : '${item.browserTypeLabel} · ${item.browserSizeLabel}';
+    final subtitle = item.isDirectory ? item.browserTypeLabel : '${item.browserTypeLabel} · ${item.browserSizeLabel}';
 
     return AppClickableArea(
       onTap: onTap,
@@ -28,24 +26,14 @@ class FileBrowserGridTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-            child: Icon(
-              item.browserIcon,
-              size: 42,
-              color: item.browserIconColor(context),
-            ),
-          ),
+          Expanded(child: Icon(item.browserIcon, size: 42, color: item.browserIconColor(context))),
           const SizedBox(height: 8),
           Text(
             item.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: theme.textTheme.bodyMedium!.color,
-            ),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: theme.textTheme.bodyMedium!.color),
           ),
           const SizedBox(height: 2),
           if (subtitle.isNotEmpty)
@@ -53,10 +41,7 @@ class FileBrowserGridTile extends StatelessWidget {
               subtitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 10,
-                color: theme.textTheme.titleMedium!.color,
-              ),
+              style: TextStyle(fontSize: 10, color: theme.textTheme.titleMedium!.color),
             ),
         ],
       ),

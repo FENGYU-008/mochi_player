@@ -31,52 +31,38 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
             title: '文件浏览',
             trailing: SizedBox(
               width: 300,
-              child: AppSearchInput(
-                placeholder: '搜索当前目录…',
-                onChanged: provider.setSearchQuery,
-              ),
+              child: AppSearchInput(placeholder: '搜索当前目录…', onChanged: provider.setSearchQuery),
             ),
           ),
           Expanded(
-            child:
-                Selector2<
-                  FileBrowserProvider,
-                  AppSettingsProvider,
-                  _FileBrowserState
-                >(
-                  selector: (context, fileProvider, settingsProvider) {
-                    final error =
-                        fileProvider.error ??
-                        (settingsProvider.hasWebDavConfig
-                            ? null
-                            : '请先在设置中配置 OpenList');
-                    return _FileBrowserState(
-                      items: fileProvider.visibleItems,
-                      totalItemCount: fileProvider.items.length,
-                      isLoading: fileProvider.isLoading,
-                      hasLoaded: fileProvider.hasLoaded,
-                      hasWebDavConfig: settingsProvider.hasWebDavConfig,
-                      error: error,
-                      currentPath: fileProvider.currentPath,
-                      canGoBack: fileProvider.canGoBack,
-                      canGoForward: fileProvider.canGoForward,
-                      viewMode: fileProvider.viewMode,
-                      sortField: fileProvider.sortField,
-                      sortAscending: fileProvider.sortAscending,
-                      hasSearchQuery: fileProvider.searchQuery
-                          .trim()
-                          .isNotEmpty,
-                    );
-                  },
-                  builder: (context, state, child) {
-                    if (state.shouldLoadInitialPath) _scheduleInitialLoad();
-                    return _FileBrowserBody(
-                      state: state,
-                      provider: context.read<FileBrowserProvider>(),
-                      onItemTap: (item) => _onItemTap(context, item, provider),
-                    );
-                  },
-                ),
+            child: Selector2<FileBrowserProvider, AppSettingsProvider, _FileBrowserState>(
+              selector: (context, fileProvider, settingsProvider) {
+                final error = fileProvider.error ?? (settingsProvider.hasWebDavConfig ? null : '请先在设置中配置 OpenList');
+                return _FileBrowserState(
+                  items: fileProvider.visibleItems,
+                  totalItemCount: fileProvider.items.length,
+                  isLoading: fileProvider.isLoading,
+                  hasLoaded: fileProvider.hasLoaded,
+                  hasWebDavConfig: settingsProvider.hasWebDavConfig,
+                  error: error,
+                  currentPath: fileProvider.currentPath,
+                  canGoBack: fileProvider.canGoBack,
+                  canGoForward: fileProvider.canGoForward,
+                  viewMode: fileProvider.viewMode,
+                  sortField: fileProvider.sortField,
+                  sortAscending: fileProvider.sortAscending,
+                  hasSearchQuery: fileProvider.searchQuery.trim().isNotEmpty,
+                );
+              },
+              builder: (context, state, child) {
+                if (state.shouldLoadInitialPath) _scheduleInitialLoad();
+                return _FileBrowserBody(
+                  state: state,
+                  provider: context.read<FileBrowserProvider>(),
+                  onItemTap: (item) => _onItemTap(context, item, provider),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -91,20 +77,14 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
       if (!mounted) return;
       final settingsProvider = context.read<AppSettingsProvider>();
       final fileProvider = context.read<FileBrowserProvider>();
-      if (!settingsProvider.hasWebDavConfig ||
-          fileProvider.hasLoaded ||
-          fileProvider.isLoading) {
+      if (!settingsProvider.hasWebDavConfig || fileProvider.hasLoaded || fileProvider.isLoading) {
         return;
       }
       fileProvider.fetchFiles(fileProvider.currentPath);
     });
   }
 
-  void _onItemTap(
-    BuildContext context,
-    FileBrowserEntry item,
-    FileBrowserProvider provider,
-  ) {
+  void _onItemTap(BuildContext context, FileBrowserEntry item, FileBrowserProvider provider) {
     if (item.isDirectory) {
       provider.enterFolder(item);
       return;
@@ -124,21 +104,12 @@ class _FileBrowserBody extends StatelessWidget {
   final FileBrowserProvider provider;
   final ValueChanged<FileBrowserEntry> onItemTap;
 
-  const _FileBrowserBody({
-    required this.state,
-    required this.provider,
-    required this.onItemTap,
-  });
+  const _FileBrowserBody({required this.state, required this.provider, required this.onItemTap});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.section,
-        AppSpacing.xxl,
-        AppSpacing.section,
-        AppSpacing.xxl,
-      ),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.section, AppSpacing.xxl, AppSpacing.section, AppSpacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -152,8 +123,7 @@ class _FileBrowserBody extends StatelessWidget {
             onBack: provider.navigateBack,
             onForward: provider.navigateForward,
             onPathSelected: provider.navigateToPath,
-            onSortChanged: (field, ascending) =>
-                provider.setSort(field, ascending: ascending),
+            onSortChanged: (field, ascending) => provider.setSort(field, ascending: ascending),
             onViewModeChanged: provider.setViewMode,
             onRefresh: provider.refresh,
           ),
@@ -170,11 +140,7 @@ class _FileBrowserBody extends StatelessWidget {
         status: AppResultStatus.info,
         title: '尚未配置 OpenList',
         subtitle: state.error ?? '请先在设置中完成连接配置',
-        icon: Icon(
-          Icons.settings_outlined,
-          size: 44,
-          color: AppColors.primary(context),
-        ),
+        icon: Icon(Icons.settings_outlined, size: 44, color: AppColors.primary(context)),
       );
     }
     if (state.isLoading || state.shouldLoadInitialPath) {
@@ -186,19 +152,11 @@ class _FileBrowserBody extends StatelessWidget {
           status: AppResultStatus.empty,
           title: '没有匹配的文件',
           subtitle: '请尝试其他关键词',
-          icon: Icon(
-            Icons.search_off_rounded,
-            size: 44,
-            color: AppColors.textSecondary(context),
-          ),
+          icon: Icon(Icons.search_off_rounded, size: 44, color: AppColors.textSecondary(context)),
         );
       }
       if (state.error != null) {
-        return AppResult(
-          status: AppResultStatus.error,
-          title: '文件加载失败',
-          subtitle: state.error,
-        );
+        return AppResult(status: AppResultStatus.error, title: '文件加载失败', subtitle: state.error);
       }
       return const AppResult(
         status: AppResultStatus.empty,
@@ -216,9 +174,7 @@ class _FileBrowserBody extends StatelessWidget {
       children: [
         Expanded(
           child: GridView.builder(
-            key: PageStorageKey<String>(
-              'file-browser-grid:${state.currentPath}',
-            ),
+            key: PageStorageKey<String>('file-browser-grid:${state.currentPath}'),
             padding: EdgeInsets.zero,
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 138,
@@ -231,9 +187,7 @@ class _FileBrowserBody extends StatelessWidget {
               final item = state.items[index];
               return FileBrowserGridTile(
                 item: item,
-                onTap: item.isDirectory || item.isPlayable
-                    ? () => onItemTap(item)
-                    : null,
+                onTap: item.isDirectory || item.isPlayable ? () => onItemTap(item) : null,
               );
             },
           ),
@@ -250,17 +204,12 @@ class _FileBrowserBody extends StatelessWidget {
       totalItemCount: state.totalItemCount,
       isFiltered: state.hasSearchQuery,
       onItemTap: onItemTap,
-      scrollStorageKey: PageStorageKey<String>(
-        'file-browser-list:${state.currentPath}',
-      ),
+      scrollStorageKey: PageStorageKey<String>('file-browser-list:${state.currentPath}'),
     );
   }
 
-  Widget _buildSummary() => FileBrowserSummary(
-    items: state.items,
-    totalItemCount: state.totalItemCount,
-    isFiltered: state.hasSearchQuery,
-  );
+  Widget _buildSummary() =>
+      FileBrowserSummary(items: state.items, totalItemCount: state.totalItemCount, isFiltered: state.hasSearchQuery);
 }
 
 class _FileBrowserState {

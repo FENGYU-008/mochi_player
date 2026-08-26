@@ -1,11 +1,7 @@
 class TmdbSearchMatcher {
   const TmdbSearchMatcher();
 
-  Map<String, dynamic>? findBest(
-    List<dynamic> results,
-    String query, {
-    required bool isTV,
-  }) {
+  Map<String, dynamic>? findBest(List<dynamic> results, String query, {required bool isTV}) {
     Map<String, dynamic>? best;
     var bestScore = double.negativeInfinity;
     for (final item in results.whereType<Map<String, dynamic>>()) {
@@ -20,15 +16,10 @@ class TmdbSearchMatcher {
 
   double _score(Map<String, dynamic> item, String query, {required bool isTV}) {
     final title = (isTV ? item['name'] : item['title'])?.toString() ?? '';
-    final originalTitle =
-        (isTV ? item['original_name'] : item['original_title'])?.toString() ??
-        '';
+    final originalTitle = (isTV ? item['original_name'] : item['original_title'])?.toString() ?? '';
     final queryKey = _normalize(query);
     final titleScore = _titleSimilarity(queryKey, _normalize(title));
-    final originalTitleScore = _titleSimilarity(
-      queryKey,
-      _normalize(originalTitle),
-    );
+    final originalTitleScore = _titleSimilarity(queryKey, _normalize(originalTitle));
     var score = titleScore > originalTitleScore
         ? titleScore + originalTitleScore * 0.15
         : originalTitleScore + titleScore * 0.15;
@@ -41,12 +32,8 @@ class TmdbSearchMatcher {
     if (query.isEmpty || candidate.isEmpty) return 0;
     if (query == candidate) return 120;
     if (candidate.contains(query) || query.contains(candidate)) {
-      final shortest = query.length < candidate.length
-          ? query.length
-          : candidate.length;
-      final longest = query.length > candidate.length
-          ? query.length
-          : candidate.length;
+      final shortest = query.length < candidate.length ? query.length : candidate.length;
+      final longest = query.length > candidate.length ? query.length : candidate.length;
       final ratio = shortest / longest;
       if (ratio >= 0.65) return 76;
       if (ratio >= 0.4) return 48;
@@ -67,14 +54,10 @@ class TmdbSearchMatcher {
       .trim();
 
   Set<String> _tokenize(String value) {
-    final tokens = value
-        .split(' ')
-        .map((token) => token.trim())
-        .where((token) => token.isNotEmpty);
-    final cjk = RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf]+')
-        .allMatches(value)
-        .map((match) => match.group(0)!)
-        .where((token) => token.isNotEmpty);
+    final tokens = value.split(' ').map((token) => token.trim()).where((token) => token.isNotEmpty);
+    final cjk = RegExp(
+      r'[\u4e00-\u9fff\u3400-\u4dbf]+',
+    ).allMatches(value).map((match) => match.group(0)!).where((token) => token.isNotEmpty);
     return {...tokens, ...cjk};
   }
 }

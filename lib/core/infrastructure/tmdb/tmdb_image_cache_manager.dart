@@ -19,10 +19,7 @@ class TmdbImageCacheManager {
     ),
   );
 
-  static void configure({
-    required String proxyUrl,
-    required bool proxyEnabled,
-  }) {
+  static void configure({required String proxyUrl, required bool proxyEnabled}) {
     _fileService.configure(proxyUrl: proxyUrl, proxyEnabled: proxyEnabled);
   }
 }
@@ -53,19 +50,14 @@ class _TmdbImageFileService extends FileService {
       // The first initialization reaches here before _client exists.
     }
 
-    final proxyConfig = _proxyEnabled
-        ? ProxyConfig.buildHttpProxy(_proxyUrl)
-        : null;
+    final proxyConfig = _proxyEnabled ? ProxyConfig.buildHttpProxy(_proxyUrl) : null;
     _client = HttpClient()
       ..connectionTimeout = const Duration(seconds: 8)
       ..findProxy = (uri) => proxyConfig ?? 'DIRECT';
   }
 
   @override
-  Future<FileServiceResponse> get(
-    String url, {
-    Map<String, String>? headers,
-  }) async {
+  Future<FileServiceResponse> get(String url, {Map<String, String>? headers}) async {
     final uri = Uri.parse(url);
     final request = await _client.getUrl(uri);
     headers?.forEach(request.headers.set);
@@ -75,8 +67,7 @@ class _TmdbImageFileService extends FileService {
 }
 
 class _TmdbImageResponse implements FileServiceResponse {
-  _TmdbImageResponse(this._uri, this._response)
-    : _receivedTime = DateTime.now();
+  _TmdbImageResponse(this._uri, this._response) : _receivedTime = DateTime.now();
 
   final Uri _uri;
   final HttpClientResponse _response;
@@ -86,8 +77,7 @@ class _TmdbImageResponse implements FileServiceResponse {
   Stream<List<int>> get content => _response;
 
   @override
-  int? get contentLength =>
-      _response.contentLength >= 0 ? _response.contentLength : null;
+  int? get contentLength => _response.contentLength >= 0 ? _response.contentLength : null;
 
   @override
   int get statusCode => _response.statusCode;
@@ -95,9 +85,7 @@ class _TmdbImageResponse implements FileServiceResponse {
   @override
   DateTime get validTill {
     var ageDuration = const Duration(days: 7);
-    final cacheControl = _response.headers.value(
-      HttpHeaders.cacheControlHeader,
-    );
+    final cacheControl = _response.headers.value(HttpHeaders.cacheControlHeader);
     if (cacheControl != null) {
       for (final setting in cacheControl.split(',')) {
         final value = setting.trim().toLowerCase();

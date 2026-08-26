@@ -118,9 +118,7 @@ class _AppInputState extends State<AppInput> {
     final primary = AppColors.primary(context);
     final textColor = AppColors.textPrimary(context);
     final inputBackground = AppColors.inputBackground(context);
-    final searchBackground = theme
-        .extension<AppThemeExtension>()!
-        .searchBarColor;
+    final searchBackground = theme.extension<AppThemeExtension>()!.searchBarColor;
     final focusedBorder = primary.withAlpha(isSearch ? 204 : 215);
     final restingBorder = isSearch
         ? Colors.transparent
@@ -133,9 +131,7 @@ class _AppInputState extends State<AppInput> {
         ? inputBackground.withAlpha(0)
         : inputBackground.withAlpha(85);
     final focusedBackground = isSearch ? searchBackground : inputBackground;
-    final borderRadius = BorderRadius.circular(
-      isSearch ? AppRadii.surface : AppRadii.small,
-    );
+    final borderRadius = BorderRadius.circular(isSearch ? AppRadii.surface : AppRadii.small);
 
     return TweenAnimationBuilder<double>(
       tween: Tween(end: widget.enabled && _focusNode.hasFocus ? 1 : 0),
@@ -149,18 +145,10 @@ class _AppInputState extends State<AppInput> {
             clipBehavior: Clip.antiAlias,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Color.lerp(
-                  restingBackground,
-                  focusedBackground,
-                  focusProgress,
-                ),
+                color: Color.lerp(restingBackground, focusedBackground, focusProgress),
                 borderRadius: borderRadius,
                 border: Border.all(
-                  color: Color.lerp(
-                    restingBorder,
-                    focusedBorder,
-                    focusProgress,
-                  )!,
+                  color: Color.lerp(restingBorder, focusedBorder, focusProgress)!,
                   width: isSearch ? 1.5 : 1,
                 ),
               ),
@@ -170,9 +158,7 @@ class _AppInputState extends State<AppInput> {
         );
       },
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: isSearch ? AppSpacing.compact : AppSpacing.sm,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: isSearch ? AppSpacing.compact : AppSpacing.sm),
         child: Row(
           children: [
             if (widget.prefix != null) ...[
@@ -197,15 +183,8 @@ class _AppInputState extends State<AppInput> {
                 padding: EdgeInsets.zero,
                 placeholder: widget.placeholder,
                 placeholderStyle: isSearch
-                    ? TextStyle(
-                        color: theme
-                            .extension<AppThemeExtension>()!
-                            .searchBarHintColor,
-                        fontSize: 14,
-                      )
-                    : AppTypography.formValue.copyWith(
-                        color: AppColors.textSecondary(context),
-                      ),
+                    ? TextStyle(color: theme.extension<AppThemeExtension>()!.searchBarHintColor, fontSize: 14)
+                    : AppTypography.formValue.copyWith(color: AppColors.textSecondary(context)),
                 style: isSearch
                     ? TextStyle(fontSize: 14, color: textColor)
                     : AppTypography.formValue.copyWith(color: textColor),

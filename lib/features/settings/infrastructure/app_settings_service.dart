@@ -29,24 +29,15 @@ class AppSettingsService {
       tmdbApiKey: prefs.getString(_tmdbApiKeyKey) ?? '',
       tmdbApiBaseUrl: prefs.getString(_tmdbApiBaseUrlKey) ?? '',
       tmdbProxyUrl: prefs.getString(_tmdbProxyUrlKey) ?? '',
-      tmdbProxyEnabled:
-          prefs.getBool(_tmdbProxyEnabledKey) ??
-          AppSettings.defaultTmdbProxyEnabled,
-      playbackCacheSizeMb:
-          prefs.getInt(_playbackCacheSizeMbKey) ??
-          AppSettings.defaultPlaybackCacheSizeMb,
+      tmdbProxyEnabled: prefs.getBool(_tmdbProxyEnabledKey) ?? AppSettings.defaultTmdbProxyEnabled,
+      playbackCacheSizeMb: prefs.getInt(_playbackCacheSizeMbKey) ?? AppSettings.defaultPlaybackCacheSizeMb,
       playbackReadaheadSeconds:
-          prefs.getInt(_playbackReadaheadSecondsKey) ??
-          AppSettings.defaultPlaybackReadaheadSeconds,
+          prefs.getInt(_playbackReadaheadSecondsKey) ?? AppSettings.defaultPlaybackReadaheadSeconds,
       enableHardwareAcceleration:
-          prefs.getBool(_enableHardwareAccelerationKey) ??
-          AppSettings.defaultEnableHardwareAcceleration,
+          prefs.getBool(_enableHardwareAccelerationKey) ?? AppSettings.defaultEnableHardwareAcceleration,
       subtitleLanguagePriority:
-          prefs.getString(_subtitleLanguagePriorityKey) ??
-          AppSettings.defaultSubtitleLanguagePriority,
-      subtitleFontSize:
-          prefs.getDouble(_subtitleFontSizeKey) ??
-          AppSettings.defaultSubtitleFontSize,
+          prefs.getString(_subtitleLanguagePriorityKey) ?? AppSettings.defaultSubtitleLanguagePriority,
+      subtitleFontSize: prefs.getDouble(_subtitleFontSizeKey) ?? AppSettings.defaultSubtitleFontSize,
     );
   }
 
@@ -60,16 +51,10 @@ class AppSettingsService {
       tmdbProxyUrl: settings.tmdbProxyUrl.trim(),
       tmdbProxyEnabled: settings.tmdbProxyEnabled,
       playbackCacheSizeMb: settings.playbackCacheSizeMb
-          .clamp(
-            AppSettings.minPlaybackCacheSizeMb,
-            AppSettings.maxPlaybackCacheSizeMb,
-          )
+          .clamp(AppSettings.minPlaybackCacheSizeMb, AppSettings.maxPlaybackCacheSizeMb)
           .toInt(),
       playbackReadaheadSeconds: settings.playbackReadaheadSeconds
-          .clamp(
-            AppSettings.minPlaybackReadaheadSeconds,
-            AppSettings.maxPlaybackReadaheadSeconds,
-          )
+          .clamp(AppSettings.minPlaybackReadaheadSeconds, AppSettings.maxPlaybackReadaheadSeconds)
           .toInt(),
       enableHardwareAcceleration: settings.enableHardwareAcceleration,
       subtitleLanguagePriority: settings.subtitleLanguagePriority.trim(),
@@ -77,38 +62,17 @@ class AppSettingsService {
     );
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_webDavUrlKey, settingsToSave.webDavUrl.trim());
-    await prefs.setString(
-      _webDavUsernameKey,
-      settingsToSave.webDavUsername.trim(),
-    );
+    await prefs.setString(_webDavUsernameKey, settingsToSave.webDavUsername.trim());
     await prefs.setString(_webDavPasswordKey, settingsToSave.webDavPassword);
     await prefs.setString(_tmdbApiKeyKey, settingsToSave.tmdbApiKey.trim());
-    await prefs.setString(
-      _tmdbApiBaseUrlKey,
-      settingsToSave.tmdbApiBaseUrl.trim(),
-    );
+    await prefs.setString(_tmdbApiBaseUrlKey, settingsToSave.tmdbApiBaseUrl.trim());
     await prefs.setString(_tmdbProxyUrlKey, settingsToSave.tmdbProxyUrl);
     await prefs.setBool(_tmdbProxyEnabledKey, settingsToSave.tmdbProxyEnabled);
-    await prefs.setInt(
-      _playbackCacheSizeMbKey,
-      settingsToSave.playbackCacheSizeMb,
-    );
-    await prefs.setInt(
-      _playbackReadaheadSecondsKey,
-      settingsToSave.playbackReadaheadSeconds,
-    );
-    await prefs.setBool(
-      _enableHardwareAccelerationKey,
-      settingsToSave.enableHardwareAcceleration,
-    );
-    await prefs.setString(
-      _subtitleLanguagePriorityKey,
-      settingsToSave.subtitleLanguagePriority,
-    );
-    await prefs.setDouble(
-      _subtitleFontSizeKey,
-      settingsToSave.subtitleFontSize,
-    );
+    await prefs.setInt(_playbackCacheSizeMbKey, settingsToSave.playbackCacheSizeMb);
+    await prefs.setInt(_playbackReadaheadSecondsKey, settingsToSave.playbackReadaheadSeconds);
+    await prefs.setBool(_enableHardwareAccelerationKey, settingsToSave.enableHardwareAcceleration);
+    await prefs.setString(_subtitleLanguagePriorityKey, settingsToSave.subtitleLanguagePriority);
+    await prefs.setDouble(_subtitleFontSizeKey, settingsToSave.subtitleFontSize);
     return settingsToSave;
   }
 }

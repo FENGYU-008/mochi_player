@@ -1,8 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:mochi_player/core/infrastructure/database/database_service.dart';
-import 'package:mochi_player/core/infrastructure/database/entities/entities.dart'
-    as entity;
+import 'package:mochi_player/core/infrastructure/database/entities/entities.dart' as entity;
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
 import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/library/application/media_library_catalog.dart';
@@ -32,8 +31,7 @@ class LibrarySyncController extends ChangeNotifier {
   final TmdbService _tmdbService;
   final MetadataScraper _metadataScraper;
   final WebDavService Function() _webDavServiceFactory;
-  final WebDavMediaScanner Function(WebDavService service)
-  _webDavScannerFactory;
+  final WebDavMediaScanner Function(WebDavService service) _webDavScannerFactory;
   final _logger = Logger(printer: PrettyPrinter(methodCount: 0));
 
   bool _isScanning = false;
@@ -47,6 +45,7 @@ class LibrarySyncController extends ChangeNotifier {
   String? _scrapeCurrentTitle;
 
   bool get isLoading => _isScanning || _isScraping;
+
   String? get error => _error;
 
   double? get scrapeProgress {
@@ -56,9 +55,7 @@ class LibrarySyncController extends ChangeNotifier {
 
   String? get activityMessage {
     if (_isScraping) {
-      final count = _scrapeTotal > 0
-          ? '$_scrapeCompleted/$_scrapeTotal'
-          : '准备中';
+      final count = _scrapeTotal > 0 ? '$_scrapeCompleted/$_scrapeTotal' : '准备中';
       final summary = '已匹配 $_scrapeSuccessCount，失败 $_scrapeFailCount';
       final title = _scrapeCurrentTitle;
       if (title != null && title.isNotEmpty) {
@@ -124,10 +121,7 @@ class LibrarySyncController extends ChangeNotifier {
       }
 
       for (final file in _catalog.mediaFiles) {
-        final parsed = FilenameParser.parse(
-          fileName: file.fileName,
-          filePath: file.path,
-        );
+        final parsed = FilenameParser.parse(fileName: file.fileName, filePath: file.path);
         MediaFileMetadataMapper.updateEntity(file, parsed);
       }
       await _db.saveMediaFiles(_catalog.mediaFiles);
@@ -254,22 +248,14 @@ class LibrarySyncController extends ChangeNotifier {
       removedCount = await _removeMissingMediaFiles(scannedPaths);
     }
 
-    return _LibraryScanResult(
-      newCount: newCount,
-      removedCount: removedCount,
-      hadReadError: scanner.hadReadError,
-    );
+    return _LibraryScanResult(newCount: newCount, removedCount: removedCount, hadReadError: scanner.hadReadError);
   }
 
   Future<int> _removeMissingMediaFiles(Set<String> scannedPaths) async {
-    final staleFiles = _catalog.mediaFiles
-        .where((file) => !scannedPaths.contains(file.path))
-        .toList();
+    final staleFiles = _catalog.mediaFiles.where((file) => !scannedPaths.contains(file.path)).toList();
     if (staleFiles.isEmpty) return 0;
 
-    final removedCount = await _db.deleteMediaFilesByIds(
-      staleFiles.map((file) => file.id).toList(),
-    );
+    final removedCount = await _db.deleteMediaFilesByIds(staleFiles.map((file) => file.id).toList());
     if (removedCount == 0) return 0;
 
     final stalePaths = staleFiles.map((file) => file.path).toSet();
@@ -280,9 +266,7 @@ class LibrarySyncController extends ChangeNotifier {
   }
 
   void _upsertMovie(entity.MovieMetadataEntity movie) {
-    final index = _catalog.movies.indexWhere(
-      (item) => item.tmdbId == movie.tmdbId,
-    );
+    final index = _catalog.movies.indexWhere((item) => item.tmdbId == movie.tmdbId);
     if (index >= 0) {
       _catalog.movies[index] = movie;
     } else {
@@ -291,9 +275,7 @@ class LibrarySyncController extends ChangeNotifier {
   }
 
   void _upsertTVShow(entity.TVShowMetadataEntity show) {
-    final index = _catalog.tvShows.indexWhere(
-      (item) => item.tmdbId == show.tmdbId,
-    );
+    final index = _catalog.tvShows.indexWhere((item) => item.tmdbId == show.tmdbId);
     if (index >= 0) {
       _catalog.tvShows[index] = show;
     } else {
@@ -303,11 +285,7 @@ class LibrarySyncController extends ChangeNotifier {
 }
 
 class _LibraryScanResult {
-  const _LibraryScanResult({
-    required this.newCount,
-    required this.removedCount,
-    required this.hadReadError,
-  });
+  const _LibraryScanResult({required this.newCount, required this.removedCount, required this.hadReadError});
 
   final int newCount;
   final int removedCount;

@@ -1,6 +1,5 @@
 import 'package:mochi_player/core/domain/media/models.dart';
-import 'package:mochi_player/core/infrastructure/database/entities/entities.dart'
-    as entity;
+import 'package:mochi_player/core/infrastructure/database/entities/entities.dart' as entity;
 import 'package:mochi_player/core/infrastructure/database/media_entity_mapper.dart';
 
 /// The single in-memory source of truth for persisted library records.
@@ -18,9 +17,13 @@ class MediaLibraryCatalog {
   int _continueWatchingCount = 0;
 
   int get mediaCatalogRevision => _mediaCatalogRevision;
+
   int get metadataRevision => _metadataRevision;
+
   int get watchProgressRevision => _watchProgressRevision;
+
   int get favoriteRevision => _favoriteRevision;
+
   int get continueWatchingCount => _continueWatchingCount;
 
   void replaceAll({
@@ -62,8 +65,11 @@ class MediaLibraryCatalog {
   }
 
   void markMediaCatalogChanged() => _mediaCatalogRevision++;
+
   void markMetadataChanged() => _metadataRevision++;
+
   void markWatchProgressChanged() => _watchProgressRevision++;
+
   void markFavoriteChanged() => _favoriteRevision++;
 
   void markAllLibraryContentChanged() {

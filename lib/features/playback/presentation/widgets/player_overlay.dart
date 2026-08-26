@@ -19,14 +19,10 @@ class PlayerOverlayLayout {
   }
 
   /// 为左上角的系统窗口按钮预留空间。
-  static double topLeftInset({
-    required TargetPlatform platform,
-    required bool isFullScreen,
-  }) {
+  static double topLeftInset({required TargetPlatform platform, required bool isFullScreen}) {
     if (isFullScreen) return AppSpacing.xxl;
     return switch (platform) {
-      TargetPlatform.macOS ||
-      TargetPlatform.windows => WindowControlsLayout.leadingContentInset,
+      TargetPlatform.macOS || TargetPlatform.windows => WindowControlsLayout.leadingContentInset,
       _ => AppSpacing.xxl,
     };
   }
@@ -43,10 +39,7 @@ abstract final class PlayerOverlayGlass {
 abstract final class PlayerSubtitleSizing {
   static const Size _referenceViewport = Size(1200, 700);
 
-  static double fontSize({
-    required double configuredFontSize,
-    required Size viewportSize,
-  }) {
+  static double fontSize({required double configuredFontSize, required Size viewportSize}) {
     final widthScale = viewportSize.width / _referenceViewport.width;
     final heightScale = viewportSize.height / _referenceViewport.height;
     final viewportScale = widthScale < heightScale ? widthScale : heightScale;
@@ -90,18 +83,12 @@ class _SubtitleAvoidanceLayoutDelegate extends SingleChildLayoutDelegate {
   final Rect? controlBarBounds;
   final bool shouldAvoidControls;
 
-  const _SubtitleAvoidanceLayoutDelegate({
-    required this.controlBarBounds,
-    required this.shouldAvoidControls,
-  });
+  const _SubtitleAvoidanceLayoutDelegate({required this.controlBarBounds, required this.shouldAvoidControls});
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
     return BoxConstraints(
-      maxWidth: (constraints.maxWidth - _horizontalMargin * 2).clamp(
-        0,
-        double.infinity,
-      ),
+      maxWidth: (constraints.maxWidth - _horizontalMargin * 2).clamp(0, double.infinity),
       maxHeight: constraints.maxHeight,
     );
   }
@@ -121,16 +108,13 @@ class _SubtitleAvoidanceLayoutDelegate extends SingleChildLayoutDelegate {
     }
 
     final preferredMinimumY = PlayerOverlayLayout.topBarHeight + AppSpacing.md;
-    final minimumY = bottomPosition < preferredMinimumY
-        ? bottomPosition
-        : preferredMinimumY;
+    final minimumY = bottomPosition < preferredMinimumY ? bottomPosition : preferredMinimumY;
     return Offset(x, y.clamp(minimumY, bottomPosition).toDouble());
   }
 
   @override
   bool shouldRelayout(_SubtitleAvoidanceLayoutDelegate oldDelegate) {
-    return controlBarBounds != oldDelegate.controlBarBounds ||
-        shouldAvoidControls != oldDelegate.shouldAvoidControls;
+    return controlBarBounds != oldDelegate.controlBarBounds || shouldAvoidControls != oldDelegate.shouldAvoidControls;
   }
 }
 
@@ -165,11 +149,7 @@ class PlayerTopBar extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: EdgeInsets.only(
-            left: leftInset,
-            right: AppSpacing.xxl,
-            top: AppSpacing.sm,
-          ),
+          padding: EdgeInsets.only(left: leftInset, right: AppSpacing.xxl, top: AppSpacing.sm),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -194,8 +174,7 @@ class PlayerTopBar extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (secondaryTitle case final value?
-                          when value.isNotEmpty) ...[
+                      if (secondaryTitle case final value? when value.isNotEmpty) ...[
                         const SizedBox(width: AppSpacing.md),
                         Flexible(
                           child: Text(
@@ -239,9 +218,7 @@ class PlayerTopBar extends StatelessWidget {
   }
 }
 
-const _topBarTextShadows = [
-  Shadow(color: Color(0xB3000000), blurRadius: 8, offset: Offset(0, 1)),
-];
+const _topBarTextShadows = [Shadow(color: Color(0xB3000000), blurRadius: 8, offset: Offset(0, 1))];
 
 class _PlayerBackButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -264,13 +241,7 @@ class _PlayerBackButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: radius,
           hoverColor: const Color(0x1FFFFFFF),
-          child: const Center(
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 17,
-            ),
-          ),
+          child: const Center(child: Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 17)),
         ),
       ),
     );
@@ -285,12 +256,7 @@ class PlayerBottomControlBar extends StatefulWidget {
   final Widget controls;
   final ValueChanged<Rect>? onBoundsChanged;
 
-  const PlayerBottomControlBar({
-    super.key,
-    required this.progress,
-    required this.controls,
-    this.onBoundsChanged,
-  });
+  const PlayerBottomControlBar({super.key, required this.progress, required this.controls, this.onBoundsChanged});
 
   @override
   State<PlayerBottomControlBar> createState() => _PlayerBottomControlBarState();
@@ -302,17 +268,9 @@ class _PlayerBottomControlBarState extends State<PlayerBottomControlBar> {
   Rect? _lastReportedBounds;
 
   Offset _clampOffset(Size windowSize, double panelWidth) {
-    final horizontalRoom = ((windowSize.width - panelWidth) / 2 - AppSpacing.md)
-        .clamp(0.0, double.infinity);
-    final upwardRoom =
-        (windowSize.height - PlayerOverlayLayout.topBarHeight - 96).clamp(
-          0.0,
-          double.infinity,
-        );
-    return Offset(
-      _dragOffset.dx.clamp(-horizontalRoom, horizontalRoom),
-      _dragOffset.dy.clamp(-upwardRoom, 0.0),
-    );
+    final horizontalRoom = ((windowSize.width - panelWidth) / 2 - AppSpacing.md).clamp(0.0, double.infinity);
+    final upwardRoom = (windowSize.height - PlayerOverlayLayout.topBarHeight - 96).clamp(0.0, double.infinity);
+    return Offset(_dragOffset.dx.clamp(-horizontalRoom, horizontalRoom), _dragOffset.dy.clamp(-upwardRoom, 0.0));
   }
 
   void _dragBy(DragUpdateDetails details, Size windowSize, double panelWidth) {
@@ -338,9 +296,7 @@ class _PlayerBottomControlBarState extends State<PlayerBottomControlBar> {
   Widget build(BuildContext context) {
     final windowSize = MediaQuery.sizeOf(context);
     final panelWidth = PlayerOverlayLayout.bottomPanelWidth(windowSize.width);
-    final horizontalPadding = windowSize.width <= 1000
-        ? AppSpacing.md
-        : AppSpacing.xl;
+    final horizontalPadding = windowSize.width <= 1000 ? AppSpacing.md : AppSpacing.xl;
     final effectiveOffset = _clampOffset(windowSize, panelWidth);
     _reportBoundsAfterLayout();
     return SizedBox(
@@ -359,9 +315,7 @@ class _PlayerBottomControlBarState extends State<PlayerBottomControlBar> {
                 key: _panelKey,
                 child: AppGlassSurface(
                   key: const ValueKey('player-bottom-control-bar'),
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(AppRadii.large),
-                  ),
+                  borderRadius: const BorderRadius.all(Radius.circular(AppRadii.large)),
                   color: PlayerOverlayGlass.background,
                   borderColor: PlayerOverlayGlass.border,
                   blur: PlayerOverlayGlass.blur,
@@ -371,12 +325,9 @@ class _PlayerBottomControlBarState extends State<PlayerBottomControlBar> {
                         child: MouseRegion(
                           cursor: SystemMouseCursors.move,
                           child: GestureDetector(
-                            key: const ValueKey(
-                              'player-control-bar-drag-surface',
-                            ),
+                            key: const ValueKey('player-control-bar-drag-surface'),
                             behavior: HitTestBehavior.opaque,
-                            onPanUpdate: (details) =>
-                                _dragBy(details, windowSize, panelWidth),
+                            onPanUpdate: (details) => _dragBy(details, windowSize, panelWidth),
                           ),
                         ),
                       ),
@@ -439,31 +390,21 @@ class PlayerMiniControls extends StatelessWidget {
         children: [
           _MiniPlayerControlButton(
             onPressed: onPlayPause,
-            child: Icon(
-              isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
+            child: Icon(isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 2),
           _MiniPlayerControlButton(
             onPressed: onToggleAlwaysOnTop,
             child: Icon(
               isAlwaysOnTop ? Icons.push_pin_rounded : Icons.push_pin_outlined,
-              color: isAlwaysOnTop
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.white70,
+              color: isAlwaysOnTop ? Theme.of(context).colorScheme.primary : Colors.white70,
               size: 16,
             ),
           ),
           const SizedBox(width: 2),
           _MiniPlayerControlButton(
             onPressed: onRestoreWindow,
-            child: const Icon(
-              Icons.open_in_full_rounded,
-              color: Colors.white,
-              size: 16,
-            ),
+            child: const Icon(Icons.open_in_full_rounded, color: Colors.white, size: 16),
           ),
         ],
       ),
@@ -475,10 +416,7 @@ class _MiniPlayerControlButton extends StatelessWidget {
   final Widget child;
   final VoidCallback onPressed;
 
-  const _MiniPlayerControlButton({
-    required this.child,
-    required this.onPressed,
-  });
+  const _MiniPlayerControlButton({required this.child, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -529,15 +467,10 @@ class PlayerMenuButtonSurface extends StatefulWidget {
   final Widget child;
   final double width;
 
-  const PlayerMenuButtonSurface({
-    super.key,
-    required this.child,
-    this.width = PlayerOverlayLayout.controlHeight,
-  });
+  const PlayerMenuButtonSurface({super.key, required this.child, this.width = PlayerOverlayLayout.controlHeight});
 
   @override
-  State<PlayerMenuButtonSurface> createState() =>
-      _PlayerMenuButtonSurfaceState();
+  State<PlayerMenuButtonSurface> createState() => _PlayerMenuButtonSurfaceState();
 }
 
 class _PlayerMenuButtonSurfaceState extends State<PlayerMenuButtonSurface> {
@@ -560,9 +493,7 @@ class _PlayerMenuButtonSurfaceState extends State<PlayerMenuButtonSurface> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Color.lerp(hoverColor.withAlpha(0), hoverColor, progress),
-            borderRadius: const BorderRadius.all(
-              Radius.circular(AppRadii.control),
-            ),
+            borderRadius: const BorderRadius.all(Radius.circular(AppRadii.control)),
           ),
           child: child,
         ),

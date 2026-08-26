@@ -39,31 +39,16 @@ class FileBrowserToolbar extends StatelessWidget {
       children: [
         _ToolbarGroup(
           children: [
-            _ToolbarIconButton(
-              icon: AppIcons.back,
-              tooltip: '后退',
-              onPressed: canGoBack ? onBack : null,
-            ),
-            _ToolbarIconButton(
-              icon: AppIcons.forward,
-              tooltip: '前进',
-              onPressed: canGoForward ? onForward : null,
-            ),
+            _ToolbarIconButton(icon: AppIcons.back, tooltip: '后退', onPressed: canGoBack ? onBack : null),
+            _ToolbarIconButton(icon: AppIcons.forward, tooltip: '前进', onPressed: canGoForward ? onForward : null),
           ],
         ),
         const SizedBox(width: AppSpacing.compact),
         Expanded(
-          child: _FilePathBreadcrumb(
-            path: currentPath,
-            onSelected: onPathSelected,
-          ),
+          child: _FilePathBreadcrumb(path: currentPath, onSelected: onPathSelected),
         ),
         const SizedBox(width: AppSpacing.md),
-        _FileSortButton(
-          field: sortField,
-          ascending: sortAscending,
-          onChanged: onSortChanged,
-        ),
+        _FileSortButton(field: sortField, ascending: sortAscending, onChanged: onSortChanged),
         const SizedBox(width: AppSpacing.compact),
         SizedBox(
           width: _viewModeControlWidth,
@@ -71,28 +56,14 @@ class FileBrowserToolbar extends StatelessWidget {
             value: viewMode,
             onChanged: onViewModeChanged,
             options: const [
-              AppSegmentedOption.icon(
-                value: FileBrowserViewMode.list,
-                label: '列表视图',
-                icon: AppIcons.list,
-              ),
-              AppSegmentedOption.icon(
-                value: FileBrowserViewMode.grid,
-                label: '网格视图',
-                icon: AppIcons.grid,
-              ),
+              AppSegmentedOption.icon(value: FileBrowserViewMode.list, label: '列表视图', icon: AppIcons.list),
+              AppSegmentedOption.icon(value: FileBrowserViewMode.grid, label: '网格视图', icon: AppIcons.grid),
             ],
           ),
         ),
         const SizedBox(width: AppSpacing.compact),
         _ToolbarGroup(
-          children: [
-            _ToolbarIconButton(
-              icon: AppIcons.refresh,
-              tooltip: '刷新目录',
-              onPressed: onRefresh,
-            ),
-          ],
+          children: [_ToolbarIconButton(icon: AppIcons.refresh, tooltip: '刷新目录', onPressed: onRefresh)],
         ),
       ],
     );
@@ -129,13 +100,7 @@ class _FilePathBreadcrumb extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           itemCount: crumbs.length,
           separatorBuilder: (context, index) => Center(
-            child: Text(
-              '/',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary(context).withAlpha(120),
-              ),
-            ),
+            child: Text('/', style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context).withAlpha(120))),
           ),
           itemBuilder: (context, index) {
             final crumb = crumbs[index];
@@ -149,9 +114,7 @@ class _FilePathBreadcrumb extends StatelessWidget {
                 child: Text(
                   crumb.label,
                   style: TextStyle(
-                    color: current
-                        ? AppColors.textPrimary(context)
-                        : AppColors.textSecondary(context),
+                    color: current ? AppColors.textPrimary(context) : AppColors.textSecondary(context),
                     fontSize: 13,
                     fontWeight: current ? FontWeight.w600 : FontWeight.w400,
                   ),
@@ -170,11 +133,7 @@ class _FileSortButton extends StatelessWidget {
   final bool ascending;
   final void Function(FileSortField field, bool ascending) onChanged;
 
-  const _FileSortButton({
-    required this.field,
-    required this.ascending,
-    required this.onChanged,
-  });
+  const _FileSortButton({required this.field, required this.ascending, required this.onChanged});
 
   String get _label => switch (field) {
     FileSortField.name => '名称',
@@ -203,11 +162,7 @@ class _FileSortButton extends StatelessWidget {
                   const SizedBox(width: 7),
                   Text(
                     _label,
-                    style: TextStyle(
-                      color: AppColors.textPrimary(context),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(color: AppColors.textPrimary(context), fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(width: 5),
                   const Icon(AppIcons.chevronDown, size: 13),
@@ -217,8 +172,7 @@ class _FileSortButton extends StatelessWidget {
           ),
           tooltip: '排序：$_label，$_directionLabel',
           selectedValue: field,
-          onSelected: (value) =>
-              onChanged(value, value == field ? !ascending : true),
+          onSelected: (value) => onChanged(value, value == field ? !ascending : true),
           options: const [
             AppDropdownOption(value: FileSortField.name, label: '名称'),
             AppDropdownOption(value: FileSortField.size, label: '大小'),
@@ -265,11 +219,7 @@ class _ToolbarGroup extends StatelessWidget {
 }
 
 class _ToolbarIconButton extends StatelessWidget {
-  const _ToolbarIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
+  const _ToolbarIconButton({required this.icon, required this.tooltip, required this.onPressed});
 
   final IconData icon;
   final String tooltip;
@@ -289,9 +239,7 @@ class _ToolbarIconButton extends StatelessWidget {
         child: Icon(
           icon,
           size: 18,
-          color: onPressed == null
-              ? AppColors.textSecondary(context).withAlpha(90)
-              : AppColors.textPrimary(context),
+          color: onPressed == null ? AppColors.textSecondary(context).withAlpha(90) : AppColors.textPrimary(context),
         ),
       ),
     );

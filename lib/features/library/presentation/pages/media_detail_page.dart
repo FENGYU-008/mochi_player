@@ -58,58 +58,25 @@ class _MediaDetailContent extends StatelessWidget {
 
         if (tvShow != null) ...[
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.page,
-              0,
-              AppSpacing.page,
-              AppSpacing.xxl,
-            ),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, AppSpacing.xxl),
             sliver: EpisodeList(tvShow: tvShow),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.page,
-              0,
-              AppSpacing.page,
-              44,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: CastList(viewModel: viewModel, topPadding: 0),
-            ),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 44),
+            sliver: SliverToBoxAdapter(child: CastList(viewModel: viewModel, topPadding: 0)),
           ),
         ] else ...[
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.page,
-              28,
-              AppSpacing.page,
-              0,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: _MovieMediaInfoSection(viewModel: viewModel),
-            ),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 28, AppSpacing.page, 0),
+            sliver: SliverToBoxAdapter(child: _MovieMediaInfoSection(viewModel: viewModel)),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.page,
-              28,
-              AppSpacing.page,
-              0,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: _OverviewSection(viewModel: viewModel),
-            ),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 28, AppSpacing.page, 0),
+            sliver: SliverToBoxAdapter(child: _OverviewSection(viewModel: viewModel)),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.page,
-              0,
-              AppSpacing.page,
-              44,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: CastList(viewModel: viewModel, topPadding: 20),
-            ),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.page, 0, AppSpacing.page, 44),
+            sliver: SliverToBoxAdapter(child: CastList(viewModel: viewModel, topPadding: 20)),
           ),
         ],
       ],
@@ -126,12 +93,9 @@ class _MovieMediaInfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     context.select<MediaLibraryProvider, (int, int)>(
-      (provider) =>
-          (provider.mediaCatalogRevision, provider.watchProgressRevision),
+      (provider) => (provider.mediaCatalogRevision, provider.watchProgressRevision),
     );
-    final files = context.read<MediaLibraryProvider>().getVersions(
-      viewModel.tmdbId,
-    )..sort(_compareVersions);
+    final files = context.read<MediaLibraryProvider>().getVersions(viewModel.tmdbId)..sort(_compareVersions);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,10 +117,7 @@ class _MovieMediaInfoSection extends StatelessWidget {
               color: AppColors.subtleSurface(context),
               borderRadius: BorderRadius.circular(AppRadii.control),
             ),
-            child: Text(
-              '未找到可播放的本地文件',
-              style: TextStyle(color: theme.textTheme.bodySmall?.color),
-            ),
+            child: Text('未找到可播放的本地文件', style: TextStyle(color: theme.textTheme.bodySmall?.color)),
           )
         else
           Column(
@@ -197,11 +158,7 @@ class _OverviewSection extends StatelessWidget {
         const SizedBox(height: 10),
         Text(
           viewModel.overview,
-          style: TextStyle(
-            fontSize: 14,
-            height: 1.55,
-            color: theme.textTheme.bodyMedium?.color?.withAlpha(220),
-          ),
+          style: TextStyle(fontSize: 14, height: 1.55, color: theme.textTheme.bodyMedium?.color?.withAlpha(220)),
         ),
       ],
     );
@@ -221,21 +178,13 @@ class _SectionTitle extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textTheme.bodyLarge?.color),
         ),
         if (trailing != null) ...[
           const SizedBox(width: 10),
           Text(
             trailing!,
-            style: TextStyle(
-              fontSize: 13,
-              color: theme.textTheme.bodySmall?.color,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 13, color: theme.textTheme.bodySmall?.color, fontWeight: FontWeight.w600),
           ),
         ],
       ],
@@ -248,11 +197,7 @@ class _VersionRow extends StatelessWidget {
   final ThemeData theme;
   final VoidCallback onTap;
 
-  const _VersionRow({
-    required this.file,
-    required this.theme,
-    required this.onTap,
-  });
+  const _VersionRow({required this.file, required this.theme, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -272,16 +217,10 @@ class _VersionRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: theme.colorScheme.primary.withAlpha(46),
-              ),
+              border: Border.all(color: theme.colorScheme.primary.withAlpha(46)),
             ),
             alignment: Alignment.center,
-            child: Icon(
-              AppIcons.video,
-              color: theme.colorScheme.primary,
-              size: 18,
-            ),
+            child: Icon(AppIcons.video, color: theme.colorScheme.primary, size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -292,30 +231,21 @@ class _VersionRow extends StatelessWidget {
                   MediaFilePresentation.playableVersionTitle(file),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   MediaFilePresentation.playableVersionDetails(file),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: theme.textTheme.bodySmall?.color,
-                  ),
+                  style: TextStyle(fontSize: 11, color: theme.textTheme.bodySmall?.color),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   file.fileName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: theme.textTheme.bodySmall?.color?.withAlpha(180),
-                  ),
+                  style: TextStyle(fontSize: 10, color: theme.textTheme.bodySmall?.color?.withAlpha(180)),
                 ),
               ],
             ),

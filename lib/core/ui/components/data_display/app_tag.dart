@@ -30,10 +30,7 @@ class AppTag extends StatelessWidget {
   Widget build(BuildContext context) {
     final usesOverlayAppearance = appearance == AppAppearance.overlay;
     final foreground =
-        foregroundColor ??
-        (usesOverlayAppearance
-            ? Colors.white
-            : AppColors.textPrimary(context).withAlpha(220));
+        foregroundColor ?? (usesOverlayAppearance ? Colors.white : AppColors.textPrimary(context).withAlpha(220));
 
     return Container(
       height: 28,
@@ -41,35 +38,22 @@ class AppTag extends StatelessWidget {
       decoration: BoxDecoration(
         color:
             backgroundColor ??
-            (usesOverlayAppearance
-                ? Colors.white.withAlpha(42)
-                : AppColors.elevatedSurface(context)),
+            (usesOverlayAppearance ? Colors.white.withAlpha(42) : AppColors.elevatedSurface(context)),
         borderRadius: BorderRadius.circular(AppRadii.chip),
         border: outlined
             ? Border.all(
                 color:
-                    borderColor ??
-                    (usesOverlayAppearance
-                        ? Colors.white.withAlpha(44)
-                        : AppColors.separator(context)),
+                    borderColor ?? (usesOverlayAppearance ? Colors.white.withAlpha(44) : AppColors.separator(context)),
               )
             : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            Icon(icon, size: 15, color: foreground),
-            const SizedBox(width: 4),
-          ],
+          if (icon != null) ...[Icon(icon, size: 15, color: foreground), const SizedBox(width: 4)],
           Text(
             text,
-            style: TextStyle(
-              color: foreground,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              height: 1,
-            ),
+            style: TextStyle(color: foreground, fontSize: 12, fontWeight: FontWeight.w800, height: 1),
           ),
         ],
       ),

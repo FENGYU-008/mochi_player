@@ -27,13 +27,7 @@ class MenuPanel extends StatelessWidget {
           color: AppColors.selectMenuSurface(context),
           borderRadius: BorderRadius.circular(AppRadii.control),
           border: Border.all(color: AppColors.selectBorder(context)),
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor,
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: shadowColor, blurRadius: 18, offset: const Offset(0, 8))],
         ),
         child: Padding(
           padding: const EdgeInsets.all(_menuPanelPadding),
@@ -46,11 +40,7 @@ class MenuPanel extends StatelessWidget {
 
 /// Internal interactive option row shared by application-owned menus.
 class MenuOptionRow extends StatefulWidget {
-  const MenuOptionRow({
-    super.key,
-    required this.onPressed,
-    required this.child,
-  });
+  const MenuOptionRow({super.key, required this.onPressed, required this.child});
 
   final VoidCallback? onPressed;
   final Widget child;
@@ -80,9 +70,7 @@ class _MenuOptionRowState extends State<MenuOptionRow> {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           alignment: Alignment.centerLeft,
           decoration: BoxDecoration(
-            color: enabled && _hovered
-                ? AppColors.hoverSurface(context)
-                : Colors.transparent,
+            color: enabled && _hovered ? AppColors.hoverSurface(context) : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadii.small),
           ),
           child: widget.child,
@@ -94,11 +82,7 @@ class _MenuOptionRowState extends State<MenuOptionRow> {
 
 /// Internal pointer-only trigger used by dropdown menus.
 class MenuTriggerArea extends StatefulWidget {
-  const MenuTriggerArea({
-    super.key,
-    required this.onPressed,
-    required this.child,
-  });
+  const MenuTriggerArea({super.key, required this.onPressed, required this.child});
 
   final VoidCallback? onPressed;
   final Widget child;

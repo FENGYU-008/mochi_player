@@ -6,11 +6,7 @@ import 'package:mochi_player/core/ui/theme/app_icons.dart';
 import 'package:mochi_player/core/ui/theme/app_radii.dart';
 
 class AppDropdownOption<T> {
-  const AppDropdownOption({
-    required this.value,
-    required this.label,
-    this.icon,
-  });
+  const AppDropdownOption({required this.value, required this.label, this.icon});
 
   final T value;
   final String label;
@@ -53,21 +49,15 @@ class AppDropdown<T> extends StatelessWidget {
         // trigger's right edge. bottomStart places it directly below the
         // trigger, which is the expected dropdown geometry in an LTR UI.
         alignment: AlignmentDirectional.bottomStart,
-        backgroundColor: WidgetStatePropertyAll(
-          AppColors.selectMenuSurface(context),
-        ),
+        backgroundColor: WidgetStatePropertyAll(AppColors.selectMenuSurface(context)),
         surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
         shadowColor: WidgetStatePropertyAll(shadowColor),
         elevation: const WidgetStatePropertyAll(8),
         padding: const WidgetStatePropertyAll(EdgeInsets.all(6)),
         fixedSize: WidgetStatePropertyAll(Size.fromWidth(menuWidth)),
-        side: WidgetStatePropertyAll(
-          BorderSide(color: AppColors.selectBorder(context)),
-        ),
+        side: WidgetStatePropertyAll(BorderSide(color: AppColors.selectBorder(context))),
         shape: const WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(AppRadii.control)),
-          ),
+          RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(AppRadii.control))),
         ),
       ),
       menuChildren: [
@@ -80,29 +70,19 @@ class AppDropdown<T> extends StatelessWidget {
       ],
       builder: (context, controller, child) {
         final button = MenuTriggerArea(
-          onPressed: _enabled
-              ? () => controller.isOpen ? controller.close() : controller.open()
-              : null,
+          onPressed: _enabled ? () => controller.isOpen ? controller.close() : controller.open() : null,
           child: trigger,
         );
         final resolvedTooltip = tooltip;
         if (resolvedTooltip == null || resolvedTooltip.isEmpty) return button;
-        return Tooltip(
-          message: resolvedTooltip,
-          excludeFromSemantics: true,
-          child: button,
-        );
+        return Tooltip(message: resolvedTooltip, excludeFromSemantics: true, child: button);
       },
     );
   }
 }
 
 class _DropdownOptionRow<T> extends StatelessWidget {
-  const _DropdownOptionRow({
-    required this.option,
-    required this.selected,
-    required this.onPressed,
-  });
+  const _DropdownOptionRow({required this.option, required this.selected, required this.onPressed});
 
   final AppDropdownOption<T> option;
   final bool selected;
@@ -110,9 +90,7 @@ class _DropdownOptionRow<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected
-        ? AppColors.primary(context)
-        : AppColors.textPrimary(context);
+    final foreground = selected ? AppColors.primary(context) : AppColors.textPrimary(context);
     return MenuOptionRow(
       onPressed: () {
         MenuController.maybeOf(context)?.close();
@@ -120,10 +98,7 @@ class _DropdownOptionRow<T> extends StatelessWidget {
       },
       child: Row(
         children: [
-          if (option.icon != null) ...[
-            Icon(option.icon, size: 15, color: foreground),
-            const SizedBox(width: 8),
-          ],
+          if (option.icon != null) ...[Icon(option.icon, size: 15, color: foreground), const SizedBox(width: 8)],
           Expanded(
             child: Text(
               option.label,
@@ -134,8 +109,7 @@ class _DropdownOptionRow<T> extends StatelessWidget {
               ),
             ),
           ),
-          if (selected)
-            Icon(AppIcons.check, size: 14, color: AppColors.primary(context)),
+          if (selected) Icon(AppIcons.check, size: 14, color: AppColors.primary(context)),
         ],
       ),
     );

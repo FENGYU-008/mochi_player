@@ -12,12 +12,7 @@ class FileBrowserList extends StatelessWidget {
   final ValueChanged<FileBrowserEntry> onItemTap;
   final PageStorageKey<String> scrollStorageKey;
 
-  const FileBrowserList({
-    super.key,
-    required this.items,
-    required this.onItemTap,
-    required this.scrollStorageKey,
-  });
+  const FileBrowserList({super.key, required this.items, required this.onItemTap, required this.scrollStorageKey});
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +44,7 @@ class FileBrowserList extends StatelessWidget {
                   height: rowHeight,
                   child: FileBrowserListRow(
                     item: item,
-                    onTap: item.isDirectory || item.isPlayable
-                        ? () => onItemTap(item)
-                        : null,
+                    onTap: item.isDirectory || item.isPlayable ? () => onItemTap(item) : null,
                   ),
                 );
               },
@@ -65,8 +58,7 @@ class FileBrowserList extends StatelessWidget {
 
 class FileBrowserListSection extends StatelessWidget {
   static const double _summarySpace = 34;
-  static const double _minimumListHeight =
-      _summarySpace + FileBrowserList.headerHeight;
+  static const double _minimumListHeight = _summarySpace + FileBrowserList.headerHeight;
 
   final List<FileBrowserEntry> items;
   final int totalItemCount;
@@ -85,8 +77,7 @@ class FileBrowserListSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final naturalHeight =
-        FileBrowserList.headerHeight + items.length * FileBrowserList.rowHeight;
+    final naturalHeight = FileBrowserList.headerHeight + items.length * FileBrowserList.rowHeight;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -94,11 +85,7 @@ class FileBrowserListSection extends StatelessWidget {
           return const SizedBox.shrink();
         }
         if (constraints.maxHeight < _minimumListHeight) {
-          return FileBrowserSummary(
-            items: items,
-            totalItemCount: totalItemCount,
-            isFiltered: isFiltered,
-          );
+          return FileBrowserSummary(items: items, totalItemCount: totalItemCount, isFiltered: isFiltered);
         }
 
         return Column(
@@ -108,19 +95,11 @@ class FileBrowserListSection extends StatelessWidget {
               fit: FlexFit.loose,
               child: SizedBox(
                 height: naturalHeight,
-                child: FileBrowserList(
-                  items: items,
-                  onItemTap: onItemTap,
-                  scrollStorageKey: scrollStorageKey,
-                ),
+                child: FileBrowserList(items: items, onItemTap: onItemTap, scrollStorageKey: scrollStorageKey),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            FileBrowserSummary(
-              items: items,
-              totalItemCount: totalItemCount,
-              isFiltered: isFiltered,
-            ),
+            FileBrowserSummary(items: items, totalItemCount: totalItemCount, isFiltered: isFiltered),
           ],
         );
       },
@@ -133,11 +112,7 @@ class _FileListHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = TextStyle(
-      fontSize: 13,
-      fontWeight: FontWeight.w500,
-      color: AppColors.textSecondary(context),
-    );
+    final style = TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary(context));
     return SizedBox(
       height: FileBrowserList.headerHeight,
       child: Padding(
@@ -161,12 +136,7 @@ class FileBrowserSummary extends StatelessWidget {
   final int totalItemCount;
   final bool isFiltered;
 
-  const FileBrowserSummary({
-    super.key,
-    required this.items,
-    required this.totalItemCount,
-    required this.isFiltered,
-  });
+  const FileBrowserSummary({super.key, required this.items, required this.totalItemCount, required this.isFiltered});
 
   @override
   Widget build(BuildContext context) {

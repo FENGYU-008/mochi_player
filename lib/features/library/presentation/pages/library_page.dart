@@ -48,11 +48,7 @@ class _LibraryPageState extends State<LibraryPage> {
         }
 
         if (snapshot.error != null) {
-          return AppResult(
-            status: AppResultStatus.error,
-            title: '媒体库加载失败',
-            subtitle: snapshot.error,
-          );
+          return AppResult(status: AppResultStatus.error, title: '媒体库加载失败', subtitle: snapshot.error);
         }
 
         final provider = context.read<MediaLibraryProvider>();
@@ -72,11 +68,7 @@ class _LibraryPageState extends State<LibraryPage> {
       case LibraryCategory.series:
         return provider.metadataRevision;
       case LibraryCategory.favorites:
-        return Object.hash(
-          provider.mediaCatalogRevision,
-          provider.metadataRevision,
-          provider.favoriteRevision,
-        );
+        return Object.hash(provider.mediaCatalogRevision, provider.metadataRevision, provider.favoriteRevision);
     }
   }
 
@@ -110,10 +102,7 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildFavoritesGrid(
-    BuildContext context,
-    MediaLibraryProvider provider,
-  ) {
+  Widget _buildFavoritesGrid(BuildContext context, MediaLibraryProvider provider) {
     final items = provider.searchFavorites(widget.searchQuery);
 
     if (items.isEmpty) {
@@ -142,10 +131,7 @@ class _LibraryPageState extends State<LibraryPage> {
     );
   }
 
-  Widget _buildGridView({
-    required int itemCount,
-    required Widget Function(BuildContext, int) itemBuilder,
-  }) {
+  Widget _buildGridView({required int itemCount, required Widget Function(BuildContext, int) itemBuilder}) {
     return MediaPosterGrid<int>(
       items: List.generate(itemCount, (index) => index),
       itemBuilder: (context, index) => itemBuilder(context, index),
@@ -170,11 +156,7 @@ class _LibraryPageSnapshot {
   final String? error;
   final int contentRevision;
 
-  const _LibraryPageSnapshot({
-    required this.showInitialLoading,
-    required this.error,
-    required this.contentRevision,
-  });
+  const _LibraryPageSnapshot({required this.showInitialLoading, required this.error, required this.contentRevision});
 
   @override
   bool operator ==(Object other) {

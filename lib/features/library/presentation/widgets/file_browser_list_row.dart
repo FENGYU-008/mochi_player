@@ -25,11 +25,7 @@ class FileBrowserListRow extends StatelessWidget {
       hoverColor: AppColors.hoverSurface(context),
       child: Row(
         children: [
-          Icon(
-            item.browserIcon,
-            color: item.browserIconColor(context),
-            size: 24,
-          ),
+          Icon(item.browserIcon, color: item.browserIconColor(context), size: 24),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             flex: 5,
@@ -41,20 +37,10 @@ class FileBrowserListRow extends StatelessWidget {
                   item.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: theme.textTheme.bodyMedium!.color,
-                  ),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: theme.textTheme.bodyMedium!.color),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  item.browserTypeLabel,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary(context),
-                  ),
-                ),
+                Text(item.browserTypeLabel, style: TextStyle(fontSize: 11, color: AppColors.textSecondary(context))),
               ],
             ),
           ),
@@ -65,10 +51,7 @@ class FileBrowserListRow extends StatelessWidget {
               item.isDirectory ? '—' : item.browserSizeLabel,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary(context),
-              ),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
             ),
           ),
           Expanded(
@@ -77,10 +60,7 @@ class FileBrowserListRow extends StatelessWidget {
               item.browserModifiedAtLabel,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary(context),
-              ),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary(context)),
             ),
           ),
           const SizedBox(width: AppSpacing.lg),
@@ -90,23 +70,14 @@ class FileBrowserListRow extends StatelessWidget {
               trigger: SizedBox(
                 width: 38,
                 height: 34,
-                child: Icon(
-                  AppIcons.more,
-                  color: AppColors.textSecondary(context),
-                ),
+                child: Icon(AppIcons.more, color: AppColors.textSecondary(context)),
               ),
               tooltip: '更多操作',
               onSelected: _handleAction,
               options: [
                 if (item.isDirectory || item.isPlayable)
-                  AppDropdownOption(
-                    value: _FileBrowserItemAction.open,
-                    label: item.isDirectory ? '打开' : '播放',
-                  ),
-                const AppDropdownOption(
-                  value: _FileBrowserItemAction.copyPath,
-                  label: '复制路径',
-                ),
+                  AppDropdownOption(value: _FileBrowserItemAction.open, label: item.isDirectory ? '打开' : '播放'),
+                const AppDropdownOption(value: _FileBrowserItemAction.copyPath, label: '复制路径'),
               ],
             ),
           ),

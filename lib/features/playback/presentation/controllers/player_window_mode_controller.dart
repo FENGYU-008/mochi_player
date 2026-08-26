@@ -32,7 +32,9 @@ class PlayerWindowModeController extends ChangeNotifier with WindowListener {
   final WindowControlsController windowControlsController;
 
   bool get isFullScreen => _isFullScreen;
+
   bool get isMiniPlayer => _isMiniPlayer;
+
   bool get isMiniPlayerAlwaysOnTop => _isMiniPlayerAlwaysOnTop;
 
   PlayerWindowModeController({required this.windowControlsController}) {
@@ -53,10 +55,9 @@ class PlayerWindowModeController extends ChangeNotifier with WindowListener {
   void toggleMiniPlayer() {
     if (_isDisposed || _miniPlayerTransition != null) return;
 
-    _miniPlayerTransition =
-        (_isMiniPlayer ? _exitMiniPlayer() : _enterMiniPlayer()).whenComplete(
-          () => _miniPlayerTransition = null,
-        );
+    _miniPlayerTransition = (_isMiniPlayer ? _exitMiniPlayer() : _enterMiniPlayer()).whenComplete(
+      () => _miniPlayerTransition = null,
+    );
     unawaited(_miniPlayerTransition);
   }
 
@@ -134,16 +135,10 @@ class PlayerWindowModeController extends ChangeNotifier with WindowListener {
 
     final targetPosition = Offset(
       (currentBounds.right - _miniPlayerSize.width).clamp(0.0, double.infinity),
-      (currentBounds.bottom - _miniPlayerSize.height).clamp(
-        0.0,
-        double.infinity,
-      ),
+      (currentBounds.bottom - _miniPlayerSize.height).clamp(0.0, double.infinity),
     );
     await windowManager.setMinimumSize(_miniPlayerMinimumSize);
-    await windowManager.setBounds(
-      targetPosition & _miniPlayerSize,
-      animate: true,
-    );
+    await windowManager.setBounds(targetPosition & _miniPlayerSize, animate: true);
     await windowManager.setAlwaysOnTop(true);
 
     if (_isDisposed) return;
@@ -202,8 +197,7 @@ class PlayerWindowModeController extends ChangeNotifier with WindowListener {
     if (stateChanged && notify && !_isDisposed) notifyListeners();
 
     await _ensureInitialFullScreenStateCaptured();
-    final shouldRestoreWindow =
-        _playerUsedWindowFullScreen && !_windowWasFullScreenOnOpen;
+    final shouldRestoreWindow = _playerUsedWindowFullScreen && !_windowWasFullScreenOnOpen;
     _playerUsedWindowFullScreen = false;
 
     if (shouldRestoreWindow) {

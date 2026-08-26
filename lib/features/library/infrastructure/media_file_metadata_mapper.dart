@@ -17,11 +17,7 @@ abstract final class MediaFileMetadataMapper {
     return entity;
   }
 
-  static void updateEntity(
-    MediaFileEntity entity,
-    ParsedMediaFilename metadata, {
-    bool preserveExistingTmdbId = true,
-  }) {
+  static void updateEntity(MediaFileEntity entity, ParsedMediaFilename metadata, {bool preserveExistingTmdbId = true}) {
     final previousMediaType = entity.mediaType;
     final parsedMediaType = _mediaType(metadata);
     entity
@@ -40,9 +36,7 @@ abstract final class MediaFileMetadataMapper {
       ..versionLabel = _nonEmpty(metadata.versionLabel);
 
     final parsedTmdbId = _nonEmpty(metadata.tmdbId);
-    final mediaTypeChanged =
-        previousMediaType != StoredMediaType.unknown &&
-        previousMediaType != parsedMediaType;
+    final mediaTypeChanged = previousMediaType != StoredMediaType.unknown && previousMediaType != parsedMediaType;
     if (parsedTmdbId != null || !preserveExistingTmdbId || mediaTypeChanged) {
       entity.tmdbId = parsedTmdbId;
     }

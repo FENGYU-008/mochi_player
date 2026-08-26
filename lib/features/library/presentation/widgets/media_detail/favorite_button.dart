@@ -8,28 +8,16 @@ class FavoriteButton extends StatelessWidget {
   final Color? overrideColor;
   final bool showLabel;
 
-  const FavoriteButton({
-    super.key,
-    required this.tmdbId,
-    this.overrideColor,
-    this.showLabel = false,
-  });
+  const FavoriteButton({super.key, required this.tmdbId, this.overrideColor, this.showLabel = false});
 
   @override
   Widget build(BuildContext context) {
-    final isFavorite = context.select<MediaLibraryProvider, bool>(
-      (provider) => provider.isFavorite(tmdbId),
-    );
+    final isFavorite = context.select<MediaLibraryProvider, bool>((provider) => provider.isFavorite(tmdbId));
     final usesOverlayAppearance = overrideColor != null;
     final favoriteColor = AppColors.favorite(context);
-    final icon = isFavorite
-        ? Icons.favorite_rounded
-        : Icons.favorite_border_rounded;
+    final icon = isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded;
     void toggleFavorite() {
-      context.read<MediaLibraryProvider>().setFavorite(
-        tmdbId,
-        isFavorite: !isFavorite,
-      );
+      context.read<MediaLibraryProvider>().setFavorite(tmdbId, isFavorite: !isFavorite);
     }
 
     if (showLabel) {
@@ -38,9 +26,7 @@ class FavoriteButton extends StatelessWidget {
         icon: icon,
         label: isFavorite ? '已收藏' : '加入收藏',
         variant: AppButtonVariant.secondary,
-        appearance: usesOverlayAppearance
-            ? AppAppearance.overlay
-            : AppAppearance.standard,
+        appearance: usesOverlayAppearance ? AppAppearance.overlay : AppAppearance.standard,
         selected: isFavorite,
         accentColor: favoriteColor,
         size: AppButtonSize.regular,
@@ -52,9 +38,7 @@ class FavoriteButton extends StatelessWidget {
       icon: icon,
       tooltip: isFavorite ? "取消收藏" : "加入收藏",
       selected: isFavorite,
-      appearance: usesOverlayAppearance
-          ? AppAppearance.overlay
-          : AppAppearance.standard,
+      appearance: usesOverlayAppearance ? AppAppearance.overlay : AppAppearance.standard,
       accentColor: favoriteColor,
       size: AppButtonSize.large,
     );

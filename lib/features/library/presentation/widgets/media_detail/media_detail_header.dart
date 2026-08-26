@@ -59,9 +59,7 @@ class MediaDetailHeader extends StatelessWidget {
   }
 
   Widget _buildBackdrop(BuildContext context) {
-    final imageUrl = viewModel.backdropUrl.isNotEmpty
-        ? viewModel.backdropUrl
-        : viewModel.posterUrl;
+    final imageUrl = viewModel.backdropUrl.isNotEmpty ? viewModel.backdropUrl : viewModel.posterUrl;
     if (imageUrl.isEmpty) {
       return const _FallbackBackdrop();
     }
@@ -151,11 +149,7 @@ class _HeaderContent extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (logoUrl != null && logoUrl.isNotEmpty) ...[
-          _LogoImage(
-            logoUrl: logoUrl,
-            fallbackTitle: viewModel.title,
-            compact: compact,
-          ),
+          _LogoImage(logoUrl: logoUrl, fallbackTitle: viewModel.title, compact: compact),
           const SizedBox(height: 14),
         ],
         _MetadataStrip(viewModel: viewModel),
@@ -174,13 +168,7 @@ class _HeaderContent extends StatelessWidget {
               color: Colors.white.withAlpha(225),
               fontSize: 14,
               height: 1.45,
-              shadows: const [
-                Shadow(
-                  offset: Offset(0, 1),
-                  blurRadius: 4,
-                  color: Colors.black54,
-                ),
-              ],
+              shadows: const [Shadow(offset: Offset(0, 1), blurRadius: 4, color: Colors.black54)],
             ),
           ),
         ),
@@ -198,14 +186,9 @@ class _PrimaryActionArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    context.select<MediaLibraryProvider, int>(
-      (provider) => provider.watchProgressRevision,
-    );
+    context.select<MediaLibraryProvider, int>((provider) => provider.watchProgressRevision);
 
-    return _ActionRow(
-      viewModel: viewModel,
-      action: _resolvePrimaryAction(context),
-    );
+    return _ActionRow(viewModel: viewModel, action: _resolvePrimaryAction(context));
   }
 
   _PrimaryPlayAction _resolvePrimaryAction(BuildContext context) {
@@ -213,27 +196,15 @@ class _PrimaryActionArea extends StatelessWidget {
     final files = provider.getVersions(viewModel.tmdbId);
 
     if (viewModel.isTVShow) {
-      final target = EpisodePlaybackTargetResolver.resolveForShowPlayback(
-        files,
-      );
+      final target = EpisodePlaybackTargetResolver.resolveForShowPlayback(files);
       if (target == null) {
-        return const _PrimaryPlayAction(
-          label: '不可播放',
-          detail: '未找到可播放剧集',
-          enabled: false,
-        );
+        return const _PrimaryPlayAction(label: '不可播放', detail: '未找到可播放剧集', enabled: false);
       }
       final verb = target.resumesCurrentEpisode ? '继续' : '播放';
       return _PrimaryPlayAction(
         label: _episodeActionLabel(target.file, verb),
-        detail: target.resumesCurrentEpisode
-            ? _resumeDetail(target.file)
-            : _episodeCountDetail(files),
-        onPressed: () => PlaybackLauncher.playFile(
-          context,
-          target.file,
-          contextTitle: viewModel.title,
-        ),
+        detail: target.resumesCurrentEpisode ? _resumeDetail(target.file) : _episodeCountDetail(files),
+        onPressed: () => PlaybackLauncher.playFile(context, target.file, contextTitle: viewModel.title),
       );
     }
 
@@ -252,9 +223,7 @@ class _PrimaryActionArea extends StatelessWidget {
       return _PrimaryPlayAction(
         label: '播放',
         enabled: files.isNotEmpty,
-        onPressed: files.isEmpty
-            ? null
-            : () => PlaybackLauncher.playMovie(context, movie),
+        onPressed: files.isEmpty ? null : () => PlaybackLauncher.playMovie(context, movie),
       );
     }
 
@@ -262,18 +231,9 @@ class _PrimaryActionArea extends StatelessWidget {
   }
 
   MediaFile? _latestResumeFile(List<MediaFile> files) {
-    final candidates = files
-        .where(
-          (file) =>
-              file.position > 0 && file.progress > 0 && file.progress < 0.95,
-        )
-        .toList();
+    final candidates = files.where((file) => file.position > 0 && file.progress > 0 && file.progress < 0.95).toList();
     if (candidates.isEmpty) return null;
-    candidates.sort(
-      (a, b) => (b.lastWatchedAt ?? DateTime(0)).compareTo(
-        a.lastWatchedAt ?? DateTime(0),
-      ),
-    );
+    candidates.sort((a, b) => (b.lastWatchedAt ?? DateTime(0)).compareTo(a.lastWatchedAt ?? DateTime(0)));
     return candidates.first;
   }
 
@@ -290,9 +250,7 @@ class _PrimaryActionArea extends StatelessWidget {
   }
 
   String _episodeCountDetail(List<MediaFile> files) {
-    final count = files
-        .where((file) => file.mediaType == MediaType.episode)
-        .length;
+    final count = files.where((file) => file.mediaType == MediaType.episode).length;
     return count == 1 ? '1 集可播放' : '$count 集可播放';
   }
 }
@@ -309,12 +267,7 @@ class _MetadataStrip extends StatelessWidget {
       items.add(MediaRatingTag(rating: viewModel.rating));
     }
     if (viewModel.releaseYear != null) {
-      items.add(
-        AppTag(
-          text: '${viewModel.releaseYear}',
-          appearance: AppAppearance.overlay,
-        ),
-      );
+      items.add(AppTag(text: '${viewModel.releaseYear}', appearance: AppAppearance.overlay));
     }
     final certification = viewModel.certification;
     if (certification != null && certification.isNotEmpty) {
@@ -323,21 +276,10 @@ class _MetadataStrip extends StatelessWidget {
     if (viewModel.isTVShow) {
       final seasons = viewModel.seasons.length;
       if (seasons > 0) {
-        items.add(
-          AppTag(
-            text: MediaFormat.seasonCount(seasons),
-            appearance: AppAppearance.overlay,
-          ),
-        );
+        items.add(AppTag(text: MediaFormat.seasonCount(seasons), appearance: AppAppearance.overlay));
       }
     }
-    items.addAll(
-      viewModel.genres
-          .take(3)
-          .map(
-            (genre) => AppTag(text: genre, appearance: AppAppearance.overlay),
-          ),
-    );
+    items.addAll(viewModel.genres.take(3).map((genre) => AppTag(text: genre, appearance: AppAppearance.overlay)));
 
     return Wrap(spacing: 8, runSpacing: 8, children: items);
   }
@@ -362,21 +304,13 @@ class _ActionRow extends StatelessWidget {
           label: action.label,
           size: AppButtonSize.regular,
         ),
-        FavoriteButton(
-          tmdbId: viewModel.tmdbId,
-          overrideColor: Colors.white,
-          showLabel: true,
-        ),
+        FavoriteButton(tmdbId: viewModel.tmdbId, overrideColor: Colors.white, showLabel: true),
         if (action.detail != null)
           Padding(
             padding: const EdgeInsets.only(left: 2),
             child: Text(
               action.detail!,
-              style: TextStyle(
-                color: Colors.white.withAlpha(205),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+              style: TextStyle(color: Colors.white.withAlpha(205), fontSize: 13, fontWeight: FontWeight.w500),
             ),
           ),
       ],
@@ -424,11 +358,7 @@ class _LogoImage extends StatelessWidget {
   final String fallbackTitle;
   final bool compact;
 
-  const _LogoImage({
-    required this.logoUrl,
-    required this.fallbackTitle,
-    required this.compact,
-  });
+  const _LogoImage({required this.logoUrl, required this.fallbackTitle, required this.compact});
 
   @override
   Widget build(BuildContext context) {
@@ -449,8 +379,7 @@ class _LogoImage extends StatelessWidget {
             fadeInDuration: Duration.zero,
             fadeOutDuration: Duration.zero,
             placeholder: (context, url) => const SizedBox.expand(),
-            errorWidget: (context, url, error) =>
-                _TitleText(title: fallbackTitle, compact: compact),
+            errorWidget: (context, url, error) => _TitleText(title: fallbackTitle, compact: compact),
           ),
         ),
       ),
@@ -475,9 +404,7 @@ class _TitleText extends StatelessWidget {
         fontSize: compact ? 30 : 36,
         fontWeight: FontWeight.w800,
         height: 1.08,
-        shadows: const [
-          Shadow(offset: Offset(0, 2), blurRadius: 10, color: Colors.black54),
-        ],
+        shadows: const [Shadow(offset: Offset(0, 2), blurRadius: 10, color: Colors.black54)],
       ),
     );
   }
@@ -489,10 +416,5 @@ class _PrimaryPlayAction {
   final VoidCallback? onPressed;
   final bool enabled;
 
-  const _PrimaryPlayAction({
-    required this.label,
-    this.detail,
-    this.onPressed,
-    this.enabled = true,
-  });
+  const _PrimaryPlayAction({required this.label, this.detail, this.onPressed, this.enabled = true});
 }

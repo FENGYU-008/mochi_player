@@ -37,23 +37,16 @@ class ContinueWatchingResolver {
     }
 
     for (final episodes in episodeGroups.values) {
-      final episodeTarget =
-          EpisodePlaybackTargetResolver.resolveForContinueWatching(episodes);
+      final episodeTarget = EpisodePlaybackTargetResolver.resolveForContinueWatching(episodes);
       if (episodeTarget == null) continue;
       targets.add(
-        ContinueWatchingTarget(
-          file: episodeTarget.file,
-          activityAt: episodeTarget.activityAt ?? DateTime(0),
-        ),
+        ContinueWatchingTarget(file: episodeTarget.file, activityAt: episodeTarget.activityAt ?? DateTime(0)),
       );
     }
 
     for (final versions in movieGroups.values) {
-      final watching =
-          versions
-              .where((file) => file.watchStatus == WatchStatus.watching)
-              .toList()
-            ..sort(_compareActivityDescending);
+      final watching = versions.where((file) => file.watchStatus == WatchStatus.watching).toList()
+        ..sort(_compareActivityDescending);
       if (watching.isNotEmpty) targets.add(_target(watching.first));
     }
 
@@ -62,16 +55,11 @@ class ContinueWatchingResolver {
   }
 
   static ContinueWatchingTarget _target(MediaFile file) {
-    return ContinueWatchingTarget(
-      file: file,
-      activityAt: file.lastWatchedAt ?? DateTime(0),
-    );
+    return ContinueWatchingTarget(file: file, activityAt: file.lastWatchedAt ?? DateTime(0));
   }
 
   static int _compareActivityDescending(MediaFile a, MediaFile b) {
-    return (b.lastWatchedAt ?? DateTime(0)).compareTo(
-      a.lastWatchedAt ?? DateTime(0),
-    );
+    return (b.lastWatchedAt ?? DateTime(0)).compareTo(a.lastWatchedAt ?? DateTime(0));
   }
 
   static String _movieKey(MediaFile file) => file.tmdbId ?? file.path;

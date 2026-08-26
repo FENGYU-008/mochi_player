@@ -13,10 +13,7 @@ class AppFormGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final separator = AppColors.separator(context).withAlpha(105);
-    final background = Color.alphaBlend(
-      AppColors.subtleSurface(context),
-      Theme.of(context).scaffoldBackgroundColor,
-    );
+    final background = Color.alphaBlend(AppColors.subtleSurface(context), Theme.of(context).scaffoldBackgroundColor);
 
     return Container(
       clipBehavior: Clip.antiAlias,

@@ -41,9 +41,7 @@ class _AppClickableAreaState extends State<AppClickableArea> {
     // Keep transparent resting surfaces in the same color space as the hover
     // target. Otherwise ColorTween interpolates from transparent black, which
     // creates a muddy intermediate frame for light hover colors in dark mode.
-    final restingColor = widget.backgroundColor.a == 0
-        ? widget.hoverColor.withAlpha(0)
-        : widget.backgroundColor;
+    final restingColor = widget.backgroundColor.a == 0 ? widget.hoverColor.withAlpha(0) : widget.backgroundColor;
     final hoverColor = widget.backgroundColor.a == 0
         ? widget.hoverColor
         : Color.alphaBlend(widget.hoverColor, widget.backgroundColor);
@@ -88,9 +86,7 @@ class _AppClickableAreaState extends State<AppClickableArea> {
                 decoration: BoxDecoration(
                   color: Color.lerp(restingColor, hoverColor, hoverProgress),
                   borderRadius: widget.borderRadius,
-                  border: borderColor == null
-                      ? null
-                      : Border.all(color: borderColor),
+                  border: borderColor == null ? null : Border.all(color: borderColor),
                 ),
                 child: child,
               ),

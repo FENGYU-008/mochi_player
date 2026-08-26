@@ -47,16 +47,8 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     }
     return AppThemeExtension(
       searchBarColor: Color.lerp(searchBarColor, other.searchBarColor, t)!,
-      searchBarHintColor: Color.lerp(
-        searchBarHintColor,
-        other.searchBarHintColor,
-        t,
-      )!,
-      searchBarIconColor: Color.lerp(
-        searchBarIconColor,
-        other.searchBarIconColor,
-        t,
-      )!,
+      searchBarHintColor: Color.lerp(searchBarHintColor, other.searchBarHintColor, t)!,
+      searchBarIconColor: Color.lerp(searchBarIconColor, other.searchBarIconColor, t)!,
       keyCapColor: Color.lerp(keyCapColor, other.keyCapColor, t)!,
       keyCapTextColor: Color.lerp(keyCapTextColor, other.keyCapTextColor, t)!,
       cardShadowColor: Color.lerp(cardShadowColor, other.cardShadowColor, t)!,

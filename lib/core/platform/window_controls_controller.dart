@@ -20,9 +20,6 @@ class WindowControlsController extends ChangeNotifier {
       notifyListeners();
     }
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.macOS) return;
-    await _nativeChannel.invokeMethod<void>(
-      'setNativeWindowButtonsVisible',
-      !enabled,
-    );
+    await _nativeChannel.invokeMethod<void>('setNativeWindowButtonsVisible', !enabled);
   }
 }

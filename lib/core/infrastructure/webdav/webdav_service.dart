@@ -3,6 +3,7 @@ import 'package:logger/logger.dart';
 
 abstract interface class WebDavFileSystem {
   bool get isInitialized;
+
   Future<List<webdav.File>> readDir(String path);
 }
 
@@ -30,12 +31,7 @@ class WebDavService implements WebDavFileSystem {
   Future<void> init(String url, String username, String password) async {
     final normalizedUrl = _normalizeBaseUrl(url);
     _logger.i("🔌 初始化 WebDAV 连接: $normalizedUrl");
-    _client = webdav.newClient(
-      normalizedUrl,
-      user: username.trim(),
-      password: password,
-      debug: false,
-    );
+    _client = webdav.newClient(normalizedUrl, user: username.trim(), password: password, debug: false);
 
     _client!.setConnectTimeout(10000); // 10秒超时
   }

@@ -1,5 +1,4 @@
-import 'package:mochi_player/core/infrastructure/database/entities/entities.dart'
-    as entity;
+import 'package:mochi_player/core/infrastructure/database/entities/entities.dart' as entity;
 import 'package:mochi_player/core/domain/media/models.dart';
 
 /// Entity ↔ Domain 模型转换器
@@ -53,13 +52,9 @@ class MediaEntityMapper {
 
   // ===== TVShow =====
 
-  static TVShow toTVShow(entity.TVShowMetadataEntity e) =>
-      toTVShowWithSeasons(e, []);
+  static TVShow toTVShow(entity.TVShowMetadataEntity e) => toTVShowWithSeasons(e, []);
 
-  static TVShow toTVShowWithSeasons(
-    entity.TVShowMetadataEntity e,
-    List<Season> seasons,
-  ) => TVShow(
+  static TVShow toTVShowWithSeasons(entity.TVShowMetadataEntity e, List<Season> seasons) => TVShow(
     tmdbId: e.tmdbId,
     title: e.title,
     originalTitle: e.originalTitle,
@@ -80,13 +75,9 @@ class MediaEntityMapper {
 
   // ===== Season =====
 
-  static Season toSeason(entity.SeasonMetadataEntity e) =>
-      toSeasonWithEpisodes(e, []);
+  static Season toSeason(entity.SeasonMetadataEntity e) => toSeasonWithEpisodes(e, []);
 
-  static Season toSeasonWithEpisodes(
-    entity.SeasonMetadataEntity e,
-    List<Episode> episodes,
-  ) => Season(
+  static Season toSeasonWithEpisodes(entity.SeasonMetadataEntity e, List<Episode> episodes) => Season(
     seasonKey: e.seasonKey,
     seasonNumber: e.seasonNumber,
     title: e.title,
@@ -110,12 +101,8 @@ class MediaEntityMapper {
 
   // ===== Artist =====
 
-  static Artist toArtist(entity.ArtistEmbedded e) => Artist(
-    tmdbId: e.tmdbId,
-    name: e.name,
-    character: e.character,
-    profileUrl: e.profileUrl,
-  );
+  static Artist toArtist(entity.ArtistEmbedded e) =>
+      Artist(tmdbId: e.tmdbId, name: e.name, character: e.character, profileUrl: e.profileUrl);
 
   // ===== WatchStatus =====
 

@@ -8,11 +8,9 @@ abstract final class AppRoutePaths {
 
   static String destination(AppDestination destination) => destination.path;
 
-  static String mediaDetail(BuildContext context) =>
-      '${currentDestination(context).path}/media';
+  static String mediaDetail(BuildContext context) => '${currentDestination(context).path}/media';
 
-  static String librarySection(String sectionName) =>
-      '${AppDestination.home.path}/section/$sectionName';
+  static String librarySection(String sectionName) => '${AppDestination.home.path}/section/$sectionName';
 
   static AppDestination currentDestination(BuildContext context) {
     final segments = GoRouterState.of(context).uri.pathSegments;

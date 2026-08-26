@@ -17,11 +17,7 @@ class ContinueWatchingCard extends StatelessWidget {
       rating: item.rating,
       artworkType: MediaArtworkType.backdrop,
       progress: item.file.progress,
-      onTap: () => PlaybackLauncher.playFile(
-        context,
-        item.file,
-        contextTitle: item.playbackContextTitle,
-      ),
+      onTap: () => PlaybackLauncher.playFile(context, item.file, contextTitle: item.playbackContextTitle),
     );
   }
 }

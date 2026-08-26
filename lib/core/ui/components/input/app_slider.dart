@@ -33,10 +33,8 @@ class AppSlider extends StatelessWidget {
   final SemanticFormatterCallback? semanticFormatterCallback;
 
   static const double _thumbRadius = AppControlMetrics.sliderThumbRadius;
-  static const double _hoverThumbRadius =
-      AppControlMetrics.sliderThumbHoverRadius;
-  static const double _tooltipHitRadius =
-      AppControlMetrics.sliderHoverHitRadius;
+  static const double _hoverThumbRadius = AppControlMetrics.sliderThumbHoverRadius;
+  static const double _tooltipHitRadius = AppControlMetrics.sliderHoverHitRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -82,8 +80,7 @@ class AppSlider extends StatelessWidget {
         onChangeStart: onChanged == null ? null : onChangeStart,
         onChanged: onChanged,
         onChangeEnd: onChanged == null ? null : onChangeEnd,
-        semanticFormatterCallback:
-            semanticFormatterCallback ?? tooltipFormatter ?? _formatValue,
+        semanticFormatterCallback: semanticFormatterCallback ?? tooltipFormatter ?? _formatValue,
       ),
     );
   }
@@ -101,8 +98,7 @@ class AppSlider extends StatelessWidget {
 
     final intervalCount = (max - min) / resolvedStep;
     final roundedIntervalCount = intervalCount.round();
-    if (roundedIntervalCount <= 0 ||
-        (intervalCount - roundedIntervalCount).abs() > 1e-9) {
+    if (roundedIntervalCount <= 0 || (intervalCount - roundedIntervalCount).abs() > 1e-9) {
       throw ArgumentError.value(resolvedStep, 'step', '必须能够整除 max - min');
     }
     return roundedIntervalCount;
@@ -110,10 +106,7 @@ class AppSlider extends StatelessWidget {
 
   String _formatValue(double value) {
     if (value == value.roundToDouble()) return value.round().toString();
-    return value
-        .toStringAsFixed(2)
-        .replaceFirst(RegExp(r'0+$'), '')
-        .replaceFirst(RegExp(r'\.$'), '');
+    return value.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
   }
 }
 
@@ -131,44 +124,25 @@ class _SliderTooltipPainter {
     required Color background,
   }) {
     if (opacity == 0) return;
-    final width = (labelPainter.width + 20)
-        .clamp(_minimumWidth, 120.0)
-        .toDouble();
-    final tip = center.translate(
-      0,
-      -AppControlMetrics.sliderThumbHoverRadius -
-          AppControlMetrics.sliderTooltipGap,
-    );
-    final bubbleRect = Rect.fromLTWH(
-      tip.dx - width / 2,
-      tip.dy - _arrowHeight - _height,
-      width,
-      _height,
-    );
+    final width = (labelPainter.width + 20).clamp(_minimumWidth, 120.0).toDouble();
+    final tip = center.translate(0, -AppControlMetrics.sliderThumbHoverRadius - AppControlMetrics.sliderTooltipGap);
+    final bubbleRect = Rect.fromLTWH(tip.dx - width / 2, tip.dy - _arrowHeight - _height, width, _height);
     final bubble = Path()
       ..addRRect(RRect.fromRectAndRadius(bubbleRect, const Radius.circular(8)))
       ..moveTo(tip.dx - _arrowWidth / 2, bubbleRect.bottom)
       ..lineTo(tip.dx + _arrowWidth / 2, bubbleRect.bottom)
       ..lineTo(tip.dx, tip.dy)
       ..close();
-    final bounds = bubbleRect
-        .inflate(16)
-        .expandToInclude(Rect.fromCircle(center: tip, radius: _arrowWidth));
+    final bounds = bubbleRect.inflate(16).expandToInclude(Rect.fromCircle(center: tip, radius: _arrowWidth));
     final needsOpacityLayer = opacity < 1;
     if (needsOpacityLayer) {
-      canvas.saveLayer(
-        bounds,
-        Paint()..color = Colors.white.withValues(alpha: opacity),
-      );
+      canvas.saveLayer(bounds, Paint()..color = Colors.white.withValues(alpha: opacity));
     }
     canvas.drawShadow(bubble, Colors.black.withAlpha(70), 8, true);
     canvas.drawPath(bubble, Paint()..color = background);
     labelPainter.paint(
       canvas,
-      Offset(
-        bubbleRect.center.dx - labelPainter.width / 2,
-        bubbleRect.center.dy - labelPainter.height / 2,
-      ),
+      Offset(bubbleRect.center.dx - labelPainter.width / 2, bubbleRect.center.dy - labelPainter.height / 2),
     );
     if (needsOpacityLayer) canvas.restore();
   }
@@ -236,16 +210,9 @@ class _AppSliderThumbShape extends SliderComponentShape {
   }) {
     final activeColor = sliderTheme.thumbColor ?? Colors.transparent;
     final disabledColor = sliderTheme.disabledThumbColor ?? activeColor;
-    final color = Color.lerp(
-      disabledColor,
-      activeColor,
-      enableAnimation.value,
-    )!;
-    final interactionProgress = Curves.easeOut.transform(
-      activationAnimation.value,
-    );
-    final animatedRadius =
-        radius + (hoverRadius - radius) * interactionProgress;
+    final color = Color.lerp(disabledColor, activeColor, enableAnimation.value)!;
+    final interactionProgress = Curves.easeOut.transform(activationAnimation.value);
+    final animatedRadius = radius + (hoverRadius - radius) * interactionProgress;
     final canvas = context.canvas;
 
     _SliderTooltipPainter.paint(
@@ -257,19 +224,11 @@ class _AppSliderThumbShape extends SliderComponentShape {
     );
 
     if (interactionProgress > 0) {
-      canvas.drawCircle(
-        center,
-        hoverRadius + 4,
-        Paint()..color = color.withAlpha((35 * interactionProgress).round()),
-      );
+      canvas.drawCircle(center, hoverRadius + 4, Paint()..color = color.withAlpha((35 * interactionProgress).round()));
     }
     canvas.drawCircle(center, animatedRadius, Paint()..color = color);
     if (interactionProgress > 0) {
-      canvas.drawCircle(
-        center,
-        (hoverRadius - 4) * interactionProgress,
-        Paint()..color = centerColor,
-      );
+      canvas.drawCircle(center, (hoverRadius - 4) * interactionProgress, Paint()..color = centerColor);
     }
   }
 }

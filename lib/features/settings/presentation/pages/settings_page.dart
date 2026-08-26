@@ -37,8 +37,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _showWebDavPassword = false;
   bool _showTmdbApiKey = false;
   bool _tmdbProxyEnabled = AppSettings.defaultTmdbProxyEnabled;
-  bool _enableHardwareAcceleration =
-      AppSettings.defaultEnableHardwareAcceleration;
+  bool _enableHardwareAcceleration = AppSettings.defaultEnableHardwareAcceleration;
   double _subtitleFontSize = AppSettings.defaultSubtitleFontSize;
   Timer? _saveDebounce;
   bool _autoSaveInFlight = false;
@@ -159,21 +158,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: AppSegmentedControl<ThemeMode>(
                       value: themeMode,
                       options: const [
-                        AppSegmentedOption(
-                          value: ThemeMode.light,
-                          label: '浅色',
-                          icon: Icons.light_mode_outlined,
-                        ),
-                        AppSegmentedOption(
-                          value: ThemeMode.dark,
-                          label: '深色',
-                          icon: Icons.dark_mode_outlined,
-                        ),
-                        AppSegmentedOption(
-                          value: ThemeMode.system,
-                          label: '跟随系统',
-                          icon: Icons.computer_rounded,
-                        ),
+                        AppSegmentedOption(value: ThemeMode.light, label: '浅色', icon: Icons.light_mode_outlined),
+                        AppSegmentedOption(value: ThemeMode.dark, label: '深色', icon: Icons.dark_mode_outlined),
+                        AppSegmentedOption(value: ThemeMode.system, label: '跟随系统', icon: Icons.computer_rounded),
                       ],
                       onChanged: context.read<ThemeProvider>().setTheme,
                     ),
@@ -225,10 +212,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 subtitle: '通过 WebDAV 检查目录访问是否可用',
                 labelWidth: null,
                 expandControl: false,
-                control: _SettingsActionButton(
-                  onPressed: isBusy ? null : _testWebDavConnection,
-                  label: '测试连接',
-                ),
+                control: _SettingsActionButton(onPressed: isBusy ? null : _testWebDavConnection, label: '测试连接'),
               ),
             ],
           ),
@@ -288,10 +272,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 subtitle: '检查当前 TMDB 配置是否可用',
                 labelWidth: null,
                 expandControl: false,
-                control: _SettingsActionButton(
-                  onPressed: isBusy ? null : _testTmdbConnection,
-                  label: '测试连接',
-                ),
+                control: _SettingsActionButton(onPressed: isBusy ? null : _testTmdbConnection, label: '测试连接'),
               ),
             ],
           ),
@@ -329,10 +310,7 @@ class _SettingsPageState extends State<SettingsPage> {
               _scheduleAutoSave();
             },
           ),
-          SettingsTextField(
-            controller: _subtitleLanguagePriorityController,
-            label: '默认字幕语言',
-          ),
+          SettingsTextField(controller: _subtitleLanguagePriorityController, label: '默认字幕语言'),
           SettingsSliderItem(
             label: '字幕大小',
             value: _subtitleFontSize,
@@ -400,12 +378,9 @@ class _SettingsPageState extends State<SettingsPage> {
     if (applyRuntime) _runtimeApplyPending = true;
 
     _saveDebounce?.cancel();
-    _saveDebounce = Timer(
-      immediate ? Duration.zero : const Duration(milliseconds: 450),
-      () {
-        unawaited(_autoSaveSettings());
-      },
-    );
+    _saveDebounce = Timer(immediate ? Duration.zero : const Duration(milliseconds: 450), () {
+      unawaited(_autoSaveSettings());
+    });
   }
 
   void _commitNetworkSettings() {
@@ -424,21 +399,12 @@ class _SettingsPageState extends State<SettingsPage> {
     _runtimeApplyPending = false;
     try {
       final settingsProvider = context.read<AppSettingsProvider>();
-      final previousRuntimeSettings =
-          settingsProvider.appliedRuntimeSettings ?? settingsProvider.settings;
-      await _persistSettings(
-        applyRuntime: shouldApplyRuntime,
-        syncControllers: false,
-      );
+      final previousRuntimeSettings = settingsProvider.appliedRuntimeSettings ?? settingsProvider.settings;
+      await _persistSettings(applyRuntime: shouldApplyRuntime, syncControllers: false);
       if (mounted && settingsProvider.error == null) {
         final currentSettings = settingsProvider.settings;
         if (shouldApplyRuntime) {
-          unawaited(
-            _refreshAfterRuntimeSettingsApplied(
-              previousRuntimeSettings,
-              currentSettings,
-            ),
-          );
+          unawaited(_refreshAfterRuntimeSettingsApplied(previousRuntimeSettings, currentSettings));
         }
       }
     } finally {
@@ -484,8 +450,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final confirmed = await AppModal.confirm(
       context: context,
       title: '补全媒体库元数据？',
-      message:
-          '这会先同步 WebDAV 根目录，移除已不存在的本地记录，然后只为缺少元数据的文件请求 TMDB。已有匹配结果、播放进度和收藏会保留。',
+      message: '这会先同步 WebDAV 根目录，移除已不存在的本地记录，然后只为缺少元数据的文件请求 TMDB。已有匹配结果、播放进度和收藏会保留。',
       confirmLabel: '开始补全',
       icon: Icons.manage_search_rounded,
     );
@@ -534,10 +499,7 @@ class _SettingsPageState extends State<SettingsPage> {
     AppMessage.success('媒体库已清空');
   }
 
-  Future<bool> _persistSettings({
-    bool applyRuntime = false,
-    bool syncControllers = true,
-  }) async {
+  Future<bool> _persistSettings({bool applyRuntime = false, bool syncControllers = true}) async {
     final settingsProvider = context.read<AppSettingsProvider>();
 
     await settingsProvider.saveSettings(
@@ -548,10 +510,7 @@ class _SettingsPageState extends State<SettingsPage> {
       tmdbApiBaseUrl: _tmdbApiBaseUrlController.text,
       tmdbProxyUrl: _tmdbProxyUrlController.text,
       tmdbProxyEnabled: _tmdbProxyEnabled,
-      playbackCacheSizeMb: _parseIntField(
-        _playbackCacheSizeMbController,
-        AppSettings.defaultPlaybackCacheSizeMb,
-      ),
+      playbackCacheSizeMb: _parseIntField(_playbackCacheSizeMbController, AppSettings.defaultPlaybackCacheSizeMb),
       playbackReadaheadSeconds: _parseIntField(
         _playbackReadaheadSecondsController,
         AppSettings.defaultPlaybackReadaheadSeconds,
@@ -574,10 +533,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return true;
   }
 
-  Future<void> _refreshAfterRuntimeSettingsApplied(
-    AppSettings previousSettings,
-    AppSettings currentSettings,
-  ) async {
+  Future<void> _refreshAfterRuntimeSettingsApplied(AppSettings previousSettings, AppSettings currentSettings) async {
     final webDavChanged =
         previousSettings.webDavUrl != currentSettings.webDavUrl ||
         previousSettings.webDavUsername != currentSettings.webDavUsername ||
@@ -590,13 +546,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
     if (!mounted) return;
 
-    if (webDavChanged &&
-        (previousSettings.hasWebDavConfig || currentSettings.hasWebDavConfig)) {
+    if (webDavChanged && (previousSettings.hasWebDavConfig || currentSettings.hasWebDavConfig)) {
       await context.read<FileBrowserProvider>().fetchFiles('/');
     }
-    if (tmdbChanged &&
-        mounted &&
-        (previousSettings.hasTmdbApiKey || currentSettings.hasTmdbApiKey)) {
+    if (tmdbChanged && mounted && (previousSettings.hasTmdbApiKey || currentSettings.hasTmdbApiKey)) {
       await context.read<TrendingMediaProvider>().fetch();
     }
   }
@@ -605,37 +558,16 @@ class _SettingsPageState extends State<SettingsPage> {
     _isSyncingControllers = true;
     try {
       _setControllerText(_webDavUrlController, settingsProvider.webDavUrl);
-      _setControllerText(
-        _webDavUsernameController,
-        settingsProvider.webDavUsername,
-      );
-      _setControllerText(
-        _webDavPasswordController,
-        settingsProvider.webDavPassword,
-      );
+      _setControllerText(_webDavUsernameController, settingsProvider.webDavUsername);
+      _setControllerText(_webDavPasswordController, settingsProvider.webDavPassword);
       _setControllerText(_tmdbApiKeyController, settingsProvider.tmdbApiKey);
-      _setControllerText(
-        _tmdbApiBaseUrlController,
-        settingsProvider.tmdbApiBaseUrl,
-      );
-      _setControllerText(
-        _tmdbProxyUrlController,
-        settingsProvider.tmdbProxyUrl,
-      );
+      _setControllerText(_tmdbApiBaseUrlController, settingsProvider.tmdbApiBaseUrl);
+      _setControllerText(_tmdbProxyUrlController, settingsProvider.tmdbProxyUrl);
       _tmdbProxyEnabled = settingsProvider.tmdbProxyEnabled;
-      _setControllerText(
-        _playbackCacheSizeMbController,
-        settingsProvider.playbackCacheSizeMb.toString(),
-      );
-      _setControllerText(
-        _playbackReadaheadSecondsController,
-        settingsProvider.playbackReadaheadSeconds.toString(),
-      );
+      _setControllerText(_playbackCacheSizeMbController, settingsProvider.playbackCacheSizeMb.toString());
+      _setControllerText(_playbackReadaheadSecondsController, settingsProvider.playbackReadaheadSeconds.toString());
       _enableHardwareAcceleration = settingsProvider.enableHardwareAcceleration;
-      _setControllerText(
-        _subtitleLanguagePriorityController,
-        settingsProvider.subtitleLanguagePriority,
-      );
+      _setControllerText(_subtitleLanguagePriorityController, settingsProvider.subtitleLanguagePriority);
       _subtitleFontSize = settingsProvider.subtitleFontSize;
     } finally {
       _isSyncingControllers = false;

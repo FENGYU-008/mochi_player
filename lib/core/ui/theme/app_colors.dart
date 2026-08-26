@@ -78,48 +78,25 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
   }
 
   @override
-  AppColorSchemeExtension lerp(
-    covariant AppColorSchemeExtension? other,
-    double t,
-  ) {
+  AppColorSchemeExtension lerp(covariant AppColorSchemeExtension? other, double t) {
     if (other == null) return this;
     return AppColorSchemeExtension(
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
       separator: Color.lerp(separator, other.separator, t)!,
-      sidebarBackground: Color.lerp(
-        sidebarBackground,
-        other.sidebarBackground,
-        t,
-      )!,
+      sidebarBackground: Color.lerp(sidebarBackground, other.sidebarBackground, t)!,
       elevatedSurface: Color.lerp(elevatedSurface, other.elevatedSurface, t)!,
       subtleSurface: Color.lerp(subtleSurface, other.subtleSurface, t)!,
       hoverSurface: Color.lerp(hoverSurface, other.hoverSurface, t)!,
       selectedSurface: Color.lerp(selectedSurface, other.selectedSurface, t)!,
       inputBackground: Color.lerp(inputBackground, other.inputBackground, t)!,
-      headerBackground: Color.lerp(
-        headerBackground,
-        other.headerBackground,
-        t,
-      )!,
+      headerBackground: Color.lerp(headerBackground, other.headerBackground, t)!,
       activitySurface: Color.lerp(activitySurface, other.activitySurface, t)!,
       modalSurface: Color.lerp(modalSurface, other.modalSurface, t)!,
-      selectMenuSurface: Color.lerp(
-        selectMenuSurface,
-        other.selectMenuSurface,
-        t,
-      )!,
-      selectControlSurface: Color.lerp(
-        selectControlSurface,
-        other.selectControlSurface,
-        t,
-      )!,
+      selectMenuSurface: Color.lerp(selectMenuSurface, other.selectMenuSurface, t)!,
+      selectControlSurface: Color.lerp(selectControlSurface, other.selectControlSurface, t)!,
       selectBorder: Color.lerp(selectBorder, other.selectBorder, t)!,
-      mediaHoverOverlay: Color.lerp(
-        mediaHoverOverlay,
-        other.mediaHoverOverlay,
-        t,
-      )!,
+      mediaHoverOverlay: Color.lerp(mediaHoverOverlay, other.mediaHoverOverlay, t)!,
     );
   }
 }
@@ -140,9 +117,7 @@ class AppColors {
   }
 
   static Color favorite(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark
-        ? favoriteDark
-        : favoriteLight;
+    return Theme.of(context).brightness == Brightness.dark ? favoriteDark : favoriteLight;
   }
 
   static Color textPrimary(BuildContext context) {
@@ -173,30 +148,21 @@ class AppColors {
     return _scheme(context).selectedSurface;
   }
 
-  static Color subtleSurface(BuildContext context) =>
-      _scheme(context).subtleSurface;
+  static Color subtleSurface(BuildContext context) => _scheme(context).subtleSurface;
 
-  static Color inputBackground(BuildContext context) =>
-      _scheme(context).inputBackground;
+  static Color inputBackground(BuildContext context) => _scheme(context).inputBackground;
 
-  static Color headerBackground(BuildContext context) =>
-      _scheme(context).headerBackground;
+  static Color headerBackground(BuildContext context) => _scheme(context).headerBackground;
 
-  static Color activitySurface(BuildContext context) =>
-      _scheme(context).activitySurface;
+  static Color activitySurface(BuildContext context) => _scheme(context).activitySurface;
 
-  static Color modalSurface(BuildContext context) =>
-      _scheme(context).modalSurface;
+  static Color modalSurface(BuildContext context) => _scheme(context).modalSurface;
 
-  static Color selectMenuSurface(BuildContext context) =>
-      _scheme(context).selectMenuSurface;
+  static Color selectMenuSurface(BuildContext context) => _scheme(context).selectMenuSurface;
 
-  static Color selectControlSurface(BuildContext context) =>
-      _scheme(context).selectControlSurface;
+  static Color selectControlSurface(BuildContext context) => _scheme(context).selectControlSurface;
 
-  static Color selectBorder(BuildContext context) =>
-      _scheme(context).selectBorder;
+  static Color selectBorder(BuildContext context) => _scheme(context).selectBorder;
 
-  static Color mediaHoverOverlay(BuildContext context) =>
-      _scheme(context).mediaHoverOverlay;
+  static Color mediaHoverOverlay(BuildContext context) => _scheme(context).mediaHoverOverlay;
 }

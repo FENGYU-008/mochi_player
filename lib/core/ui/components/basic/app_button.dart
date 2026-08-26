@@ -78,9 +78,7 @@ class _AppButtonState extends State<AppButton> {
       onTap: _enabled ? widget.onPressed : null,
       child: FocusableActionDetector(
         enabled: _enabled,
-        mouseCursor: _enabled
-            ? SystemMouseCursors.click
-            : SystemMouseCursors.basic,
+        mouseCursor: _enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
         onShowHoverHighlight: (value) => setState(() => _isHovering = value),
         onShowFocusHighlight: (value) => setState(() => _isFocused = value),
         shortcuts: const {
@@ -98,9 +96,7 @@ class _AppButtonState extends State<AppButton> {
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _enabled ? widget.onPressed : null,
-          child: widget._iconOnly
-              ? _buildIconButton(context)
-              : _buildLabeledButton(context),
+          child: widget._iconOnly ? _buildIconButton(context) : _buildLabeledButton(context),
         ),
       ),
     );
@@ -113,9 +109,7 @@ class _AppButtonState extends State<AppButton> {
   Widget _buildLabeledButton(BuildContext context) {
     final isPrimary = widget.variant == AppButtonVariant.primary;
     final metrics = _AppButtonMetrics.forSize(widget.size);
-    final actionColor = widget.destructive
-        ? Colors.redAccent
-        : widget.accentColor ?? AppColors.primary(context);
+    final actionColor = widget.destructive ? Colors.redAccent : widget.accentColor ?? AppColors.primary(context);
     final adaptiveSurface = AppColors.elevatedSurface(context);
     final palette = _AppButtonPalette.resolve(
       context: context,
@@ -126,10 +120,7 @@ class _AppButtonState extends State<AppButton> {
       isOverlay: widget.appearance == AppAppearance.overlay,
       isSelected: widget.selected,
       adaptiveSurface: adaptiveSurface,
-      adaptiveHoverSurface: Color.alphaBlend(
-        AppColors.hoverSurface(context),
-        adaptiveSurface,
-      ),
+      adaptiveHoverSurface: Color.alphaBlend(AppColors.hoverSurface(context), adaptiveSurface),
     );
 
     return AnimatedOpacity(
@@ -142,31 +133,17 @@ class _AppButtonState extends State<AppButton> {
         builder: (context, hoverProgress, child) {
           return Container(
             height: metrics.buttonHeight,
-            padding: EdgeInsets.symmetric(
-              horizontal: metrics.horizontalPadding,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: metrics.horizontalPadding),
             decoration: BoxDecoration(
               color: _enabled
-                  ? Color.lerp(
-                      palette.restingBackground,
-                      palette.hoverBackground,
-                      hoverProgress,
-                    )
+                  ? Color.lerp(palette.restingBackground, palette.hoverBackground, hoverProgress)
                   : palette.disabledBackground,
               borderRadius: BorderRadius.circular(metrics.borderRadius),
-              border: Border.all(
-                color: Color.lerp(
-                  palette.restingBorder,
-                  palette.hoverBorder,
-                  hoverProgress,
-                )!,
-              ),
+              border: Border.all(color: Color.lerp(palette.restingBorder, palette.hoverBorder, hoverProgress)!),
               boxShadow: isPrimary && _enabled
                   ? [
                       BoxShadow(
-                        color: actionColor.withAlpha(
-                          (46 + (32 * hoverProgress)).round(),
-                        ),
+                        color: actionColor.withAlpha((46 + (32 * hoverProgress)).round()),
                         blurRadius: 12 + (6 * hoverProgress),
                         offset: const Offset(0, 6),
                       ),
@@ -184,10 +161,7 @@ class _AppButtonState extends State<AppButton> {
               SizedBox(
                 width: metrics.iconSize,
                 height: metrics.iconSize,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: palette.foreground,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2, color: palette.foreground),
               )
             else if (widget._leadingIcon != null)
               Icon(
@@ -195,12 +169,8 @@ class _AppButtonState extends State<AppButton> {
                 size: metrics.iconSize,
                 color: widget.selected ? actionColor : palette.foreground,
               ),
-            if (widget.busy || widget._leadingIcon != null)
-              const SizedBox(width: AppSpacing.xs),
-            Text(
-              widget.label,
-              style: metrics.labelStyle.copyWith(color: palette.foreground),
-            ),
+            if (widget.busy || widget._leadingIcon != null) const SizedBox(width: AppSpacing.xs),
+            Text(widget.label, style: metrics.labelStyle.copyWith(color: palette.foreground)),
           ],
         ),
       ),
@@ -244,11 +214,7 @@ class _AppButtonState extends State<AppButton> {
       duration: const Duration(milliseconds: 140),
       curve: Curves.easeOut,
       builder: (context, hoverProgress, child) {
-        final background = Color.lerp(
-          restingBackground,
-          hoverBackground,
-          hoverProgress,
-        )!;
+        final background = Color.lerp(restingBackground, hoverBackground, hoverProgress)!;
         return Container(
           width: metrics.iconButtonSize,
           height: metrics.iconButtonSize,
@@ -297,11 +263,7 @@ class _AppButtonMetrics {
       iconSize: 19,
       horizontalPadding: AppSpacing.xl,
       borderRadius: AppRadii.surface,
-      labelStyle: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
-        height: 1,
-      ),
+      labelStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, height: 1),
     ),
     AppButtonSize.large => const _AppButtonMetrics(
       buttonHeight: 44,
@@ -309,11 +271,7 @@ class _AppButtonMetrics {
       iconSize: 22,
       horizontalPadding: AppSpacing.xl,
       borderRadius: AppRadii.surface,
-      labelStyle: TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
-        height: 1,
-      ),
+      labelStyle: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, height: 1),
     ),
   };
 }

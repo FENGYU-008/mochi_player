@@ -62,8 +62,7 @@ abstract final class AppModal {
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: maxWidth,
-                maxHeight:
-                    MediaQuery.sizeOf(dialogContext).height * maxHeightFactor,
+                maxHeight: MediaQuery.sizeOf(dialogContext).height * maxHeightFactor,
               ),
               child: _ModalCard(
                 title: title,
@@ -101,10 +100,7 @@ abstract final class AppModal {
               ),
             ),
             ScaleTransition(
-              scale: Tween<double>(
-                begin: 0.97,
-                end: 1,
-              ).animate(curvedAnimation),
+              scale: Tween<double>(begin: 0.97, end: 1).animate(curvedAnimation),
               child: FadeTransition(opacity: curvedAnimation, child: child),
             ),
           ],
@@ -150,23 +146,12 @@ class _ModalCard extends StatelessWidget {
         color: AppColors.modalSurface(context),
         borderRadius: borderRadius,
         border: Border.all(color: AppColors.separator(context)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(28),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withAlpha(28), blurRadius: 24, offset: const Offset(0, 10))],
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xxl,
-            AppSpacing.xl,
-            AppSpacing.xxl,
-            AppSpacing.xl,
-          ),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.xxl, AppSpacing.xl, AppSpacing.xxl, AppSpacing.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,11 +199,7 @@ class _ModalTitle extends StatelessWidget {
   final IconData? icon;
   final Color accent;
 
-  const _ModalTitle({
-    required this.title,
-    required this.icon,
-    required this.accent,
-  });
+  const _ModalTitle({required this.title, required this.icon, required this.accent});
 
   @override
   Widget build(BuildContext context) {
@@ -228,10 +209,7 @@ class _ModalTitle extends StatelessWidget {
           Container(
             width: 30,
             height: 30,
-            decoration: BoxDecoration(
-              color: accent.withAlpha(24),
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: accent.withAlpha(24), shape: BoxShape.circle),
             alignment: Alignment.center,
             child: Icon(icon, size: 17, color: accent),
           ),

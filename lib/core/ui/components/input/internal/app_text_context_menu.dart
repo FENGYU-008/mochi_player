@@ -4,11 +4,7 @@ import 'package:mochi_player/core/ui/components/overlay/internal/menu_parts.dart
 
 /// Internal adapter from Flutter text-editing actions to the application menu.
 class AppTextContextMenu extends StatelessWidget {
-  const AppTextContextMenu({
-    super.key,
-    required this.anchors,
-    required this.buttonItems,
-  });
+  const AppTextContextMenu({super.key, required this.anchors, required this.buttonItems});
 
   static const _screenMargin = 8.0;
   static const _menuWidth = 136.0;
@@ -16,10 +12,7 @@ class AppTextContextMenu extends StatelessWidget {
   final TextSelectionToolbarAnchors anchors;
   final List<ContextMenuButtonItem> buttonItems;
 
-  static Widget buildForEditableText(
-    BuildContext context,
-    EditableTextState editableTextState,
-  ) {
+  static Widget buildForEditableText(BuildContext context, EditableTextState editableTextState) {
     return AppTextContextMenu(
       anchors: editableTextState.contextMenuAnchors,
       buttonItems: editableTextState.contextMenuButtonItems,
@@ -31,25 +24,14 @@ class AppTextContextMenu extends StatelessWidget {
     final topPadding = MediaQuery.paddingOf(context).top + _screenMargin;
     final localAdjustment = Offset(_screenMargin, topPadding);
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        _screenMargin,
-        topPadding,
-        _screenMargin,
-        _screenMargin,
-      ),
+      padding: EdgeInsets.fromLTRB(_screenMargin, topPadding, _screenMargin, _screenMargin),
       child: CustomSingleChildLayout(
-        delegate: DesktopTextSelectionToolbarLayoutDelegate(
-          anchor: anchors.primaryAnchor - localAdjustment,
-        ),
+        delegate: DesktopTextSelectionToolbarLayoutDelegate(anchor: anchors.primaryAnchor - localAdjustment),
         child: SizedBox(
           width: _menuWidth,
           child: MenuPanel(
             children: [
-              for (final item in buttonItems)
-                MenuOptionRow(
-                  onPressed: item.onPressed,
-                  child: Text(_labelFor(item)),
-                ),
+              for (final item in buttonItems) MenuOptionRow(onPressed: item.onPressed, child: Text(_labelFor(item))),
             ],
           ),
         ),

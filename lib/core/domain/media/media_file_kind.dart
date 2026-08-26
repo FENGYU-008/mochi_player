@@ -3,20 +3,7 @@ enum MediaFileKind { directory, video, other }
 class MediaFileKindResolver {
   const MediaFileKindResolver._();
 
-  static const videoExtensions = {
-    'mp4',
-    'mkv',
-    'avi',
-    'mov',
-    'wmv',
-    'flv',
-    'webm',
-    'ts',
-    'm2ts',
-    'mpg',
-    'mpeg',
-    'm4v',
-  };
+  static const videoExtensions = {'mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', 'ts', 'm2ts', 'mpg', 'mpeg', 'm4v'};
 
   static MediaFileKind resolve(String fileName, {bool isDirectory = false}) {
     if (isDirectory) return MediaFileKind.directory;

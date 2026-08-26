@@ -35,8 +35,7 @@ class PlayerPopupMenuButton extends StatefulWidget {
   State<PlayerPopupMenuButton> createState() => _PlayerPopupMenuButtonState();
 }
 
-class _PlayerPopupMenuButtonState extends State<PlayerPopupMenuButton>
-    with SingleTickerProviderStateMixin {
+class _PlayerPopupMenuButtonState extends State<PlayerPopupMenuButton> with SingleTickerProviderStateMixin {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _entry;
   bool _isClosing = false;
@@ -116,10 +115,7 @@ class _PlayerPopupMenuButtonState extends State<PlayerPopupMenuButton>
                 child: ScaleTransition(
                   scale: _scale,
                   alignment: Alignment.bottomCenter,
-                  child: SizedBox(
-                    width: widget.menuWidth,
-                    child: widget.menuBuilder(overlayContext, _closeMenu),
-                  ),
+                  child: SizedBox(width: widget.menuWidth, child: widget.menuBuilder(overlayContext, _closeMenu)),
                 ),
               ),
             ),
@@ -148,11 +144,7 @@ class _PlayerPopupMenuButtonState extends State<PlayerPopupMenuButton>
   Widget build(BuildContext context) {
     return CompositedTransformTarget(
       link: _layerLink,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: _toggleMenu,
-        child: widget.child,
-      ),
+      child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: _toggleMenu, child: widget.child),
     );
   }
 }
@@ -162,11 +154,7 @@ class PlayerPopupMenuPanel extends StatelessWidget {
   final String title;
   final List<Widget> children;
 
-  const PlayerPopupMenuPanel({
-    super.key,
-    required this.title,
-    required this.children,
-  });
+  const PlayerPopupMenuPanel({super.key, required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -185,13 +173,7 @@ class PlayerPopupMenuPanel extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: radius,
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x66000000),
-                  blurRadius: 22,
-                  offset: Offset(0, 10),
-                ),
-              ],
+              boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 22, offset: Offset(0, 10))],
             ),
             child: ClipRRect(
               key: const ValueKey('player-popup-menu-panel'),
@@ -217,13 +199,7 @@ class PlayerPopupMenuPanel extends StatelessWidget {
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          child: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                         ),
                         const SizedBox(height: 8),
                         ...children,
@@ -253,19 +229,12 @@ class PlayerPopupMenuItem extends StatelessWidget {
   final bool selected;
   final VoidCallback? onPressed;
 
-  const PlayerPopupMenuItem({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    this.selected = false,
-  });
+  const PlayerPopupMenuItem({super.key, required this.label, required this.onPressed, this.selected = false});
 
   @override
   Widget build(BuildContext context) {
     final primary = AppColors.primary(context);
-    final foreground = selected
-        ? Color.lerp(primary, Colors.white, 0.3)!
-        : Colors.white;
+    final foreground = selected ? Color.lerp(primary, Colors.white, 0.3)! : Colors.white;
     return AppClickableArea(
       onTap: onPressed,
       height: PlayerPopupMenuMetrics.itemHeight,
@@ -275,12 +244,7 @@ class PlayerPopupMenuItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         children: [
-          SizedBox(
-            width: 20,
-            child: selected
-                ? Icon(Icons.check_rounded, color: foreground, size: 17)
-                : null,
-          ),
+          SizedBox(width: 20, child: selected ? Icon(Icons.check_rounded, color: foreground, size: 17) : null),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -337,21 +301,14 @@ class PlayerPopupMenuSwitchItem extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withAlpha(128),
-                    fontSize: 10,
-                  ),
+                  style: TextStyle(color: Colors.white.withAlpha(128), fontSize: 10),
                 ),
               ],
             ),
@@ -380,6 +337,5 @@ class _MenuPointerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _MenuPointerPainter oldDelegate) =>
-      oldDelegate.color != color;
+  bool shouldRepaint(covariant _MenuPointerPainter oldDelegate) => oldDelegate.color != color;
 }

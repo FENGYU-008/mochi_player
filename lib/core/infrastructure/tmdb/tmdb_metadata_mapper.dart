@@ -43,14 +43,8 @@ class TmdbMetadataMapper {
       ..numberOfEpisodes = data['number_of_episodes'];
   }
 
-  TmdbSeasonResult season(
-    Map<String, dynamic> data,
-    String showTmdbId,
-    int seasonNumber,
-  ) {
-    final episodeData = (data['episodes'] as List? ?? [])
-        .whereType<Map<String, dynamic>>()
-        .toList();
+  TmdbSeasonResult season(Map<String, dynamic> data, String showTmdbId, int seasonNumber) {
+    final episodeData = (data['episodes'] as List? ?? []).whereType<Map<String, dynamic>>().toList();
     final metadata = SeasonMetadataEntity()
       ..seasonKey = '${showTmdbId}_s$seasonNumber'
       ..seasonNumber = seasonNumber
@@ -60,9 +54,7 @@ class TmdbMetadataMapper {
       ..numberOfEpisodes = episodeData.length;
     return TmdbSeasonResult(
       season: metadata,
-      episodes: episodeData
-          .map((episode) => _episode(episode, showTmdbId, seasonNumber))
-          .toList(),
+      episodes: episodeData.map((episode) => _episode(episode, showTmdbId, seasonNumber)).toList(),
     );
   }
 
@@ -75,19 +67,13 @@ class TmdbMetadataMapper {
       backdropUrl: TmdbImageUrl.backdrop(data['backdrop_path']),
       overview: data['overview'],
       rating: (data['vote_average'] ?? 0.0).toDouble(),
-      releaseYear: _year(
-        isMovie ? data['release_date'] : data['first_air_date'],
-      ),
+      releaseYear: _year(isMovie ? data['release_date'] : data['first_air_date']),
       genres: _genreNames(data['genre_ids']),
       isMovie: isMovie,
     );
   }
 
-  EpisodeMetadataEntity _episode(
-    Map<String, dynamic> data,
-    String showTmdbId,
-    int seasonNumber,
-  ) {
+  EpisodeMetadataEntity _episode(Map<String, dynamic> data, String showTmdbId, int seasonNumber) {
     final episodeNumber = data['episode_number'] as int;
     return EpisodeMetadataEntity()
       ..tmdbId = '${showTmdbId}_s${seasonNumber}e$episodeNumber'
@@ -109,11 +95,9 @@ class TmdbMetadataMapper {
     return DateTime.tryParse(value);
   }
 
-  List<String> _genres(List<dynamic>? values) =>
-      values?.map((genre) => genre['name'].toString()).toList() ?? const [];
+  List<String> _genres(List<dynamic>? values) => values?.map((genre) => genre['name'].toString()).toList() ?? const [];
 
-  List<ArtistEmbedded> _cast(Map<String, dynamic>? credits) =>
-      _artists(credits?['cast'] as List?, limit: 10);
+  List<ArtistEmbedded> _cast(Map<String, dynamic>? credits) => _artists(credits?['cast'] as List?, limit: 10);
 
   List<ArtistEmbedded> _artists(List<dynamic>? values, {required int limit}) {
     if (values == null) return [];
@@ -198,10 +182,6 @@ class TmdbMetadataMapper {
       10767: 'Talk',
       10768: 'Politics',
     };
-    return ids
-        .take(2)
-        .map((id) => names[id] ?? '')
-        .where((name) => name.isNotEmpty)
-        .toList();
+    return ids.take(2).map((id) => names[id] ?? '').where((name) => name.isNotEmpty).toList();
   }
 }

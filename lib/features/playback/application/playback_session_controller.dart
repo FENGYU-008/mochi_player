@@ -19,8 +19,7 @@ class PlaybackSessionController {
     required String initialUrl,
     DirectLinkResolver? resolveDirectLink,
   }) : _libraryProvider = libraryProvider,
-       _resolveDirectLink =
-           resolveDirectLink ?? OpenListPlaybackService().getDirectLink,
+       _resolveDirectLink = resolveDirectLink ?? OpenListPlaybackService().getDirectLink,
        _queue = PlaybackQueue(initialItem: initialItem, items: queueItems),
        _currentUrl = initialUrl,
        _progressWriter = PlaybackProgressWriter(libraryProvider.updateProgress);
@@ -34,9 +33,13 @@ class PlaybackSessionController {
   bool _isSwitching = false;
 
   MediaFile get currentItem => _queue.current;
+
   String get currentUrl => _currentUrl;
+
   bool get hasPrevious => _queue.hasPrevious;
+
   bool get hasNext => _queue.hasNext;
+
   bool get isSwitching => _isSwitching;
 
   Future<void> refreshCurrentItem() async {
@@ -47,31 +50,18 @@ class PlaybackSessionController {
     }
   }
 
-  bool _isCurrent(MediaFile item) =>
-      currentItem.id == item.id || currentItem.path == item.path;
+  bool _isCurrent(MediaFile item) => currentItem.id == item.id || currentItem.path == item.path;
 
-  Future<void> saveProgress({
-    required int positionMs,
-    required int durationMs,
-    bool force = false,
-  }) async {
+  Future<void> saveProgress({required int positionMs, required int durationMs, bool force = false}) async {
     if (positionMs <= 0 && durationMs <= 0) return;
     final delta = (positionMs - _lastSavedPositionMs).abs();
     if (!force && _lastSavedPositionMs >= 0 && delta < 5000) return;
 
     _lastSavedPositionMs = positionMs;
-    await _progressWriter.save(
-      currentItem,
-      positionMs,
-      duration: durationMs > 0 ? durationMs : null,
-    );
+    await _progressWriter.save(currentItem, positionMs, duration: durationMs > 0 ? durationMs : null);
   }
 
-  Future<PlaybackQueueMoveResult?> moveBy(
-    int offset, {
-    required int positionMs,
-    required int durationMs,
-  }) async {
+  Future<PlaybackQueueMoveResult?> moveBy(int offset, {required int positionMs, required int durationMs}) async {
     if (_isSwitching) return null;
     final targetItem = _queue.itemAtOffset(offset);
     if (targetItem == null) return null;
@@ -79,11 +69,7 @@ class PlaybackSessionController {
     _isSwitching = true;
     try {
       try {
-        await saveProgress(
-          positionMs: positionMs,
-          durationMs: durationMs,
-          force: true,
-        );
+        await saveProgress(positionMs: positionMs, durationMs: durationMs, force: true);
       } catch (_) {
         // Playback can continue even when persistence is temporarily down.
       }
@@ -105,11 +91,9 @@ class PlaybackSessionController {
 class PlaybackQueueMoveResult {
   const PlaybackQueueMoveResult._({required this.item, this.isReady = false});
 
-  factory PlaybackQueueMoveResult.ready(MediaFile item) =>
-      PlaybackQueueMoveResult._(item: item, isReady: true);
+  factory PlaybackQueueMoveResult.ready(MediaFile item) => PlaybackQueueMoveResult._(item: item, isReady: true);
 
-  factory PlaybackQueueMoveResult.failed(MediaFile item) =>
-      PlaybackQueueMoveResult._(item: item);
+  factory PlaybackQueueMoveResult.failed(MediaFile item) => PlaybackQueueMoveResult._(item: item);
 
   final MediaFile item;
   final bool isReady;

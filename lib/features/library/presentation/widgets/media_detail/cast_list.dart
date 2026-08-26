@@ -35,11 +35,7 @@ class _CastListState extends State<CastList> {
         SizedBox(height: widget.topPadding),
         Text(
           "演员",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: theme.textTheme.bodyLarge?.color,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.textTheme.bodyLarge?.color),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -52,8 +48,7 @@ class _CastListState extends State<CastList> {
               scrollDirection: Axis.horizontal,
               itemCount: widget.viewModel.cast.length,
               separatorBuilder: (_, _) => const SizedBox(width: 20),
-              itemBuilder: (context, index) =>
-                  _buildCastItem(widget.viewModel.cast[index]),
+              itemBuilder: (context, index) => _buildCastItem(widget.viewModel.cast[index]),
             ),
           ),
         ),
@@ -76,8 +71,7 @@ class _CastListState extends State<CastList> {
                     height: 80,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => _buildAvatarPlaceholder(),
-                    errorWidget: (context, url, error) =>
-                        _buildAvatarPlaceholder(),
+                    errorWidget: (context, url, error) => _buildAvatarPlaceholder(),
                   )
                 : _buildAvatarPlaceholder(),
           ),
@@ -90,11 +84,7 @@ class _CastListState extends State<CastList> {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              height: 1.2,
-            ),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, height: 1.2),
           ),
         ),
         SizedBox(
@@ -104,11 +94,7 @@ class _CastListState extends State<CastList> {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-              height: 1.2,
-            ),
+            style: TextStyle(fontSize: 11, color: Colors.grey[600], height: 1.2),
           ),
         ),
       ],
