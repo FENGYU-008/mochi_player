@@ -158,11 +158,7 @@ class _FileBrowserBody extends StatelessWidget {
       if (state.error != null) {
         return AppResult(status: AppResultStatus.error, title: '文件加载失败', subtitle: state.error);
       }
-      return const AppResult(
-        status: AppResultStatus.empty,
-        title: '此文件夹为空',
-        icon: Icon(Icons.folder_off_outlined, size: 44),
-      );
+      return const AppResult(status: AppResultStatus.empty, title: '此文件夹为空', icon: Icon(Icons.folder_open_outlined));
     }
     if (state.viewMode == FileBrowserViewMode.grid) return _buildGrid();
     return _buildList();

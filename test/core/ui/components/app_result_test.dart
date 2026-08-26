@@ -21,6 +21,11 @@ void main() {
     expect(find.text('没有匹配的媒体'), findsOneWidget);
     expect(find.text('请尝试其他关键词'), findsOneWidget);
     expect(find.byIcon(Icons.search_off_rounded), findsOneWidget);
+    final context = tester.element(find.byType(AppResult));
+    final customIconTheme = IconTheme.of(tester.element(find.byIcon(Icons.search_off_rounded)));
+    expect(customIconTheme.size, 32);
+    expect(customIconTheme.color, AppColors.textSecondary(context));
+    expect(_resultIconBackgrounds(tester), contains(AppColors.elevatedSurface(context)));
   });
 
   testWidgets('uses the status appearance and renders the operation area', (

@@ -26,7 +26,13 @@ class AppResult extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              icon ?? _DefaultResultIcon(appearance: appearance),
+              _ResultIconContainer(
+                appearance: appearance,
+                child: IconTheme(
+                  data: IconThemeData(size: 32, color: appearance.color),
+                  child: icon ?? Icon(appearance.icon),
+                ),
+              ),
               const SizedBox(height: AppSpacing.xl),
               Text(
                 title,
@@ -60,10 +66,11 @@ class AppResult extends StatelessWidget {
   }
 }
 
-class _DefaultResultIcon extends StatelessWidget {
+class _ResultIconContainer extends StatelessWidget {
   final _ResultAppearance appearance;
+  final Widget child;
 
-  const _DefaultResultIcon({required this.appearance});
+  const _ResultIconContainer({required this.appearance, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +83,7 @@ class _DefaultResultIcon extends StatelessWidget {
         border: Border.all(color: appearance.color.withAlpha(42)),
       ),
       alignment: Alignment.center,
-      child: Icon(appearance.icon, size: 32, color: appearance.color),
+      child: child,
     );
   }
 }

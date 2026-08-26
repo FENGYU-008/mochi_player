@@ -9,7 +9,6 @@ import 'package:mochi_player/features/settings/application/app_settings_provider
 import 'package:mochi_player/features/settings/application/theme_provider.dart';
 import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_section.dart';
-import 'package:mochi_player/features/settings/presentation/widgets/settings_slider_item.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_switch_item.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_text_field.dart';
 import 'package:provider/provider.dart';
@@ -311,23 +310,25 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           ),
           SettingsTextField(controller: _subtitleLanguagePriorityController, label: '默认字幕语言'),
-          SettingsSliderItem(
+          AppFormItem(
             label: '字幕大小',
-            value: _subtitleFontSize,
-            min: 18,
-            max: 40,
-            displayValue: _subtitleFontSize.round().toString(),
-            onChanged: (value) {
-              setState(() {
-                _subtitleFontSize = value;
-              });
-            },
-            onChangeEnd: (value) {
-              setState(() {
-                _subtitleFontSize = value.roundToDouble();
-              });
-              _scheduleAutoSave();
-            },
+            control: Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                width: 160,
+                child: AppInputNumber(
+                  value: _subtitleFontSize.round(),
+                  min: 18,
+                  max: 40,
+                  onChanged: (value) {
+                    setState(() {
+                      _subtitleFontSize = value.toDouble();
+                    });
+                    _scheduleAutoSave();
+                  },
+                ),
+              ),
+            ),
           ),
         ],
       ),

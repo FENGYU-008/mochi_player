@@ -7,6 +7,7 @@ export 'components/feedback/app_modal.dart';
 export 'components/feedback/app_progress_notice.dart';
 export 'components/feedback/app_result.dart';
 export 'components/input/app_input.dart';
+export 'components/input/app_input_number.dart';
 export 'components/input/app_search_input.dart';
 export 'components/input/app_segmented_control.dart';
 export 'components/input/app_select.dart';
