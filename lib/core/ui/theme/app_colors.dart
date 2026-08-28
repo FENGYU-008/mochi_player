@@ -4,22 +4,21 @@ import 'package:flutter/material.dart';
 class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
   final Color textPrimary;
   final Color textSecondary;
+  final Color success;
+  final Color danger;
   final Color separator;
   final Color sidebarBackground;
-  final Color elevatedSurface;
+  final Color controlSurface;
   final Color subtleSurface;
   final Color hoverSurface;
   final Color selectedSurface;
-  final Color inputBackground;
+  final Color surface;
   final Color headerBackground;
   final Color activitySurface;
   final Color modalSurface;
-  final Color selectMenuSurface;
-  final Color selectControlSurface;
-  final Color selectBorder;
+  final Color menuSurface;
   final Color mediaHoverOverlay;
-  final Color searchHint;
-  final Color searchIcon;
+  final Color placeholderForeground;
   final Color keyCapBackground;
   final Color keyCapForeground;
   final Color cardShadow;
@@ -27,22 +26,21 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
   const AppColorSchemeExtension({
     required this.textPrimary,
     required this.textSecondary,
+    required this.success,
+    required this.danger,
     required this.separator,
     required this.sidebarBackground,
-    required this.elevatedSurface,
+    required this.controlSurface,
     required this.subtleSurface,
     required this.hoverSurface,
     required this.selectedSurface,
-    required this.inputBackground,
+    required this.surface,
     required this.headerBackground,
     required this.activitySurface,
     required this.modalSurface,
-    required this.selectMenuSurface,
-    required this.selectControlSurface,
-    required this.selectBorder,
+    required this.menuSurface,
     required this.mediaHoverOverlay,
-    required this.searchHint,
-    required this.searchIcon,
+    required this.placeholderForeground,
     required this.keyCapBackground,
     required this.keyCapForeground,
     required this.cardShadow,
@@ -52,22 +50,21 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
   AppColorSchemeExtension copyWith({
     Color? textPrimary,
     Color? textSecondary,
+    Color? success,
+    Color? danger,
     Color? separator,
     Color? sidebarBackground,
-    Color? elevatedSurface,
+    Color? controlSurface,
     Color? subtleSurface,
     Color? hoverSurface,
     Color? selectedSurface,
-    Color? inputBackground,
+    Color? surface,
     Color? headerBackground,
     Color? activitySurface,
     Color? modalSurface,
-    Color? selectMenuSurface,
-    Color? selectControlSurface,
-    Color? selectBorder,
+    Color? menuSurface,
     Color? mediaHoverOverlay,
-    Color? searchHint,
-    Color? searchIcon,
+    Color? placeholderForeground,
     Color? keyCapBackground,
     Color? keyCapForeground,
     Color? cardShadow,
@@ -75,22 +72,21 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
     return AppColorSchemeExtension(
       textPrimary: textPrimary ?? this.textPrimary,
       textSecondary: textSecondary ?? this.textSecondary,
+      success: success ?? this.success,
+      danger: danger ?? this.danger,
       separator: separator ?? this.separator,
       sidebarBackground: sidebarBackground ?? this.sidebarBackground,
-      elevatedSurface: elevatedSurface ?? this.elevatedSurface,
+      controlSurface: controlSurface ?? this.controlSurface,
       subtleSurface: subtleSurface ?? this.subtleSurface,
       hoverSurface: hoverSurface ?? this.hoverSurface,
       selectedSurface: selectedSurface ?? this.selectedSurface,
-      inputBackground: inputBackground ?? this.inputBackground,
+      surface: surface ?? this.surface,
       headerBackground: headerBackground ?? this.headerBackground,
       activitySurface: activitySurface ?? this.activitySurface,
       modalSurface: modalSurface ?? this.modalSurface,
-      selectMenuSurface: selectMenuSurface ?? this.selectMenuSurface,
-      selectControlSurface: selectControlSurface ?? this.selectControlSurface,
-      selectBorder: selectBorder ?? this.selectBorder,
+      menuSurface: menuSurface ?? this.menuSurface,
       mediaHoverOverlay: mediaHoverOverlay ?? this.mediaHoverOverlay,
-      searchHint: searchHint ?? this.searchHint,
-      searchIcon: searchIcon ?? this.searchIcon,
+      placeholderForeground: placeholderForeground ?? this.placeholderForeground,
       keyCapBackground: keyCapBackground ?? this.keyCapBackground,
       keyCapForeground: keyCapForeground ?? this.keyCapForeground,
       cardShadow: cardShadow ?? this.cardShadow,
@@ -103,22 +99,21 @@ class AppColorSchemeExtension extends ThemeExtension<AppColorSchemeExtension> {
     return AppColorSchemeExtension(
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      danger: Color.lerp(danger, other.danger, t)!,
       separator: Color.lerp(separator, other.separator, t)!,
       sidebarBackground: Color.lerp(sidebarBackground, other.sidebarBackground, t)!,
-      elevatedSurface: Color.lerp(elevatedSurface, other.elevatedSurface, t)!,
+      controlSurface: Color.lerp(controlSurface, other.controlSurface, t)!,
       subtleSurface: Color.lerp(subtleSurface, other.subtleSurface, t)!,
       hoverSurface: Color.lerp(hoverSurface, other.hoverSurface, t)!,
       selectedSurface: Color.lerp(selectedSurface, other.selectedSurface, t)!,
-      inputBackground: Color.lerp(inputBackground, other.inputBackground, t)!,
+      surface: Color.lerp(surface, other.surface, t)!,
       headerBackground: Color.lerp(headerBackground, other.headerBackground, t)!,
       activitySurface: Color.lerp(activitySurface, other.activitySurface, t)!,
       modalSurface: Color.lerp(modalSurface, other.modalSurface, t)!,
-      selectMenuSurface: Color.lerp(selectMenuSurface, other.selectMenuSurface, t)!,
-      selectControlSurface: Color.lerp(selectControlSurface, other.selectControlSurface, t)!,
-      selectBorder: Color.lerp(selectBorder, other.selectBorder, t)!,
+      menuSurface: Color.lerp(menuSurface, other.menuSurface, t)!,
       mediaHoverOverlay: Color.lerp(mediaHoverOverlay, other.mediaHoverOverlay, t)!,
-      searchHint: Color.lerp(searchHint, other.searchHint, t)!,
-      searchIcon: Color.lerp(searchIcon, other.searchIcon, t)!,
+      placeholderForeground: Color.lerp(placeholderForeground, other.placeholderForeground, t)!,
       keyCapBackground: Color.lerp(keyCapBackground, other.keyCapBackground, t)!,
       keyCapForeground: Color.lerp(keyCapForeground, other.keyCapForeground, t)!,
       cardShadow: Color.lerp(cardShadow, other.cardShadow, t)!,
@@ -153,6 +148,10 @@ class AppColors {
     return _scheme(context).textSecondary;
   }
 
+  static Color success(BuildContext context) => _scheme(context).success;
+
+  static Color danger(BuildContext context) => _scheme(context).danger;
+
   static Color separator(BuildContext context) {
     return _scheme(context).separator;
   }
@@ -161,8 +160,8 @@ class AppColors {
     return _scheme(context).sidebarBackground;
   }
 
-  static Color elevatedSurface(BuildContext context) {
-    return _scheme(context).elevatedSurface;
+  static Color controlSurface(BuildContext context) {
+    return _scheme(context).controlSurface;
   }
 
   static Color hoverSurface(BuildContext context) {
@@ -175,7 +174,7 @@ class AppColors {
 
   static Color subtleSurface(BuildContext context) => _scheme(context).subtleSurface;
 
-  static Color inputBackground(BuildContext context) => _scheme(context).inputBackground;
+  static Color surface(BuildContext context) => _scheme(context).surface;
 
   static Color headerBackground(BuildContext context) => _scheme(context).headerBackground;
 
@@ -183,17 +182,11 @@ class AppColors {
 
   static Color modalSurface(BuildContext context) => _scheme(context).modalSurface;
 
-  static Color selectMenuSurface(BuildContext context) => _scheme(context).selectMenuSurface;
-
-  static Color selectControlSurface(BuildContext context) => _scheme(context).selectControlSurface;
-
-  static Color selectBorder(BuildContext context) => _scheme(context).selectBorder;
+  static Color menuSurface(BuildContext context) => _scheme(context).menuSurface;
 
   static Color mediaHoverOverlay(BuildContext context) => _scheme(context).mediaHoverOverlay;
 
-  static Color searchHint(BuildContext context) => _scheme(context).searchHint;
-
-  static Color searchIcon(BuildContext context) => _scheme(context).searchIcon;
+  static Color placeholderForeground(BuildContext context) => _scheme(context).placeholderForeground;
 
   static Color keyCapBackground(BuildContext context) => _scheme(context).keyCapBackground;
 

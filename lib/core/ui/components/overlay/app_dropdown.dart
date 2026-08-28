@@ -48,13 +48,13 @@ class AppDropdown<T> extends StatelessWidget {
         // trigger's right edge. bottomStart places it directly below the
         // trigger, which is the expected dropdown geometry in an LTR UI.
         alignment: AlignmentDirectional.bottomStart,
-        backgroundColor: WidgetStatePropertyAll(AppColors.selectMenuSurface(context)),
+        backgroundColor: WidgetStatePropertyAll(AppColors.menuSurface(context)),
         surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
         shadowColor: WidgetStatePropertyAll(shadowColor),
         elevation: const WidgetStatePropertyAll(8),
         padding: const WidgetStatePropertyAll(EdgeInsets.all(6)),
         fixedSize: WidgetStatePropertyAll(Size.fromWidth(menuWidth)),
-        side: WidgetStatePropertyAll(BorderSide(color: AppColors.selectBorder(context))),
+        side: WidgetStatePropertyAll(BorderSide(color: AppColors.separator(context))),
         shape: const WidgetStatePropertyAll(
           RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(AppRadii.control))),
         ),

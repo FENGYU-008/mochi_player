@@ -13,7 +13,7 @@ void main() {
     final darkColors = AppTheme.darkTheme.extension<AppColorSchemeExtension>()!;
     expect(lightColors.selectedSurface, const Color(0xFFECEAF4));
     expect(darkColors.selectedSurface, const Color(0xFF35323F));
-    expect(lightColors.elevatedSurface, const Color(0xFFF2F2F7));
-    expect(darkColors.elevatedSurface, const Color(0xFF2C2C2E));
+    expect(lightColors.controlSurface, const Color(0x06000000));
+    expect(darkColors.controlSurface, const Color(0x0EFFFFFF));
   });
 }

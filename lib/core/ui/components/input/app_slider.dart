@@ -39,7 +39,7 @@ class AppSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = AppColors.primary(context);
-    final thumbCenterColor = AppColors.elevatedSurface(context);
+    final thumbCenterColor = AppColors.controlSurface(context);
     final tooltipBackground = Theme.of(context).brightness == Brightness.dark
         ? const Color(0xFF3A3A3C)
         : const Color(0xFF252527);

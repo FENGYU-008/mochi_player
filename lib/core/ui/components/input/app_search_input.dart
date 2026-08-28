@@ -101,7 +101,7 @@ class _AppSearchInputState extends State<AppSearchInput> {
         prefix: Icon(
           CupertinoIcons.search,
           size: 18,
-          color: _hasFocus ? theme.textTheme.bodyMedium?.color : AppColors.searchIcon(context),
+          color: _hasFocus ? theme.textTheme.bodyMedium?.color : AppColors.placeholderForeground(context),
         ),
         suffix: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),

@@ -100,17 +100,17 @@ class _ResultAppearance {
       AppResultStatus.empty => _ResultAppearance(
         icon: Icons.inbox_outlined,
         color: AppColors.textSecondary(context),
-        backgroundColor: AppColors.elevatedSurface(context),
+        backgroundColor: AppColors.controlSurface(context),
       ),
       AppResultStatus.info => _ResultAppearance(
         icon: Icons.info_outline_rounded,
         color: AppColors.primary(context),
-        backgroundColor: AppColors.elevatedSurface(context),
+        backgroundColor: AppColors.controlSurface(context),
       ),
       AppResultStatus.error => _ResultAppearance(
         icon: Icons.close_rounded,
-        color: Theme.of(context).colorScheme.error,
-        backgroundColor: AppColors.elevatedSurface(context),
+        color: AppColors.danger(context),
+        backgroundColor: AppColors.controlSurface(context),
       ),
     };
   }

@@ -36,8 +36,7 @@ class AppTag extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.compact),
       decoration: BoxDecoration(
         color:
-            backgroundColor ??
-            (usesOverlayAppearance ? Colors.white.withAlpha(42) : AppColors.elevatedSurface(context)),
+            backgroundColor ?? (usesOverlayAppearance ? Colors.white.withAlpha(42) : AppColors.controlSurface(context)),
         borderRadius: BorderRadius.circular(AppRadii.tag),
         border: outlined
             ? Border.all(

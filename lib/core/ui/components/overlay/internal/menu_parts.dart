@@ -23,9 +23,9 @@ class MenuPanel extends StatelessWidget {
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.selectMenuSurface(context),
+          color: AppColors.menuSurface(context),
           borderRadius: BorderRadius.circular(AppRadii.control),
-          border: Border.all(color: AppColors.selectBorder(context)),
+          border: Border.all(color: AppColors.separator(context)),
           boxShadow: [BoxShadow(color: shadowColor, blurRadius: 18, offset: const Offset(0, 8))],
         ),
         child: Padding(

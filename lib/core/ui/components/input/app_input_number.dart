@@ -128,7 +128,7 @@ class _AppInputNumberState extends State<AppInputNumber> {
         height: _height,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: _isInteractive ? AppColors.inputBackground(context) : AppColors.subtleSurface(context),
+            color: _isInteractive ? AppColors.surface(context) : AppColors.subtleSurface(context),
             borderRadius: BorderRadius.circular(AppRadii.small),
             border: Border.all(
               color: Color.lerp(AppColors.separator(context).withAlpha(90), borderColor, focusProgress)!,

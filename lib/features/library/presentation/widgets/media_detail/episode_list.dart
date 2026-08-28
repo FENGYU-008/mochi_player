@@ -244,7 +244,7 @@ class _EpisodeStatusLabel extends StatelessWidget {
     final color = !available
         ? theme.textTheme.bodySmall?.color ?? Colors.grey
         : completed
-        ? Colors.green
+        ? AppColors.success(context)
         : theme.colorScheme.primary;
     return SizedBox(
       height: 18,

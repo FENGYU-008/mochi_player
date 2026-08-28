@@ -126,8 +126,8 @@ class _AppInputState extends State<AppInput> {
     final isSearch = widget._variant == _AppInputVariant.search;
     final primary = AppColors.primary(context);
     final textColor = widget.enabled ? AppColors.textPrimary(context) : AppColors.textSecondary(context);
-    final inputBackground = AppColors.inputBackground(context);
-    final controlBackground = AppColors.elevatedSurface(context);
+    final surface = AppColors.surface(context);
+    final controlBackground = AppColors.controlSurface(context);
     final focusedBorder = primary.withAlpha(isSearch ? 204 : 215);
     final restingBorder = isSearch
         ? Colors.transparent
@@ -137,9 +137,9 @@ class _AppInputState extends State<AppInput> {
     final restingBackground = isSearch
         ? controlBackground
         : widget.enabled
-        ? inputBackground.withAlpha(0)
+        ? surface.withAlpha(0)
         : AppColors.subtleSurface(context);
-    final focusedBackground = isSearch ? controlBackground : inputBackground;
+    final focusedBackground = isSearch ? controlBackground : surface;
     final borderRadius = BorderRadius.circular(isSearch ? AppRadii.surface : AppRadii.small);
 
     return TweenAnimationBuilder<double>(
@@ -199,7 +199,7 @@ class _AppInputState extends State<AppInput> {
                 strutStyle: isSearch ? _searchStrutStyle : null,
                 placeholder: widget.placeholder,
                 placeholderStyle: isSearch
-                    ? _searchTextStyle.copyWith(color: AppColors.searchHint(context))
+                    ? _searchTextStyle.copyWith(color: AppColors.placeholderForeground(context))
                     : AppTypography.formValue.copyWith(color: AppColors.textSecondary(context)),
                 style: isSearch
                     ? _searchTextStyle.copyWith(color: textColor)

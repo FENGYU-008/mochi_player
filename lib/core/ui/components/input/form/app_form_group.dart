@@ -5,29 +5,43 @@ import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 /// Groups related form items on one visually connected surface.
 class AppFormGroup extends StatelessWidget {
-  const AppFormGroup({super.key, required this.children});
+  const AppFormGroup({super.key, required this.children, this.title});
 
+  /// Optional heading for this settings card.
+  final String? title;
   final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    final separator = AppColors.separator(context).withAlpha(105);
-    final background = Color.alphaBlend(AppColors.subtleSurface(context), Theme.of(context).scaffoldBackgroundColor);
+    final separator = AppColors.separator(context);
 
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: background,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: separator),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (title case final title?) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  title,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
+                ),
+              ),
+            ),
+            Divider(height: 1, thickness: 1, color: separator),
+          ],
           for (var index = 0; index < children.length; index++) ...[
             if (index != 0)
               Padding(
-                padding: const EdgeInsets.only(left: AppSpacing.compact),
+                padding: const EdgeInsets.only(left: AppSpacing.lg),
                 child: Divider(height: 1, thickness: 1, color: separator),
               ),
             children[index],

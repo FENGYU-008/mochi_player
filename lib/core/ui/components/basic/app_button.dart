@@ -108,8 +108,10 @@ class _AppButtonState extends State<AppButton> {
   Widget _buildLabeledButton(BuildContext context) {
     final isPrimary = widget.variant == AppButtonVariant.primary;
     final metrics = _AppButtonMetrics.forSize(widget.size);
-    final actionColor = widget.destructive ? Colors.redAccent : widget.accentColor ?? AppColors.primary(context);
-    final adaptiveSurface = AppColors.elevatedSurface(context);
+    final actionColor = widget.destructive
+        ? AppColors.danger(context)
+        : widget.accentColor ?? AppColors.primary(context);
+    final adaptiveSurface = AppColors.controlSurface(context);
     final palette = _AppButtonPalette.resolve(
       context: context,
       actionColor: actionColor,
@@ -325,12 +327,12 @@ class _AppButtonPalette {
     }
     if (isDestructive) {
       return _AppButtonPalette(
-        restingBackground: Colors.redAccent.withAlpha(14),
-        hoverBackground: Colors.redAccent.withAlpha(26),
-        disabledBackground: Colors.redAccent.withAlpha(14),
-        foreground: Colors.redAccent,
-        restingBorder: Colors.redAccent.withAlpha(128),
-        hoverBorder: Colors.redAccent.withAlpha(190),
+        restingBackground: AppColors.danger(context).withAlpha(14),
+        hoverBackground: AppColors.danger(context).withAlpha(26),
+        disabledBackground: AppColors.danger(context).withAlpha(14),
+        foreground: AppColors.danger(context),
+        restingBorder: AppColors.danger(context).withAlpha(128),
+        hoverBorder: AppColors.danger(context).withAlpha(190),
       );
     }
     if (isOverlay) {

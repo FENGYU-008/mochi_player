@@ -136,7 +136,7 @@ class _ModalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = destructive ? Colors.redAccent : AppColors.primary(context);
+    final accent = destructive ? AppColors.danger(context) : AppColors.primary(context);
     final borderRadius = BorderRadius.circular(AppRadii.card);
 
     return Container(

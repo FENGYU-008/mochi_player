@@ -314,8 +314,8 @@ class _MessageCard extends StatelessWidget {
 
   Color _accentColor(BuildContext context) {
     return switch (type) {
-      _MessageType.success => Colors.green,
-      _MessageType.error => Theme.of(context).colorScheme.error,
+      _MessageType.success => AppColors.success(context),
+      _MessageType.error => AppColors.danger(context),
       _MessageType.loading => Theme.of(context).colorScheme.primary,
     };
   }

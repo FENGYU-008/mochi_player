@@ -19,7 +19,7 @@ class FileBrowserList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.inputBackground(context),
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(AppRadii.card),
         border: Border.all(color: AppColors.separator(context), width: borderWidth),
       ),

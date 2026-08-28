@@ -42,9 +42,9 @@ class AppSelect<T> extends StatelessWidget {
               height: _height,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: AppColors.selectControlSurface(context),
+                  color: AppColors.controlSurface(context),
                   borderRadius: BorderRadius.circular(AppRadii.control),
-                  border: Border.all(color: AppColors.selectBorder(context)),
+                  border: Border.all(color: AppColors.separator(context)),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.compact),

@@ -37,9 +37,8 @@ class AppSegmentedControl<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     assert(options.length >= 2, 'A segmented control needs at least 2 options.');
-    final isToolbar = appearance == AppSegmentedControlAppearance.toolbar;
-    final borderColor = isToolbar ? AppColors.selectBorder(context) : AppColors.separator(context);
-    final backgroundColor = isToolbar ? AppColors.selectControlSurface(context) : AppColors.elevatedSurface(context);
+    final borderColor = AppColors.separator(context);
+    final backgroundColor = AppColors.controlSurface(context);
     final enabled = onChanged != null;
     return AnimatedOpacity(
       duration: AppControlMetrics.stateAnimationDuration,
@@ -112,20 +111,23 @@ class _SegmentButton<T> extends StatelessWidget {
         borderRadius: BorderRadius.zero,
         backgroundColor: selected ? selectedSurface : Colors.transparent,
         hoverColor: selected ? Colors.transparent : AppColors.hoverSurface(context),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (option.icon != null) Icon(option.icon, size: 16, color: foreground),
-            if (option.icon != null && !option._iconOnly) const SizedBox(width: AppControlMetrics.iconLabelGap),
-            if (!option._iconOnly)
-              Text(
-                option.label,
-                style: AppTypography.controlLabel.copyWith(
-                  color: foreground,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (option.icon != null) Icon(option.icon, size: 16, color: foreground),
+              if (option.icon != null && !option._iconOnly) const SizedBox(width: AppControlMetrics.iconLabelGap),
+              if (!option._iconOnly)
+                Text(
+                  option.label,
+                  style: AppTypography.controlLabel.copyWith(
+                    color: foreground,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

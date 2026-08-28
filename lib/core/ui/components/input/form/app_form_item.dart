@@ -43,7 +43,7 @@ class AppFormItem extends StatelessWidget {
     return SizedBox(
       height: resolvedHeight,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.compact),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         child: Row(
           children: [
             if (icon != null) ...[

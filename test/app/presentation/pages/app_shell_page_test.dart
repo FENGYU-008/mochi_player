@@ -9,6 +9,7 @@ import 'package:mochi_player/features/library/application/file_browser_provider.
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:mochi_player/features/settings/application/theme_provider.dart';
+import 'package:mochi_player/features/settings/presentation/pages/settings_page.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -57,19 +58,14 @@ void main() {
     await tester.tap(settingsDestination);
     await tester.pumpAndSettle();
 
-    final settingsList = find.byKey(
-      const PageStorageKey<String>('settings-scroll'),
+    final settingsTabs = find.descendant(
+      of: find.byType(SettingsPage),
+      matching: find.text('媒体库'),
     );
-    await tester.drag(settingsList, const Offset(0, -400));
+    await tester.ensureVisible(settingsTabs);
+    await tester.tap(settingsTabs);
     await tester.pumpAndSettle();
-    final scrollable = find
-        .descendant(of: settingsList, matching: find.byType(Scrollable))
-        .first;
-    final offsetBeforeSwitch = tester
-        .state<ScrollableState>(scrollable)
-        .position
-        .pixels;
-    expect(offsetBeforeSwitch, greaterThan(0));
+    expect(find.text('清空媒体库'), findsOneWidget);
 
     await tester.tap(
       find.descendant(of: find.byType(Sidebar), matching: find.text('首页')),
@@ -78,16 +74,7 @@ void main() {
     await tester.tap(settingsDestination);
     await tester.pumpAndSettle();
 
-    final restoredScrollable = find
-        .descendant(
-          of: find.byKey(const PageStorageKey<String>('settings-scroll')),
-          matching: find.byType(Scrollable),
-        )
-        .first;
-    expect(
-      tester.state<ScrollableState>(restoredScrollable).position.pixels,
-      closeTo(offsetBeforeSwitch, 0.1),
-    );
+    expect(find.text('清空媒体库'), findsOneWidget);
   });
 
   testWidgets('preserves each destination navigation stack', (tester) async {

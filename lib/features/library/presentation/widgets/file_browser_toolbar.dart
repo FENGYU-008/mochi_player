@@ -90,7 +90,7 @@ class _FilePathBreadcrumb extends StatelessWidget {
       height: 34,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.inputBackground(context),
+          color: AppColors.surface(context),
           borderRadius: BorderRadius.circular(AppRadii.control),
           border: Border.all(color: AppColors.separator(context)),
         ),
@@ -195,9 +195,9 @@ class _ToolbarGroup extends StatelessWidget {
     return Container(
       height: _toolbarHeight,
       decoration: BoxDecoration(
-        color: AppColors.selectControlSurface(context),
+        color: AppColors.controlSurface(context),
         borderRadius: BorderRadius.circular(AppRadii.surface),
-        border: Border.all(color: AppColors.selectBorder(context)),
+        border: Border.all(color: AppColors.separator(context)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Row(
