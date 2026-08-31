@@ -10,8 +10,15 @@ part 'media_file_entity.g.dart';
 class MediaFileEntity {
   Id id = Isar.autoIncrement;
 
-  /// 文件完整路径 (唯一标识)
+  /// Storage source that owns this file.
+  @Index()
+  String sourceId = '';
+
+  /// Stable unique identity composed from [sourceId] and [path].
   @Index(unique: true)
+  String storageKey = '';
+
+  /// File path relative to its storage source root.
   late String path;
 
   /// 原始文件名

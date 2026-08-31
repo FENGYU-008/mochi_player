@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/media/media_file_kind.dart';
-import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
+import 'package:mochi_player/core/domain/storage/models.dart';
+import 'package:mochi_player/core/infrastructure/storage/storage_provider_registry.dart';
 import 'package:mochi_player/features/library/domain/file_browser_entry.dart';
-import 'package:webdav_client/webdav_client.dart' as webdav;
 
 enum FileBrowserViewMode { grid, list }
 
@@ -14,10 +14,20 @@ enum FileSortField { name, size, modifiedAt }
 ///
 /// Owns directory navigation, filtering and sorting for the file browser.
 class FileBrowserProvider extends ChangeNotifier {
-  final WebDavFileSystem _fileSystem;
+  final StorageProviderRegistry _storageProviderRegistry;
+  StorageConnection? _storageConnection;
   final _logger = Logger(printer: PrettyPrinter(methodCount: 0));
 
-  FileBrowserProvider({WebDavFileSystem? fileSystem}) : _fileSystem = fileSystem ?? WebDavService();
+  FileBrowserProvider({StorageProviderRegistry? storageProviderRegistry})
+    : _storageProviderRegistry = storageProviderRegistry ?? StorageProviderRegistry.defaults();
+
+  String get sourceId => _storageConnection?.source.id ?? '';
+
+  StorageSource? get activeSource => _storageConnection?.source;
+
+  bool get hasSelectedStorageSource => _storageConnection != null;
+
+  bool get hasActiveSource => _storageConnection != null;
 
   // === 状态变量 ===
   List<FileBrowserEntry> _items = [];
@@ -25,8 +35,6 @@ class FileBrowserProvider extends ChangeNotifier {
   bool _hasLoaded = false;
   String _currentPath = '/';
   String? _error;
-  final List<String> _pathHistory = [];
-  final List<String> _forwardHistory = [];
   FileBrowserViewMode _viewMode = FileBrowserViewMode.list;
   FileSortField _sortField = FileSortField.name;
   bool _sortAscending = true;
@@ -44,9 +52,7 @@ class FileBrowserProvider extends ChangeNotifier {
 
   String? get error => _error;
 
-  bool get canGoBack => _pathHistory.isNotEmpty;
-
-  bool get canGoForward => _forwardHistory.isNotEmpty;
+  bool get canGoBack => _currentPath != '/';
 
   FileBrowserViewMode get viewMode => _viewMode;
 
@@ -92,18 +98,17 @@ class FileBrowserProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (!_fileSystem.isInitialized) {
+      if (!hasActiveSource) {
         _items = [];
-        _error = '请先在设置中配置 WebDAV';
+        _error = '请先选择媒体源';
         _hasLoaded = true;
         return;
       }
 
-      // Read raw directory entries; browser visibility is decided locally.
-      final files = await _fileSystem.readDir(path);
+      final entries = await _readStorageDirectory(path);
       if (requestGeneration != _requestGeneration) return;
 
-      _items = files.where(_isVisibleEntry).map((file) => _mapFile(file, path)).toList();
+      _items = entries;
 
       _currentPath = path;
       _hasLoaded = true;
@@ -122,27 +127,52 @@ class FileBrowserProvider extends ChangeNotifier {
     }
   }
 
-  bool _isVisibleEntry(webdav.File file) {
-    final name = file.name;
-    return name != null && name.isNotEmpty && !name.startsWith('.');
+  /// Selects a configured storage source and starts its browser at the root.
+  Future<void> openStorageSource(StorageSource source, StorageCredentials? credentials) async {
+    final connection = await _storageProviderRegistry.connect(source, credentials);
+    _storageConnection = connection;
+    _items = [];
+    _currentPath = '/';
+    _searchQuery = '';
+    _error = null;
+    _hasLoaded = false;
+    await fetchFiles('/');
   }
 
-  FileBrowserEntry _mapFile(webdav.File file, String parentPath) {
-    final isDir = file.isDir ?? false;
-    final name = file.name ?? '未知文件';
-    // 构造完整路径
-    String fullPath = parentPath.endsWith('/') ? '$parentPath$name' : '$parentPath/$name';
-    if (isDir && !fullPath.endsWith('/')) {
-      fullPath += '/';
-    }
+  /// Returns the browser to its source-selection state.
+  void clearStorageSource() {
+    _requestGeneration++;
+    _storageConnection = null;
+    _items = [];
+    _currentPath = '/';
+    _searchQuery = '';
+    _error = null;
+    _hasLoaded = false;
+    _isLoading = false;
+    notifyListeners();
+  }
 
-    return FileBrowserEntry(
-      path: fullPath,
-      name: name,
-      kind: MediaFileKindResolver.resolve(name, isDirectory: isDir),
-      size: file.size ?? 0,
-      modifiedAt: file.mTime,
-    );
+  Future<List<FileBrowserEntry>> _readStorageDirectory(String path) async {
+    final entries = await _storageConnection!.readDirectory(path);
+    return entries
+        .where((entry) => entry.name.isNotEmpty && !entry.name.startsWith('.'))
+        .map(
+          (entry) => FileBrowserEntry(
+            sourceId: sourceId,
+            path: _entryPath(path, entry.name, entry.isDirectory),
+            name: entry.name,
+            kind: MediaFileKindResolver.resolve(entry.name, isDirectory: entry.isDirectory),
+            size: entry.size,
+            modifiedAt: entry.modifiedAt,
+          ),
+        )
+        .toList();
+  }
+
+  String _entryPath(String parentPath, String name, bool isDirectory) {
+    var fullPath = parentPath.endsWith('/') ? '$parentPath$name' : '$parentPath/$name';
+    if (isDirectory && !fullPath.endsWith('/')) fullPath += '/';
+    return fullPath;
   }
 
   /// Adapts a playable browser entry to the playback API's media model.
@@ -153,6 +183,7 @@ class FileBrowserProvider extends ChangeNotifier {
     }
     return MediaFile(
       id: -1,
+      sourceId: entry.sourceId,
       path: entry.path,
       fileName: entry.name,
       parsedTitle: entry.name,
@@ -165,31 +196,20 @@ class FileBrowserProvider extends ChangeNotifier {
   // === 核心功能 3: 进入文件夹 ===
   void enterFolder(FileBrowserEntry folder) {
     if (!folder.isDirectory) return;
-    _pathHistory.add(_currentPath);
-    _forwardHistory.clear();
     fetchFiles(folder.path);
   }
 
-  // === 核心功能 4: 返回上一级 ===
+  // === 核心功能 4: 返回上一级目录 ===
   void navigateBack() {
-    if (_pathHistory.isNotEmpty) {
-      _forwardHistory.add(_currentPath);
-      final previousPath = _pathHistory.removeLast();
-      fetchFiles(previousPath);
-    }
-  }
-
-  void navigateForward() {
-    if (_forwardHistory.isEmpty) return;
-    _pathHistory.add(_currentPath);
-    final nextPath = _forwardHistory.removeLast();
-    fetchFiles(nextPath);
+    if (!canGoBack) return;
+    final normalized = _currentPath.replaceFirst(RegExp(r'/+$'), '');
+    final parentSeparator = normalized.lastIndexOf('/');
+    final parentPath = parentSeparator <= 0 ? '/' : normalized.substring(0, parentSeparator + 1);
+    fetchFiles(parentPath);
   }
 
   void navigateToPath(String path) {
     if (path == _currentPath) return;
-    _pathHistory.add(_currentPath);
-    _forwardHistory.clear();
     fetchFiles(path);
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -44,6 +45,7 @@ abstract final class AppModal {
     IconData? icon,
     bool destructive = false,
     bool showFooter = true,
+    FutureOr<bool> Function()? onConfirm,
     bool barrierDismissible = true,
     double maxWidth = 440,
     double maxHeightFactor = 0.85,
@@ -72,7 +74,15 @@ abstract final class AppModal {
                 confirmLabel: confirmLabel,
                 cancelLabel: cancelLabel,
                 onCancel: () => Navigator.of(dialogContext).pop(false),
-                onConfirm: () => Navigator.of(dialogContext).pop(true),
+                onConfirm: onConfirm == null
+                    ? () => Navigator.of(dialogContext).pop(true)
+                    : () async {
+                        if (await onConfirm()) {
+                          if (dialogContext.mounted) {
+                            Navigator.of(dialogContext).pop(true);
+                          }
+                        }
+                      },
               ),
             ),
           ),
@@ -120,7 +130,7 @@ class _ModalCard extends StatelessWidget {
   final String confirmLabel;
   final String cancelLabel;
   final VoidCallback onCancel;
-  final VoidCallback onConfirm;
+  final FutureOr<void> Function() onConfirm;
 
   const _ModalCard({
     required this.title,

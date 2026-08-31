@@ -5,10 +5,11 @@ import 'package:mochi_player/core/ui/theme/app_spacing.dart';
 
 /// Groups related form items on one visually connected surface.
 class AppFormGroup extends StatelessWidget {
-  const AppFormGroup({super.key, required this.children, this.title});
+  const AppFormGroup({super.key, required this.children, this.title, this.trailing});
 
   /// Optional heading for this settings card.
   final String? title;
+  final Widget? trailing;
   final List<Widget> children;
 
   @override
@@ -28,12 +29,20 @@ class AppFormGroup extends StatelessWidget {
           if (title case final title?) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  title,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary(context),
+                      ),
+                    ),
+                  ),
+                  trailing ?? const SizedBox.shrink(),
+                ],
               ),
             ),
             Divider(height: 1, thickness: 1, color: separator),

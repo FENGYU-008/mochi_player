@@ -4,6 +4,7 @@ import 'package:mochi_player/core/domain/media/media_file_kind.dart';
 ///
 /// This model deliberately contains no library metadata or playback state.
 class FileBrowserEntry {
+  final String sourceId;
   final String path;
   final String name;
   final MediaFileKind kind;
@@ -11,6 +12,7 @@ class FileBrowserEntry {
   final DateTime? modifiedAt;
 
   const FileBrowserEntry({
+    this.sourceId = '',
     required this.path,
     required this.name,
     required this.kind,

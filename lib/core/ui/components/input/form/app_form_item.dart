@@ -12,6 +12,7 @@ class AppFormItem extends StatelessWidget {
     required this.control,
     this.icon,
     this.subtitle,
+    this.subtitleColor,
     this.enabled = true,
     this.expandControl = true,
     this.labelWidth = AppControlMetrics.labelWidth,
@@ -21,6 +22,7 @@ class AppFormItem extends StatelessWidget {
   final IconData? icon;
   final String label;
   final String? subtitle;
+  final Color? subtitleColor;
   final Widget control;
   final bool enabled;
   final bool expandControl;
@@ -37,7 +39,7 @@ class AppFormItem extends StatelessWidget {
       label: label,
       subtitle: subtitle,
       textColor: enabled ? textColor : secondaryColor,
-      secondaryColor: enabled ? secondaryColor : secondaryColor.withAlpha(190),
+      secondaryColor: subtitleColor ?? (enabled ? secondaryColor : secondaryColor.withAlpha(190)),
     );
 
     return SizedBox(

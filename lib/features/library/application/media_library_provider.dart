@@ -80,6 +80,8 @@ class MediaLibraryProvider extends ChangeNotifier {
 
   Future<void> refreshLibraryMetadata() => _syncController.refreshLibraryMetadata();
 
+  Future<MediaSourceScanSummary?> scanMediaSources() => _syncController.scanEnabledMediaSources();
+
   Future<void> updateProgress(MediaFile file, int position, {int? duration}) async {
     final entity = _findMediaFileEntity(file);
     if (entity == null) {
@@ -97,12 +99,14 @@ class MediaLibraryProvider extends ChangeNotifier {
   Future<MediaFile?> getLatestMediaFile(MediaFile file) async {
     entity.MediaFileEntity? latest;
     if (file.path.isNotEmpty) {
-      latest = await _db.getMediaFileByPath(file.path);
+      latest = await _db.getMediaFile(file.sourceId, file.path);
     }
     latest ??= _findMediaFileEntity(file);
     if (latest == null) return null;
 
-    final index = _catalog.mediaFiles.indexWhere((item) => item.id == latest!.id || item.path == file.path);
+    final index = _catalog.mediaFiles.indexWhere(
+      (item) => item.id == latest!.id || (item.sourceId == file.sourceId && item.path == file.path),
+    );
     if (index >= 0) {
       _catalog.mediaFiles[index] = latest;
     }
@@ -133,9 +137,22 @@ class MediaLibraryProvider extends ChangeNotifier {
     _syncController.reset();
   }
 
+  /// Removes in-memory library records already deleted for one storage source.
+  void removeSourceMediaFromCatalog(String sourceId) {
+    final removed = _catalog.mediaFiles.where((file) => file.sourceId == sourceId).map((file) => file.id).toSet();
+    if (removed.isEmpty) return;
+
+    _catalog.mediaFiles.removeWhere((file) => removed.contains(file.id));
+    _catalog.recountContinueWatching();
+    _catalog.markAllLibraryContentChanged();
+    notifyListeners();
+  }
+
   entity.MediaFileEntity? _findMediaFileEntity(MediaFile file) {
     for (final entity in _catalog.mediaFiles) {
-      if (entity.id == file.id || entity.path == file.path) return entity;
+      if (entity.id == file.id || (entity.sourceId == file.sourceId && entity.path == file.path)) {
+        return entity;
+      }
     }
     return null;
   }

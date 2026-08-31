@@ -62,7 +62,7 @@ class ContinueWatchingResolver {
     return (b.lastWatchedAt ?? DateTime(0)).compareTo(a.lastWatchedAt ?? DateTime(0));
   }
 
-  static String _movieKey(MediaFile file) => file.tmdbId ?? file.path;
+  static String _movieKey(MediaFile file) => file.tmdbId ?? '${file.sourceId}:${file.path}';
 
   static String _showKey(MediaFile file) {
     final tmdbId = file.tmdbId;
@@ -73,6 +73,6 @@ class ContinueWatchingResolver {
     }
 
     final title = file.parsedTitle.trim().toLowerCase();
-    return title.isEmpty ? 'file:${file.path}' : 'title:$title';
+    return title.isEmpty ? 'file:${file.sourceId}:${file.path}' : 'title:$title';
   }
 }

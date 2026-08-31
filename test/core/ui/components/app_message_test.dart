@@ -14,25 +14,25 @@ void main() {
     );
 
     AppMessage.error(
-      'OpenList WebDAV 连接失败',
+      'WebDAV 连接失败',
       duration: const Duration(seconds: 1),
     );
     AppMessage.error(
-      'OpenList WebDAV 连接失败',
+      'WebDAV 连接失败',
       duration: const Duration(seconds: 2),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 140));
 
-    expect(find.text('OpenList WebDAV 连接失败'), findsNWidgets(2));
+    expect(find.text('WebDAV 连接失败'), findsNWidgets(2));
 
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(milliseconds: 140));
-    expect(find.text('OpenList WebDAV 连接失败'), findsOneWidget);
+    expect(find.text('WebDAV 连接失败'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(milliseconds: 140));
-    expect(find.text('OpenList WebDAV 连接失败'), findsNothing);
+    expect(find.text('WebDAV 连接失败'), findsNothing);
   });
 
   testWidgets('keeps loading visible until its handle is dismissed', (

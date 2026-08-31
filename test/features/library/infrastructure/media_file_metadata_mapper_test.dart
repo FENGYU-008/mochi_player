@@ -6,6 +6,7 @@ import 'package:mochi_player/features/library/infrastructure/media_file_metadata
 void main() {
   test('creates a media entity from parsed filename metadata', () {
     final entity = MediaFileMetadataMapper.createEntity(
+      sourceId: 'nas-a',
       path: '/shows/example.mkv',
       fileName: 'example.mkv',
       size: 1024,
@@ -27,6 +28,8 @@ void main() {
     );
 
     expect(entity.path, '/shows/example.mkv');
+    expect(entity.sourceId, 'nas-a');
+    expect(entity.storageKey, 'nas-a:/shows/example.mkv');
     expect(entity.fileName, 'example.mkv');
     expect(entity.size, 1024);
     expect(entity.parsedTitle, 'Example');

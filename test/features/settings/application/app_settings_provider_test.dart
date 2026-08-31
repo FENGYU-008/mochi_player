@@ -30,11 +30,8 @@ Future<void> _save(
   bool applyRuntime = false,
 }) {
   return provider.saveSettings(
-    webDavUrl: '',
-    webDavUsername: '',
-    webDavPassword: '',
     tmdbApiKey: tmdbApiKey,
-    tmdbApiBaseUrl: '',
+    tmdbApiBaseUrl: AppSettings.defaultTmdbApiBaseUrl,
     tmdbProxyUrl: '',
     tmdbProxyEnabled: AppSettings.defaultTmdbProxyEnabled,
     playbackCacheSizeMb: AppSettings.defaultPlaybackCacheSizeMb,

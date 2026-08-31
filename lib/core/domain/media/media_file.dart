@@ -4,6 +4,7 @@ import 'package:mochi_player/core/domain/media/watch_status.dart';
 /// 媒体文件 Domain Model
 class MediaFile {
   final int id;
+  final String sourceId;
   final String path;
   final String fileName;
   final String parsedTitle;
@@ -31,6 +32,7 @@ class MediaFile {
 
   const MediaFile({
     required this.id,
+    this.sourceId = '',
     required this.path,
     required this.fileName,
     required this.parsedTitle,

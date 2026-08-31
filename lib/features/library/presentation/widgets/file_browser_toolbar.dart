@@ -3,33 +3,37 @@ import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 
 class FileBrowserToolbar extends StatelessWidget {
+  final String? sourceName;
+  final IconData? sourceIcon;
   final String currentPath;
   final bool canGoBack;
-  final bool canGoForward;
   final FileBrowserViewMode viewMode;
   final FileSortField sortField;
   final bool sortAscending;
   final VoidCallback onBack;
-  final VoidCallback onForward;
   final ValueChanged<String> onPathSelected;
   final void Function(FileSortField field, bool ascending) onSortChanged;
   final ValueChanged<FileBrowserViewMode> onViewModeChanged;
   final VoidCallback onRefresh;
+  final VoidCallback? onRootSelected;
+  final bool showDirectoryControls;
 
   const FileBrowserToolbar({
     super.key,
+    this.sourceName,
+    this.sourceIcon,
     required this.currentPath,
     required this.canGoBack,
-    required this.canGoForward,
     required this.viewMode,
     required this.sortField,
     required this.sortAscending,
     required this.onBack,
-    required this.onForward,
     required this.onPathSelected,
     required this.onSortChanged,
     required this.onViewModeChanged,
     required this.onRefresh,
+    this.onRootSelected,
+    this.showDirectoryControls = true,
   });
 
   @override
@@ -37,30 +41,35 @@ class FileBrowserToolbar extends StatelessWidget {
     return Row(
       children: [
         _ToolbarGroup(
-          children: [
-            _ToolbarIconButton(icon: AppIcons.back, tooltip: '后退', onPressed: canGoBack ? onBack : null),
-            _ToolbarIconButton(icon: AppIcons.forward, tooltip: '前进', onPressed: canGoForward ? onForward : null),
-          ],
+          children: [_ToolbarIconButton(icon: AppIcons.back, tooltip: '后退', onPressed: canGoBack ? onBack : null)],
         ),
         const SizedBox(width: AppSpacing.compact),
         Expanded(
-          child: _FilePathBreadcrumb(path: currentPath, onSelected: onPathSelected),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        _FileSortButton(field: sortField, ascending: sortAscending, onChanged: onSortChanged),
-        const SizedBox(width: AppSpacing.compact),
-        SizedBox(
-          width: _viewModeControlWidth,
-          child: AppSegmentedControl<FileBrowserViewMode>(
-            value: viewMode,
-            onChanged: onViewModeChanged,
-            appearance: AppSegmentedControlAppearance.toolbar,
-            options: const [
-              AppSegmentedOption.icon(value: FileBrowserViewMode.list, label: '列表视图', icon: AppIcons.list),
-              AppSegmentedOption.icon(value: FileBrowserViewMode.grid, label: '网格视图', icon: AppIcons.grid),
-            ],
+          child: _FilePathBreadcrumb(
+            sourceName: sourceName,
+            sourceIcon: sourceIcon,
+            path: currentPath,
+            onRootSelected: onRootSelected,
+            onPathSelected: onPathSelected,
           ),
         ),
+        if (showDirectoryControls) ...[
+          const SizedBox(width: AppSpacing.md),
+          _FileSortButton(field: sortField, ascending: sortAscending, onChanged: onSortChanged),
+          const SizedBox(width: AppSpacing.compact),
+          SizedBox(
+            width: _viewModeControlWidth,
+            child: AppSegmentedControl<FileBrowserViewMode>(
+              value: viewMode,
+              onChanged: onViewModeChanged,
+              appearance: AppSegmentedControlAppearance.toolbar,
+              options: const [
+                AppSegmentedOption.icon(value: FileBrowserViewMode.list, label: '列表视图', icon: AppIcons.list),
+                AppSegmentedOption.icon(value: FileBrowserViewMode.grid, label: '网格视图', icon: AppIcons.grid),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(width: AppSpacing.compact),
         _ToolbarGroup(
           children: [_ToolbarIconButton(icon: AppIcons.refresh, tooltip: '刷新目录', onPressed: onRefresh)],
@@ -71,15 +80,27 @@ class FileBrowserToolbar extends StatelessWidget {
 }
 
 class _FilePathBreadcrumb extends StatelessWidget {
+  final String? sourceName;
+  final IconData? sourceIcon;
   final String path;
-  final ValueChanged<String> onSelected;
+  final VoidCallback? onRootSelected;
+  final ValueChanged<String> onPathSelected;
 
-  const _FilePathBreadcrumb({required this.path, required this.onSelected});
+  const _FilePathBreadcrumb({
+    required this.sourceName,
+    required this.sourceIcon,
+    required this.path,
+    required this.onRootSelected,
+    required this.onPathSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
     final segments = path.split('/').where((segment) => segment.isNotEmpty);
-    final crumbs = <({String label, String path})>[(label: '根目录', path: '/')];
+    final crumbs = <({String label, String? path})>[
+      (label: '根目录', path: null),
+      if (sourceName != null) (label: sourceName!, path: '/'),
+    ];
     var accumulatedPath = '/';
     for (final segment in segments) {
       accumulatedPath = '$accumulatedPath$segment/';
@@ -105,19 +126,37 @@ class _FilePathBreadcrumb extends StatelessWidget {
           itemBuilder: (context, index) {
             final crumb = crumbs[index];
             final current = index == crumbs.length - 1;
+            final onTap = index == 0
+                ? onRootSelected
+                : current || crumb.path == null
+                ? null
+                : () => onPathSelected(crumb.path!);
             return AppClickableArea(
-              onTap: current ? null : () => onSelected(crumb.path),
+              onTap: onTap,
               borderRadius: BorderRadius.circular(AppRadii.small),
               padding: const EdgeInsets.symmetric(horizontal: 7),
               hoverColor: Colors.transparent,
               child: Center(
-                child: Text(
-                  crumb.label,
-                  style: TextStyle(
-                    color: current ? AppColors.textPrimary(context) : AppColors.textSecondary(context),
-                    fontSize: 13,
-                    fontWeight: current ? FontWeight.w600 : FontWeight.w400,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (sourceName != null && index == 1) ...[
+                      Icon(
+                        sourceIcon ?? Icons.dns_outlined,
+                        size: 15,
+                        color: current ? AppColors.textPrimary(context) : AppColors.textSecondary(context),
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                    ],
+                    Text(
+                      crumb.label,
+                      style: TextStyle(
+                        color: current ? AppColors.textPrimary(context) : AppColors.textSecondary(context),
+                        fontSize: 13,
+                        fontWeight: current ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );

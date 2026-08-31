@@ -2,9 +2,6 @@ import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppSettingsService {
-  static const _webDavUrlKey = 'webdav_url';
-  static const _webDavUsernameKey = 'webdav_username';
-  static const _webDavPasswordKey = 'webdav_password';
   static const _tmdbApiKeyKey = 'tmdb_api_key';
   static const _tmdbApiBaseUrlKey = 'tmdb_api_base_url';
   static const _tmdbProxyUrlKey = 'tmdb_proxy_url';
@@ -23,11 +20,8 @@ class AppSettingsService {
   Future<AppSettings> load() async {
     final prefs = await SharedPreferences.getInstance();
     return AppSettings(
-      webDavUrl: prefs.getString(_webDavUrlKey) ?? '',
-      webDavUsername: prefs.getString(_webDavUsernameKey) ?? '',
-      webDavPassword: prefs.getString(_webDavPasswordKey) ?? '',
       tmdbApiKey: prefs.getString(_tmdbApiKeyKey) ?? '',
-      tmdbApiBaseUrl: prefs.getString(_tmdbApiBaseUrlKey) ?? '',
+      tmdbApiBaseUrl: prefs.getString(_tmdbApiBaseUrlKey) ?? AppSettings.defaultTmdbApiBaseUrl,
       tmdbProxyUrl: prefs.getString(_tmdbProxyUrlKey) ?? '',
       tmdbProxyEnabled: prefs.getBool(_tmdbProxyEnabledKey) ?? AppSettings.defaultTmdbProxyEnabled,
       playbackCacheSizeMb: prefs.getInt(_playbackCacheSizeMbKey) ?? AppSettings.defaultPlaybackCacheSizeMb,
@@ -43,11 +37,10 @@ class AppSettingsService {
 
   Future<AppSettings> save(AppSettings settings) async {
     final settingsToSave = AppSettings(
-      webDavUrl: settings.webDavUrl.trim(),
-      webDavUsername: settings.webDavUsername.trim(),
-      webDavPassword: settings.webDavPassword,
       tmdbApiKey: settings.tmdbApiKey.trim(),
-      tmdbApiBaseUrl: settings.tmdbApiBaseUrl.trim(),
+      tmdbApiBaseUrl: settings.tmdbApiBaseUrl.trim().isEmpty
+          ? AppSettings.defaultTmdbApiBaseUrl
+          : settings.tmdbApiBaseUrl.trim(),
       tmdbProxyUrl: settings.tmdbProxyUrl.trim(),
       tmdbProxyEnabled: settings.tmdbProxyEnabled,
       playbackCacheSizeMb: settings.playbackCacheSizeMb
@@ -61,11 +54,8 @@ class AppSettingsService {
       subtitleFontSize: settings.subtitleFontSize.clamp(18.0, 40.0).toDouble(),
     );
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_webDavUrlKey, settingsToSave.webDavUrl.trim());
-    await prefs.setString(_webDavUsernameKey, settingsToSave.webDavUsername.trim());
-    await prefs.setString(_webDavPasswordKey, settingsToSave.webDavPassword);
     await prefs.setString(_tmdbApiKeyKey, settingsToSave.tmdbApiKey.trim());
-    await prefs.setString(_tmdbApiBaseUrlKey, settingsToSave.tmdbApiBaseUrl.trim());
+    await prefs.setString(_tmdbApiBaseUrlKey, settingsToSave.tmdbApiBaseUrl);
     await prefs.setString(_tmdbProxyUrlKey, settingsToSave.tmdbProxyUrl);
     await prefs.setBool(_tmdbProxyEnabledKey, settingsToSave.tmdbProxyEnabled);
     await prefs.setInt(_playbackCacheSizeMbKey, settingsToSave.playbackCacheSizeMb);

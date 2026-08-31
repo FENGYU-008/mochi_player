@@ -1,10 +1,10 @@
 import 'package:mochi_player/core/domain/media/media_file.dart';
-import 'package:mochi_player/core/infrastructure/openlist/openlist_playback_service.dart';
+import 'package:mochi_player/core/domain/playback/playback_target.dart';
+import 'package:mochi_player/core/domain/playback/playback_target_resolver.dart';
+import 'package:mochi_player/core/infrastructure/storage/storage_source_playback_resolver.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/playback/application/playback_progress_writer.dart';
 import 'package:mochi_player/features/playback/domain/playback_queue.dart';
-
-typedef DirectLinkResolver = Future<String?> Function(String path);
 
 /// Coordinates playback data for a single page session.
 ///
@@ -16,25 +16,25 @@ class PlaybackSessionController {
     required MediaLibraryProvider libraryProvider,
     required MediaFile initialItem,
     required List<MediaFile> queueItems,
-    required String initialUrl,
-    DirectLinkResolver? resolveDirectLink,
+    required PlaybackTarget initialTarget,
+    PlaybackTargetResolver? resolver,
   }) : _libraryProvider = libraryProvider,
-       _resolveDirectLink = resolveDirectLink ?? OpenListPlaybackService().getDirectLink,
+       _resolver = resolver ?? StorageSourcePlaybackResolver(),
        _queue = PlaybackQueue(initialItem: initialItem, items: queueItems),
-       _currentUrl = initialUrl,
+       _currentTarget = initialTarget,
        _progressWriter = PlaybackProgressWriter(libraryProvider.updateProgress);
 
   final MediaLibraryProvider _libraryProvider;
-  final DirectLinkResolver _resolveDirectLink;
+  final PlaybackTargetResolver _resolver;
   final PlaybackQueue _queue;
   final PlaybackProgressWriter _progressWriter;
-  String _currentUrl;
+  PlaybackTarget _currentTarget;
   int _lastSavedPositionMs = -1;
   bool _isSwitching = false;
 
   MediaFile get currentItem => _queue.current;
 
-  String get currentUrl => _currentUrl;
+  PlaybackTarget get currentTarget => _currentTarget;
 
   bool get hasPrevious => _queue.hasPrevious;
 
@@ -50,7 +50,8 @@ class PlaybackSessionController {
     }
   }
 
-  bool _isCurrent(MediaFile item) => currentItem.id == item.id || currentItem.path == item.path;
+  bool _isCurrent(MediaFile item) =>
+      currentItem.id == item.id || (currentItem.sourceId == item.sourceId && currentItem.path == item.path);
 
   Future<void> saveProgress({required int positionMs, required int durationMs, bool force = false}) async {
     if (positionMs <= 0 && durationMs <= 0) return;
@@ -73,13 +74,13 @@ class PlaybackSessionController {
       } catch (_) {
         // Playback can continue even when persistence is temporarily down.
       }
-      final directLink = await _resolveDirectLink(targetItem.path);
-      if (directLink == null) {
+      final target = await _resolver.resolve(targetItem);
+      if (target == null) {
         return PlaybackQueueMoveResult.failed(targetItem);
       }
 
       _queue.selectOffset(offset);
-      _currentUrl = directLink;
+      _currentTarget = target;
       _lastSavedPositionMs = -1;
       return PlaybackQueueMoveResult.ready(targetItem);
     } finally {

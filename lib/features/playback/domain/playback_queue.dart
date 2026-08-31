@@ -6,7 +6,9 @@ import 'package:mochi_player/core/domain/media/media_file.dart';
 /// so queue state can be tested without Flutter or a media backend.
 class PlaybackQueue {
   PlaybackQueue({required MediaFile initialItem, required List<MediaFile> items}) : _items = _deduplicate(items) {
-    _currentIndex = _items.indexWhere((item) => item.id == initialItem.id || item.path == initialItem.path);
+    _currentIndex = _items.indexWhere(
+      (item) => item.id == initialItem.id || (item.sourceId == initialItem.sourceId && item.path == initialItem.path),
+    );
     if (_currentIndex < 0) {
       _items.insert(0, initialItem);
       _currentIndex = 0;
@@ -46,7 +48,7 @@ class PlaybackQueue {
     final seenPaths = <String>{};
     return [
       for (final item in items)
-        if (seenPaths.add(item.path)) item,
+        if (seenPaths.add('${item.sourceId}:${item.path}')) item,
     ];
   }
 }

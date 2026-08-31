@@ -1,15 +1,19 @@
+import 'package:mochi_player/core/domain/storage/storage_locator.dart';
 import 'package:mochi_player/core/infrastructure/database/entities/entities.dart';
 import 'package:mochi_player/features/library/infrastructure/filename_parser.dart';
 
 /// Maps parsed filename metadata onto the persisted physical-file entity.
 abstract final class MediaFileMetadataMapper {
   static MediaFileEntity createEntity({
+    required String sourceId,
     required String path,
     required String fileName,
     required int size,
     required ParsedMediaFilename metadata,
   }) {
     final entity = MediaFileEntity()
+      ..sourceId = sourceId
+      ..storageKey = StorageLocator.keyFor(sourceId, path)
       ..path = path
       ..fileName = fileName
       ..size = size;

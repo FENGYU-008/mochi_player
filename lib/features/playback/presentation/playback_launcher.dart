@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mochi_player/app/routing/app_route_paths.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
-import 'package:mochi_player/core/infrastructure/openlist/openlist_playback_service.dart';
+import 'package:mochi_player/core/domain/playback/playback_target.dart';
+import 'package:mochi_player/core/infrastructure/storage/storage_source_playback_resolver.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/playback/presentation/player_route_data.dart';
@@ -106,20 +107,21 @@ class PlaybackLauncher {
       loadingBanner = AppMessage.loading(loadingMessage ?? '正在获取播放链接…');
     });
 
-    String? directLink;
+    PlaybackTarget? target;
     try {
-      directLink = await OpenListPlaybackService().getDirectLink(file.path);
+      target = await StorageSourcePlaybackResolver().resolve(file);
+    } catch (error, stackTrace) {
+      debugPrint('获取播放链接失败: $error\n$stackTrace');
     } finally {
       loadingDelay.cancel();
       loadingBanner?.dismiss();
     }
     if (!context.mounted) return;
 
-    final playerUrl = directLink;
-    if (playerUrl != null) {
+    if (target != null) {
       context.push(
         AppRoutePaths.player,
-        extra: PlayerRouteData(videoItem: file, url: playerUrl, contextTitle: contextTitle, playlist: playlist),
+        extra: PlayerRouteData(videoItem: file, target: target, contextTitle: contextTitle, playlist: playlist),
       );
     } else {
       _showError(context, failureMessage ?? "获取播放链接失败，请检查网络或服务器");

@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mochi_player/core/domain/media/media_file.dart';
+import 'package:mochi_player/core/domain/playback/playback_target.dart';
+import 'package:mochi_player/core/domain/playback/playback_target_resolver.dart';
 import 'package:mochi_player/features/playback/application/playback_session_controller.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 
@@ -31,6 +33,15 @@ class _FakeLibraryProvider extends MediaLibraryProvider {
   }
 }
 
+class _FakePlaybackTargetResolver implements PlaybackTargetResolver {
+  _FakePlaybackTargetResolver(this._resolve);
+
+  final Future<PlaybackTarget?> Function(MediaFile file) _resolve;
+
+  @override
+  Future<PlaybackTarget?> resolve(MediaFile file) => _resolve(file);
+}
+
 void main() {
   test(
     'saves current progress before resolving and committing a queue move',
@@ -43,18 +54,18 @@ void main() {
         libraryProvider: library,
         initialItem: first,
         queueItems: [first, second],
-        initialUrl: 'https://example.test/one',
-        resolveDirectLink: (path) async {
-          events.add('link:$path');
-          return 'https://example.test/two';
-        },
+        initialTarget: const PlaybackTarget(url: 'https://example.test/one'),
+        resolver: _FakePlaybackTargetResolver((file) async {
+          events.add('link:${file.path}');
+          return const PlaybackTarget(url: 'https://example.test/two');
+        }),
       );
 
       final move = await session.moveBy(1, positionMs: 4000, durationMs: 10000);
 
       expect(move?.isReady, isTrue);
       expect(session.currentItem, second);
-      expect(session.currentUrl, 'https://example.test/two');
+      expect(session.currentTarget.url, 'https://example.test/two');
       expect(library.progressWrites, [4000]);
       expect(events, ['link:/media/two.mkv']);
     },
@@ -70,15 +81,15 @@ void main() {
         libraryProvider: library,
         initialItem: first,
         queueItems: [first, second],
-        initialUrl: 'https://example.test/one',
-        resolveDirectLink: (_) async => null,
+        initialTarget: const PlaybackTarget(url: 'https://example.test/one'),
+        resolver: _FakePlaybackTargetResolver((_) async => null),
       );
 
       final move = await session.moveBy(1, positionMs: 4000, durationMs: 10000);
 
       expect(move?.isReady, isFalse);
       expect(session.currentItem, first);
-      expect(session.currentUrl, 'https://example.test/one');
+      expect(session.currentTarget.url, 'https://example.test/one');
     },
   );
 
@@ -90,8 +101,10 @@ void main() {
       libraryProvider: library,
       initialItem: first,
       queueItems: [first, second],
-      initialUrl: 'https://example.test/one',
-      resolveDirectLink: (_) async => 'https://example.test/two',
+      initialTarget: const PlaybackTarget(url: 'https://example.test/one'),
+      resolver: _FakePlaybackTargetResolver(
+        (_) async => const PlaybackTarget(url: 'https://example.test/two'),
+      ),
     );
 
     final move = await session.moveBy(1, positionMs: 4000, durationMs: 10000);

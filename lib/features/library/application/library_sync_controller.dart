@@ -1,14 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
+import 'package:mochi_player/core/domain/storage/models.dart';
 import 'package:mochi_player/core/infrastructure/database/database_service.dart';
 import 'package:mochi_player/core/infrastructure/database/entities/entities.dart' as entity;
+import 'package:mochi_player/core/infrastructure/storage/storage_source_service.dart';
+import 'package:mochi_player/core/infrastructure/storage/storage_provider_registry.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
-import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/library/application/media_library_catalog.dart';
 import 'package:mochi_player/features/library/infrastructure/filename_parser.dart';
 import 'package:mochi_player/features/library/infrastructure/media_file_metadata_mapper.dart';
 import 'package:mochi_player/features/library/infrastructure/metadata_scraper.dart';
-import 'package:mochi_player/features/library/infrastructure/webdav_media_scanner.dart';
+import 'package:mochi_player/features/library/infrastructure/storage_media_scanner.dart';
 
 /// Coordinates database loading, WebDAV scans and TMDB metadata scraping.
 class LibrarySyncController extends ChangeNotifier {
@@ -17,21 +19,24 @@ class LibrarySyncController extends ChangeNotifier {
     DatabaseService? database,
     TmdbService? tmdbService,
     MetadataScraper? metadataScraper,
-    WebDavService Function()? webDavServiceFactory,
-    WebDavMediaScanner Function(WebDavService service)? webDavScannerFactory,
+    StorageSourceService? storageSourceService,
+    StorageProviderRegistry? storageProviderRegistry,
+    StorageMediaScanner Function(StorageConnection connection)? storageScannerFactory,
   }) : _catalog = catalog,
        _db = database ?? DatabaseService(),
        _tmdbService = tmdbService ?? TmdbService(),
        _metadataScraper = metadataScraper ?? MetadataScraper(),
-       _webDavServiceFactory = webDavServiceFactory ?? WebDavService.new,
-       _webDavScannerFactory = webDavScannerFactory ?? WebDavMediaScanner.new;
+       _storageSourceService = storageSourceService ?? StorageSourceService(),
+       _storageProviderRegistry = storageProviderRegistry ?? StorageProviderRegistry.defaults(),
+       _storageScannerFactory = storageScannerFactory ?? StorageMediaScanner.new;
 
   final MediaLibraryCatalog _catalog;
   final DatabaseService _db;
   final TmdbService _tmdbService;
   final MetadataScraper _metadataScraper;
-  final WebDavService Function() _webDavServiceFactory;
-  final WebDavMediaScanner Function(WebDavService service) _webDavScannerFactory;
+  final StorageSourceService _storageSourceService;
+  final StorageProviderRegistry _storageProviderRegistry;
+  final StorageMediaScanner Function(StorageConnection connection) _storageScannerFactory;
   final _logger = Logger(printer: PrettyPrinter(methodCount: 0));
 
   bool _isScanning = false;
@@ -43,6 +48,9 @@ class LibrarySyncController extends ChangeNotifier {
   int _scrapeSuccessCount = 0;
   int _scrapeFailCount = 0;
   String? _scrapeCurrentTitle;
+  int _scanCompletedSources = 0;
+  int _scanTotalSources = 0;
+  String? _scanCurrentSource;
 
   bool get isLoading => _isScanning || _isScraping;
 
@@ -63,7 +71,11 @@ class LibrarySyncController extends ChangeNotifier {
       }
       return '正在刮削媒体库 $count · $summary';
     }
-    if (_isScanning) return '正在扫描媒体库...';
+    if (_isScanning) {
+      final progress = _scanTotalSources > 0 ? '$_scanCompletedSources/$_scanTotalSources' : '准备中';
+      final source = _scanCurrentSource;
+      return source == null ? '正在扫描已启用的媒体源...' : '正在扫描 $progress：$source';
+    }
     return null;
   }
 
@@ -88,11 +100,18 @@ class LibrarySyncController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> refreshLibraryMetadata() async {
-    if (isLoading) return;
+  /// Scans every enabled media source and updates the local file index.
+  ///
+  /// This workflow deliberately does not require a TMDB key. Metadata
+  /// scraping is a separate optional step after files have been discovered.
+  Future<MediaSourceScanSummary?> scanEnabledMediaSources() async {
+    if (isLoading) return null;
 
     _isScanning = true;
     _error = null;
+    _scanCompletedSources = 0;
+    _scanTotalSources = 0;
+    _scanCurrentSource = null;
     notifyListeners();
 
     try {
@@ -102,41 +121,95 @@ class LibrarySyncController extends ChangeNotifier {
       _isInitialized = true;
       _catalog.markMediaCatalogChanged();
 
-      final scanResult = await _scanFilesFromWebDav(
-        webDavService: _webDavServiceFactory(),
-        rootPath: '/',
-        removeMissingFiles: true,
-      );
-      if (scanResult.hadReadError) {
-        _error = 'WebDAV 扫描不完整，已跳过增量刮削，避免使用数据库旧文件';
-        return;
-      }
-      if (_catalog.mediaFiles.isEmpty) {
-        _error = '已扫描 WebDAV 根目录，但没有发现可刮削视频文件';
-        return;
-      }
-      if (!_tmdbService.isConfigured) {
-        _error = '未配置 TMDB API Key，无法增量刮削';
-        return;
+      final sources = (await _storageSourceService.getAll())
+          .where((source) => source.enabled && _storageProviderRegistry.supports(source.type))
+          .toList(growable: false);
+      if (sources.isEmpty) {
+        _error = '请先添加并启用至少一个可扫描的媒体源';
+        return null;
       }
 
-      for (final file in _catalog.mediaFiles) {
-        final parsed = FilenameParser.parse(fileName: file.fileName, filePath: file.path);
-        MediaFileMetadataMapper.updateEntity(file, parsed);
+      _scanTotalSources = sources.length;
+      var completedSourceCount = 0;
+      var failedSourceCount = 0;
+      var discoveredFileCount = 0;
+      var newFileCount = 0;
+      var removedFileCount = 0;
+      for (final source in sources) {
+        _scanCurrentSource = source.name;
+        notifyListeners();
+        try {
+          final credentials = await _storageSourceService.readCredentials(source.id);
+          final connection = await _storageProviderRegistry.connect(source, credentials);
+          final result = await _scanFilesFromStorage(connection);
+          discoveredFileCount += result.discoveredCount;
+          newFileCount += result.newCount;
+          removedFileCount += result.removedCount;
+          _logger.i(
+            '媒体源 ${source.name} 扫描完成：发现 ${result.discoveredCount} 个视频，'
+            '新增 ${result.newCount} 个，移除 ${result.removedCount} 个',
+          );
+          if (result.hadReadError) {
+            failedSourceCount++;
+            _logger.w('媒体源 ${source.name} 的扫描不完整，已跳过失效文件清理');
+          } else {
+            completedSourceCount++;
+          }
+        } catch (error) {
+          failedSourceCount++;
+          _logger.w('扫描媒体源 ${source.name} 失败: $error');
+        } finally {
+          _scanCompletedSources++;
+          notifyListeners();
+        }
       }
-      await _db.saveMediaFiles(_catalog.mediaFiles);
       _catalog.markMediaCatalogChanged();
-      notifyListeners();
-
-      _isScanning = false;
-      await _scrapeMetadata();
+      final summary = MediaSourceScanSummary(
+        enabledSourceCount: sources.length,
+        completedSourceCount: completedSourceCount,
+        failedSourceCount: failedSourceCount,
+        discoveredFileCount: discoveredFileCount,
+        newFileCount: newFileCount,
+        removedFileCount: removedFileCount,
+      );
+      _logger.i(
+        '全部媒体源扫描完成：启用 ${summary.enabledSourceCount} 个，'
+        '成功 ${summary.completedSourceCount} 个，失败 ${summary.failedSourceCount} 个，'
+        '发现 ${summary.discoveredFileCount} 个视频，新增 ${summary.newFileCount} 个，'
+        '移除 ${summary.removedFileCount} 个',
+      );
+      await _scrapeScannedMediaFiles();
+      return summary;
     } catch (error, stackTrace) {
-      _logger.e('增量刮削失败', error: error, stackTrace: stackTrace);
-      _error = '增量刮削失败: $error';
+      _logger.e('扫描媒体源失败', error: error, stackTrace: stackTrace);
+      _error = '扫描媒体源失败: $error';
+      return null;
     } finally {
       _isScanning = false;
+      _scanCurrentSource = null;
       notifyListeners();
     }
+  }
+
+  /// Retained for callers that explicitly request a full scan and metadata
+  /// refresh. A normal scan now follows the same workflow.
+  Future<void> refreshLibraryMetadata() async {
+    await scanEnabledMediaSources();
+  }
+
+  /// Parses every discovered file again before scraping so both newly added
+  /// and existing media can receive updated TMDB identifiers and metadata.
+  Future<void> _scrapeScannedMediaFiles() async {
+    if (_catalog.mediaFiles.isEmpty || !_tmdbService.isConfigured) return;
+
+    for (final file in _catalog.mediaFiles) {
+      final parsed = FilenameParser.parse(fileName: file.fileName, filePath: file.path);
+      MediaFileMetadataMapper.updateEntity(file, parsed);
+    }
+    await _db.saveMediaFiles(_catalog.mediaFiles);
+    _catalog.markMediaCatalogChanged();
+    notifyListeners();
+    await _scrapeMetadata();
   }
 
   void reset() {
@@ -149,6 +222,9 @@ class LibrarySyncController extends ChangeNotifier {
     _scrapeSuccessCount = 0;
     _scrapeFailCount = 0;
     _scrapeCurrentTitle = null;
+    _scanCompletedSources = 0;
+    _scanTotalSources = 0;
+    _scanCurrentSource = null;
     notifyListeners();
   }
 
@@ -220,19 +296,17 @@ class LibrarySyncController extends ChangeNotifier {
     }
   }
 
-  Future<_LibraryScanResult> _scanFilesFromWebDav({
-    required WebDavService webDavService,
-    required String rootPath,
-    required bool removeMissingFiles,
-  }) async {
-    final scanner = _webDavScannerFactory(webDavService);
+  Future<_LibraryScanResult> _scanFilesFromStorage(StorageConnection connection) async {
+    final scanner = _storageScannerFactory(connection);
     var newCount = 0;
     var removedCount = 0;
+    var discoveredCount = 0;
     final scannedPaths = <String>{};
 
-    await for (final file in scanner.scan(rootPath)) {
+    await for (final file in scanner.scan()) {
+      discoveredCount++;
       scannedPaths.add(file.path);
-      final existing = await _db.getMediaFileByPath(file.path);
+      final existing = await _db.getMediaFile(file.sourceId, file.path);
       if (existing != null) continue;
 
       await _db.saveMediaFile(file);
@@ -242,24 +316,31 @@ class LibrarySyncController extends ChangeNotifier {
       if (newCount % 10 == 0) notifyListeners();
     }
 
-    if (removeMissingFiles && scanner.hadReadError) {
-      _logger.w('跳过失效文件清理，因为本次 WebDAV 扫描存在读取失败');
-    } else if (removeMissingFiles) {
-      removedCount = await _removeMissingMediaFiles(scannedPaths);
+    if (scanner.hadReadError) {
+      _logger.w('跳过失效文件清理，因为来源 ${connection.source.name} 的扫描存在读取失败');
+    } else {
+      removedCount = await _removeMissingMediaFiles(connection.source.id, scannedPaths);
     }
 
-    return _LibraryScanResult(newCount: newCount, removedCount: removedCount, hadReadError: scanner.hadReadError);
+    return _LibraryScanResult(
+      discoveredCount: discoveredCount,
+      newCount: newCount,
+      removedCount: removedCount,
+      hadReadError: scanner.hadReadError,
+    );
   }
 
-  Future<int> _removeMissingMediaFiles(Set<String> scannedPaths) async {
-    final staleFiles = _catalog.mediaFiles.where((file) => !scannedPaths.contains(file.path)).toList();
+  Future<int> _removeMissingMediaFiles(String sourceId, Set<String> scannedPaths) async {
+    final staleFiles = _catalog.mediaFiles
+        .where((file) => file.sourceId == sourceId && !scannedPaths.contains(file.path))
+        .toList();
     if (staleFiles.isEmpty) return 0;
 
     final removedCount = await _db.deleteMediaFilesByIds(staleFiles.map((file) => file.id).toList());
     if (removedCount == 0) return 0;
 
-    final stalePaths = staleFiles.map((file) => file.path).toSet();
-    _catalog.mediaFiles.removeWhere((file) => stalePaths.contains(file.path));
+    final staleIds = staleFiles.map((file) => file.id).toSet();
+    _catalog.mediaFiles.removeWhere((file) => staleIds.contains(file.id));
     _catalog.recountContinueWatching();
     _catalog.markAllLibraryContentChanged();
     return removedCount;
@@ -285,9 +366,34 @@ class LibrarySyncController extends ChangeNotifier {
 }
 
 class _LibraryScanResult {
-  const _LibraryScanResult({required this.newCount, required this.removedCount, required this.hadReadError});
+  const _LibraryScanResult({
+    required this.discoveredCount,
+    required this.newCount,
+    required this.removedCount,
+    required this.hadReadError,
+  });
 
+  final int discoveredCount;
   final int newCount;
   final int removedCount;
   final bool hadReadError;
+}
+
+/// The outcome of scanning all currently enabled media sources.
+class MediaSourceScanSummary {
+  const MediaSourceScanSummary({
+    required this.enabledSourceCount,
+    required this.completedSourceCount,
+    required this.failedSourceCount,
+    required this.discoveredFileCount,
+    required this.newFileCount,
+    required this.removedFileCount,
+  });
+
+  final int enabledSourceCount;
+  final int completedSourceCount;
+  final int failedSourceCount;
+  final int discoveredFileCount;
+  final int newFileCount;
+  final int removedFileCount;
 }

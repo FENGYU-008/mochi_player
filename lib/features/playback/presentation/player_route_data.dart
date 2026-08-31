@@ -1,10 +1,11 @@
 import 'package:mochi_player/core/domain/media/media_file.dart';
+import 'package:mochi_player/core/domain/playback/playback_target.dart';
 
 class PlayerRouteData {
-  const PlayerRouteData({required this.videoItem, required this.url, this.contextTitle, this.playlist = const []});
+  const PlayerRouteData({required this.videoItem, required this.target, this.contextTitle, this.playlist = const []});
 
   final MediaFile videoItem;
-  final String url;
+  final PlaybackTarget target;
   final String? contextTitle;
   final List<MediaFile> playlist;
 }

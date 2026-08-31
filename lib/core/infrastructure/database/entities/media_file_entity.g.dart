@@ -43,16 +43,18 @@ const MediaFileEntitySchema = CollectionSchema(
     r'progress': PropertySchema(id: 18, name: r'progress', type: IsarType.double),
     r'quality': PropertySchema(id: 19, name: r'quality', type: IsarType.string),
     r'size': PropertySchema(id: 20, name: r'size', type: IsarType.long),
-    r'tmdbId': PropertySchema(id: 21, name: r'tmdbId', type: IsarType.string),
-    r'versionLabel': PropertySchema(id: 22, name: r'versionLabel', type: IsarType.string),
-    r'videoCodec': PropertySchema(id: 23, name: r'videoCodec', type: IsarType.string),
+    r'sourceId': PropertySchema(id: 21, name: r'sourceId', type: IsarType.string),
+    r'storageKey': PropertySchema(id: 22, name: r'storageKey', type: IsarType.string),
+    r'tmdbId': PropertySchema(id: 23, name: r'tmdbId', type: IsarType.string),
+    r'versionLabel': PropertySchema(id: 24, name: r'versionLabel', type: IsarType.string),
+    r'videoCodec': PropertySchema(id: 25, name: r'videoCodec', type: IsarType.string),
     r'watchStatus': PropertySchema(
-      id: 24,
+      id: 26,
       name: r'watchStatus',
       type: IsarType.byte,
       enumMap: _MediaFileEntitywatchStatusEnumValueMap,
     ),
-    r'width': PropertySchema(id: 25, name: r'width', type: IsarType.long),
+    r'width': PropertySchema(id: 27, name: r'width', type: IsarType.long),
   },
   estimateSize: _mediaFileEntityEstimateSize,
   serialize: _mediaFileEntitySerialize,
@@ -60,12 +62,19 @@ const MediaFileEntitySchema = CollectionSchema(
   deserializeProp: _mediaFileEntityDeserializeProp,
   idName: r'id',
   indexes: {
-    r'path': IndexSchema(
-      id: 8756705481922369689,
-      name: r'path',
+    r'sourceId': IndexSchema(
+      id: 2155220942429093580,
+      name: r'sourceId',
+      unique: false,
+      replace: false,
+      properties: [IndexPropertySchema(name: r'sourceId', type: IndexType.hash, caseSensitive: true)],
+    ),
+    r'storageKey': IndexSchema(
+      id: -7366682635250878879,
+      name: r'storageKey',
       unique: true,
       replace: false,
-      properties: [IndexPropertySchema(name: r'path', type: IndexType.hash, caseSensitive: true)],
+      properties: [IndexPropertySchema(name: r'storageKey', type: IndexType.hash, caseSensitive: true)],
     ),
     r'tmdbId': IndexSchema(
       id: 7174867214654401712,
@@ -141,6 +150,8 @@ int _mediaFileEntityEstimateSize(MediaFileEntity object, List<int> offsets, Map<
   bytesCount += 3 + object.parsedTitle.length * 3;
   bytesCount += 3 + object.path.length * 3;
   bytesCount += 3 + object.quality.length * 3;
+  bytesCount += 3 + object.sourceId.length * 3;
+  bytesCount += 3 + object.storageKey.length * 3;
   {
     final value = object.tmdbId;
     if (value != null) {
@@ -189,11 +200,13 @@ void _mediaFileEntitySerialize(
   writer.writeDouble(offsets[18], object.progress);
   writer.writeString(offsets[19], object.quality);
   writer.writeLong(offsets[20], object.size);
-  writer.writeString(offsets[21], object.tmdbId);
-  writer.writeString(offsets[22], object.versionLabel);
-  writer.writeString(offsets[23], object.videoCodec);
-  writer.writeByte(offsets[24], object.watchStatus.index);
-  writer.writeLong(offsets[25], object.width);
+  writer.writeString(offsets[21], object.sourceId);
+  writer.writeString(offsets[22], object.storageKey);
+  writer.writeString(offsets[23], object.tmdbId);
+  writer.writeString(offsets[24], object.versionLabel);
+  writer.writeString(offsets[25], object.videoCodec);
+  writer.writeByte(offsets[26], object.watchStatus.index);
+  writer.writeLong(offsets[27], object.width);
 }
 
 MediaFileEntity _mediaFileEntityDeserialize(
@@ -223,12 +236,14 @@ MediaFileEntity _mediaFileEntityDeserialize(
   object.path = reader.readString(offsets[16]);
   object.position = reader.readLong(offsets[17]);
   object.size = reader.readLong(offsets[20]);
-  object.tmdbId = reader.readStringOrNull(offsets[21]);
-  object.versionLabel = reader.readStringOrNull(offsets[22]);
-  object.videoCodec = reader.readStringOrNull(offsets[23]);
+  object.sourceId = reader.readString(offsets[21]);
+  object.storageKey = reader.readString(offsets[22]);
+  object.tmdbId = reader.readStringOrNull(offsets[23]);
+  object.versionLabel = reader.readStringOrNull(offsets[24]);
+  object.videoCodec = reader.readStringOrNull(offsets[25]);
   object.watchStatus =
-      _MediaFileEntitywatchStatusValueEnumMap[reader.readByteOrNull(offsets[24])] ?? StoredWatchStatus.notStarted;
-  object.width = reader.readLongOrNull(offsets[25]);
+      _MediaFileEntitywatchStatusValueEnumMap[reader.readByteOrNull(offsets[26])] ?? StoredWatchStatus.notStarted;
+  object.width = reader.readLongOrNull(offsets[27]);
   return object;
 }
 
@@ -277,15 +292,19 @@ P _mediaFileEntityDeserializeProp<P>(IsarReader reader, int propertyId, int offs
     case 20:
       return (reader.readLong(offset)) as P;
     case 21:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 22:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 23:
       return (reader.readStringOrNull(offset)) as P;
     case 24:
+      return (reader.readStringOrNull(offset)) as P;
+    case 25:
+      return (reader.readStringOrNull(offset)) as P;
+    case 26:
       return (_MediaFileEntitywatchStatusValueEnumMap[reader.readByteOrNull(offset)] ?? StoredWatchStatus.notStarted)
           as P;
-    case 25:
+    case 27:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -318,56 +337,56 @@ void _mediaFileEntityAttach(IsarCollection<dynamic> col, Id id, MediaFileEntity 
 }
 
 extension MediaFileEntityByIndex on IsarCollection<MediaFileEntity> {
-  Future<MediaFileEntity?> getByPath(String path) {
-    return getByIndex(r'path', [path]);
+  Future<MediaFileEntity?> getByStorageKey(String storageKey) {
+    return getByIndex(r'storageKey', [storageKey]);
   }
 
-  MediaFileEntity? getByPathSync(String path) {
-    return getByIndexSync(r'path', [path]);
+  MediaFileEntity? getByStorageKeySync(String storageKey) {
+    return getByIndexSync(r'storageKey', [storageKey]);
   }
 
-  Future<bool> deleteByPath(String path) {
-    return deleteByIndex(r'path', [path]);
+  Future<bool> deleteByStorageKey(String storageKey) {
+    return deleteByIndex(r'storageKey', [storageKey]);
   }
 
-  bool deleteByPathSync(String path) {
-    return deleteByIndexSync(r'path', [path]);
+  bool deleteByStorageKeySync(String storageKey) {
+    return deleteByIndexSync(r'storageKey', [storageKey]);
   }
 
-  Future<List<MediaFileEntity?>> getAllByPath(List<String> pathValues) {
-    final values = pathValues.map((e) => [e]).toList();
-    return getAllByIndex(r'path', values);
+  Future<List<MediaFileEntity?>> getAllByStorageKey(List<String> storageKeyValues) {
+    final values = storageKeyValues.map((e) => [e]).toList();
+    return getAllByIndex(r'storageKey', values);
   }
 
-  List<MediaFileEntity?> getAllByPathSync(List<String> pathValues) {
-    final values = pathValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'path', values);
+  List<MediaFileEntity?> getAllByStorageKeySync(List<String> storageKeyValues) {
+    final values = storageKeyValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'storageKey', values);
   }
 
-  Future<int> deleteAllByPath(List<String> pathValues) {
-    final values = pathValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'path', values);
+  Future<int> deleteAllByStorageKey(List<String> storageKeyValues) {
+    final values = storageKeyValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'storageKey', values);
   }
 
-  int deleteAllByPathSync(List<String> pathValues) {
-    final values = pathValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'path', values);
+  int deleteAllByStorageKeySync(List<String> storageKeyValues) {
+    final values = storageKeyValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'storageKey', values);
   }
 
-  Future<Id> putByPath(MediaFileEntity object) {
-    return putByIndex(r'path', object);
+  Future<Id> putByStorageKey(MediaFileEntity object) {
+    return putByIndex(r'storageKey', object);
   }
 
-  Id putByPathSync(MediaFileEntity object, {bool saveLinks = true}) {
-    return putByIndexSync(r'path', object, saveLinks: saveLinks);
+  Id putByStorageKeySync(MediaFileEntity object, {bool saveLinks = true}) {
+    return putByIndexSync(r'storageKey', object, saveLinks: saveLinks);
   }
 
-  Future<List<Id>> putAllByPath(List<MediaFileEntity> objects) {
-    return putAllByIndex(r'path', objects);
+  Future<List<Id>> putAllByStorageKey(List<MediaFileEntity> objects) {
+    return putAllByIndex(r'storageKey', objects);
   }
 
-  List<Id> putAllByPathSync(List<MediaFileEntity> objects, {bool saveLinks = true}) {
-    return putAllByIndexSync(r'path', objects, saveLinks: saveLinks);
+  List<Id> putAllByStorageKeySync(List<MediaFileEntity> objects, {bool saveLinks = true}) {
+    return putAllByIndexSync(r'storageKey', objects, saveLinks: saveLinks);
   }
 }
 
@@ -449,25 +468,57 @@ extension MediaFileEntityQueryWhere on QueryBuilder<MediaFileEntity, MediaFileEn
     });
   }
 
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause> pathEqualTo(String path) {
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause> sourceIdEqualTo(String sourceId) {
     return QueryBuilder.apply(this, (query) {
-      return query.addWhereClause(IndexWhereClause.equalTo(indexName: r'path', value: [path]));
+      return query.addWhereClause(IndexWhereClause.equalTo(indexName: r'sourceId', value: [sourceId]));
     });
   }
 
-  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause> pathNotEqualTo(String path) {
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause> sourceIdNotEqualTo(String sourceId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
-            .addWhereClause(IndexWhereClause.between(indexName: r'path', lower: [], upper: [path], includeUpper: false))
             .addWhereClause(
-              IndexWhereClause.between(indexName: r'path', lower: [path], includeLower: false, upper: []),
+              IndexWhereClause.between(indexName: r'sourceId', lower: [], upper: [sourceId], includeUpper: false),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(indexName: r'sourceId', lower: [sourceId], includeLower: false, upper: []),
             );
       } else {
         return query
-            .addWhereClause(IndexWhereClause.between(indexName: r'path', lower: [path], includeLower: false, upper: []))
             .addWhereClause(
-              IndexWhereClause.between(indexName: r'path', lower: [], upper: [path], includeUpper: false),
+              IndexWhereClause.between(indexName: r'sourceId', lower: [sourceId], includeLower: false, upper: []),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(indexName: r'sourceId', lower: [], upper: [sourceId], includeUpper: false),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause> storageKeyEqualTo(String storageKey) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(indexName: r'storageKey', value: [storageKey]));
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterWhereClause> storageKeyNotEqualTo(String storageKey) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(indexName: r'storageKey', lower: [], upper: [storageKey], includeUpper: false),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(indexName: r'storageKey', lower: [storageKey], includeLower: false, upper: []),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IndexWhereClause.between(indexName: r'storageKey', lower: [storageKey], includeLower: false, upper: []),
+            )
+            .addWhereClause(
+              IndexWhereClause.between(indexName: r'storageKey', lower: [], upper: [storageKey], includeUpper: false),
             );
       }
     });
@@ -2392,6 +2443,240 @@ extension MediaFileEntityQueryFilter on QueryBuilder<MediaFileEntity, MediaFileE
     });
   }
 
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> sourceIdEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'sourceId', value: value, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> sourceIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'sourceId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> sourceIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(include: include, property: r'sourceId', value: value, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> sourceIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'sourceId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> sourceIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(property: r'sourceId', value: value, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> sourceIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(property: r'sourceId', value: value, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> sourceIdContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(property: r'sourceId', value: value, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> sourceIdMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(property: r'sourceId', wildcard: pattern, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> sourceIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(property: r'sourceId', value: ''));
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> sourceIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(property: r'sourceId', value: ''));
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> storageKeyEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'storageKey', value: value, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> storageKeyGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'storageKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> storageKeyLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(include: include, property: r'storageKey', value: value, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> storageKeyBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'storageKey',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> storageKeyStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(property: r'storageKey', value: value, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> storageKeyEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(property: r'storageKey', value: value, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> storageKeyContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(property: r'storageKey', value: value, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> storageKeyMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(property: r'storageKey', wildcard: pattern, caseSensitive: caseSensitive),
+      );
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> storageKeyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(property: r'storageKey', value: ''));
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> storageKeyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(property: r'storageKey', value: ''));
+    });
+  }
+
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterFilterCondition> tmdbIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(property: r'tmdbId'));
@@ -3139,6 +3424,30 @@ extension MediaFileEntityQuerySortBy on QueryBuilder<MediaFileEntity, MediaFileE
     });
   }
 
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy> sortBySourceId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy> sortBySourceIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy> sortByStorageKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'storageKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy> sortByStorageKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'storageKey', Sort.desc);
+    });
+  }
+
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy> sortByTmdbId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'tmdbId', Sort.asc);
@@ -3465,6 +3774,30 @@ extension MediaFileEntityQuerySortThenBy on QueryBuilder<MediaFileEntity, MediaF
     });
   }
 
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy> thenBySourceId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy> thenBySourceIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'sourceId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy> thenByStorageKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'storageKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy> thenByStorageKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'storageKey', Sort.desc);
+    });
+  }
+
   QueryBuilder<MediaFileEntity, MediaFileEntity, QAfterSortBy> thenByTmdbId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'tmdbId', Sort.asc);
@@ -3653,6 +3986,18 @@ extension MediaFileEntityQueryWhereDistinct on QueryBuilder<MediaFileEntity, Med
     });
   }
 
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctBySourceId({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'sourceId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByStorageKey({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'storageKey', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<MediaFileEntity, MediaFileEntity, QDistinct> distinctByTmdbId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'tmdbId', caseSensitive: caseSensitive);
@@ -3814,6 +4159,18 @@ extension MediaFileEntityQueryProperty on QueryBuilder<MediaFileEntity, MediaFil
   QueryBuilder<MediaFileEntity, int, QQueryOperations> sizeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'size');
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, String, QQueryOperations> sourceIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'sourceId');
+    });
+  }
+
+  QueryBuilder<MediaFileEntity, String, QQueryOperations> storageKeyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'storageKey');
     });
   }
 

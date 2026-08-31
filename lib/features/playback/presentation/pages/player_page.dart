@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/media/media_type.dart';
+import 'package:mochi_player/core/domain/playback/playback_target.dart';
 import 'package:mochi_player/core/platform/window_controls_controller.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
@@ -18,14 +19,14 @@ import 'package:provider/provider.dart';
 
 class PlayerPage extends StatefulWidget {
   final MediaFile videoItem;
-  final String url;
+  final PlaybackTarget target;
   final String? contextTitle;
   final List<MediaFile> playlist;
 
   const PlayerPage({
     super.key,
     required this.videoItem,
-    required this.url,
+    required this.target,
     this.contextTitle,
     this.playlist = const [],
   });
@@ -77,7 +78,7 @@ class _PlayerPageState extends State<PlayerPage> {
       settings: _playbackSettings,
       initialItem: widget.videoItem,
       queueItems: queueItems,
-      initialUrl: widget.url,
+      initialTarget: widget.target,
       onPlaybackActivity: _startHideControlsTimer,
     )..addListener(_handlePlaybackChanged);
     _windowModeController = PlayerWindowModeController(

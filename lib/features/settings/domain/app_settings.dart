@@ -9,11 +9,9 @@ class AppSettings {
   static const defaultEnableHardwareAcceleration = true;
   static const defaultSubtitleLanguagePriority = 'zh,chi,zho,chs,cht,eng';
   static const defaultSubtitleFontSize = 24.0;
-  static const defaultTmdbProxyEnabled = true;
+  static const defaultTmdbApiBaseUrl = 'https://api.themoviedb.org/3';
+  static const defaultTmdbProxyEnabled = false;
 
-  final String webDavUrl;
-  final String webDavUsername;
-  final String webDavPassword;
   final String tmdbApiKey;
   final String tmdbApiBaseUrl;
   final String tmdbProxyUrl;
@@ -25,11 +23,8 @@ class AppSettings {
   final double subtitleFontSize;
 
   const AppSettings({
-    this.webDavUrl = '',
-    this.webDavUsername = '',
-    this.webDavPassword = '',
     this.tmdbApiKey = '',
-    this.tmdbApiBaseUrl = '',
+    this.tmdbApiBaseUrl = defaultTmdbApiBaseUrl,
     this.tmdbProxyUrl = '',
     this.tmdbProxyEnabled = defaultTmdbProxyEnabled,
     this.playbackCacheSizeMb = defaultPlaybackCacheSizeMb,
@@ -38,9 +33,6 @@ class AppSettings {
     this.subtitleLanguagePriority = defaultSubtitleLanguagePriority,
     this.subtitleFontSize = defaultSubtitleFontSize,
   });
-
-  bool get hasWebDavConfig =>
-      webDavUrl.trim().isNotEmpty && webDavUsername.trim().isNotEmpty && webDavPassword.isNotEmpty;
 
   bool get hasTmdbApiKey => tmdbApiKey.trim().isNotEmpty;
 
@@ -51,9 +43,6 @@ class AppSettings {
 
   AppSettings withFallbacks(AppSettings fallback) {
     return AppSettings(
-      webDavUrl: webDavUrl.trim().isNotEmpty ? webDavUrl : fallback.webDavUrl,
-      webDavUsername: webDavUsername.trim().isNotEmpty ? webDavUsername : fallback.webDavUsername,
-      webDavPassword: webDavPassword.isNotEmpty ? webDavPassword : fallback.webDavPassword,
       tmdbApiKey: tmdbApiKey.trim().isNotEmpty ? tmdbApiKey : fallback.tmdbApiKey,
       tmdbApiBaseUrl: tmdbApiBaseUrl.trim().isNotEmpty ? tmdbApiBaseUrl : fallback.tmdbApiBaseUrl,
       tmdbProxyUrl: tmdbProxyUrl.trim(),

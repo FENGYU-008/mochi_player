@@ -45,7 +45,7 @@ void main() {
 
     await tester.tap(find.text('文件浏览'));
     await tester.pumpAndSettle();
-    expect(find.text('请先在设置中配置 OpenList').hitTestable(), findsOneWidget);
+    expect(find.text('媒体源').hitTestable(), findsOneWidget);
 
     await tester.tap(find.text('首页'));
     await tester.pumpAndSettle();
@@ -58,12 +58,12 @@ void main() {
     await tester.tap(settingsDestination);
     await tester.pumpAndSettle();
 
-    final settingsTabs = find.descendant(
+    final mediaSourceTab = find.descendant(
       of: find.byType(SettingsPage),
-      matching: find.text('媒体库'),
+      matching: find.text('媒体源'),
     );
-    await tester.ensureVisible(settingsTabs);
-    await tester.tap(settingsTabs);
+    await tester.ensureVisible(mediaSourceTab);
+    await tester.tap(mediaSourceTab);
     await tester.pumpAndSettle();
     expect(find.text('清空媒体库'), findsOneWidget);
 

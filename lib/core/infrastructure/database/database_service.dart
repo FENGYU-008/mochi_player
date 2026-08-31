@@ -32,6 +32,7 @@ class DatabaseService {
       TVShowMetadataEntitySchema,
       SeasonMetadataEntitySchema,
       EpisodeMetadataEntitySchema,
+      StorageSourceEntitySchema,
     ], directory: dir.path);
 
     _isInitialized = true;
@@ -40,11 +41,52 @@ class DatabaseService {
 
   // ===== MediaFile CRUD =====
 
-  /// 保存或更新媒体文件（使用 path 唯一索引）
+  // ===== Storage source CRUD =====
+
+  Future<List<StorageSourceEntity>> getStorageSources() {
+    return _isar.storageSourceEntitys.where().sortByName().findAll();
+  }
+
+  Future<StorageSourceEntity?> getStorageSource(String sourceId) {
+    return _isar.storageSourceEntitys.getBySourceId(sourceId);
+  }
+
+  Future<void> saveStorageSource(StorageSourceEntity source) async {
+    await _isar.writeTxn(() async {
+      await _isar.storageSourceEntitys.putBySourceId(source);
+    });
+  }
+
+  Future<bool> deleteStorageSource(String sourceId) async {
+    return _isar.writeTxn(() async {
+      final source = await _isar.storageSourceEntitys.getBySourceId(sourceId);
+      if (source == null) return false;
+      return _isar.storageSourceEntitys.delete(source.id);
+    });
+  }
+
+  /// Deletes a storage source and every indexed media file owned by it.
+  ///
+  /// Media-file rows contain their own playback progress and favorite state,
+  /// so deleting them clears all source-specific library data atomically.
+  /// Shared metadata is intentionally retained for any remaining sources.
+  Future<int?> deleteStorageSourceAndMediaFiles(String sourceId) async {
+    return _isar.writeTxn(() async {
+      final source = await _isar.storageSourceEntitys.getBySourceId(sourceId);
+      if (source == null) return null;
+
+      final mediaFiles = await _isar.mediaFileEntitys.filter().sourceIdEqualTo(sourceId).findAll();
+      await _isar.mediaFileEntitys.deleteAll(mediaFiles.map((file) => file.id).toList(growable: false));
+      await _isar.storageSourceEntitys.delete(source.id);
+      return mediaFiles.length;
+    });
+  }
+
+  /// 保存或更新媒体文件（使用 sourceId + path 唯一索引）
   Future<void> saveMediaFile(MediaFileEntity file) async {
     await _isar.writeTxn(() async {
       // 使用 putByIndex 确保基于唯一索引更新，避免冲突
-      await _isar.mediaFileEntitys.putByPath(file);
+      await _isar.mediaFileEntitys.putByStorageKey(file);
     });
   }
 
@@ -55,9 +97,9 @@ class DatabaseService {
     });
   }
 
-  /// 根据路径获取媒体文件
-  Future<MediaFileEntity?> getMediaFileByPath(String path) async {
-    return await _isar.mediaFileEntitys.filter().pathEqualTo(path).findFirst();
+  /// 根据来源和来源内路径获取媒体文件。
+  Future<MediaFileEntity?> getMediaFile(String sourceId, String path) async {
+    return _isar.mediaFileEntitys.getByStorageKey('$sourceId:$path');
   }
 
   /// 获取所有媒体文件

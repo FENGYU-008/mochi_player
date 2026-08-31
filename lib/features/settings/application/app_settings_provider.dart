@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mochi_player/core/infrastructure/openlist/openlist_playback_service.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_image_cache_manager.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
-import 'package:mochi_player/core/infrastructure/webdav/webdav_service.dart';
 import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/settings/infrastructure/app_settings_service.dart';
 
@@ -28,12 +26,6 @@ class AppSettingsProvider extends ChangeNotifier {
 
   String? get error => _error;
 
-  String get webDavUrl => _settings.webDavUrl;
-
-  String get webDavUsername => _settings.webDavUsername;
-
-  String get webDavPassword => _settings.webDavPassword;
-
   String get tmdbApiKey => _settings.tmdbApiKey;
 
   String get tmdbApiBaseUrl => _settings.tmdbApiBaseUrl;
@@ -51,8 +43,6 @@ class AppSettingsProvider extends ChangeNotifier {
   String get subtitleLanguagePriority => _settings.subtitleLanguagePriority;
 
   double get subtitleFontSize => _settings.subtitleFontSize;
-
-  bool get hasWebDavConfig => _settings.hasWebDavConfig;
 
   bool get hasTmdbApiKey => _settings.hasTmdbApiKey;
 
@@ -73,9 +63,6 @@ class AppSettingsProvider extends ChangeNotifier {
   }
 
   Future<void> saveSettings({
-    required String webDavUrl,
-    required String webDavUsername,
-    required String webDavPassword,
     required String tmdbApiKey,
     required String tmdbApiBaseUrl,
     required String tmdbProxyUrl,
@@ -93,9 +80,6 @@ class AppSettingsProvider extends ChangeNotifier {
 
     try {
       final nextSettings = AppSettings(
-        webDavUrl: webDavUrl.trim(),
-        webDavUsername: webDavUsername.trim(),
-        webDavPassword: webDavPassword,
         tmdbApiKey: tmdbApiKey.trim(),
         tmdbApiBaseUrl: tmdbApiBaseUrl.trim(),
         tmdbProxyUrl: tmdbProxyUrl.trim(),
@@ -116,11 +100,6 @@ class AppSettingsProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> testWebDavConnection() async {
-    if (!hasWebDavConfig) return false;
-    return WebDavService().testConnection();
-  }
-
   Future<bool> testTmdbConnection() async {
     if (!hasTmdbApiKey) return false;
     final result = await TmdbService().fetchTrendingMovies(limit: 1);
@@ -136,13 +115,6 @@ class AppSettingsProvider extends ChangeNotifier {
     );
     TmdbImageCacheManager.configure(proxyUrl: _settings.tmdbProxyUrl, proxyEnabled: _settings.tmdbProxyEnabled);
 
-    if (_settings.hasWebDavConfig) {
-      await WebDavService().init(_settings.webDavUrl, _settings.webDavUsername, _settings.webDavPassword);
-      OpenListPlaybackService().configure(_settings.webDavUrl, _settings.webDavUsername, _settings.webDavPassword);
-    } else {
-      WebDavService().clear();
-      OpenListPlaybackService().clear();
-    }
     _appliedRuntimeSettings = _settings;
   }
 }

@@ -62,7 +62,9 @@ class MediaLibraryQueries {
     if (candidates.isEmpty) return [currentFile];
 
     final queue = candidates.map(MediaEntityMapper.toMediaFile).toList();
-    final hasCurrent = queue.any((file) => file.id == currentFile.id || file.path == currentFile.path);
+    final hasCurrent = queue.any(
+      (file) => file.id == currentFile.id || (file.sourceId == currentFile.sourceId && file.path == currentFile.path),
+    );
     return hasCurrent ? queue : [currentFile, ...queue];
   }
 
@@ -119,12 +121,12 @@ class MediaLibraryQueries {
 
   String _favoriteGroupKey(entity.MediaFileEntity file) {
     if (file.mediaType == entity.StoredMediaType.episode) {
-      return 'tv:${_showKeyForEntity(file) ?? file.path}';
+      return 'tv:${_showKeyForEntity(file) ?? '${file.sourceId}:${file.path}'}';
     }
     if (file.mediaType == entity.StoredMediaType.movie) {
-      return 'movie:${file.tmdbId ?? file.path}';
+      return 'movie:${file.tmdbId ?? '${file.sourceId}:${file.path}'}';
     }
-    return 'file:${file.path}';
+    return 'file:${file.sourceId}:${file.path}';
   }
 
   String? _showKeyForMediaFile(MediaFile file) {

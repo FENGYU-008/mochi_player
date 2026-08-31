@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:mochi_player/core/domain/media/media_file.dart';
+import 'package:mochi_player/core/domain/playback/playback_target.dart';
 import 'package:mochi_player/core/formatters/media_format.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
 import 'package:mochi_player/features/playback/application/playback_session_controller.dart';
@@ -23,14 +24,14 @@ class PlayerPlaybackController extends ChangeNotifier {
     required AppSettings settings,
     required MediaFile initialItem,
     required List<MediaFile> queueItems,
-    required String initialUrl,
+    required PlaybackTarget initialTarget,
     this.onPlaybackActivity,
   }) : _settings = settings,
        _session = PlaybackSessionController(
          libraryProvider: libraryProvider,
          initialItem: initialItem,
          queueItems: queueItems,
-         initialUrl: initialUrl,
+         initialTarget: initialTarget,
        ) {
     player = Player(
       configuration: PlayerConfiguration(
@@ -269,15 +270,15 @@ class PlayerPlaybackController extends ChangeNotifier {
     if (!_canUsePlayer(generation)) return;
     final resumePosition = PlaybackResumePolicy.positionFor(currentItem, hasRestoredPosition: _hasRestoredPosition);
 
-    debugPrint('正在播放直链: ${LibmpvLogBuffer.sanitize(_session.currentUrl)}');
+    debugPrint('正在播放直链: ${LibmpvLogBuffer.sanitize(_session.currentTarget.url)}');
     await _applyPlayerSettings(generation);
     if (!_canUsePlayer(generation)) return;
     await _applySubtitleStyleMode(generation);
     if (!_canUsePlayer(generation)) return;
 
     final media = Media(
-      _session.currentUrl,
-      httpHeaders: const {'User-Agent': 'MochiPlayer/1.0.0'},
+      _session.currentTarget.url,
+      httpHeaders: {'User-Agent': 'MochiPlayer/1.0.0', ..._session.currentTarget.httpHeaders},
       start: resumePosition,
     );
     try {

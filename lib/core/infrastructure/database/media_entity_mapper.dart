@@ -7,6 +7,7 @@ class MediaEntityMapper {
 
   static MediaFile toMediaFile(entity.MediaFileEntity e) => MediaFile(
     id: e.id,
+    sourceId: e.sourceId,
     path: e.path,
     fileName: e.fileName,
     parsedTitle: e.parsedTitle,

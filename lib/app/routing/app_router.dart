@@ -34,7 +34,7 @@ GoRouter createAppRouter() {
             key: state.pageKey,
             child: PlayerPage(
               videoItem: data.videoItem,
-              url: data.url,
+              target: data.target,
               contextTitle: data.contextTitle,
               playlist: data.playlist,
             ),

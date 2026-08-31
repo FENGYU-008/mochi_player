@@ -91,7 +91,14 @@ class TmdbService {
   }
 
   Future<Map<String, dynamic>?> _search(String path, String query, {int? year, String yearKey = 'year'}) async {
-    final parameters = <String, dynamic>{'query': query, 'include_adult': false, yearKey: ?year};
+    final parameters = <String, dynamic>{
+      'query': query,
+      'include_adult': false,
+      // The code generator currently uses an analyzer that does not parse
+      // the equivalent `yearKey: ?year` collection element.
+      // ignore: use_null_aware_elements
+      if (year != null) yearKey: year,
+    };
     final data = await _client.get(path, operation: '搜索 TMDB: $query', queryParameters: parameters);
     return _matcher.findBest(_results(data), query, isTV: path.contains('/tv'));
   }

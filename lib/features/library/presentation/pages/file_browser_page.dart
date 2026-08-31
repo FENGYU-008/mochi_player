@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mochi_player/core/domain/storage/models.dart';
+import 'package:mochi_player/core/infrastructure/storage/storage_source_service.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
 import 'package:mochi_player/features/library/domain/file_browser_entry.dart';
@@ -6,7 +8,6 @@ import 'package:mochi_player/features/library/presentation/widgets/file_browser_
 import 'package:mochi_player/features/library/presentation/widgets/file_browser_list.dart';
 import 'package:mochi_player/features/library/presentation/widgets/file_browser_toolbar.dart';
 import 'package:mochi_player/features/playback/presentation/playback_launcher.dart';
-import 'package:mochi_player/features/settings/application/app_settings_provider.dart';
 import 'package:provider/provider.dart';
 
 class FileBrowserPage extends StatefulWidget {
@@ -17,11 +18,28 @@ class FileBrowserPage extends StatefulWidget {
 }
 
 class _FileBrowserPageState extends State<FileBrowserPage> {
-  bool _didScheduleInitialLoad = false;
+  final _storageSourceService = StorageSourceService();
+  var _sources = const <StorageSource>[];
+  var _isLoadingSources = true;
+  String? _sourceError;
+  bool _showSourceList = true;
+  String? _openingSourceId;
+  bool _didScheduleExternalSelection = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSources();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.read<FileBrowserProvider>();
+    final provider = context.watch<FileBrowserProvider>();
+    final shouldShowSourceList = !provider.hasSelectedStorageSource;
+    if (_showSourceList != shouldShowSourceList) {
+      _scheduleSourceListVisibility(shouldShowSourceList);
+    }
+    final showSourceList = shouldShowSourceList || _showSourceList;
 
     return Scaffold(
       body: Column(
@@ -29,59 +47,115 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
         children: [
           AppHeader(
             title: '文件浏览',
-            trailing: SizedBox(
-              width: 300,
-              child: AppSearchInput(placeholder: '搜索当前目录…', onChanged: provider.setSearchQuery),
-            ),
+            trailing: showSourceList
+                ? null
+                : SizedBox(
+                    width: 300,
+                    child: AppSearchInput(placeholder: '搜索当前目录…', onChanged: provider.setSearchQuery),
+                  ),
           ),
           Expanded(
-            child: Selector2<FileBrowserProvider, AppSettingsProvider, _FileBrowserState>(
-              selector: (context, fileProvider, settingsProvider) {
-                final error = fileProvider.error ?? (settingsProvider.hasWebDavConfig ? null : '请先在设置中配置 OpenList');
-                return _FileBrowserState(
-                  items: fileProvider.visibleItems,
-                  totalItemCount: fileProvider.items.length,
-                  isLoading: fileProvider.isLoading,
-                  hasLoaded: fileProvider.hasLoaded,
-                  hasWebDavConfig: settingsProvider.hasWebDavConfig,
-                  error: error,
-                  currentPath: fileProvider.currentPath,
-                  canGoBack: fileProvider.canGoBack,
-                  canGoForward: fileProvider.canGoForward,
-                  viewMode: fileProvider.viewMode,
-                  sortField: fileProvider.sortField,
-                  sortAscending: fileProvider.sortAscending,
-                  hasSearchQuery: fileProvider.searchQuery.trim().isNotEmpty,
-                );
-              },
-              builder: (context, state, child) {
-                if (state.shouldLoadInitialPath) _scheduleInitialLoad();
-                return _FileBrowserBody(
-                  state: state,
-                  provider: context.read<FileBrowserProvider>(),
-                  onItemTap: (item) => _onItemTap(context, item, provider),
-                );
-              },
-            ),
+            child: showSourceList
+                ? _StorageSourceListBody(
+                    sources: _sources,
+                    isLoading: _isLoadingSources,
+                    error: _sourceError,
+                    openingSourceId: _openingSourceId,
+                    onSourceSelected: _openSource,
+                    onRefresh: _loadSources,
+                  )
+                : Selector<FileBrowserProvider, _FileBrowserState>(
+                    selector: (context, fileProvider) => _FileBrowserState(
+                      sourceName: fileProvider.activeSource?.name,
+                      sourceType: fileProvider.activeSource?.type,
+                      items: fileProvider.visibleItems,
+                      totalItemCount: fileProvider.items.length,
+                      isLoading: fileProvider.isLoading,
+                      hasLoaded: fileProvider.hasLoaded,
+                      error: fileProvider.error,
+                      currentPath: fileProvider.currentPath,
+                      canGoBack: fileProvider.canGoBack,
+                      viewMode: fileProvider.viewMode,
+                      sortField: fileProvider.sortField,
+                      sortAscending: fileProvider.sortAscending,
+                      hasSearchQuery: fileProvider.searchQuery.trim().isNotEmpty,
+                    ),
+                    builder: (context, state, child) => _FileBrowserBody(
+                      state: state,
+                      provider: context.read<FileBrowserProvider>(),
+                      onItemTap: (item) => _onItemTap(context, item, provider),
+                      onSourceSelected: _showSources,
+                    ),
+                  ),
           ),
         ],
       ),
     );
   }
 
-  void _scheduleInitialLoad() {
-    if (_didScheduleInitialLoad) return;
-    _didScheduleInitialLoad = true;
-
+  void _scheduleSourceListVisibility(bool shouldShowSourceList) {
+    if (_didScheduleExternalSelection) return;
+    _didScheduleExternalSelection = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final settingsProvider = context.read<AppSettingsProvider>();
-      final fileProvider = context.read<FileBrowserProvider>();
-      if (!settingsProvider.hasWebDavConfig || fileProvider.hasLoaded || fileProvider.isLoading) {
+      if (!mounted || _showSourceList == shouldShowSourceList) {
+        _didScheduleExternalSelection = false;
         return;
       }
-      fileProvider.fetchFiles(fileProvider.currentPath);
+      setState(() {
+        _showSourceList = shouldShowSourceList;
+        _didScheduleExternalSelection = false;
+      });
     });
+  }
+
+  Future<void> _loadSources() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingSources = true;
+        _sourceError = null;
+      });
+    }
+    try {
+      final sources = (await _storageSourceService.getAll()).where((source) => source.enabled).toList(growable: false);
+      if (!mounted) return;
+      setState(() {
+        _sources = sources;
+        _isLoadingSources = false;
+      });
+    } catch (error, stackTrace) {
+      debugPrint('加载媒体源失败: $error\n$stackTrace');
+      if (!mounted) return;
+      setState(() {
+        _isLoadingSources = false;
+        _sourceError = '加载媒体源失败';
+      });
+    }
+  }
+
+  Future<void> _openSource(StorageSource source) async {
+    if (!source.enabled || _openingSourceId != null) return;
+    setState(() => _openingSourceId = source.id);
+    try {
+      final credentials = await _storageSourceService.readCredentials(source.id);
+      if (!mounted) return;
+      await context.read<FileBrowserProvider>().openStorageSource(source, credentials);
+      if (!mounted) return;
+      setState(() => _showSourceList = false);
+    } catch (error, stackTrace) {
+      debugPrint(
+        '打开媒体源失败: name=${source.name}, type=${source.type.name}, '
+        'endpoint=${source.endpoint}, error=$error\n$stackTrace',
+      );
+      if (mounted) AppMessage.error('无法连接到“${source.name}”');
+    } finally {
+      if (mounted) setState(() => _openingSourceId = null);
+    }
+  }
+
+  void _showSources() {
+    context.read<FileBrowserProvider>().clearStorageSource();
+    setState(() => _showSourceList = true);
+    _loadSources();
   }
 
   void _onItemTap(BuildContext context, FileBrowserEntry item, FileBrowserProvider provider) {
@@ -94,7 +168,234 @@ class _FileBrowserPageState extends State<FileBrowserPage> {
       context,
       provider.createPlaybackFile(item),
       loadingMessage: '正在获取播放链接: ${item.name}',
-      failureMessage: '获取播放链接失败，请检查 OpenList 配置或网络',
+      failureMessage: '获取播放链接失败，请检查 WebDAV 配置或网络',
+    );
+  }
+}
+
+class _StorageSourceListBody extends StatelessWidget {
+  const _StorageSourceListBody({
+    required this.sources,
+    required this.isLoading,
+    required this.error,
+    required this.openingSourceId,
+    required this.onSourceSelected,
+    required this.onRefresh,
+  });
+
+  final List<StorageSource> sources;
+  final bool isLoading;
+  final String? error;
+  final String? openingSourceId;
+  final ValueChanged<StorageSource> onSourceSelected;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.section, AppSpacing.xxl, AppSpacing.section, AppSpacing.xxl),
+      child: Column(
+        children: [
+          FileBrowserToolbar(
+            currentPath: '/',
+            canGoBack: false,
+            viewMode: FileBrowserViewMode.list,
+            sortField: FileSortField.name,
+            sortAscending: true,
+            onBack: () {},
+            onPathSelected: (_) {},
+            onSortChanged: (_, _) {},
+            onViewModeChanged: (_) {},
+            onRefresh: onRefresh,
+            showDirectoryControls: false,
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          if (isLoading)
+            const Expanded(child: Center(child: CircularProgressIndicator()))
+          else if (error != null)
+            Expanded(
+              child: AppResult(status: AppResultStatus.error, title: '媒体源加载失败', subtitle: error),
+            )
+          else if (sources.isEmpty)
+            const Expanded(
+              child: AppResult(
+                status: AppResultStatus.empty,
+                title: '尚未添加媒体源',
+                subtitle: '请在设置的“媒体源”中添加 WebDAV 媒体源',
+                icon: Icon(Icons.dns_outlined),
+              ),
+            )
+          else
+            _StorageSourceTable(sources: sources, openingSourceId: openingSourceId, onSourceSelected: onSourceSelected),
+        ],
+      ),
+    );
+  }
+}
+
+class _StorageSourceTable extends StatelessWidget {
+  const _StorageSourceTable({required this.sources, required this.openingSourceId, required this.onSourceSelected});
+
+  final List<StorageSource> sources;
+  final String? openingSourceId;
+  final ValueChanged<StorageSource> onSourceSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final separator = AppColors.separator(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: separator),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _StorageSourceTableHeader(),
+          Divider(height: 1, thickness: 1, color: separator),
+          for (var index = 0; index < sources.length; index++) ...[
+            _StorageSourceTableRow(
+              source: sources[index],
+              isOpening: openingSourceId == sources[index].id,
+              onTap: () => onSourceSelected(sources[index]),
+            ),
+            if (index != sources.length - 1)
+              Padding(
+                padding: const EdgeInsets.only(left: AppSpacing.xl),
+                child: Divider(height: 1, thickness: 1, color: separator),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StorageSourceTableHeader extends StatelessWidget {
+  const _StorageSourceTableHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary(context));
+    return SizedBox(
+      height: 44,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        child: Row(
+          children: [
+            Expanded(flex: 6, child: Text('名称', style: style)),
+            Expanded(flex: 5, child: Text('位置', style: style)),
+            const SizedBox(width: 28),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StorageSourceTableRow extends StatelessWidget {
+  const _StorageSourceTableRow({required this.source, required this.isOpening, required this.onTap});
+
+  final StorageSource source;
+  final bool isOpening;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = !isOpening;
+    final endpoint = Uri.tryParse(source.endpoint);
+    final location = source.type == StorageSourceType.local
+        ? source.endpoint
+        : endpoint == null
+        ? source.endpoint
+        : endpoint.hasPort
+        ? '${endpoint.host}:${endpoint.port}'
+        : endpoint.host;
+    final typeLabel = switch (source.type) {
+      StorageSourceType.local => '本地目录',
+      StorageSourceType.webDav => 'WebDAV',
+      StorageSourceType.smb => 'SMB',
+    };
+    final icon = switch (source.type) {
+      StorageSourceType.local => Icons.folder_outlined,
+      StorageSourceType.webDav => Icons.dns_outlined,
+      StorageSourceType.smb => Icons.lan_outlined,
+    };
+    final muted = AppColors.textSecondary(context);
+
+    return AppClickableArea(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.zero,
+      hoverColor: AppColors.hoverSurface(context),
+      child: SizedBox(
+        height: 76,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 6,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary(context).withAlpha(18),
+                        borderRadius: BorderRadius.circular(AppRadii.control),
+                      ),
+                      child: Icon(icon, size: 19, color: AppColors.primary(context)),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            source.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.textPrimary(context),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            typeLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: muted, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 5,
+                child: Text(
+                  location,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: AppColors.textPrimary(context), fontSize: 13),
+                ),
+              ),
+              SizedBox(
+                width: 28,
+                child: isOpening
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Icon(Icons.chevron_right_rounded, size: 20, color: muted),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -103,29 +404,50 @@ class _FileBrowserBody extends StatelessWidget {
   final _FileBrowserState state;
   final FileBrowserProvider provider;
   final ValueChanged<FileBrowserEntry> onItemTap;
+  final VoidCallback onSourceSelected;
 
-  const _FileBrowserBody({required this.state, required this.provider, required this.onItemTap});
+  const _FileBrowserBody({
+    required this.state,
+    required this.provider,
+    required this.onItemTap,
+    required this.onSourceSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (state.sourceName == null) {
+      return const AppResult(status: AppResultStatus.info, title: '请选择媒体源');
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSpacing.section, AppSpacing.xxl, AppSpacing.section, AppSpacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           FileBrowserToolbar(
+            sourceName: state.sourceName!,
+            sourceIcon: switch (state.sourceType) {
+              StorageSourceType.local => Icons.folder_outlined,
+              StorageSourceType.webDav => Icons.dns_outlined,
+              StorageSourceType.smb => Icons.lan_outlined,
+              null => Icons.dns_outlined,
+            },
             currentPath: state.currentPath,
-            canGoBack: state.canGoBack,
-            canGoForward: state.canGoForward,
+            canGoBack: true,
             viewMode: state.viewMode,
             sortField: state.sortField,
             sortAscending: state.sortAscending,
-            onBack: provider.navigateBack,
-            onForward: provider.navigateForward,
+            onBack: () {
+              if (state.canGoBack) {
+                provider.navigateBack();
+              } else {
+                onSourceSelected();
+              }
+            },
             onPathSelected: provider.navigateToPath,
             onSortChanged: (field, ascending) => provider.setSort(field, ascending: ascending),
             onViewModeChanged: provider.setViewMode,
             onRefresh: provider.refresh,
+            onRootSelected: onSourceSelected,
           ),
           const SizedBox(height: AppSpacing.xxl),
           Expanded(child: _buildContent(context)),
@@ -135,15 +457,7 @@ class _FileBrowserBody extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context) {
-    if (!state.hasWebDavConfig) {
-      return AppResult(
-        status: AppResultStatus.info,
-        title: '尚未配置 OpenList',
-        subtitle: state.error ?? '请先在设置中完成连接配置',
-        icon: Icon(Icons.settings_outlined, size: 44, color: AppColors.primary(context)),
-      );
-    }
-    if (state.isLoading || state.shouldLoadInitialPath) {
+    if (state.isLoading || !state.hasLoaded) {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.items.isEmpty) {
@@ -170,7 +484,7 @@ class _FileBrowserBody extends StatelessWidget {
       children: [
         Expanded(
           child: GridView.builder(
-            key: PageStorageKey<String>('file-browser-grid:${state.currentPath}'),
+            key: PageStorageKey<String>('file-browser-grid:${state.sourceName}:${state.currentPath}'),
             padding: EdgeInsets.zero,
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 138,
@@ -200,7 +514,7 @@ class _FileBrowserBody extends StatelessWidget {
       totalItemCount: state.totalItemCount,
       isFiltered: state.hasSearchQuery,
       onItemTap: onItemTap,
-      scrollStorageKey: PageStorageKey<String>('file-browser-list:${state.currentPath}'),
+      scrollStorageKey: PageStorageKey<String>('file-browser-list:${state.sourceName}:${state.currentPath}'),
     );
   }
 
@@ -209,50 +523,48 @@ class _FileBrowserBody extends StatelessWidget {
 }
 
 class _FileBrowserState {
+  final String? sourceName;
+  final StorageSourceType? sourceType;
   final List<FileBrowserEntry> items;
   final int totalItemCount;
   final bool isLoading;
   final bool hasLoaded;
-  final bool hasWebDavConfig;
   final String? error;
   final String currentPath;
   final bool canGoBack;
-  final bool canGoForward;
   final FileBrowserViewMode viewMode;
   final FileSortField sortField;
   final bool sortAscending;
   final bool hasSearchQuery;
 
   const _FileBrowserState({
+    required this.sourceName,
+    required this.sourceType,
     required this.items,
     required this.totalItemCount,
     required this.isLoading,
     required this.hasLoaded,
-    required this.hasWebDavConfig,
     required this.error,
     required this.currentPath,
     required this.canGoBack,
-    required this.canGoForward,
     required this.viewMode,
     required this.sortField,
     required this.sortAscending,
     required this.hasSearchQuery,
   });
 
-  bool get shouldLoadInitialPath => hasWebDavConfig && !hasLoaded && !isLoading;
-
   @override
   bool operator ==(Object other) {
     return other is _FileBrowserState &&
+        other.sourceName == sourceName &&
+        other.sourceType == sourceType &&
         _sameItems(other.items, items) &&
         other.totalItemCount == totalItemCount &&
         other.isLoading == isLoading &&
         other.hasLoaded == hasLoaded &&
-        other.hasWebDavConfig == hasWebDavConfig &&
         other.error == error &&
         other.currentPath == currentPath &&
         other.canGoBack == canGoBack &&
-        other.canGoForward == canGoForward &&
         other.viewMode == viewMode &&
         other.sortField == sortField &&
         other.sortAscending == sortAscending &&
@@ -261,15 +573,15 @@ class _FileBrowserState {
 
   @override
   int get hashCode => Object.hash(
+    sourceName,
+    sourceType,
     Object.hashAll(items),
     totalItemCount,
     isLoading,
     hasLoaded,
-    hasWebDavConfig,
     error,
     currentPath,
     canGoBack,
-    canGoForward,
     viewMode,
     sortField,
     sortAscending,

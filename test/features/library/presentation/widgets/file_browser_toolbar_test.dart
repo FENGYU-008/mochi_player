@@ -7,8 +7,8 @@ import 'package:mochi_player/features/library/presentation/widgets/file_browser_
 void main() {
   testWidgets('exposes the file browser toolbar actions', (tester) async {
     var backCount = 0;
-    var forwardCount = 0;
     var refreshCount = 0;
+    var sourceSelectionCount = 0;
     String? selectedPath;
     FileBrowserViewMode? selectedViewMode;
 
@@ -19,18 +19,18 @@ void main() {
           body: SizedBox(
             width: 1200,
             child: FileBrowserToolbar(
+              sourceName: '家庭媒体库',
               currentPath: '/quark/电影/',
               canGoBack: false,
-              canGoForward: true,
               viewMode: FileBrowserViewMode.list,
               sortField: FileSortField.name,
               sortAscending: true,
               onBack: () => backCount++,
-              onForward: () => forwardCount++,
               onPathSelected: (path) => selectedPath = path,
               onSortChanged: (_, _) {},
               onViewModeChanged: (mode) => selectedViewMode = mode,
               onRefresh: () => refreshCount++,
+              onRootSelected: () => sourceSelectionCount++,
             ),
           ),
         ),
@@ -38,15 +38,15 @@ void main() {
     );
 
     await tester.tap(find.byTooltip('后退'));
-    await tester.tap(find.byTooltip('前进'));
     await tester.tap(find.byTooltip('网格视图'));
     await tester.tap(find.byTooltip('刷新目录'));
     await tester.tap(find.text('根目录'));
+    await tester.tap(find.text('quark'));
 
     expect(backCount, 0);
-    expect(forwardCount, 1);
     expect(selectedViewMode, FileBrowserViewMode.grid);
     expect(refreshCount, 1);
-    expect(selectedPath, '/');
+    expect(sourceSelectionCount, 1);
+    expect(selectedPath, '/quark/');
   });
 }

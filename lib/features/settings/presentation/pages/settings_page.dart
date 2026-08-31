@@ -1,6 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as path;
+import 'package:mochi_player/core/domain/storage/models.dart';
+import 'package:mochi_player/core/infrastructure/storage/storage_source_service.dart';
+import 'package:mochi_player/core/infrastructure/storage/storage_provider_registry.dart';
+import 'package:mochi_player/core/infrastructure/storage/local_directory_access.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/home/application/trending_media_provider.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
@@ -12,6 +18,7 @@ import 'package:mochi_player/features/settings/presentation/widgets/settings_sec
 import 'package:mochi_player/features/settings/presentation/widgets/settings_switch_item.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_text_field.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -20,12 +27,12 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-enum _SettingsTab { appearance, mediaSource, metadata, playback, library }
+enum _SettingsTab { appearance, mediaSource, metadata, playback }
+
+enum _StorageSourceAddOption { local, webDav }
 
 class _SettingsPageState extends State<SettingsPage> {
-  final _webDavUrlController = TextEditingController();
-  final _webDavUsernameController = TextEditingController();
-  final _webDavPasswordController = TextEditingController();
+  final _storageSourceService = StorageSourceService();
   final _tmdbApiKeyController = TextEditingController();
   final _tmdbApiBaseUrlController = TextEditingController();
   final _tmdbProxyUrlController = TextEditingController();
@@ -35,7 +42,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   bool _controllersInitialized = false;
   bool _isSyncingControllers = false;
-  bool _showWebDavPassword = false;
   bool _showTmdbApiKey = false;
   bool _tmdbProxyEnabled = AppSettings.defaultTmdbProxyEnabled;
   bool _enableHardwareAcceleration = AppSettings.defaultEnableHardwareAcceleration;
@@ -45,11 +51,10 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _autoSaveInFlight = false;
   bool _autoSavePending = false;
   bool _runtimeApplyPending = false;
+  List<StorageSource> _storageSources = const [];
+  bool _isLoadingStorageSources = true;
 
   List<TextEditingController> get _settingsControllers => [
-    _webDavUrlController,
-    _webDavUsernameController,
-    _webDavPasswordController,
     _tmdbApiKeyController,
     _tmdbApiBaseUrlController,
     _tmdbProxyUrlController,
@@ -57,6 +62,12 @@ class _SettingsPageState extends State<SettingsPage> {
     _playbackReadaheadSecondsController,
     _subtitleLanguagePriorityController,
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadStorageSources());
+  }
 
   @override
   void didChangeDependencies() {
@@ -77,9 +88,6 @@ class _SettingsPageState extends State<SettingsPage> {
     for (final controller in _settingsControllers) {
       controller.removeListener(_scheduleAutoSave);
     }
-    _webDavUrlController.dispose();
-    _webDavUsernameController.dispose();
-    _webDavPasswordController.dispose();
     _tmdbApiKeyController.dispose();
     _tmdbApiBaseUrlController.dispose();
     _tmdbProxyUrlController.dispose();
@@ -113,7 +121,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     AppTab(value: _SettingsTab.mediaSource, label: '媒体源', icon: Icons.storage_outlined),
                     AppTab(value: _SettingsTab.metadata, label: '元数据', icon: Icons.sell_outlined),
                     AppTab(value: _SettingsTab.playback, label: '播放', icon: Icons.play_circle_outline_rounded),
-                    AppTab(value: _SettingsTab.library, label: '媒体库', icon: Icons.inventory_2_outlined),
                   ],
                 ),
               ),
@@ -142,10 +149,9 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSelectedTab(BuildContext context) {
     return switch (_selectedTab) {
       _SettingsTab.appearance => _buildThemeSettings(context),
-      _SettingsTab.mediaSource => _buildOpenListSettings(context),
+      _SettingsTab.mediaSource => _buildWebDavSettings(context),
       _SettingsTab.metadata => _buildTmdbSettings(context),
       _SettingsTab.playback => _buildPlaybackSettings(context),
-      _SettingsTab.library => _buildLibraryMaintenance(context),
     };
   }
 
@@ -188,60 +194,672 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildOpenListSettings(BuildContext context) {
-    return Selector<AppSettingsProvider, bool>(
-      selector: (context, provider) => provider.isSaving,
-      builder: (context, isBusy, child) {
-        return SettingsSection(
+  Widget _buildWebDavSettings(BuildContext context) {
+    return SettingsSection(
+      title: '媒体源',
+      subtitle: '管理用于浏览、扫描与播放的本地和网络媒体源',
+      groups: [
+        AppFormGroup(
           title: '媒体源',
-          subtitle: '配置用于浏览与播放的 WebDAV 媒体服务器',
-          groups: [
-            AppFormGroup(
-              title: '服务器配置',
+          trailing: _buildAddStorageSourceMenu(),
+          children: [
+            if (_isLoadingStorageSources)
+              const SizedBox(height: 88, child: Center(child: CircularProgressIndicator.adaptive()))
+            else if (_storageSources.isEmpty)
+              const AppFormItem(
+                label: '尚未添加媒体源',
+                subtitle: '添加本地目录或 WebDAV 服务器后即可浏览媒体文件',
+                labelWidth: null,
+                expandControl: false,
+                control: SizedBox.shrink(),
+              )
+            else
+              for (final source in _storageSources) _buildStorageSourceItem(context, source),
+          ],
+        ),
+        Selector<MediaLibraryProvider, bool>(
+          selector: (context, provider) => provider.isLoading,
+          builder: (context, isBusy, child) => AppFormGroup(
+            title: '媒体库',
+            children: [
+              AppFormItem(
+                label: '扫描媒体源',
+                subtitle: '扫描全部启用的媒体源，新增文件并清理已删除的本地索引',
+                labelWidth: null,
+                expandControl: false,
+                control: _SettingsActionButton(
+                  onPressed: isBusy ? null : _confirmScanMediaSources,
+                  icon: Icons.manage_search_outlined,
+                  label: isBusy ? '扫描中' : '开始扫描',
+                  busy: isBusy,
+                ),
+              ),
+              AppFormItem(
+                label: '清空媒体库',
+                subtitle: '删除本地索引、元数据、播放进度和收藏，不会删除远程文件',
+                labelWidth: null,
+                expandControl: false,
+                control: _SettingsActionButton(
+                  onPressed: isBusy ? null : _confirmClearLibrary,
+                  icon: Icons.delete_sweep_outlined,
+                  label: '清空',
+                  destructive: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddStorageSourceMenu() {
+    return Builder(
+      builder: (context) => AppDropdown<_StorageSourceAddOption>(
+        trigger: Container(
+          height: 34,
+          padding: const EdgeInsets.only(left: AppSpacing.sm, right: AppSpacing.xs),
+          decoration: BoxDecoration(
+            color: AppColors.controlSurface(context),
+            borderRadius: BorderRadius.circular(AppRadii.control),
+            border: Border.all(color: AppColors.separator(context)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add_rounded, size: 16, color: AppColors.textPrimary(context)),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                '添加',
+                style: TextStyle(color: AppColors.textPrimary(context), fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Icon(AppIcons.chevronDown, size: 14, color: AppColors.textSecondary(context)),
+            ],
+          ),
+        ),
+        tooltip: '添加媒体源',
+        menuWidth: 164,
+        onSelected: _isLoadingStorageSources
+            ? null
+            : (option) => switch (option) {
+                _StorageSourceAddOption.local => _pickAndAddLocalSource(),
+                _StorageSourceAddOption.webDav => _showStorageSourceEditor(),
+              },
+        options: const [
+          AppDropdownOption(value: _StorageSourceAddOption.local, label: '本地目录', icon: Icons.folder_outlined),
+          AppDropdownOption(value: _StorageSourceAddOption.webDav, label: 'WebDAV', icon: Icons.language_rounded),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStorageSourceItem(BuildContext context, StorageSource source) {
+    return AppFormItem(
+      label: source.name,
+      subtitle: source.enabled ? source.endpoint : '已停用 · ${source.endpoint}',
+      icon: source.type == StorageSourceType.local ? Icons.folder_outlined : Icons.dns_outlined,
+      labelWidth: null,
+      expandControl: false,
+      control: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppButton.icon(
+            onPressed: () => source.type == StorageSourceType.local
+                ? _showLocalSourceEditor(source: source)
+                : _showStorageSourceEditor(source: source),
+            icon: Icons.edit_outlined,
+            tooltip: '编辑媒体源',
+            size: AppButtonSize.compact,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          AppButton.icon(
+            onPressed: () => _confirmDeleteStorageSource(source),
+            icon: Icons.delete_outline_rounded,
+            tooltip: '删除媒体源',
+            size: AppButtonSize.compact,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _loadStorageSources() async {
+    try {
+      final sources = await _storageSourceService.getAll();
+      if (!mounted) return;
+      setState(() {
+        _storageSources = sources;
+        _isLoadingStorageSources = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoadingStorageSources = false);
+      AppMessage.error('加载媒体源失败');
+    }
+  }
+
+  Future<void> _pickAndAddLocalSource() async {
+    final directoryPath = await MacLocalDirectoryAccess().pickDirectory();
+    if (directoryPath == null || directoryPath.isEmpty || !mounted) return;
+    await _showLocalSourceEditor(initialDirectory: directoryPath);
+  }
+
+  Future<void> _showLocalSourceEditor({StorageSource? source, String? initialDirectory}) async {
+    var directoryPath = initialDirectory ?? source?.endpoint ?? '';
+    final nameController = TextEditingController(
+      text: source?.name ?? (directoryPath.isEmpty ? '' : path.basename(directoryPath)),
+    );
+    var isEnabled = source?.enabled ?? true;
+    var isTestingConnection = false;
+    String? formError;
+    String? connectionTestResult;
+    bool? connectionTestSucceeded;
+    StateSetter? updateModal;
+
+    void showFormError(String message) {
+      updateModal?.call(() => formError = message);
+    }
+
+    Future<void> chooseDirectory() async {
+      final selected = await MacLocalDirectoryAccess().pickDirectory(
+        initialDirectory: directoryPath.isEmpty ? null : directoryPath,
+      );
+      if (selected == null || selected.isEmpty) return;
+      updateModal?.call(() {
+        directoryPath = selected;
+        if (nameController.text.trim().isEmpty) {
+          nameController.text = path.basename(selected);
+        }
+        formError = null;
+        connectionTestResult = null;
+        connectionTestSucceeded = null;
+      });
+    }
+
+    Future<void> testConnection() async {
+      if (directoryPath.isEmpty) {
+        showFormError('请选择本地目录');
+        return;
+      }
+      updateModal?.call(() {
+        formError = null;
+        isTestingConnection = true;
+        connectionTestResult = null;
+        connectionTestSucceeded = null;
+      });
+      try {
+        final connection = await StorageProviderRegistry.defaults().connect(
+          StorageSource(
+            id: source?.id ?? 'connection-test',
+            name: nameController.text.trim().isEmpty ? path.basename(directoryPath) : nameController.text.trim(),
+            type: StorageSourceType.local,
+            endpoint: directoryPath,
+          ),
+          null,
+        );
+        final entries = await connection.readDirectory('/');
+        updateModal?.call(() {
+          connectionTestSucceeded = true;
+          connectionTestResult = '目录可访问（${entries.length} 项）';
+        });
+      } catch (error, stackTrace) {
+        debugPrint('测试本地目录失败: $error\n$stackTrace');
+        updateModal?.call(() {
+          connectionTestSucceeded = false;
+          connectionTestResult = '无法访问该目录，请检查目录是否存在及授权是否允许';
+        });
+      } finally {
+        updateModal?.call(() => isTestingConnection = false);
+      }
+    }
+
+    try {
+      final saved = await AppModal.show(
+        context: context,
+        title: source == null ? '添加本地目录' : '编辑本地目录',
+        icon: Icons.folder_outlined,
+        confirmLabel: source == null ? '添加' : '保存',
+        content: StatefulBuilder(
+          builder: (context, setModalState) {
+            updateModal = setModalState;
+            return AppFormGroup(
               children: [
-                SettingsTextField(
-                  controller: _webDavUrlController,
-                  keyboardType: TextInputType.url,
-                  label: 'OpenList 服务器地址',
-                  onFocusLost: _commitNetworkSettings,
-                ),
-                SettingsTextField(
-                  controller: _webDavUsernameController,
-                  label: '用户名',
-                  onFocusLost: _commitNetworkSettings,
-                ),
-                SettingsTextField(
-                  controller: _webDavPasswordController,
-                  obscureText: !_showWebDavPassword,
-                  label: '密码',
-                  onFocusLost: _commitNetworkSettings,
-                  inputSuffix: _VisibilityToggle(
-                    visible: _showWebDavPassword,
-                    onPressed: () {
-                      setState(() {
-                        _showWebDavPassword = !_showWebDavPassword;
-                      });
-                    },
+                _buildStorageSourceFormItem(label: '名称', controller: nameController, placeholder: '例如：家庭媒体库'),
+                AppFormItem(
+                  label: '本地目录',
+                  subtitle: directoryPath.isEmpty ? '请选择要用于浏览和扫描的目录' : directoryPath,
+                  labelWidth: 104,
+                  control: Align(
+                    alignment: Alignment.centerRight,
+                    child: AppButton(
+                      onPressed: chooseDirectory,
+                      label: directoryPath.isEmpty ? '选择目录' : '更改目录',
+                      icon: Icons.folder_open_outlined,
+                      variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.compact,
+                    ),
                   ),
                 ),
-              ],
-            ),
-            AppFormGroup(
-              title: '连接测试',
-              children: [
+                if (source != null)
+                  AppFormItem(
+                    label: '启用此媒体源',
+                    subtitle: '停用后不会显示在文件浏览中，也不会参与扫描和播放',
+                    labelWidth: 104,
+                    control: Align(
+                      alignment: Alignment.centerRight,
+                      child: AppSwitch(value: isEnabled, onChanged: (value) => setModalState(() => isEnabled = value)),
+                    ),
+                  ),
                 AppFormItem(
-                  label: '连接状态',
-                  subtitle: '通过 WebDAV 检查目录访问是否可用',
-                  labelWidth: null,
-                  expandControl: false,
-                  control: _SettingsActionButton(onPressed: isBusy ? null : _testWebDavConnection, label: '测试连接'),
+                  label: '连接测试',
+                  subtitle: connectionTestResult ?? '验证是否能读取所选目录',
+                  subtitleColor: connectionTestSucceeded == null
+                      ? null
+                      : connectionTestSucceeded!
+                      ? AppColors.success(context)
+                      : AppColors.danger(context),
+                  labelWidth: 104,
+                  control: Align(
+                    alignment: Alignment.centerRight,
+                    child: AppButton(
+                      onPressed: isTestingConnection ? null : testConnection,
+                      label: isTestingConnection ? '测试中' : '测试目录',
+                      icon: Icons.wifi_tethering_outlined,
+                      variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.compact,
+                      busy: isTestingConnection,
+                    ),
+                  ),
                 ),
+                if (formError != null)
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Text(
+                      formError!,
+                      style: TextStyle(color: AppColors.danger(context), fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ),
               ],
-            ),
-          ],
-        );
-      },
+            );
+          },
+        ),
+        onConfirm: () async {
+          if (directoryPath.isEmpty) {
+            showFormError('请选择本地目录');
+            return false;
+          }
+          if (!await Directory(directoryPath).exists()) {
+            showFormError('所选目录不存在或不可访问');
+            return false;
+          }
+          try {
+            await _storageSourceService.save(
+              StorageSource(
+                id: source?.id ?? const Uuid().v4(),
+                name: nameController.text.trim().isEmpty ? path.basename(directoryPath) : nameController.text.trim(),
+                type: StorageSourceType.local,
+                endpoint: directoryPath,
+                rootPath: '/',
+                enabled: isEnabled,
+              ),
+            );
+            return true;
+          } catch (error, stackTrace) {
+            debugPrint('保存本地目录失败: $error\n$stackTrace');
+            showFormError('保存本地目录失败：$error');
+            return false;
+          }
+        },
+      );
+      if (saved == true) {
+        var clearedActiveSource = false;
+        if (source != null && mounted) {
+          final fileBrowser = context.read<FileBrowserProvider>();
+          if (fileBrowser.activeSource?.id == source.id) {
+            fileBrowser.clearStorageSource();
+            clearedActiveSource = true;
+          }
+        }
+        await _loadStorageSources();
+        if (mounted) {
+          AppMessage.success(
+            source == null
+                ? '本地目录已添加'
+                : clearedActiveSource
+                ? '媒体源已保存，请重新打开以应用新配置'
+                : '媒体源已保存',
+          );
+        }
+      }
+    } finally {
+      nameController.dispose();
+    }
+  }
+
+  Future<void> _showStorageSourceEditor({StorageSource? source}) async {
+    final nameController = TextEditingController(text: source?.name ?? '');
+    final existingEndpoint = Uri.tryParse(source?.endpoint ?? '');
+    final hostController = TextEditingController(text: existingEndpoint?.host ?? '');
+    final pathController = TextEditingController(text: _combineWebDavPaths(existingEndpoint?.path, source?.rootPath));
+    final portController = TextEditingController(
+      text: existingEndpoint?.hasPort == true ? '${existingEndpoint!.port}' : '',
     );
+    final existingCredentials = source == null ? null : await _storageSourceService.readCredentials(source.id);
+    final usernameController = TextEditingController(text: existingCredentials?.username ?? '');
+    final passwordController = TextEditingController(text: existingCredentials?.password ?? '');
+    if (!mounted) {
+      nameController.dispose();
+      hostController.dispose();
+      pathController.dispose();
+      portController.dispose();
+      usernameController.dispose();
+      passwordController.dispose();
+      return;
+    }
+    var showPassword = false;
+    // A local WebDAV endpoint (for example port 5244) commonly serves HTTP.
+    // Existing sources retain their saved scheme; newly added sources start
+    // with HTTPS disabled and can opt in when a server has TLS configured.
+    var useHttps = existingEndpoint?.scheme == 'https';
+    var isEnabled = source?.enabled ?? true;
+    String? formError;
+    String? connectionTestResult;
+    bool? connectionTestSucceeded;
+    var isTestingConnection = false;
+    StateSetter? updateModal;
+
+    void showFormError(String message) {
+      updateModal?.call(() => formError = message);
+    }
+
+    Future<void> testConnection() async {
+      final host = hostController.text.trim();
+      if (host.isEmpty) {
+        showFormError('请先填写 WebDAV 主机地址');
+        return;
+      }
+      final portText = portController.text.trim();
+      final port = portText.isEmpty ? null : int.tryParse(portText);
+      if (portText.isNotEmpty && (port == null || port < 1 || port > 65535)) {
+        showFormError('端口应在 1 到 65535 之间');
+        return;
+      }
+
+      updateModal?.call(() {
+        formError = null;
+        isTestingConnection = true;
+        connectionTestResult = null;
+        connectionTestSucceeded = null;
+      });
+      try {
+        final endpoint = Uri(
+          scheme: useHttps ? 'https' : 'http',
+          host: host,
+          port: port,
+          path: _normalizeWebDavPath(pathController.text),
+        ).toString();
+        final connection = await StorageProviderRegistry.defaults().connect(
+          StorageSource(
+            id: source?.id ?? 'connection-test',
+            name: nameController.text.trim().isEmpty ? host : nameController.text.trim(),
+            type: StorageSourceType.webDav,
+            endpoint: endpoint,
+          ),
+          StorageCredentials(username: usernameController.text.trim(), password: passwordController.text),
+        );
+        final entries = await connection.readDirectory('/');
+        updateModal?.call(() {
+          connectionTestSucceeded = true;
+          connectionTestResult = '连接成功，可访问此目录（${entries.length} 项）';
+        });
+      } catch (error, stackTrace) {
+        debugPrint('测试 WebDAV 连接失败: $error\n$stackTrace');
+        updateModal?.call(() {
+          connectionTestSucceeded = false;
+          connectionTestResult = '连接失败：${_describeConnectionError(error)}';
+        });
+      } finally {
+        updateModal?.call(() => isTestingConnection = false);
+      }
+    }
+
+    try {
+      final saved = await AppModal.show(
+        context: context,
+        title: source == null ? '添加 WebDAV 媒体源' : '编辑媒体源',
+        icon: Icons.dns_outlined,
+        confirmLabel: source == null ? '添加' : '保存',
+        content: StatefulBuilder(
+          builder: (context, setModalState) {
+            updateModal = setModalState;
+            return AppFormGroup(
+              children: [
+                _buildStorageSourceFormItem(label: '名称', controller: nameController, placeholder: '例如：家庭 NAS'),
+                _buildStorageSourceFormItem(label: '主机', controller: hostController, placeholder: '例如：127.0.0.1'),
+                _buildStorageSourceFormItem(label: 'WebDAV 路径', controller: pathController, placeholder: '/dav/quark'),
+                _buildStorageSourceFormItem(
+                  label: '端口',
+                  controller: portController,
+                  placeholder: useHttps ? '443（可选）' : '80（可选）',
+                  keyboardType: TextInputType.number,
+                ),
+                AppFormItem(
+                  label: 'HTTPS',
+                  labelWidth: 104,
+                  height: 48,
+                  control: Align(
+                    alignment: Alignment.centerRight,
+                    child: AppSwitch(value: useHttps, onChanged: (value) => setModalState(() => useHttps = value)),
+                  ),
+                ),
+                if (source != null)
+                  AppFormItem(
+                    label: '启用此媒体源',
+                    subtitle: '停用后不会显示在文件浏览中，也不会参与扫描和播放',
+                    labelWidth: 104,
+                    control: Align(
+                      alignment: Alignment.centerRight,
+                      child: AppSwitch(value: isEnabled, onChanged: (value) => setModalState(() => isEnabled = value)),
+                    ),
+                  ),
+                _buildStorageSourceFormItem(label: '用户名', controller: usernameController),
+                _buildStorageSourceFormItem(
+                  label: '密码',
+                  controller: passwordController,
+                  obscureText: !showPassword,
+                  suffix: AppButton.icon(
+                    onPressed: () => setModalState(() => showPassword = !showPassword),
+                    icon: showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    tooltip: showPassword ? '隐藏密码' : '显示密码',
+                    variant: AppButtonVariant.ghost,
+                    size: AppButtonSize.compact,
+                  ),
+                ),
+                AppFormItem(
+                  label: '连接测试',
+                  subtitle: connectionTestResult ?? '使用当前填写的信息验证 WebDAV 连接',
+                  subtitleColor: connectionTestSucceeded == null
+                      ? null
+                      : connectionTestSucceeded!
+                      ? AppColors.success(context)
+                      : AppColors.danger(context),
+                  labelWidth: 104,
+                  control: Align(
+                    alignment: Alignment.centerRight,
+                    child: AppButton(
+                      onPressed: isTestingConnection ? null : testConnection,
+                      label: isTestingConnection ? '测试中' : '测试连接',
+                      icon: Icons.wifi_tethering_outlined,
+                      variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.compact,
+                      busy: isTestingConnection,
+                    ),
+                  ),
+                ),
+                if (formError != null)
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Text(
+                      formError!,
+                      style: TextStyle(color: AppColors.danger(context), fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+        onConfirm: () async {
+          final host = hostController.text.trim();
+          if (host.isEmpty) {
+            showFormError('请填写 WebDAV 主机地址');
+            return false;
+          }
+          final portText = portController.text.trim();
+          final port = portText.isEmpty ? null : int.tryParse(portText);
+          if (portText.isNotEmpty && (port == null || port < 1 || port > 65535)) {
+            showFormError('端口应在 1 到 65535 之间');
+            return false;
+          }
+          final path = _normalizeWebDavPath(pathController.text);
+          final endpoint = Uri(scheme: useHttps ? 'https' : 'http', host: host, port: port, path: path).toString();
+          final uri = Uri.tryParse(endpoint);
+          if (uri == null || uri.host.isEmpty) {
+            showFormError('请输入有效的 WebDAV 主机地址');
+            return false;
+          }
+          try {
+            await _storageSourceService.save(
+              StorageSource(
+                id: source?.id ?? const Uuid().v4(),
+                name: nameController.text.trim().isEmpty ? host : nameController.text.trim(),
+                type: StorageSourceType.webDav,
+                endpoint: endpoint,
+                rootPath: '/',
+                enabled: isEnabled,
+              ),
+              credentials: StorageCredentials(
+                username: usernameController.text.trim(),
+                password: passwordController.text,
+              ),
+            );
+            return true;
+          } catch (error, stackTrace) {
+            debugPrint('保存媒体源失败: $error\n$stackTrace');
+            showFormError('保存媒体源失败：$error');
+            return false;
+          }
+        },
+      );
+      if (saved == true) {
+        var clearedActiveSource = false;
+        if (source != null && mounted) {
+          final fileBrowser = context.read<FileBrowserProvider>();
+          if (fileBrowser.activeSource?.id == source.id) {
+            fileBrowser.clearStorageSource();
+            clearedActiveSource = true;
+          }
+        }
+        await _loadStorageSources();
+        if (mounted) {
+          AppMessage.success(
+            source == null
+                ? '媒体源已添加'
+                : clearedActiveSource
+                ? '媒体源已保存，请重新打开以应用新配置'
+                : '媒体源已保存',
+          );
+        }
+      }
+    } finally {
+      nameController.dispose();
+      hostController.dispose();
+      pathController.dispose();
+      portController.dispose();
+      usernameController.dispose();
+      passwordController.dispose();
+    }
+  }
+
+  String _normalizeWebDavPath(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty || trimmed == '/') return '/';
+    final prefixed = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return prefixed.replaceFirst(RegExp(r'/+$'), '');
+  }
+
+  String _describeConnectionError(Object error) {
+    final message = error.toString();
+    if (message.contains('401')) return '认证失败，请检查用户名或密码';
+    if (message.contains('403')) return '服务器拒绝访问，请检查目录权限';
+    if (message.contains('404')) return '找不到该 WebDAV 路径';
+    if (message.contains('HandshakeException') || message.contains('WRONG_VERSION_NUMBER')) {
+      return 'HTTPS 设置不匹配，请确认服务器是否启用了 HTTPS';
+    }
+    if (message.contains('SocketException')) return '无法连接到服务器，请检查主机和端口';
+    return '请检查主机、端口、路径和网络连接';
+  }
+
+  String _combineWebDavPaths(String? endpointPath, String? rootPath) {
+    final endpoint = _normalizeWebDavPath(endpointPath ?? '/');
+    final root = _normalizeWebDavPath(rootPath ?? '/');
+    if (endpoint == '/') return root;
+    if (root == '/') return endpoint;
+    return '$endpoint$root';
+  }
+
+  Widget _buildStorageSourceFormItem({
+    required String label,
+    required TextEditingController controller,
+    String? placeholder,
+    TextInputType? keyboardType,
+    bool obscureText = false,
+    Widget? suffix,
+  }) {
+    return AppFormItem(
+      label: label,
+      labelWidth: 104,
+      height: 48,
+      control: AppInput(
+        controller: controller,
+        placeholder: placeholder,
+        keyboardType: keyboardType,
+        obscureText: obscureText,
+        suffix: suffix,
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteStorageSource(StorageSource source) async {
+    final confirmed = await AppModal.confirm(
+      context: context,
+      title: '删除媒体源？',
+      message: '“${source.name}”的连接信息及其已扫描的本地媒体数据、播放进度和收藏状态将被删除，不会删除远程文件。',
+      confirmLabel: '删除',
+      icon: Icons.delete_outline_rounded,
+      destructive: true,
+    );
+    if (confirmed != true) return;
+    try {
+      final deletedFileCount = await _storageSourceService.deleteWithMedia(source.id);
+      if (deletedFileCount == null) {
+        AppMessage.error('媒体源不存在或已被删除');
+        return;
+      }
+      if (!mounted) return;
+      final fileBrowser = context.read<FileBrowserProvider>();
+      if (fileBrowser.activeSource?.id == source.id) {
+        fileBrowser.clearStorageSource();
+      }
+      context.read<MediaLibraryProvider>().removeSourceMediaFromCatalog(source.id);
+      await _loadStorageSources();
+      if (mounted) {
+        AppMessage.success('媒体源已删除，已清理 $deletedFileCount 个媒体文件');
+      }
+    } catch (error, stackTrace) {
+      debugPrint('删除媒体源失败: $error\n$stackTrace');
+      if (mounted) AppMessage.error('删除媒体源失败：$error');
+    }
   }
 
   Widget _buildTmdbSettings(BuildContext context) {
@@ -256,6 +874,12 @@ class _SettingsPageState extends State<SettingsPage> {
               title: 'TMDB 配置',
               children: [
                 SettingsTextField(
+                  controller: _tmdbApiBaseUrlController,
+                  keyboardType: TextInputType.url,
+                  label: 'API 地址',
+                  onFocusLost: _commitNetworkSettings,
+                ),
+                SettingsTextField(
                   controller: _tmdbApiKeyController,
                   obscureText: !_showTmdbApiKey,
                   label: 'API 密钥',
@@ -268,12 +892,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       });
                     },
                   ),
-                ),
-                SettingsTextField(
-                  controller: _tmdbApiBaseUrlController,
-                  keyboardType: TextInputType.url,
-                  label: 'API 地址',
-                  onFocusLost: _commitNetworkSettings,
                 ),
               ],
             ),
@@ -387,54 +1005,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildLibraryMaintenance(BuildContext context) {
-    return Selector<MediaLibraryProvider, bool>(
-      selector: (context, provider) => provider.isLoading,
-      builder: (context, isBusy, child) {
-        return SettingsSection(
-          title: '媒体库',
-          subtitle: '管理本地媒体索引与元数据',
-          groups: [
-            AppFormGroup(
-              title: '媒体库维护',
-              children: [
-                AppFormItem(
-                  label: '补全元数据',
-                  subtitle: '同步 WebDAV，并为缺少信息的媒体重新匹配',
-                  labelWidth: null,
-                  expandControl: false,
-                  control: _SettingsActionButton(
-                    onPressed: isBusy ? null : _confirmRescrapeLibrary,
-                    icon: Icons.manage_search_outlined,
-                    label: isBusy ? '刮削中' : '开始补全',
-                    busy: isBusy,
-                  ),
-                ),
-              ],
-            ),
-            AppFormGroup(
-              title: '危险操作',
-              children: [
-                AppFormItem(
-                  label: '清空媒体库',
-                  subtitle: '删除本地索引、元数据、播放进度和收藏',
-                  labelWidth: null,
-                  expandControl: false,
-                  control: _SettingsActionButton(
-                    onPressed: isBusy ? null : _confirmClearLibrary,
-                    icon: Icons.delete_sweep_outlined,
-                    label: '清空',
-                    destructive: true,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _scheduleAutoSave({bool applyRuntime = false, bool immediate = false}) {
     if (!_controllersInitialized || _isSyncingControllers) return;
     if (applyRuntime) _runtimeApplyPending = true;
@@ -478,21 +1048,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _testWebDavConnection() async {
-    final didSave = await _persistSettings(applyRuntime: true);
-    if (!didSave || !mounted) return;
-
-    final settingsProvider = context.read<AppSettingsProvider>();
-    final isConnected = await settingsProvider.testWebDavConnection();
-    if (!mounted) return;
-
-    if (isConnected) {
-      AppMessage.success('OpenList WebDAV 连接成功');
-    } else {
-      AppMessage.error('OpenList WebDAV 连接失败');
-    }
-  }
-
   Future<void> _testTmdbConnection() async {
     final didSave = await _persistSettings(applyRuntime: true);
     if (!didSave || !mounted) return;
@@ -508,36 +1063,36 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _confirmRescrapeLibrary() async {
+  Future<void> _confirmScanMediaSources() async {
     final confirmed = await AppModal.confirm(
       context: context,
-      title: '补全媒体库元数据？',
-      message: '这会先同步 WebDAV 根目录，移除已不存在的本地记录，然后只为缺少元数据的文件请求 TMDB。已有匹配结果、播放进度和收藏会保留。',
-      confirmLabel: '开始补全',
+      title: '扫描全部媒体源？',
+      message: '这会递归扫描全部启用的媒体源，新增发现的视频，并清理已从来源删除的文件索引。配置 TMDB API Key 后还会自动刮削媒体信息。不会删除远程文件。',
+      confirmLabel: '开始扫描',
       icon: Icons.manage_search_rounded,
     );
 
     if (confirmed != true || !mounted) return;
 
-    final didSave = await _persistSettings(applyRuntime: true);
-    if (!didSave || !mounted) return;
-
-    final settingsProvider = context.read<AppSettingsProvider>();
     final mediaLibraryProvider = context.read<MediaLibraryProvider>();
-
-    if (!settingsProvider.hasTmdbApiKey) {
-      AppMessage.error('补全元数据前请先设置 TMDB API 密钥');
-      return;
-    }
-
-    await mediaLibraryProvider.refreshLibraryMetadata();
+    final summary = await mediaLibraryProvider.scanMediaSources();
     if (!mounted) return;
 
     final error = mediaLibraryProvider.error;
-    if (error == null) {
-      AppMessage.success('已从 WebDAV 根目录补全媒体库元数据');
+    if (summary == null) {
+      AppMessage.error(error ?? '扫描媒体源失败');
+      return;
+    }
+    final message =
+        '扫描完成：发现 ${summary.discoveredFileCount} 个视频，新增 ${summary.newFileCount} 个，移除 ${summary.removedFileCount} 个';
+    if (error != null) {
+      AppMessage.error('$message；$error');
+    } else if (summary.failedSourceCount > 0) {
+      AppMessage.error('$message；${summary.failedSourceCount} 个媒体源扫描失败');
+    } else if (context.read<AppSettingsProvider>().hasTmdbApiKey) {
+      AppMessage.success('$message；TMDB 元数据已刮削');
     } else {
-      AppMessage.error(error);
+      AppMessage.success('$message；未配置 TMDB API Key，已跳过元数据刮削');
     }
   }
 
@@ -565,9 +1120,6 @@ class _SettingsPageState extends State<SettingsPage> {
     final settingsProvider = context.read<AppSettingsProvider>();
 
     await settingsProvider.saveSettings(
-      webDavUrl: _webDavUrlController.text,
-      webDavUsername: _webDavUsernameController.text,
-      webDavPassword: _webDavPasswordController.text,
       tmdbApiKey: _tmdbApiKeyController.text,
       tmdbApiBaseUrl: _tmdbApiBaseUrlController.text,
       tmdbProxyUrl: _tmdbProxyUrlController.text,
@@ -596,10 +1148,6 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _refreshAfterRuntimeSettingsApplied(AppSettings previousSettings, AppSettings currentSettings) async {
-    final webDavChanged =
-        previousSettings.webDavUrl != currentSettings.webDavUrl ||
-        previousSettings.webDavUsername != currentSettings.webDavUsername ||
-        previousSettings.webDavPassword != currentSettings.webDavPassword;
     final tmdbChanged =
         previousSettings.tmdbApiKey != currentSettings.tmdbApiKey ||
         previousSettings.tmdbApiBaseUrl != currentSettings.tmdbApiBaseUrl ||
@@ -608,9 +1156,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
     if (!mounted) return;
 
-    if (webDavChanged && (previousSettings.hasWebDavConfig || currentSettings.hasWebDavConfig)) {
-      await context.read<FileBrowserProvider>().fetchFiles('/');
-    }
     if (tmdbChanged && mounted && (previousSettings.hasTmdbApiKey || currentSettings.hasTmdbApiKey)) {
       await context.read<TrendingMediaProvider>().fetch();
     }
@@ -619,9 +1164,6 @@ class _SettingsPageState extends State<SettingsPage> {
   void _syncControllers(AppSettingsProvider settingsProvider) {
     _isSyncingControllers = true;
     try {
-      _setControllerText(_webDavUrlController, settingsProvider.webDavUrl);
-      _setControllerText(_webDavUsernameController, settingsProvider.webDavUsername);
-      _setControllerText(_webDavPasswordController, settingsProvider.webDavPassword);
       _setControllerText(_tmdbApiKeyController, settingsProvider.tmdbApiKey);
       _setControllerText(_tmdbApiBaseUrlController, settingsProvider.tmdbApiBaseUrl);
       _setControllerText(_tmdbProxyUrlController, settingsProvider.tmdbProxyUrl);

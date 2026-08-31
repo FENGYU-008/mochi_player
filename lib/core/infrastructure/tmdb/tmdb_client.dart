@@ -7,7 +7,7 @@ import 'package:mochi_player/core/infrastructure/tmdb/proxy_config.dart';
 
 class TmdbClient {
   static const String _defaultApiKey = String.fromEnvironment('TMDB_API_KEY');
-  static const String _defaultBaseUrl = 'https://api.themoviedb.org/3';
+  static const String defaultApiBaseUrl = 'https://api.themoviedb.org/3';
   static const Duration _connectTimeout = Duration(seconds: 8);
   static const Duration _sendTimeout = Duration(seconds: 8);
   static const Duration _receiveTimeout = Duration(seconds: 12);
@@ -25,9 +25,9 @@ class TmdbClient {
   final Dio _dio;
   final Logger _logger;
   String _apiKey = _defaultApiKey;
-  String _baseUrl = _defaultBaseUrl;
+  String _baseUrl = defaultApiBaseUrl;
   String _proxyUrl = '';
-  bool _proxyEnabled = true;
+  bool _proxyEnabled = false;
 
   bool get isConfigured => _apiKey.trim().isNotEmpty;
 
@@ -36,7 +36,7 @@ class TmdbClient {
     if (key != null) _apiKey = key.isEmpty ? _defaultApiKey : key;
     final baseUrl = apiBaseUrl?.trim();
     if (baseUrl != null) {
-      _baseUrl = baseUrl.isEmpty ? _defaultBaseUrl : baseUrl.replaceFirst(RegExp(r'/+$'), '');
+      _baseUrl = baseUrl.isEmpty ? defaultApiBaseUrl : baseUrl.replaceFirst(RegExp(r'/+$'), '');
     }
     if (proxyUrl != null) _proxyUrl = proxyUrl.trim();
     if (proxyEnabled != null) _proxyEnabled = proxyEnabled;
