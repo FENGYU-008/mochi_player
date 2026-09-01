@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:mochi_player/core/ui/theme/app_colors.dart';
 
 class AppTheme {
-  static final ThemeData lightTheme = ThemeData(
+  static final ThemeData lightTheme = lightThemeFor(AppColors.primaryLight);
+  static final ThemeData darkTheme = darkThemeFor(AppColors.primaryDark);
+
+  static ThemeData lightThemeFor(Color accentColor) => ThemeData(
     brightness: Brightness.light,
     useMaterial3: true,
-    primaryColor: AppColors.primaryLight,
+    primaryColor: accentColor,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primaryLight,
+      seedColor: accentColor,
       brightness: Brightness.light,
-      primary: AppColors.primaryLight,
-      secondary: AppColors.primaryLight,
+      primary: accentColor,
+      secondary: accentColor,
     ),
     scaffoldBackgroundColor: const Color(0xFFFFFFFF),
     canvasColor: const Color(0xFFF5F5F7),
@@ -19,7 +22,7 @@ class AppTheme {
       bodyMedium: TextStyle(color: Color(0xFF1D1D1F)),
       titleMedium: TextStyle(color: Color(0xFF1D1D1F)),
     ),
-    extensions: const <ThemeExtension<dynamic>>[
+    extensions: <ThemeExtension<dynamic>>[
       AppColorSchemeExtension(
         textPrimary: Color(0xFF1D1D1F),
         textSecondary: Color(0xA61D1D1F),
@@ -30,7 +33,9 @@ class AppTheme {
         controlSurface: Color(0x06000000),
         subtleSurface: Color(0x06000000),
         hoverSurface: Color(0x0D1D1D1F),
-        selectedSurface: Color(0xFFECEAF4),
+        selectedSurface: accentColor == AppColors.primaryLight
+            ? const Color(0xFFECEAF4)
+            : Color.alphaBlend(accentColor.withAlpha(24), Colors.white),
         surface: Colors.white,
         headerBackground: Color(0xD9FFFFFF),
         activitySurface: Color(0xEBFFFFFF),
@@ -45,15 +50,15 @@ class AppTheme {
     ],
   );
 
-  static final ThemeData darkTheme = ThemeData(
+  static ThemeData darkThemeFor(Color accentColor) => ThemeData(
     brightness: Brightness.dark,
     useMaterial3: true,
-    primaryColor: AppColors.primaryDark,
+    primaryColor: accentColor,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primaryDark,
+      seedColor: accentColor,
       brightness: Brightness.dark,
-      primary: AppColors.primaryDark,
-      secondary: AppColors.primaryDark,
+      primary: accentColor,
+      secondary: accentColor,
     ),
     scaffoldBackgroundColor: const Color(0xFF1C1C1E),
     canvasColor: const Color(0xFF2C2C2E),
@@ -62,7 +67,7 @@ class AppTheme {
       bodyMedium: TextStyle(color: Color(0xFFE5E5E7)),
       titleMedium: TextStyle(color: Color(0xFFE5E5E7)),
     ),
-    extensions: const <ThemeExtension<dynamic>>[
+    extensions: <ThemeExtension<dynamic>>[
       AppColorSchemeExtension(
         textPrimary: Color(0xFFF5F5F7),
         textSecondary: Color(0xA6F5F5F7),
@@ -73,7 +78,9 @@ class AppTheme {
         controlSurface: Color(0x0EFFFFFF),
         subtleSurface: Color(0x0CFFFFFF),
         hoverSurface: Color(0x16F5F5F7),
-        selectedSurface: Color(0xFF35323F),
+        selectedSurface: accentColor == AppColors.primaryDark
+            ? const Color(0xFF35323F)
+            : Color.alphaBlend(accentColor.withAlpha(48), const Color(0xFF2C2C2E)),
         surface: Color(0xFF2C2C2E),
         headerBackground: Color(0xD92C2C2E),
         activitySurface: Color(0xF21F1F22),

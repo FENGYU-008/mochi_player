@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:mochi_player/core/domain/media/media_file.dart';
@@ -130,7 +132,9 @@ class FileBrowserProvider extends ChangeNotifier {
   /// Selects a configured storage source and starts its browser at the root.
   Future<void> openStorageSource(StorageSource source, StorageCredentials? credentials) async {
     final connection = await _storageProviderRegistry.connect(source, credentials);
+    final previousConnection = _storageConnection;
     _storageConnection = connection;
+    if (previousConnection != null) unawaited(previousConnection.close());
     _items = [];
     _currentPath = '/';
     _searchQuery = '';
@@ -142,7 +146,9 @@ class FileBrowserProvider extends ChangeNotifier {
   /// Returns the browser to its source-selection state.
   void clearStorageSource() {
     _requestGeneration++;
+    final previousConnection = _storageConnection;
     _storageConnection = null;
+    if (previousConnection != null) unawaited(previousConnection.close());
     _items = [];
     _currentPath = '/';
     _searchQuery = '';
@@ -242,6 +248,8 @@ class FileBrowserProvider extends ChangeNotifier {
   @override
   void dispose() {
     _requestGeneration++;
+    final connection = _storageConnection;
+    if (connection != null) unawaited(connection.close());
     super.dispose();
   }
 }

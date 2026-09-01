@@ -58,4 +58,7 @@ class _FakeStorageConnection implements StorageConnection {
 
   @override
   Future<bool> testConnection() async => true;
+
+  @override
+  Future<void> close() async {}
 }

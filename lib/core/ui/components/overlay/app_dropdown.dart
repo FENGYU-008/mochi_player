@@ -52,8 +52,10 @@ class AppDropdown<T> extends StatelessWidget {
         surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
         shadowColor: WidgetStatePropertyAll(shadowColor),
         elevation: const WidgetStatePropertyAll(8),
+        // Keep the popup width identical to the trigger width. Desktop's
+        // compact visual density otherwise shrinks fixed-width menus.
+        visualDensity: VisualDensity.standard,
         padding: const WidgetStatePropertyAll(EdgeInsets.all(6)),
-        fixedSize: WidgetStatePropertyAll(Size.fromWidth(menuWidth)),
         side: WidgetStatePropertyAll(BorderSide(color: AppColors.separator(context))),
         shape: const WidgetStatePropertyAll(
           RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(AppRadii.control))),
@@ -61,10 +63,13 @@ class AppDropdown<T> extends StatelessWidget {
       ),
       menuChildren: [
         for (final option in options)
-          _DropdownOptionRow<T>(
-            option: option,
-            selected: option.value == selectedValue,
-            onPressed: () => onSelected?.call(option.value),
+          SizedBox(
+            width: menuWidth > 12 ? menuWidth - 12 : 0,
+            child: _DropdownOptionRow<T>(
+              option: option,
+              selected: option.value == selectedValue,
+              onPressed: () => onSelected?.call(option.value),
+            ),
           ),
       ],
       builder: (context, controller, child) {

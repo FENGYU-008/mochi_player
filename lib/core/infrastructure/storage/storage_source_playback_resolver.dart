@@ -3,6 +3,7 @@ import 'package:mochi_player/core/domain/playback/playback_target.dart';
 import 'package:mochi_player/core/domain/playback/playback_target_resolver.dart';
 import 'package:mochi_player/core/domain/storage/storage_source_type.dart';
 import 'package:mochi_player/core/infrastructure/storage/local_playback_resolver.dart';
+import 'package:mochi_player/core/infrastructure/storage/smb_playback_resolver.dart';
 import 'package:mochi_player/core/infrastructure/storage/storage_source_repository.dart';
 import 'package:mochi_player/core/infrastructure/storage/webdav_playback_resolver.dart';
 
@@ -25,7 +26,10 @@ class StorageSourcePlaybackResolver implements PlaybackTargetResolver {
         source: source,
         credentials: await _repository.readCredentials(source.id),
       ).resolve(file),
-      StorageSourceType.smb => null,
+      StorageSourceType.smb => SmbPlaybackResolver(
+        source: source,
+        credentials: await _repository.readCredentials(source.id),
+      ).resolve(file),
     };
   }
 }

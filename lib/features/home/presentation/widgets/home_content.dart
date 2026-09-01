@@ -57,11 +57,13 @@ class _HomeContentState extends State<HomeContent> {
       return _buildSearchResults(context);
     }
 
-    final hasTrendingContent = context.select<TrendingMediaProvider, bool>((provider) => provider.hasContent);
+    final trendingState = context.select<TrendingMediaProvider, _TrendingShellState>(
+      (provider) => _TrendingShellState(hasContent: provider.hasContent, isConfigured: provider.isConfigured),
+    );
     return Selector<MediaLibraryProvider, _HomeShellState>(
       selector: (context, provider) => _HomeShellState(
         showInitialLoading: provider.isLoading && provider.totalFiles == 0,
-        hasHomeContent: provider.hasLibraryContent || hasTrendingContent,
+        hasHomeContent: provider.hasLibraryContent || trendingState.hasContent || trendingState.isConfigured,
       ),
       builder: (context, shellState, child) {
         if (shellState.showInitialLoading) {
@@ -145,7 +147,7 @@ class _HomeContentState extends State<HomeContent> {
             // Trending on TMDB (三卡片布局)
             Consumer<TrendingMediaProvider>(
               builder: (context, provider, child) {
-                if (!provider.hasContent && !provider.isLoading) {
+                if (!provider.hasContent && !provider.isConfigured) {
                   return const SliverToBoxAdapter(child: SizedBox.shrink());
                 }
 
@@ -299,7 +301,7 @@ class _HomeContentState extends State<HomeContent> {
                 subtitle: '全球前三',
               ),
               items: provider.movies,
-              isLoading: provider.isLoading,
+              isLoading: provider.isLoading || !provider.hasContent,
             ),
           ),
           const SizedBox(width: 16),
@@ -313,7 +315,7 @@ class _HomeContentState extends State<HomeContent> {
                 subtitle: '最多观看',
               ),
               items: provider.tvShows,
-              isLoading: provider.isLoading,
+              isLoading: provider.isLoading || !provider.hasContent,
             ),
           ),
           const SizedBox(width: 16),
@@ -327,7 +329,7 @@ class _HomeContentState extends State<HomeContent> {
                 subtitle: '评分最高',
               ),
               items: provider.topRated,
-              isLoading: provider.isLoading,
+              isLoading: provider.isLoading || !provider.hasContent,
               showRating: true,
             ),
           ),
@@ -352,6 +354,20 @@ class _HomeShellState {
 
   @override
   int get hashCode => Object.hash(showInitialLoading, hasHomeContent);
+}
+
+class _TrendingShellState {
+  const _TrendingShellState({required this.hasContent, required this.isConfigured});
+
+  final bool hasContent;
+  final bool isConfigured;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _TrendingShellState && other.hasContent == hasContent && other.isConfigured == isConfigured;
+
+  @override
+  int get hashCode => Object.hash(hasContent, isConfigured);
 }
 
 class _LibraryContentRevision {

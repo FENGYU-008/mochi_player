@@ -44,7 +44,7 @@ void main() {
     final selectRect = tester.getRect(find.byType(AppSelect<int>));
     final firstOptionRect = tester.getRect(find.byType(MenuOptionRow).first);
     expect(firstOptionRect.left, closeTo(selectRect.left + 6, 0.1));
-    expect(firstOptionRect.right, lessThanOrEqualTo(selectRect.right));
+    expect(firstOptionRect.right, closeTo(selectRect.right - 6, 0.1));
     await tester.tap(find.text('第二项'));
     await tester.pump();
 

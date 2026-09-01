@@ -1,4 +1,6 @@
 PODS:
+  - dart_smb2 (0.1.2):
+    - FlutterMacOS
   - FlutterMacOS (1.0.0)
   - isar_flutter_libs (1.0.0):
     - FlutterMacOS
@@ -22,6 +24,7 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - dart_smb2 (from `Flutter/ephemeral/.symlinks/plugins/dart_smb2/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - isar_flutter_libs (from `Flutter/ephemeral/.symlinks/plugins/isar_flutter_libs/macos`)
   - media_kit_libs_macos_video (from `Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos`)
@@ -34,6 +37,8 @@ DEPENDENCIES:
   - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
 
 EXTERNAL SOURCES:
+  dart_smb2:
+    :path: Flutter/ephemeral/.symlinks/plugins/dart_smb2/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
   isar_flutter_libs:
@@ -56,6 +61,7 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
 
 SPEC CHECKSUMS:
+  dart_smb2: c596120ffb6d7767cb1322d478ba726a3155d97e
   FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
   isar_flutter_libs: a65381780401f81ad6bf3f2e7cd0de5698fb98c4
   media_kit_libs_macos_video: 85a23e549b5f480e72cae3e5634b5514bc692f65
@@ -67,6 +73,6 @@ SPEC CHECKSUMS:
   wakelock_plus: 917609be14d812ddd9e9528876538b2263aaa03b
   window_manager: b729e31d38fb04905235df9ea896128991cad99e
 
-PODFILE CHECKSUM: 54d867c82ac51cbd61b565781b9fada492027009
+PODFILE CHECKSUM: 1e95c36afbfd1cb6423ceca4de7a8e1b256fb6ac
 
 COCOAPODS: 1.16.2

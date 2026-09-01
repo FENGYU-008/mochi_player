@@ -50,7 +50,7 @@ class TrendingCategoryCard extends StatelessWidget {
           _buildHeader(theme),
           const SizedBox(height: 16),
           if (isLoading)
-            _buildLoadingState()
+            _buildLoadingState(theme)
           else if (items.isEmpty)
             _buildEmptyState(theme)
           else
@@ -114,10 +114,49 @@ class TrendingCategoryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadingState() {
-    return const SizedBox(
-      height: 200,
-      child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+  Widget _buildLoadingState(ThemeData theme) {
+    final skeletonColor = theme.dividerColor.withAlpha(52);
+    return Column(
+      children: List.generate(
+        3,
+        (index) => Padding(
+          padding: EdgeInsets.only(bottom: index == 2 ? 0 : 12),
+          child: Row(
+            children: [
+              Container(
+                width: 24,
+                height: 20,
+                decoration: BoxDecoration(color: skeletonColor, borderRadius: BorderRadius.circular(5)),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 40,
+                height: 60,
+                decoration: BoxDecoration(color: skeletonColor, borderRadius: BorderRadius.circular(6)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 14,
+                      width: index == 1 ? 92 : 128,
+                      decoration: BoxDecoration(color: skeletonColor, borderRadius: BorderRadius.circular(5)),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      height: 11,
+                      width: 72,
+                      decoration: BoxDecoration(color: skeletonColor, borderRadius: BorderRadius.circular(5)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

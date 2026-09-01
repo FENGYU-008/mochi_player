@@ -10,4 +10,7 @@ abstract interface class StorageConnection {
   Future<List<StorageEntry>> readDirectory(String path);
 
   Future<bool> testConnection();
+
+  /// Releases any protocol-specific resources held by this connection.
+  Future<void> close();
 }

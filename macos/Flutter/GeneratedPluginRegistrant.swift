@@ -5,6 +5,7 @@
 import FlutterMacOS
 import Foundation
 
+import dart_smb2
 import isar_flutter_libs
 import media_kit_libs_macos_video
 import media_kit_video
@@ -16,6 +17,7 @@ import wakelock_plus
 import window_manager
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+  DartSmb2Plugin.register(with: registry.registrar(forPlugin: "DartSmb2Plugin"))
   IsarFlutterLibsPlugin.register(with: registry.registrar(forPlugin: "IsarFlutterLibsPlugin"))
   MediaKitLibsMacosVideoPlugin.register(with: registry.registrar(forPlugin: "MediaKitLibsMacosVideoPlugin"))
   MediaKitVideoPlugin.register(with: registry.registrar(forPlugin: "MediaKitVideoPlugin"))

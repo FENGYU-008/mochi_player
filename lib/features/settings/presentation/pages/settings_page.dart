@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as path;
 import 'package:mochi_player/core/domain/storage/models.dart';
-import 'package:mochi_player/core/infrastructure/storage/storage_source_service.dart';
-import 'package:mochi_player/core/infrastructure/storage/storage_provider_registry.dart';
 import 'package:mochi_player/core/infrastructure/storage/local_directory_access.dart';
+import 'package:mochi_player/core/infrastructure/storage/smb_source_location.dart';
+import 'package:mochi_player/core/infrastructure/storage/smb_storage_provider.dart';
+import 'package:mochi_player/core/infrastructure/storage/storage_provider_registry.dart';
+import 'package:mochi_player/core/infrastructure/storage/storage_source_service.dart';
 import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/home/application/trending_media_provider.dart';
 import 'package:mochi_player/features/library/application/file_browser_provider.dart';
@@ -17,6 +18,8 @@ import 'package:mochi_player/features/settings/domain/app_settings.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_section.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_switch_item.dart';
 import 'package:mochi_player/features/settings/presentation/widgets/settings_text_field.dart';
+import 'package:mochi_player/features/settings/presentation/widgets/theme_preference_controls.dart';
+import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
@@ -27,9 +30,9 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-enum _SettingsTab { appearance, mediaSource, metadata, playback }
+enum _SettingsTab { general, mediaSource, metadata, playback }
 
-enum _StorageSourceAddOption { local, webDav }
+enum _StorageSourceAddOption { local, webDav, smb }
 
 class _SettingsPageState extends State<SettingsPage> {
   final _storageSourceService = StorageSourceService();
@@ -46,7 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _tmdbProxyEnabled = AppSettings.defaultTmdbProxyEnabled;
   bool _enableHardwareAcceleration = AppSettings.defaultEnableHardwareAcceleration;
   double _subtitleFontSize = AppSettings.defaultSubtitleFontSize;
-  var _selectedTab = _SettingsTab.appearance;
+  var _selectedTab = _SettingsTab.general;
   Timer? _saveDebounce;
   bool _autoSaveInFlight = false;
   bool _autoSavePending = false;
@@ -117,7 +120,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   value: _selectedTab,
                   onChanged: (tab) => setState(() => _selectedTab = tab),
                   tabs: const [
-                    AppTab(value: _SettingsTab.appearance, label: '外观', icon: Icons.light_mode_outlined),
+                    AppTab(value: _SettingsTab.general, label: '通用', icon: Icons.tune_rounded),
                     AppTab(value: _SettingsTab.mediaSource, label: '媒体源', icon: Icons.storage_outlined),
                     AppTab(value: _SettingsTab.metadata, label: '元数据', icon: Icons.sell_outlined),
                     AppTab(value: _SettingsTab.playback, label: '播放', icon: Icons.play_circle_outline_rounded),
@@ -148,43 +151,52 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildSelectedTab(BuildContext context) {
     return switch (_selectedTab) {
-      _SettingsTab.appearance => _buildThemeSettings(context),
+      _SettingsTab.general => _buildGeneralSettings(context),
       _SettingsTab.mediaSource => _buildWebDavSettings(context),
       _SettingsTab.metadata => _buildTmdbSettings(context),
       _SettingsTab.playback => _buildPlaybackSettings(context),
     };
   }
 
-  Widget _buildThemeSettings(BuildContext context) {
-    return Selector<ThemeProvider, ThemeMode>(
-      selector: (context, provider) => provider.themeMode,
-      builder: (context, themeMode, child) {
+  Widget _buildGeneralSettings(BuildContext context) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
         return SettingsSection(
-          title: '外观',
-          subtitle: '调整应用主题与内容显示方式',
+          title: '通用',
+          subtitle: '调整应用的外观与语言偏好',
           groups: [
             AppFormGroup(
               title: '界面主题',
               children: [
+                ThemeModePicker(
+                  value: themeProvider.themeMode,
+                  accentColor: themeProvider.accentColor.color,
+                  onChanged: themeProvider.setTheme,
+                ),
+              ],
+            ),
+            AppFormGroup(
+              title: '偏好',
+              children: [
                 AppFormItem(
-                  label: '主题模式',
-                  subtitle: '选择应用使用的明暗外观',
+                  label: '强调色',
+                  subtitle: '用于按钮、选中项和进度',
                   labelWidth: null,
-                  control: Align(
-                    alignment: Alignment.centerRight,
-                    child: SizedBox(
-                      width: 300,
-                      child: AppSegmentedControl<ThemeMode>(
-                        value: themeMode,
-                        options: const [
-                          AppSegmentedOption(value: ThemeMode.light, label: '浅色', icon: Icons.light_mode_outlined),
-                          AppSegmentedOption(value: ThemeMode.dark, label: '深色', icon: Icons.dark_mode_outlined),
-                          AppSegmentedOption(value: ThemeMode.system, label: '跟随系统', icon: Icons.computer_rounded),
-                        ],
-                        onChanged: context.read<ThemeProvider>().setTheme,
-                      ),
+                  control: AccentColorPicker(value: themeProvider.accentColor, onChanged: themeProvider.setAccentColor),
+                  expandControl: false,
+                ),
+                AppFormItem(
+                  label: '应用语言',
+                  labelWidth: null,
+                  control: SizedBox(
+                    width: 120,
+                    child: AppSelect<String>(
+                      value: 'zh-CN',
+                      options: [AppSelectOption(value: 'zh-CN', label: '简体中文')],
+                      onChanged: (_) {},
                     ),
                   ),
+                  expandControl: false,
                 ),
               ],
             ),
@@ -285,10 +297,12 @@ class _SettingsPageState extends State<SettingsPage> {
             : (option) => switch (option) {
                 _StorageSourceAddOption.local => _pickAndAddLocalSource(),
                 _StorageSourceAddOption.webDav => _showStorageSourceEditor(),
+                _StorageSourceAddOption.smb => _showSmbSourceEditor(),
               },
         options: const [
           AppDropdownOption(value: _StorageSourceAddOption.local, label: '本地目录', icon: Icons.folder_outlined),
           AppDropdownOption(value: _StorageSourceAddOption.webDav, label: 'WebDAV', icon: Icons.language_rounded),
+          AppDropdownOption(value: _StorageSourceAddOption.smb, label: 'SMB', icon: Icons.lan_outlined),
         ],
       ),
     );
@@ -298,16 +312,22 @@ class _SettingsPageState extends State<SettingsPage> {
     return AppFormItem(
       label: source.name,
       subtitle: source.enabled ? source.endpoint : '已停用 · ${source.endpoint}',
-      icon: source.type == StorageSourceType.local ? Icons.folder_outlined : Icons.dns_outlined,
+      icon: switch (source.type) {
+        StorageSourceType.local => Icons.folder_outlined,
+        StorageSourceType.webDav => Icons.dns_outlined,
+        StorageSourceType.smb => Icons.lan_outlined,
+      },
       labelWidth: null,
       expandControl: false,
       control: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           AppButton.icon(
-            onPressed: () => source.type == StorageSourceType.local
-                ? _showLocalSourceEditor(source: source)
-                : _showStorageSourceEditor(source: source),
+            onPressed: () => switch (source.type) {
+              StorageSourceType.local => _showLocalSourceEditor(source: source),
+              StorageSourceType.webDav => _showStorageSourceEditor(source: source),
+              StorageSourceType.smb => _showSmbSourceEditor(source: source),
+            },
             icon: Icons.edit_outlined,
             tooltip: '编辑媒体源',
             size: AppButtonSize.compact,
@@ -534,6 +554,223 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     } finally {
       nameController.dispose();
+    }
+  }
+
+  Future<void> _showSmbSourceEditor({StorageSource? source}) async {
+    final endpoint = Uri.tryParse(source?.endpoint ?? '');
+    final nameController = TextEditingController(text: source?.name ?? '');
+    final hostController = TextEditingController(text: endpoint?.host ?? '');
+    final shareController = TextEditingController(
+      text: endpoint?.pathSegments.where((segment) => segment.isNotEmpty).firstOrNull ?? '',
+    );
+    final rootPathController = TextEditingController(text: source?.rootPath ?? '/');
+    final existingCredentials = source == null ? null : await _storageSourceService.readCredentials(source.id);
+    final usernameController = TextEditingController(text: existingCredentials?.username ?? '');
+    final passwordController = TextEditingController(text: existingCredentials?.password ?? '');
+    if (!mounted) {
+      nameController.dispose();
+      hostController.dispose();
+      shareController.dispose();
+      rootPathController.dispose();
+      usernameController.dispose();
+      passwordController.dispose();
+      return;
+    }
+
+    var showPassword = false;
+    var isEnabled = source?.enabled ?? true;
+    var isTestingConnection = false;
+    String? formError;
+    String? connectionTestResult;
+    bool? connectionTestSucceeded;
+    StateSetter? updateModal;
+
+    void showFormError(String message) {
+      updateModal?.call(() => formError = message);
+    }
+
+    StorageSource? draftSource() {
+      final host = hostController.text.trim();
+      final share = shareController.text.trim().replaceAll(RegExp(r'^/+|/+$'), '');
+      if (host.isEmpty) {
+        showFormError('请填写 SMB 主机地址');
+        return null;
+      }
+      if (share.isEmpty || share.contains('/')) {
+        showFormError('请填写共享名，不能包含斜杠');
+        return null;
+      }
+      final rootPath = SmbSourceLocation.normalizeRootPath(rootPathController.text);
+      return StorageSource(
+        id: source?.id ?? 'connection-test',
+        name: nameController.text.trim().isEmpty ? '$host / $share' : nameController.text.trim(),
+        type: StorageSourceType.smb,
+        endpoint: Uri(scheme: 'smb', host: host, path: '/$share').toString(),
+        rootPath: rootPath,
+        enabled: isEnabled,
+      );
+    }
+
+    Future<void> testConnection() async {
+      final draft = draftSource();
+      if (draft == null) return;
+      updateModal?.call(() {
+        formError = null;
+        isTestingConnection = true;
+        connectionTestResult = null;
+        connectionTestSucceeded = null;
+      });
+      SmbStorageConnection? smbConnection;
+      try {
+        final connection = await StorageProviderRegistry.defaults().connect(
+          draft,
+          StorageCredentials(username: usernameController.text.trim(), password: passwordController.text),
+        );
+        smbConnection = connection is SmbStorageConnection ? connection : null;
+        final entries = await connection.readDirectory('/');
+        updateModal?.call(() {
+          connectionTestSucceeded = true;
+          connectionTestResult = '连接成功，可访问此目录（${entries.length} 项）';
+        });
+      } catch (error, stackTrace) {
+        debugPrint('测试 SMB 连接失败: $error\n$stackTrace');
+        updateModal?.call(() {
+          connectionTestSucceeded = false;
+          connectionTestResult = '连接失败：${_describeSmbConnectionError(error)}';
+        });
+      } finally {
+        if (smbConnection != null) {
+          await smbConnection.close();
+        }
+        updateModal?.call(() => isTestingConnection = false);
+      }
+    }
+
+    try {
+      final saved = await AppModal.show(
+        context: context,
+        title: source == null ? '添加 SMB 媒体源' : '编辑 SMB 媒体源',
+        icon: Icons.lan_outlined,
+        confirmLabel: source == null ? '添加' : '保存',
+        content: StatefulBuilder(
+          builder: (context, setModalState) {
+            updateModal = setModalState;
+            return AppFormGroup(
+              children: [
+                _buildStorageSourceFormItem(label: '名称', controller: nameController, placeholder: '例如：家庭 NAS'),
+                _buildStorageSourceFormItem(label: '主机', controller: hostController, placeholder: '例如：192.168.1.20'),
+                _buildStorageSourceFormItem(label: '共享名', controller: shareController, placeholder: '例如：Media'),
+                _buildStorageSourceFormItem(label: '共享内路径', controller: rootPathController, placeholder: '/电影（可选）'),
+                if (source != null)
+                  AppFormItem(
+                    label: '启用此媒体源',
+                    subtitle: '停用后不会显示在文件浏览中，也不会参与扫描和播放',
+                    labelWidth: 104,
+                    control: Align(
+                      alignment: Alignment.centerRight,
+                      child: AppSwitch(value: isEnabled, onChanged: (value) => setModalState(() => isEnabled = value)),
+                    ),
+                  ),
+                _buildStorageSourceFormItem(label: '用户名', controller: usernameController),
+                _buildStorageSourceFormItem(
+                  label: '密码',
+                  controller: passwordController,
+                  obscureText: !showPassword,
+                  suffix: AppButton.icon(
+                    onPressed: () => setModalState(() => showPassword = !showPassword),
+                    icon: showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    tooltip: showPassword ? '隐藏密码' : '显示密码',
+                    variant: AppButtonVariant.ghost,
+                    size: AppButtonSize.compact,
+                  ),
+                ),
+                AppFormItem(
+                  label: '连接测试',
+                  subtitle: connectionTestResult ?? '使用当前填写的信息验证 SMB 连接',
+                  subtitleColor: connectionTestSucceeded == null
+                      ? null
+                      : connectionTestSucceeded!
+                      ? AppColors.success(context)
+                      : AppColors.danger(context),
+                  labelWidth: 104,
+                  control: Align(
+                    alignment: Alignment.centerRight,
+                    child: AppButton(
+                      onPressed: isTestingConnection ? null : testConnection,
+                      label: isTestingConnection ? '测试中' : '测试连接',
+                      icon: Icons.wifi_tethering_outlined,
+                      variant: AppButtonVariant.secondary,
+                      size: AppButtonSize.compact,
+                      busy: isTestingConnection,
+                    ),
+                  ),
+                ),
+                if (formError != null)
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: Text(
+                      formError!,
+                      style: TextStyle(color: AppColors.danger(context), fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+        onConfirm: () async {
+          final draft = draftSource();
+          if (draft == null) return false;
+          try {
+            await _storageSourceService.save(
+              StorageSource(
+                id: source?.id ?? const Uuid().v4(),
+                name: draft.name,
+                type: StorageSourceType.smb,
+                endpoint: draft.endpoint,
+                rootPath: draft.rootPath,
+                enabled: draft.enabled,
+              ),
+              credentials: StorageCredentials(
+                username: usernameController.text.trim(),
+                password: passwordController.text,
+              ),
+            );
+            return true;
+          } catch (error, stackTrace) {
+            debugPrint('保存 SMB 媒体源失败: $error\n$stackTrace');
+            showFormError('保存 SMB 媒体源失败：$error');
+            return false;
+          }
+        },
+      );
+      if (saved == true) {
+        var clearedActiveSource = false;
+        if (source != null && mounted) {
+          final fileBrowser = context.read<FileBrowserProvider>();
+          if (fileBrowser.activeSource?.id == source.id) {
+            fileBrowser.clearStorageSource();
+            clearedActiveSource = true;
+          }
+        }
+        await _loadStorageSources();
+        if (mounted) {
+          AppMessage.success(
+            source == null
+                ? 'SMB 媒体源已添加'
+                : clearedActiveSource
+                ? '媒体源已保存，请重新打开以应用新配置'
+                : '媒体源已保存',
+          );
+        }
+      }
+    } finally {
+      nameController.dispose();
+      hostController.dispose();
+      shareController.dispose();
+      rootPathController.dispose();
+      usernameController.dispose();
+      passwordController.dispose();
     }
   }
 
@@ -798,6 +1035,20 @@ class _SettingsPageState extends State<SettingsPage> {
     }
     if (message.contains('SocketException')) return '无法连接到服务器，请检查主机和端口';
     return '请检查主机、端口、路径和网络连接';
+  }
+
+  String _describeSmbConnectionError(Object error) {
+    final message = error.toString().toLowerCase();
+    if (message.contains('auth') || message.contains('logon') || message.contains('access denied')) {
+      return '认证失败，请检查用户名或密码';
+    }
+    if (message.contains('not found') || message.contains('no such')) {
+      return '找不到共享名或共享内路径';
+    }
+    if (message.contains('connection') || message.contains('socket') || message.contains('timeout')) {
+      return '无法连接到 SMB 服务器，请检查主机、共享名和网络';
+    }
+    return '请检查主机、共享名、路径和登录信息';
   }
 
   String _combineWebDavPaths(String? endpointPath, String? rootPath) {

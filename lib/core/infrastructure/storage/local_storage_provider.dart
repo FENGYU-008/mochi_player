@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as path;
 import 'package:mochi_player/core/domain/storage/models.dart';
 import 'package:mochi_player/core/infrastructure/storage/local_directory_access.dart';
+import 'package:path/path.dart' as path;
 
 /// Connects to a user-selected directory on the local machine.
 class LocalStorageProvider implements StorageProvider {
@@ -75,6 +75,9 @@ class LocalStorageConnection implements StorageConnection {
       return false;
     }
   }
+
+  @override
+  Future<void> close() async {}
 
   String _resolve(String relativePath) {
     final normalizedRelative = relativePath.replaceFirst(RegExp(r'^/+'), '').replaceAll('\\', path.separator);

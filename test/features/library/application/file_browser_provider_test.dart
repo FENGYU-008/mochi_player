@@ -118,6 +118,23 @@ void main() {
     expect(provider.currentPath, '/');
     expect(provider.canGoBack, isFalse);
   });
+
+  test(
+    'closes the previous storage connection when changing sources',
+    () async {
+      final storageProvider = _TrackingStorageProvider();
+      final provider = FileBrowserProvider(
+        storageProviderRegistry: StorageProviderRegistry([storageProvider]),
+      );
+
+      await provider.openStorageSource(_source, null);
+      final firstConnection = storageProvider.connections.single;
+      await provider.openStorageSource(_source, null);
+
+      expect(firstConnection.isClosed, isTrue);
+      expect(storageProvider.connections, hasLength(2));
+    },
+  );
 }
 
 const _source = StorageSource(
@@ -159,6 +176,45 @@ class _FakeStorageConnection implements StorageConnection {
 
   @override
   Future<List<StorageEntry>> readDirectory(String path) => _read(path);
+
+  @override
+  Future<bool> testConnection() async => true;
+
+  @override
+  Future<void> close() async {}
+}
+
+class _TrackingStorageProvider implements StorageProvider {
+  final connections = <_TrackingStorageConnection>[];
+
+  @override
+  StorageSourceType get type => StorageSourceType.webDav;
+
+  @override
+  Future<StorageConnection> connect(
+    StorageSource source,
+    StorageCredentials? credentials,
+  ) async {
+    final connection = _TrackingStorageConnection(source);
+    connections.add(connection);
+    return connection;
+  }
+}
+
+class _TrackingStorageConnection implements StorageConnection {
+  _TrackingStorageConnection(this.source);
+
+  @override
+  final StorageSource source;
+  bool isClosed = false;
+
+  @override
+  Future<void> close() async {
+    isClosed = true;
+  }
+
+  @override
+  Future<List<StorageEntry>> readDirectory(String path) async => const [];
 
   @override
   Future<bool> testConnection() async => true;

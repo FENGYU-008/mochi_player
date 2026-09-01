@@ -16,4 +16,17 @@ void main() {
     expect(lightColors.controlSurface, const Color(0x06000000));
     expect(darkColors.controlSurface, const Color(0x0EFFFFFF));
   });
+
+  test(
+    'derives the theme primary and selection surface from the accent color',
+    () {
+      const accent = Color(0xFF43B649);
+
+      final theme = AppTheme.lightThemeFor(accent);
+      final colors = theme.extension<AppColorSchemeExtension>()!;
+
+      expect(theme.colorScheme.primary, accent);
+      expect(colors.selectedSurface, isNot(const Color(0xFFECEAF4)));
+    },
+  );
 }

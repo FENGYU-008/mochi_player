@@ -22,7 +22,7 @@ class LibmpvLogBuffer {
 
   static String sanitize(String text) {
     var sanitized = text.replaceAllMapped(
-      RegExp(r'https?://[^\s]+', caseSensitive: false),
+      RegExp(r'(?:https?|smb)://[^\s]+', caseSensitive: false),
       (match) => _sanitizeUrl(match.group(0)!),
     );
     sanitized = sanitized.replaceAllMapped(

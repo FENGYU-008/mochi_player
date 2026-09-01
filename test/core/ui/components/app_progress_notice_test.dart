@@ -36,4 +36,18 @@ void main() {
       findsNothing,
     );
   });
+
+  testWidgets('uses only the linear indicator when progress is measurable', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const AppProgressNotice(message: '正在刮削 1/2', progress: 0.5),
+      ),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+  });
 }

@@ -1,5 +1,6 @@
 import 'package:mochi_player/core/domain/storage/models.dart';
 import 'package:mochi_player/core/infrastructure/storage/local_storage_provider.dart';
+import 'package:mochi_player/core/infrastructure/storage/smb_storage_provider.dart';
 import 'package:mochi_player/core/infrastructure/storage/webdav_storage_provider.dart';
 
 /// Resolves the connection implementation for a configured storage protocol.
@@ -16,7 +17,7 @@ class StorageProviderRegistry {
   }
 
   factory StorageProviderRegistry.defaults() =>
-      StorageProviderRegistry([LocalStorageProvider(), WebDavStorageProvider()]);
+      StorageProviderRegistry([LocalStorageProvider(), WebDavStorageProvider(), SmbStorageProvider()]);
 
   final Map<StorageSourceType, StorageProvider> _providers;
 

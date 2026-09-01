@@ -92,7 +92,7 @@ class PlaybackLauncher {
     _openPlayer(context, targetFile, contextTitle: showTitle);
   }
 
-  /// 核心播放逻辑：获取直链 -> 跳转 PlayerPage
+  /// 核心播放逻辑：解析媒体地址 -> 跳转 PlayerPage
   static void _openPlayer(
     BuildContext context,
     MediaFile file, {

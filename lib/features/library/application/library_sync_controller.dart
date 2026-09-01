@@ -3,8 +3,8 @@ import 'package:logger/logger.dart';
 import 'package:mochi_player/core/domain/storage/models.dart';
 import 'package:mochi_player/core/infrastructure/database/database_service.dart';
 import 'package:mochi_player/core/infrastructure/database/entities/entities.dart' as entity;
-import 'package:mochi_player/core/infrastructure/storage/storage_source_service.dart';
 import 'package:mochi_player/core/infrastructure/storage/storage_provider_registry.dart';
+import 'package:mochi_player/core/infrastructure/storage/storage_source_service.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
 import 'package:mochi_player/features/library/application/media_library_catalog.dart';
 import 'package:mochi_player/features/library/infrastructure/filename_parser.dart';
@@ -141,19 +141,23 @@ class LibrarySyncController extends ChangeNotifier {
         try {
           final credentials = await _storageSourceService.readCredentials(source.id);
           final connection = await _storageProviderRegistry.connect(source, credentials);
-          final result = await _scanFilesFromStorage(connection);
-          discoveredFileCount += result.discoveredCount;
-          newFileCount += result.newCount;
-          removedFileCount += result.removedCount;
-          _logger.i(
-            '媒体源 ${source.name} 扫描完成：发现 ${result.discoveredCount} 个视频，'
-            '新增 ${result.newCount} 个，移除 ${result.removedCount} 个',
-          );
-          if (result.hadReadError) {
-            failedSourceCount++;
-            _logger.w('媒体源 ${source.name} 的扫描不完整，已跳过失效文件清理');
-          } else {
-            completedSourceCount++;
+          try {
+            final result = await _scanFilesFromStorage(connection);
+            discoveredFileCount += result.discoveredCount;
+            newFileCount += result.newCount;
+            removedFileCount += result.removedCount;
+            _logger.i(
+              '媒体源 ${source.name} 扫描完成：发现 ${result.discoveredCount} 个视频，'
+              '新增 ${result.newCount} 个，移除 ${result.removedCount} 个',
+            );
+            if (result.hadReadError) {
+              failedSourceCount++;
+              _logger.w('媒体源 ${source.name} 的扫描不完整，已跳过失效文件清理');
+            } else {
+              completedSourceCount++;
+            }
+          } finally {
+            await connection.close();
           }
         } catch (error) {
           failedSourceCount++;

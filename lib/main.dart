@@ -82,8 +82,8 @@ class MochiPlayerApp extends StatelessWidget {
       themeAnimationCurve: Curves.linear,
 
       // 直接使用从 AppTheme 类中导入的主题
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.lightThemeFor(themeProvider.accentColor.color),
+      darkTheme: AppTheme.darkThemeFor(themeProvider.accentColor.color),
 
       builder: (context, child) {
         return Stack(

@@ -71,6 +71,9 @@ class WebDavStorageConnection implements StorageConnection {
     }
   }
 
+  @override
+  Future<void> close() async {}
+
   String _requestPathFor(String sourceRelativePath) {
     final rootPath = _normalizePath(source.rootPath);
     final path = _normalizePath(sourceRelativePath);

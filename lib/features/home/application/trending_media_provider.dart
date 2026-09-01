@@ -23,6 +23,10 @@ class TrendingMediaProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
 
+  /// Whether TMDB has been configured. The home page uses this to reserve the
+  /// trending section while a configured endpoint is still returning data.
+  bool get isConfigured => _tmdbService.isConfigured;
+
   bool get hasContent => _movies.isNotEmpty || _tvShows.isNotEmpty || _topRated.isNotEmpty;
 
   Future<void> fetch() async {

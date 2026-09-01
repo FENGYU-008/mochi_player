@@ -30,12 +30,10 @@ class AppProgressNotice extends StatelessWidget {
           children: [
             Row(
               children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, value: progress, color: accentColor),
-                ),
-                const SizedBox(width: AppSpacing.sm),
+                if (progress == null) ...[
+                  SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: accentColor)),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
                 Expanded(
                   child: Text(
                     message,

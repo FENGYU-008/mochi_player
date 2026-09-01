@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as path;
 import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/playback/playback_target.dart';
 import 'package:mochi_player/core/domain/playback/playback_target_resolver.dart';
 import 'package:mochi_player/core/domain/storage/models.dart';
 import 'package:mochi_player/core/infrastructure/storage/local_directory_access.dart';
+import 'package:path/path.dart' as path;
 
 /// Resolves a source-relative media file to a local `file://` URL.
 class LocalPlaybackResolver implements PlaybackTargetResolver {

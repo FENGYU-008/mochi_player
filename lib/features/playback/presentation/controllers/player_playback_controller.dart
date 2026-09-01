@@ -18,6 +18,7 @@ import 'package:mochi_player/features/settings/domain/app_settings.dart';
 /// modes and widget-only interaction state deliberately remain outside.
 class PlayerPlaybackController extends ChangeNotifier {
   static const Duration _progressSaveInterval = Duration(seconds: 10);
+  static const Duration localBufferingIndicatorDelay = Duration(milliseconds: 350);
 
   PlayerPlaybackController({
     required MediaLibraryProvider libraryProvider,
@@ -63,6 +64,8 @@ class PlayerPlaybackController extends ChangeNotifier {
   bool _hasRestoredPosition = false;
   bool _didAutoSelectSubtitle = false;
   bool _isBuffering = false;
+  bool _isBufferingIndicatorVisible = false;
+  Timer? _bufferingIndicatorTimer;
   bool _showResumeNotice = false;
   bool _overrideEmbeddedSubtitleStyle = false;
   int _mediaOpenGeneration = 0;
@@ -81,7 +84,13 @@ class PlayerPlaybackController extends ChangeNotifier {
 
   bool get hasNext => _session.hasNext;
 
-  bool get isBuffering => _isBuffering;
+  bool get isBuffering => _isBufferingIndicatorVisible;
+
+  @visibleForTesting
+  static Duration bufferingIndicatorDelayFor(String mediaUrl) {
+    final scheme = Uri.tryParse(mediaUrl)?.scheme.toLowerCase();
+    return scheme == 'http' || scheme == 'https' ? Duration.zero : localBufferingIndicatorDelay;
+  }
 
   bool get showResumeNotice => _showResumeNotice;
 
@@ -113,7 +122,7 @@ class PlayerPlaybackController extends ChangeNotifier {
     if (_isDisposed || _session.isSwitching) return;
 
     final generation = _nextMediaOpenGeneration();
-    _isBuffering = true;
+    _setBuffering(true);
     _playerError = null;
     _showResumeNotice = false;
     notifyListeners();
@@ -126,12 +135,12 @@ class PlayerPlaybackController extends ChangeNotifier {
     if (!_canUsePlayer(generation)) return;
 
     if (move == null) {
-      _isBuffering = false;
+      _setBuffering(false);
       notifyListeners();
       return;
     }
     if (!move.isReady) {
-      _isBuffering = false;
+      _setBuffering(false);
       _playerError = '获取播放链接失败: ${move.item.fileName}';
       notifyListeners();
       return;
@@ -247,8 +256,8 @@ class PlayerPlaybackController extends ChangeNotifier {
         notifyListeners();
       }),
       player.stream.buffering.listen((buffering) {
-        if (_isDisposed || _isBuffering == buffering) return;
-        _isBuffering = buffering;
+        if (_isDisposed) return;
+        _setBuffering(buffering);
         notifyListeners();
       }),
       player.stream.playing.listen((_) {
@@ -270,7 +279,7 @@ class PlayerPlaybackController extends ChangeNotifier {
     if (!_canUsePlayer(generation)) return;
     final resumePosition = PlaybackResumePolicy.positionFor(currentItem, hasRestoredPosition: _hasRestoredPosition);
 
-    debugPrint('正在播放直链: ${LibmpvLogBuffer.sanitize(_session.currentTarget.url)}');
+    debugPrint('正在播放媒体地址: ${LibmpvLogBuffer.sanitize(_session.currentTarget.url)}');
     await _applyPlayerSettings(generation);
     if (!_canUsePlayer(generation)) return;
     await _applySubtitleStyleMode(generation);
@@ -393,8 +402,33 @@ class PlayerPlaybackController extends ChangeNotifier {
     if (!_isDisposed && hasNext) await playQueueOffset(1);
   }
 
+  void _setBuffering(bool buffering) {
+    if (_isBuffering == buffering) return;
+    _isBuffering = buffering;
+    _bufferingIndicatorTimer?.cancel();
+    _bufferingIndicatorTimer = null;
+
+    if (!buffering) {
+      _isBufferingIndicatorVisible = false;
+      return;
+    }
+
+    final delay = bufferingIndicatorDelayFor(_session.currentTarget.url);
+    if (delay == Duration.zero) {
+      _isBufferingIndicatorVisible = true;
+      return;
+    }
+
+    _isBufferingIndicatorVisible = false;
+    _bufferingIndicatorTimer = Timer(delay, () {
+      if (_isDisposed || !_isBuffering) return;
+      _isBufferingIndicatorVisible = true;
+      notifyListeners();
+    });
+  }
+
   void _resetMediaState() {
-    _isBuffering = false;
+    _setBuffering(false);
     _hasRestoredPosition = false;
     _didAutoSelectSubtitle = false;
     _showResumeNotice = false;
@@ -504,6 +538,7 @@ class PlayerPlaybackController extends ChangeNotifier {
     _nextMediaOpenGeneration();
     unawaited(_saveProgress(force: true, allowDisposed: true));
     _progressSaveTimer?.cancel();
+    _bufferingIndicatorTimer?.cancel();
     _resumeNoticeTimer?.cancel();
     for (final subscription in _subscriptions) {
       unawaited(subscription.cancel());
