@@ -1,7 +1,23 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Mochi Player: one soft mochi, with playback expressed as a cut-out. -->
-  <rect width="1024" height="1024" rx="224" fill="#62578F"/>
-  <path d="M512 218C648 218 764 312 776 451C789 597 689 787 512 787C335 787 235 597 248 451C260 312 376 218 512 218Z" fill="#F5F0E5"/>
-  <path d="M310 421C335 318 422 259 512 259C603 259 690 318 715 421C688 357 617 321 512 321C407 321 336 357 310 421Z" fill="#FFFDF8" fill-opacity="0.58"/>
-  <path d="M450 420.648C450 394.126 478.954 377.703 501.743 391.277L636.946 471.819C659.006 484.961 659.006 517.039 636.946 530.181L501.743 610.723C478.954 624.297 450 607.874 450 581.352V420.648Z" fill="#62578F"/>
+  <!-- Mochi Player: a quiet, softly layered playback window. -->
+  <defs>
+    <linearGradient id="background" x1="180" y1="116" x2="838" y2="912" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C71B6"/>
+      <stop offset="1" stop-color="#554A83"/>
+    </linearGradient>
+    <linearGradient id="window" x1="512" y1="252" x2="512" y2="782" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FAF9FD"/>
+      <stop offset="1" stop-color="#E8E4F2"/>
+    </linearGradient>
+    <linearGradient id="play" x1="406" y1="390" x2="620" y2="618" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7569A9"/>
+      <stop offset="1" stop-color="#5C518A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" rx="224" fill="url(#background)"/>
+  <path d="M230 404C230 259 347 184 512 184C677 184 794 259 794 404V620C794 765 677 840 512 840C347 840 230 765 230 620V404Z" fill="#A79FD0" fill-opacity="0.22"/>
+  <rect x="242" y="226" width="540" height="572" rx="172" fill="url(#window)"/>
+  <path d="M284 396C284 299 376 266 512 266C648 266 740 299 740 396V432C709 356 623 338 512 338C401 338 315 356 284 432V396Z" fill="white" fill-opacity="0.5"/>
+  <path d="M454 408.245C454 380.622 484.262 363.49 508.038 377.577L646.939 459.832C670.076 473.537 670.076 507.463 646.939 521.168L508.038 603.423C484.262 617.51 454 600.378 454 572.755V408.245Z" transform="translate(-14 22)" fill="url(#play)"/>
 </svg>

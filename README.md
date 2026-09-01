@@ -1,14 +1,26 @@
-# Mochi Player
+<p align="center">
+  <img src="docs/images/app-icon.png" width="112" alt="Mochi Player 图标">
+</p>
 
-让你的私人影片库，拥有接近流媒体服务的浏览与播放体验。
+<h1 align="center">Mochi Player</h1>
 
-Mochi Player 是一款面向 Windows 与 macOS 的本地优先媒体库播放器。连接本地目录或
-WebDAV 后，它会扫描并整理视频，使用 TMDB 补全海报、简介、评分、演职员和剧集信息，
-再以首页、海报墙与详情页重新呈现你的收藏。
+<p align="center">
+  让你的私人影片库，拥有接近流媒体服务的浏览与播放体验。
+</p>
 
-从挑选影片到继续观看，一切都围绕舒服地看完一部作品：直接播放本地与 WebDAV 媒体、
-记忆播放进度，并支持多版本文件、音轨与字幕选择。Mochi 先专注把个人媒体库的核心体验
-做好，再逐步加入更具个性的功能。
+<p align="center">
+  <a href="https://github.com/FENGYU-008/mochi_player/actions/workflows/windows.yml">
+    <img src="https://github.com/FENGYU-008/mochi_player/actions/workflows/windows.yml/badge.svg" alt="Windows CI">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-GPL--3.0--only-7A6AB3" alt="GPL-3.0-only 许可证">
+  </a>
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-5B6B8C" alt="支持 macOS 和 Windows">
+</p>
+
+Mochi Player 是一款面向 Windows 与 macOS 的本地优先媒体库播放器。连接本地目录或WebDAV 后，它会扫描并整理视频，使用 TMDB 补全海报、简介、评分、演职员和剧集信息，再以首页、海报墙与详情页重新呈现你的收藏。
+
+从挑选影片到继续观看，一切都围绕舒服地看完一部作品：直接播放本地与 WebDAV 媒体、记忆播放进度，并支持多版本文件、音轨与字幕选择。Mochi 先专注把个人媒体库的核心体验做好，再逐步加入更具个性的功能。
 
 ## 🖼️ 界面预览
 
