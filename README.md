@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/app-icon.png" width="112" alt="Mochi Player 图标">
+  <img src="assets/branding/mochi_app_icon.svg" width="112" alt="Mochi Player 图标">
 </p>
 
 <h1 align="center">Mochi Player</h1>
