@@ -72,6 +72,8 @@ class FileBrowserListRow extends StatelessWidget {
                 child: Icon(AppIcons.more, color: AppColors.textSecondary(context)),
               ),
               tooltip: '更多操作',
+              menuWidth: 140,
+              menuAlignment: AppDropdownMenuAlignment.end,
               onSelected: _handleAction,
               options: [
                 if (item.isDirectory || item.isPlayable)

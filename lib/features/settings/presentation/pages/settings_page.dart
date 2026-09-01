@@ -291,7 +291,8 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
         tooltip: '添加媒体源',
-        menuWidth: 164,
+        menuWidth: 152,
+        menuAlignment: AppDropdownMenuAlignment.end,
         onSelected: _isLoadingStorageSources
             ? null
             : (option) => switch (option) {
@@ -1144,13 +1145,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     },
                   ),
                 ),
-              ],
-            ),
-            AppFormGroup(
-              title: '网络代理',
-              children: [
                 SettingsSwitchItem(
-                  label: '使用 TMDB 代理',
+                  label: '使用代理访问 TMDB',
                   subtitle: '用于 TMDB API 和图片下载',
                   value: _tmdbProxyEnabled,
                   onChanged: (value) {
@@ -1160,18 +1156,13 @@ class _SettingsPageState extends State<SettingsPage> {
                     _scheduleAutoSave(applyRuntime: true, immediate: true);
                   },
                 ),
-                SettingsTextField(
-                  controller: _tmdbProxyUrlController,
-                  enabled: _tmdbProxyEnabled,
-                  keyboardType: TextInputType.url,
-                  label: 'HTTP 代理',
-                  onFocusLost: _commitNetworkSettings,
-                ),
-              ],
-            ),
-            AppFormGroup(
-              title: '连接测试',
-              children: [
+                if (_tmdbProxyEnabled)
+                  SettingsTextField(
+                    controller: _tmdbProxyUrlController,
+                    keyboardType: TextInputType.url,
+                    label: 'HTTP 代理',
+                    onFocusLost: _commitNetworkSettings,
+                  ),
                 AppFormItem(
                   label: '连接状态',
                   subtitle: '检查当前 TMDB 配置是否可用',

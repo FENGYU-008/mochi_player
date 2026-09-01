@@ -29,8 +29,6 @@ class FileBrowserProvider extends ChangeNotifier {
 
   bool get hasSelectedStorageSource => _storageConnection != null;
 
-  bool get hasActiveSource => _storageConnection != null;
-
   // === 状态变量 ===
   List<FileBrowserEntry> _items = [];
   bool _isLoading = false;
@@ -100,7 +98,7 @@ class FileBrowserProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (!hasActiveSource) {
+      if (!hasSelectedStorageSource) {
         _items = [];
         _error = '请先选择媒体源';
         _hasLoaded = true;

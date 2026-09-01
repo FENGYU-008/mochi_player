@@ -12,6 +12,9 @@ class AppDropdownOption<T> {
   final IconData? icon;
 }
 
+/// Horizontal edge of a menu that is anchored to its trigger.
+enum AppDropdownMenuAlignment { start, end }
+
 /// An anchored pointer-operated application menu.
 class AppDropdown<T> extends StatelessWidget {
   const AppDropdown({
@@ -22,6 +25,7 @@ class AppDropdown<T> extends StatelessWidget {
     this.selectedValue,
     this.tooltip,
     this.menuWidth = 160,
+    this.menuAlignment = AppDropdownMenuAlignment.start,
   });
 
   final Widget trigger;
@@ -30,6 +34,7 @@ class AppDropdown<T> extends StatelessWidget {
   final T? selectedValue;
   final String? tooltip;
   final double menuWidth;
+  final AppDropdownMenuAlignment menuAlignment;
 
   bool get _enabled => onSelected != null && options.isNotEmpty;
 
@@ -42,12 +47,14 @@ class AppDropdown<T> extends StatelessWidget {
       consumeOutsideTap: true,
       useRootOverlay: true,
       clipBehavior: Clip.none,
-      alignmentOffset: const Offset(0, 6),
+      alignmentOffset: Offset(menuAlignment == AppDropdownMenuAlignment.end ? -menuWidth : 0, 6),
       style: MenuStyle(
-        // MenuAnchor interprets bottomEnd as starting the menu at the
-        // trigger's right edge. bottomStart places it directly below the
-        // trigger, which is the expected dropdown geometry in an LTR UI.
-        alignment: AlignmentDirectional.bottomStart,
+        // With MenuAnchor, bottomEnd starts the menu at the trigger's trailing
+        // edge. Offset it back by the menu width so contextual action menus
+        // truly align their trailing edges and grow toward the leading edge.
+        alignment: menuAlignment == AppDropdownMenuAlignment.start
+            ? AlignmentDirectional.bottomStart
+            : AlignmentDirectional.bottomEnd,
         backgroundColor: WidgetStatePropertyAll(AppColors.menuSurface(context)),
         surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
         shadowColor: WidgetStatePropertyAll(shadowColor),

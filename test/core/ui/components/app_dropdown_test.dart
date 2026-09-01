@@ -83,4 +83,37 @@ void main() {
     expect(find.byType(MenuOptionRow), findsOneWidget);
     await mouse.removePointer();
   });
+
+  testWidgets('can align an action menu to the trigger trailing edge', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: Center(
+            child: AppDropdown<String>(
+              menuWidth: 140,
+              menuAlignment: AppDropdownMenuAlignment.end,
+              onSelected: (_) {},
+              options: const [AppDropdownOption(value: 'copy', label: '复制路径')],
+              trigger: const SizedBox(
+                width: 38,
+                height: 34,
+                child: Icon(AppIcons.more),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(AppIcons.more));
+    await tester.pumpAndSettle();
+
+    final anchorRect = tester.getRect(find.byType(MenuAnchor));
+    final optionRect = tester.getRect(find.byType(MenuOptionRow));
+    expect(optionRect.right, closeTo(anchorRect.right - 6, 0.1));
+    expect(optionRect.top, closeTo(anchorRect.bottom + 12, 0.1));
+  });
 }

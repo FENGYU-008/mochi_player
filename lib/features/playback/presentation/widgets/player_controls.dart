@@ -445,7 +445,7 @@ class _AudioMenuButton extends StatelessWidget {
           ),
         ],
       ),
-      child: PlayerMenuButtonSurface(child: const Icon(Icons.audiotrack_rounded, color: Colors.white, size: 18)),
+      child: PlayerMenuButtonSurface(child: const Icon(Icons.graphic_eq_rounded, color: Colors.white, size: 18)),
     );
   }
 }
