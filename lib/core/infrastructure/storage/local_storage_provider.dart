@@ -1,16 +1,10 @@
 import 'dart:io';
 
 import 'package:mochi_player/core/domain/storage/models.dart';
-import 'package:mochi_player/core/infrastructure/storage/local_directory_access.dart';
 import 'package:path/path.dart' as path;
 
 /// Connects to a user-selected directory on the local machine.
 class LocalStorageProvider implements StorageProvider {
-  LocalStorageProvider({LocalDirectoryAccess? directoryAccess})
-    : _directoryAccess = directoryAccess ?? MacLocalDirectoryAccess();
-
-  final LocalDirectoryAccess _directoryAccess;
-
   @override
   StorageSourceType get type => StorageSourceType.local;
 
@@ -23,7 +17,6 @@ class LocalStorageProvider implements StorageProvider {
     if (directoryPath.isEmpty || !path.isAbsolute(directoryPath)) {
       throw ArgumentError.value(source.endpoint, 'source.endpoint', 'must be an absolute local directory path');
     }
-    await _directoryAccess.ensureAccess(directoryPath);
     final directory = Directory(directoryPath);
     if (!await directory.exists()) {
       throw FileSystemException('本地目录不存在或不可访问', directoryPath);

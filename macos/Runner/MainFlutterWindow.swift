@@ -18,69 +18,6 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 
-    let localDirectoryAccessChannel = FlutterMethodChannel(
-      name: "mochi_player/local_directory_access",
-      binaryMessenger: flutterViewController.engine.binaryMessenger
-    )
-    localDirectoryAccessChannel.setMethodCallHandler { call, result in
-      switch call.method {
-      case "pickDirectory":
-        let arguments = call.arguments as? [String: Any]
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.canCreateDirectories = true
-        if let initialDirectory = arguments?["initialDirectory"] as? String {
-          panel.directoryURL = URL(fileURLWithPath: initialDirectory)
-        }
-        panel.beginSheetModal(for: self) { response in
-          guard response == .OK, let url = panel.url else {
-            result(nil)
-            return
-          }
-          do {
-            guard try LocalDirectoryAccessManager.shared.registerSelectedDirectory(url) else {
-              result(FlutterError(
-                code: "directory_access_denied",
-                message: "macOS 未授予所选目录的访问权限",
-                details: nil
-              ))
-              return
-            }
-            result(url.path)
-          } catch {
-            result(FlutterError(
-              code: "directory_access_failed",
-              message: error.localizedDescription,
-              details: nil
-            ))
-          }
-        }
-      case "authorize":
-        guard let arguments = call.arguments as? [String: Any],
-          let path = arguments["path"] as? String else {
-          result(FlutterError(
-            code: "invalid_arguments",
-            message: "Expected a directory path.",
-            details: nil
-          ))
-          return
-        }
-        do {
-          result(try LocalDirectoryAccessManager.shared.authorize(path: path))
-        } catch {
-          result(FlutterError(
-            code: "directory_access_failed",
-            message: error.localizedDescription,
-            details: nil
-          ))
-        }
-      default:
-        result(FlutterMethodNotImplemented)
-      }
-    }
-
     let channel = FlutterMethodChannel(
       name: "mochi_player/window_controls",
       binaryMessenger: flutterViewController.engine.binaryMessenger

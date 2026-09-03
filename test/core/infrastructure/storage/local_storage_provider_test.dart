@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mochi_player/core/domain/storage/models.dart';
-import 'package:mochi_player/core/infrastructure/storage/local_directory_access.dart';
 import 'package:mochi_player/core/infrastructure/storage/local_storage_provider.dart';
 
 void main() {
@@ -48,12 +47,4 @@ StorageSource _source(Directory directory) => StorageSource(
   endpoint: directory.path,
 );
 
-LocalStorageProvider _provider() =>
-    LocalStorageProvider(directoryAccess: const _AllowedDirectoryAccess());
-
-class _AllowedDirectoryAccess implements LocalDirectoryAccess {
-  const _AllowedDirectoryAccess();
-
-  @override
-  Future<void> ensureAccess(String directoryPath) async {}
-}
+LocalStorageProvider _provider() => LocalStorageProvider();

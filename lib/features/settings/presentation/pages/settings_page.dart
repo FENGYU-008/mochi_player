@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:mochi_player/core/domain/storage/models.dart';
-import 'package:mochi_player/core/infrastructure/storage/local_directory_access.dart';
+import 'package:mochi_player/core/infrastructure/storage/local_directory_picker.dart';
 import 'package:mochi_player/core/infrastructure/storage/smb_source_location.dart';
 import 'package:mochi_player/core/infrastructure/storage/smb_storage_provider.dart';
 import 'package:mochi_player/core/infrastructure/storage/storage_provider_registry.dart';
@@ -361,7 +361,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _pickAndAddLocalSource() async {
-    final directoryPath = await MacLocalDirectoryAccess().pickDirectory();
+    final directoryPath = await const LocalDirectoryPicker().pickDirectory();
     if (directoryPath == null || directoryPath.isEmpty || !mounted) return;
     await _showLocalSourceEditor(initialDirectory: directoryPath);
   }
@@ -383,7 +383,7 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     Future<void> chooseDirectory() async {
-      final selected = await MacLocalDirectoryAccess().pickDirectory(
+      final selected = await const LocalDirectoryPicker().pickDirectory(
         initialDirectory: directoryPath.isEmpty ? null : directoryPath,
       );
       if (selected == null || selected.isEmpty) return;

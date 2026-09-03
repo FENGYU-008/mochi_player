@@ -7,6 +7,7 @@ import 'package:mochi_player/core/domain/media/media_file.dart';
 import 'package:mochi_player/core/domain/playback/playback_target.dart';
 import 'package:mochi_player/core/formatters/media_format.dart';
 import 'package:mochi_player/features/library/application/media_library_provider.dart';
+import 'package:mochi_player/features/playback/application/external_subtitle_track.dart';
 import 'package:mochi_player/features/playback/application/playback_session_controller.dart';
 import 'package:mochi_player/features/playback/domain/playback_resume_policy.dart';
 import 'package:mochi_player/features/playback/infrastructure/libmpv_log_buffer.dart';
@@ -72,6 +73,8 @@ class PlayerPlaybackController extends ChangeNotifier {
   double _lastVolumeBeforeMute = 100;
   String? _playerError;
   String? _resumePositionLabel;
+  String? _pendingExternalSubtitlePath;
+  final Map<String, _LoadedExternalSubtitle> _loadedExternalSubtitles = {};
   List<String> _subtitle = const [];
   List<AudioTrack> _audioTracks = const [];
   List<SubtitleTrack> _subtitleTracks = const [];
@@ -181,6 +184,47 @@ class PlayerPlaybackController extends ChangeNotifier {
     if (!_isDisposed) onPlaybackActivity?.call();
   }
 
+  /// Loads an external subtitle file for the media currently playing.
+  ///
+  /// The player publishes the loaded subtitle as a normal track update, which
+  /// is the single source of truth for the subtitle menu.
+  Future<bool> loadExternalSubtitle(String path) async {
+    if (_isDisposed || path.trim().isEmpty) return false;
+
+    final normalizedPath = ExternalSubtitleTrack.normalizePath(path);
+    final previousLoad = _loadedExternalSubtitles[normalizedPath];
+    if (previousLoad != null) {
+      final loadedTrack = previousLoad.track ?? _findSubtitleTrackByTitle(previousLoad.title, _subtitleTracks);
+      if (loadedTrack != null) {
+        previousLoad.track = loadedTrack;
+        await setSubtitleTrack(loadedTrack);
+      }
+      return true;
+    }
+
+    final track = ExternalSubtitleTrack.fromPath(normalizedPath);
+    _didAutoSelectSubtitle = true;
+    _loadedExternalSubtitles[normalizedPath] = _LoadedExternalSubtitle(title: track.title!);
+    _pendingExternalSubtitlePath = normalizedPath;
+    try {
+      await player.setSubtitleTrack(track);
+      if (_isDisposed) return false;
+      _subtitleTracks = _normalizeSubtitleTracks(player.state.tracks.subtitle);
+      _syncPendingExternalSubtitleSelection();
+      await _applySubtitleStyleMode();
+      notifyListeners();
+      onPlaybackActivity?.call();
+      return true;
+    } catch (error) {
+      _loadedExternalSubtitles.remove(normalizedPath);
+      if (_pendingExternalSubtitlePath == normalizedPath) {
+        _pendingExternalSubtitlePath = null;
+      }
+      debugPrint('加载外挂字幕失败: $error');
+      return false;
+    }
+  }
+
   void setSubtitleStyleOverride(bool value) {
     if (_isDisposed || _overrideEmbeddedSubtitleStyle == value) return;
     _overrideEmbeddedSubtitleStyle = value;
@@ -242,6 +286,7 @@ class PlayerPlaybackController extends ChangeNotifier {
         _subtitleTracks = _normalizeSubtitleTracks(tracks.subtitle);
         _selectedAudioTrack = _resolveDisplayedAudioTrack(_selectedAudioTrack, _audioTracks);
         _selectedSubtitleTrack = _resolveDisplayedSubtitleTrack(_selectedSubtitleTrack, _subtitleTracks);
+        _syncPendingExternalSubtitleSelection();
         notifyListeners();
         if (!_didAutoSelectSubtitle) _autoSelectSubtitle();
       }),
@@ -251,8 +296,9 @@ class PlayerPlaybackController extends ChangeNotifier {
           _selectedAudioTrack = track.audio;
         }
         if (!_isSubtitleTrackAuto(track.subtitle)) {
-          _selectedSubtitleTrack = track.subtitle;
+          _selectedSubtitleTrack = _resolveDisplayedSubtitleTrack(track.subtitle, _subtitleTracks);
         }
+        _syncPendingExternalSubtitleSelection();
         notifyListeners();
       }),
       player.stream.buffering.listen((buffering) {
@@ -437,6 +483,8 @@ class PlayerPlaybackController extends ChangeNotifier {
     _subtitle = const [];
     _audioTracks = const [];
     _subtitleTracks = const [];
+    _pendingExternalSubtitlePath = null;
+    _loadedExternalSubtitles.clear();
     _selectedAudioTrack = const AudioTrack('auto', null, null);
     _selectedSubtitleTrack = const SubtitleTrack('auto', null, null);
   }
@@ -448,6 +496,27 @@ class PlayerPlaybackController extends ChangeNotifier {
       if (!result.contains(track)) result.add(track);
     }
     return result;
+  }
+
+  void _syncPendingExternalSubtitleSelection() {
+    final path = _pendingExternalSubtitlePath;
+    if (path == null) return;
+
+    final loadedSubtitle = _loadedExternalSubtitles[path];
+    if (loadedSubtitle == null) return;
+    final track = _findSubtitleTrackByTitle(loadedSubtitle.title, _subtitleTracks);
+    if (track == null) return;
+
+    loadedSubtitle.track = track;
+    _selectedSubtitleTrack = track;
+    _pendingExternalSubtitlePath = null;
+  }
+
+  SubtitleTrack? _findSubtitleTrackByTitle(String title, List<SubtitleTrack> tracks) {
+    for (final track in tracks) {
+      if (track.title?.trim() == title) return track;
+    }
+    return null;
   }
 
   List<AudioTrack> _normalizeAudioTracks(List<AudioTrack> tracks) {
@@ -466,6 +535,12 @@ class PlayerPlaybackController extends ChangeNotifier {
 
   SubtitleTrack _resolveDisplayedSubtitleTrack(SubtitleTrack selectedTrack, List<SubtitleTrack> tracks) {
     if (tracks.contains(selectedTrack)) return selectedTrack;
+    final selectedTitle = selectedTrack.title?.trim();
+    if (selectedTitle != null && selectedTitle.isNotEmpty) {
+      for (final track in tracks) {
+        if (track.title?.trim() == selectedTitle) return track;
+      }
+    }
     return tracks.firstWhere(
       (track) => !_isSubtitleTrackOff(track) && track.isDefault == true,
       orElse: () => tracks.first,
@@ -546,4 +621,11 @@ class PlayerPlaybackController extends ChangeNotifier {
     unawaited(player.dispose());
     super.dispose();
   }
+}
+
+class _LoadedExternalSubtitle {
+  _LoadedExternalSubtitle({required this.title});
+
+  final String title;
+  SubtitleTrack? track;
 }
