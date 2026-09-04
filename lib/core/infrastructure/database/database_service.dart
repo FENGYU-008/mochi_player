@@ -126,11 +126,6 @@ class DatabaseService {
     return await _isar.mediaFileEntitys.where().sortByAddedAtDesc().limit(limit).findAll();
   }
 
-  /// 获取某个 TMDB ID 的所有版本
-  Future<List<MediaFileEntity>> getVersionsByTmdbId(String tmdbId) async {
-    return await _isar.mediaFileEntitys.filter().tmdbIdEqualTo(tmdbId).findAll();
-  }
-
   /// 更新播放进度
   Future<void> updateProgress(MediaFileEntity file, int position, {int? duration}) async {
     if (duration != null && duration > 0) {

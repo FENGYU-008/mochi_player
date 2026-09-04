@@ -65,7 +65,9 @@ class PlaybackLauncher {
   static void playTVShow(BuildContext context, TVShow show) {
     final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
     final versions = provider.getVersions(show.tmdbId);
-    final target = EpisodePlaybackTargetResolver.resolveForShowPlayback(versions);
+    final target = EpisodePlaybackTargetResolver.resolveForShowPlayback(
+      versions,
+    );
 
     if (target == null) {
       _showError(context, "未找到可播放剧集");
@@ -76,12 +78,18 @@ class PlaybackLauncher {
   }
 
   /// 播放剧集：查找对应 Episode 的文件并播放
-  static void playEpisode(BuildContext context, Episode episode, {required String showTitle}) {
+  static void playEpisode(
+    BuildContext context,
+    Episode episode, {
+    required String showTitle,
+  }) {
     final provider = Provider.of<MediaLibraryProvider>(context, listen: false);
 
     MediaFile? targetFile;
     try {
-      targetFile = provider.mediaFiles.firstWhere((f) => f.tmdbId == episode.tmdbId);
+      targetFile = provider.mediaFiles.firstWhere(
+        (f) => f.episodeTmdbId == episode.tmdbId,
+      );
     } catch (_) {}
 
     if (targetFile == null) {
@@ -121,7 +129,12 @@ class PlaybackLauncher {
     if (target != null) {
       context.push(
         AppRoutePaths.player,
-        extra: PlayerRouteData(videoItem: file, target: target, contextTitle: contextTitle, playlist: playlist),
+        extra: PlayerRouteData(
+          videoItem: file,
+          target: target,
+          contextTitle: contextTitle,
+          playlist: playlist,
+        ),
       );
     } else {
       _showError(context, failureMessage ?? "获取播放链接失败，请检查网络或服务器");
@@ -133,7 +146,10 @@ class PlaybackLauncher {
   }
 
   /// 版本选择弹窗
-  static void _showVersionPicker(BuildContext context, List<MediaFile> versions) {
+  static void _showVersionPicker(
+    BuildContext context,
+    List<MediaFile> versions,
+  ) {
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
@@ -153,13 +169,20 @@ class PlaybackLauncher {
               Container(
                 width: 40,
                 height: 4,
-                decoration: BoxDecoration(color: Colors.grey[400], borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Text(
                   "选择版本",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
                 ),
               ),
               const Divider(height: 1),
@@ -172,13 +195,19 @@ class PlaybackLauncher {
                   final file = versions[index];
                   final label = MediaFileLabels.versionTitle(file);
                   return ListTile(
-                    leading: Icon(Icons.movie_outlined, color: theme.colorScheme.primary),
+                    leading: Icon(
+                      Icons.movie_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
                     title: Text(
                       label.isNotEmpty ? label : file.fileName,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
-                      MediaFileLabels.versionSubtitle(file, includeContainer: false),
+                      MediaFileLabels.versionSubtitle(
+                        file,
+                        includeContainer: false,
+                      ),
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                     onTap: () {

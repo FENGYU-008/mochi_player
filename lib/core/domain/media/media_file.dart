@@ -12,7 +12,9 @@ class MediaFile {
   final int? parsedSeason;
   final int? parsedEpisode;
   final MediaType mediaType;
-  final String? tmdbId;
+  final String? movieTmdbId;
+  final String? tvShowTmdbId;
+  final String? episodeTmdbId;
   final int size;
   final String? container;
   final int? width;
@@ -40,7 +42,9 @@ class MediaFile {
     this.parsedSeason,
     this.parsedEpisode,
     this.mediaType = MediaType.unknown,
-    this.tmdbId,
+    this.movieTmdbId,
+    this.tvShowTmdbId,
+    this.episodeTmdbId,
     this.size = 0,
     this.container,
     this.width,
@@ -58,6 +62,10 @@ class MediaFile {
     this.isFavorite = false,
     required this.addedAt,
   });
+
+  /// Metadata ID of the directly playable item: movie for movies, episode for
+  /// TV episodes. Parent show IDs intentionally live in [tvShowTmdbId].
+  String? get tmdbId => movieTmdbId ?? episodeTmdbId;
 
   /// 播放进度百分比
   double get progress => duration == 0 ? 0 : position / duration;

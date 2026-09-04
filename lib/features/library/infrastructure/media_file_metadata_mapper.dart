@@ -17,11 +17,15 @@ abstract final class MediaFileMetadataMapper {
       ..path = path
       ..fileName = fileName
       ..size = size;
-    updateEntity(entity, metadata, preserveExistingTmdbId: false);
+    updateEntity(entity, metadata, preserveExistingMatch: false);
     return entity;
   }
 
-  static void updateEntity(MediaFileEntity entity, ParsedMediaFilename metadata, {bool preserveExistingTmdbId = true}) {
+  static void updateEntity(
+    MediaFileEntity entity,
+    ParsedMediaFilename metadata, {
+    bool preserveExistingMatch = true,
+  }) {
     final previousMediaType = entity.mediaType;
     final parsedMediaType = _mediaType(metadata);
     entity
@@ -39,10 +43,17 @@ abstract final class MediaFileMetadataMapper {
       ..hdrFormat = metadata.hdrFormat
       ..versionLabel = _nonEmpty(metadata.versionLabel);
 
-    final parsedTmdbId = _nonEmpty(metadata.tmdbId);
-    final mediaTypeChanged = previousMediaType != StoredMediaType.unknown && previousMediaType != parsedMediaType;
-    if (parsedTmdbId != null || !preserveExistingTmdbId || mediaTypeChanged) {
-      entity.tmdbId = parsedTmdbId;
+    final explicitTmdbId = _nonEmpty(metadata.tmdbId);
+    final mediaTypeChanged =
+        previousMediaType != StoredMediaType.unknown &&
+        previousMediaType != parsedMediaType;
+    entity.explicitTmdbId = explicitTmdbId;
+    if (!preserveExistingMatch || mediaTypeChanged) {
+      entity
+        ..movieTmdbId = null
+        ..tvShowTmdbId = null
+        ..episodeTmdbId = null
+        ..metadataMatchStatus = StoredMetadataMatchStatus.pending;
     }
   }
 

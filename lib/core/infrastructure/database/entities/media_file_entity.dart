@@ -1,11 +1,14 @@
 import 'package:isar/isar.dart';
 import 'package:mochi_player/core/infrastructure/database/entities/stored_media_type.dart';
+import 'package:mochi_player/core/infrastructure/database/entities/stored_metadata_match_status.dart';
 import 'package:mochi_player/core/infrastructure/database/entities/stored_watch_status.dart';
 
 part 'media_file_entity.g.dart';
 
 /// 物理媒体文件实体
-/// 每个文件对应一条记录，通过 tmdbId 关联到元数据
+/// Each file keeps separate links for its movie, TV show and episode metadata.
+/// A previous schema overloaded one field for all three, making it impossible
+/// to distinguish a confirmed episode from a show-level fallback.
 @collection
 class MediaFileEntity {
   Id id = Isar.autoIncrement;
@@ -42,9 +45,25 @@ class MediaFileEntity {
 
   // ===== 关联 =====
 
-  /// TMDB ID (刮削后填充，用于关联元数据)
+  /// Explicit TMDB ID parsed from `{tmdb-123}` in the path, if provided.
   @Index()
-  String? tmdbId;
+  String? explicitTmdbId;
+
+  /// Confirmed TMDB movie ID for movie files.
+  @Index()
+  String? movieTmdbId;
+
+  /// Confirmed parent TV show ID for episode files.
+  @Index()
+  String? tvShowTmdbId;
+
+  /// Confirmed TMDB episode ID for episode files.
+  @Index()
+  String? episodeTmdbId;
+
+  @Enumerated(EnumType.ordinal)
+  StoredMetadataMatchStatus metadataMatchStatus =
+      StoredMetadataMatchStatus.pending;
 
   // ===== 技术信息 =====
 

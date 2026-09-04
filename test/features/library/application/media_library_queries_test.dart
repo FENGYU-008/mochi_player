@@ -34,8 +34,8 @@ void main() {
     test('falls back to the parsed title when a TMDB id is unusable', () {
       final catalog = MediaLibraryCatalog();
       catalog.mediaFiles.addAll([
-        _episode(id: 1, season: 1, episode: 1, tmdbId: 'unknown-1'),
-        _episode(id: 2, season: 1, episode: 2, tmdbId: 'unknown-2'),
+        _episode(id: 1, season: 1, episode: 1, tvShowTmdbId: 'unknown'),
+        _episode(id: 2, season: 1, episode: 2, tvShowTmdbId: 'unknown'),
       ]);
       final queries = MediaLibraryQueries(catalog);
 
@@ -51,7 +51,7 @@ MediaFileEntity _episode({
   required int season,
   required int episode,
   bool isFavorite = false,
-  String? tmdbId,
+  String? tvShowTmdbId,
 }) {
   return MediaFileEntity()
     ..id = id
@@ -61,6 +61,7 @@ MediaFileEntity _episode({
     ..parsedSeason = season
     ..parsedEpisode = episode
     ..mediaType = StoredMediaType.episode
-    ..tmdbId = tmdbId ?? '123_s${season}e$episode'
+    ..tvShowTmdbId = tvShowTmdbId ?? '123'
+    ..episodeTmdbId = '${tvShowTmdbId ?? '123'}_s${season}e$episode'
     ..isFavorite = isFavorite;
 }

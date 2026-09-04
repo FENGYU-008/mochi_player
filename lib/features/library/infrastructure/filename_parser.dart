@@ -101,7 +101,9 @@ class FilenameParser {
     caseSensitive: false,
   );
 
-  static final _chineseSeasonPattern = RegExp(r'(?:^|[.\s_\-\[\(\]\)【】])第([一二两三四五六七八九十\d]{1,3})季(?:$|[.\s_\-\]\)【】])?');
+  static final _chineseSeasonPattern = RegExp(
+    r'(?:^|[.\s_\-\[\(\]\)【】])第([一二两三四五六七八九十\d]{1,3})季(?:$|[.\s_\-\]\)【】])?',
+  );
 
   // 单集: E01, EP01, 第1集, 01
   static final _episodeOnlyPattern = RegExp(
@@ -115,16 +117,20 @@ class FilenameParser {
 
   static final _bareEpisodePattern = RegExp(r'^\s*0*(\d{1,3})\s*$');
 
-  static final _trailingEpisodePattern = RegExp(r'(.+?)[.\s_\-]*0*(\d{1,3})$');
-
   // 年份: (2024), .2024., _2024_
   static final _yearPattern = RegExp(r'[.\s_\(\[](\d{4})[.\s_\)\]]');
 
   // TMDB ID: {tmdbid-12345}
-  static final _tmdbIdPattern = RegExp(r'\{tmdb(?:id)?[=-](\d+)\}', caseSensitive: false);
+  static final _tmdbIdPattern = RegExp(
+    r'\{tmdb(?:id)?[=-](\d+)\}',
+    caseSensitive: false,
+  );
 
   // 分辨率
-  static final _resolutionPattern = RegExp(r'\b(720p|1080p|2160p|4k|uhd)\b', caseSensitive: false);
+  static final _resolutionPattern = RegExp(
+    r'\b(720p|1080p|2160p|4k|uhd)\b',
+    caseSensitive: false,
+  );
 
   // 视频编码
   static final _videoCodecPattern = RegExp(
@@ -139,10 +145,16 @@ class FilenameParser {
   );
 
   // 音频声道 (独立的声道标识，如 "5.1" 或 "DTS 5.1")
-  static final _audioChannelsPattern = RegExp(r'(?<!\w)(2\.0|5\.1|7\.1|stereo|mono)(?!\d)', caseSensitive: false);
+  static final _audioChannelsPattern = RegExp(
+    r'(?<!\w)(2\.0|5\.1|7\.1|stereo|mono)(?!\d)',
+    caseSensitive: false,
+  );
 
   // HDR 格式
-  static final _hdrPattern = RegExp(r'\b(hdr10\+?|hdr|dolby\s?vision|dv|dovi|hlg)\b', caseSensitive: false);
+  static final _hdrPattern = RegExp(
+    r'\b(hdr10\+?|hdr|dolby\s?vision|dv|dovi|hlg)\b',
+    caseSensitive: false,
+  );
 
   // 来源
   static final _sourcePattern = RegExp(
@@ -151,7 +163,10 @@ class FilenameParser {
   );
 
   /// 解析文件名
-  static ParsedMediaFilename parse({required String fileName, String? filePath}) {
+  static ParsedMediaFilename parse({
+    required String fileName,
+    String? filePath,
+  }) {
     final pathSegments = _pathSegments(filePath);
     final parentSegments = pathSegments.isNotEmpty
         ? pathSegments.take(pathSegments.length - 1).toList()
@@ -212,8 +227,10 @@ class FilenameParser {
     if (title.isEmpty) title = fileName;
 
     final pathTitle =
-        _extractTitleFromPath(parentSegments, seasonContext) ?? _extractNearestTitleFromPath(parentSegments);
-    if (pathTitle != null && _shouldUsePathTitle(title, fileName, isEpisode, seasonContext)) {
+        _extractTitleFromPath(parentSegments, seasonContext) ??
+        _extractNearestTitleFromPath(parentSegments);
+    if (pathTitle != null &&
+        _shouldUsePathTitle(title, fileName, isEpisode, seasonContext)) {
       title = pathTitle;
     }
 
@@ -310,7 +327,10 @@ class FilenameParser {
 
   static List<String> _pathSegments(String? filePath) {
     if (filePath == null || filePath.isEmpty) return const [];
-    return filePath.split(RegExp(r'[\\/]')).where((segment) => segment.trim().isNotEmpty).toList();
+    return filePath
+        .split(RegExp(r'[\\/]'))
+        .where((segment) => segment.trim().isNotEmpty)
+        .toList();
   }
 
   static _SeasonContext? _extractSeasonContext(List<String> parentSegments) {
@@ -340,26 +360,27 @@ class FilenameParser {
     return null;
   }
 
-  static _SeasonContext? _inferSeasonOneContext(List<String> parentSegments, int? standaloneEpisode) {
+  static _SeasonContext? _inferSeasonOneContext(
+    List<String> parentSegments,
+    int? standaloneEpisode,
+  ) {
     if (standaloneEpisode == null) return null;
 
     final title = _extractNearestTitleFromPath(parentSegments);
     if (title == null) return null;
 
-    return _SeasonContext(season: 1, segmentIndex: parentSegments.length, titleHint: title);
+    return _SeasonContext(
+      season: 1,
+      segmentIndex: parentSegments.length,
+      titleHint: title,
+    );
   }
 
   static int? _extractEpisodeFromFileName(String fileName) {
-    final standaloneEpisode = _extractStandaloneEpisodeFromFileName(fileName);
-    if (standaloneEpisode != null) return standaloneEpisode;
-
-    final stem = _stripExtension(fileName);
-    final trailingMatch = _trailingEpisodePattern.firstMatch(stem);
-    if (trailingMatch != null) {
-      return int.tryParse(trailingMatch.group(2)!);
-    }
-
-    return null;
+    // Only accept an explicit, standalone episode label here. In particular,
+    // never infer an episode from arbitrary trailing digits: codec and quality
+    // labels such as H265, x264 and 1080p are not episode numbers.
+    return _extractStandaloneEpisodeFromFileName(fileName);
   }
 
   static int? _extractStandaloneEpisodeFromFileName(String fileName) {
@@ -383,7 +404,10 @@ class FilenameParser {
     return null;
   }
 
-  static String? _extractTitleFromPath(List<String> parentSegments, _SeasonContext? seasonContext) {
+  static String? _extractTitleFromPath(
+    List<String> parentSegments,
+    _SeasonContext? seasonContext,
+  ) {
     if (seasonContext == null) return null;
 
     final titleHint = seasonContext.titleHint;
@@ -413,7 +437,12 @@ class FilenameParser {
     return null;
   }
 
-  static bool _shouldUsePathTitle(String fileTitle, String fileName, bool isEpisode, _SeasonContext? seasonContext) {
+  static bool _shouldUsePathTitle(
+    String fileTitle,
+    String fileName,
+    bool isEpisode,
+    _SeasonContext? seasonContext,
+  ) {
     if (_isGenericFileTitle(fileTitle)) return true;
 
     if (!isEpisode || seasonContext == null) return false;
@@ -429,26 +458,95 @@ class FilenameParser {
     if (dotIndex <= 0) return fileName;
 
     final ext = fileName.substring(dotIndex + 1).toLowerCase();
-    return MediaFileKindResolver.isVideoExtension(ext) ? fileName.substring(0, dotIndex) : fileName;
+    return MediaFileKindResolver.isVideoExtension(ext)
+        ? fileName.substring(0, dotIndex)
+        : fileName;
   }
 
   static String? _cleanTitle(String value) {
-    final title = _removeYearMarkers(
-      value,
-    ).replaceAll(RegExp(r'[._\[\]]'), ' ').replaceAll(RegExp(r'[\(\)\-]'), '').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final separatorCleaned = _removeYearMarkers(_decodeHtmlEntities(value))
+        .replaceAll(RegExp(r'[._\[\]]'), ' ')
+        .replaceAll(RegExp(r'[\(\)\-]'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final title = _removeTitleNoise(separatorCleaned);
     return title.isEmpty ? null : title;
+  }
+
+  /// File names copied from web indexes sometimes contain HTML entities such
+  /// as King&amp;#39;s. Decode them before title cleanup or TMDB lookup.
+  static String _decodeHtmlEntities(String value) {
+    final numericDecoded = value.replaceAllMapped(
+      RegExp(r'&#(?:x([0-9a-fA-F]+)|(\d+));'),
+      (match) {
+        final codePoint =
+            int.tryParse(match.group(1) ?? '', radix: 16) ??
+            int.tryParse(match.group(2) ?? '');
+        if (codePoint == null || codePoint > 0x10ffff) return match.group(0)!;
+        return String.fromCharCode(codePoint);
+      },
+    );
+    return numericDecoded
+        .replaceAll('&apos;', "'")
+        .replaceAll('&quot;', '"')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&nbsp;', ' ');
+  }
+
+  /// Removes release labels that are not part of the media title.
+  ///
+  /// This happens during parsing so every later layer receives a semantic
+  /// title, rather than making each metadata provider invent its own cleanup.
+  static String _removeTitleNoise(String value) {
+    return value
+        // Some indexers prepend one category letter directly before a Chinese
+        // title, for example R人生切割术. It is not part of the title.
+        .replaceFirst(RegExp(r'^[A-Za-z](?=[\u4e00-\u9fff\u3400-\u4dbf])'), '')
+        .replaceFirst(
+          RegExp(r'^(?:[A-Za-z]\s*)?(?:top\s*0*\d+)\s*', caseSensitive: false),
+          '',
+        )
+        .replaceFirst(
+          RegExp(r'^(?:韩剧|美剧|日剧|英剧|台剧|国产剧|国剧|电视剧)\s*', caseSensitive: false),
+          '',
+        )
+        .replaceAll(
+          RegExp(
+            r'特别加长版|导演剪辑(?:加长)?版|加长版|(?:数码)?修复版|CC标准收藏版|标准收藏版|(?:\d+)?周年纪念版|纪念版',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(
+            r"\b(?:director(?:'|&#39;)?s cut|extended(?: cut| edition)?|special edition|anniversary edition|criterion collection|remastered|restored|collector(?:'|&#39;)?s edition|ultimate edition|unrated|theatrical cut)\b",
+            caseSensitive: false,
+          ),
+          ' ',
+        )
+        .replaceAll(
+          RegExp(r'\b(?:720p|1080p|2160p|4k|uhd)\b', caseSensitive: false),
+          ' ',
+        )
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   static String _removeYearMarkers(String value) {
     return value
         .replaceAll(RegExp(r'[\(\[](?:19\d{2}|20\d{2}|2100)[\)\]]'), ' ')
-        .replaceAll(RegExp(r'[._\s]+(?:19\d{2}|20\d{2}|2100)(?=$|[._\s])'), ' ');
+        .replaceAll(
+          RegExp(r'[._\s]+(?:19\d{2}|20\d{2}|2100)(?=$|[._\s])'),
+          ' ',
+        );
   }
 
   static int? _extractYearFromPath(List<String> parentSegments) {
     for (var i = parentSegments.length - 1; i >= 0; i--) {
       final segment = parentSegments[i];
-      final match = RegExp(r'(?:^|[.\s_\(\[])(19\d{2}|20\d{2}|2100)(?=$|[.\s_\)\]])').firstMatch(segment);
+      final match = RegExp(
+        r'(?:^|[.\s_\(\[])(19\d{2}|20\d{2}|2100)(?=$|[.\s_\)\]])',
+      ).firstMatch(segment);
       if (match != null) {
         return int.tryParse(match.group(1)!);
       }
@@ -457,7 +555,8 @@ class FilenameParser {
   }
 
   static bool _isSeasonDirectorySegment(String segment) {
-    return _seasonOnlyPattern.hasMatch(segment) || _chineseSeasonPattern.hasMatch(segment);
+    return _seasonOnlyPattern.hasMatch(segment) ||
+        _chineseSeasonPattern.hasMatch(segment);
   }
 
   static bool _isGenericFileTitle(String title) {
@@ -516,7 +615,19 @@ class FilenameParser {
   }
 
   static int? _parseChineseNumber(String value) {
-    const digits = {'零': 0, '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9};
+    const digits = {
+      '零': 0,
+      '一': 1,
+      '二': 2,
+      '两': 2,
+      '三': 3,
+      '四': 4,
+      '五': 5,
+      '六': 6,
+      '七': 7,
+      '八': 8,
+      '九': 9,
+    };
 
     if (digits.containsKey(value)) return digits[value];
     if (value == '十') return 10;
@@ -652,5 +763,9 @@ class _SeasonContext {
   final int segmentIndex;
   final String? titleHint;
 
-  const _SeasonContext({required this.season, required this.segmentIndex, required this.titleHint});
+  const _SeasonContext({
+    required this.season,
+    required this.segmentIndex,
+    required this.titleHint,
+  });
 }

@@ -37,7 +37,8 @@ class _EpisodeListState extends State<EpisodeList> {
   }
 
   void _prepareSeasons() {
-    _sortedSeasons = List.from(widget.tvShow.seasons)..sort((a, b) => a.seasonNumber.compareTo(b.seasonNumber));
+    _sortedSeasons = List.from(widget.tvShow.seasons)
+      ..sort((a, b) => a.seasonNumber.compareTo(b.seasonNumber));
 
     if (_sortedSeasons.isNotEmpty) {
       _selectedSeason = _sortedSeasons.first;
@@ -52,7 +53,7 @@ class _EpisodeListState extends State<EpisodeList> {
     final mediaFiles = context.read<MediaLibraryProvider>().mediaFiles;
     final result = <String, MediaFile>{};
     for (final file in mediaFiles) {
-      final tmdbId = file.tmdbId;
+      final tmdbId = file.episodeTmdbId;
       if (tmdbId != null && tmdbId.isNotEmpty) {
         result.putIfAbsent(tmdbId, () => file);
       }
@@ -61,7 +62,8 @@ class _EpisodeListState extends State<EpisodeList> {
   }
 
   List<Episode> _sortedEpisodesFor(Season season) {
-    return List<Episode>.from(season.episodes)..sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
+    return List<Episode>.from(season.episodes)
+      ..sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
   }
 
   void _selectSeason(Season season) {
@@ -74,7 +76,8 @@ class _EpisodeListState extends State<EpisodeList> {
   @override
   Widget build(BuildContext context) {
     context.select<MediaLibraryProvider, (int, int)>(
-      (provider) => (provider.mediaCatalogRevision, provider.watchProgressRevision),
+      (provider) =>
+          (provider.mediaCatalogRevision, provider.watchProgressRevision),
     );
     final mediaFileByTmdbId = _buildMediaFileIndex();
 
@@ -107,9 +110,15 @@ class _EpisodeListState extends State<EpisodeList> {
               }
 
               final episode = _sortedEpisodes[index ~/ 2];
-              return _buildEpisodeCard(context, episode, mediaFileByTmdbId[episode.tmdbId]);
+              return _buildEpisodeCard(
+                context,
+                episode,
+                mediaFileByTmdbId[episode.tmdbId],
+              );
             },
-            childCount: _sortedEpisodes.isEmpty ? 0 : _sortedEpisodes.length * 2 - 1,
+            childCount: _sortedEpisodes.isEmpty
+                ? 0
+                : _sortedEpisodes.length * 2 - 1,
             addAutomaticKeepAlives: false,
           ),
         ),
@@ -118,15 +127,26 @@ class _EpisodeListState extends State<EpisodeList> {
     );
   }
 
-  Widget _buildEpisodeCard(BuildContext context, Episode episode, MediaFile? episodeFile) {
+  Widget _buildEpisodeCard(
+    BuildContext context,
+    Episode episode,
+    MediaFile? episodeFile,
+  ) {
     final theme = Theme.of(context);
     final available = episodeFile != null;
     final progress = episodeFile?.progress.clamp(0.0, 1.0) ?? 0.0;
-    final completed = episodeFile?.watchStatus == WatchStatus.completed || progress >= 0.95;
+    final completed =
+        episodeFile?.watchStatus == WatchStatus.completed || progress >= 0.95;
     final showStatus = !available || completed;
 
     return AppClickableArea(
-      onTap: available ? () => PlaybackLauncher.playEpisode(context, episode, showTitle: widget.tvShow.title) : null,
+      onTap: available
+          ? () => PlaybackLauncher.playEpisode(
+              context,
+              episode,
+              showTitle: widget.tvShow.title,
+            )
+          : null,
       borderRadius: BorderRadius.circular(AppRadii.control),
       backgroundColor: AppColors.subtleSurface(context),
       hoverColor: AppColors.hoverSurface(context),
@@ -148,7 +168,9 @@ class _EpisodeListState extends State<EpisodeList> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: available ? theme.textTheme.bodyLarge?.color : theme.textTheme.bodySmall?.color,
+                          color: available
+                              ? theme.textTheme.bodyLarge?.color
+                              : theme.textTheme.bodySmall?.color,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -156,14 +178,21 @@ class _EpisodeListState extends State<EpisodeList> {
                     ),
                     if (showStatus) ...[
                       const SizedBox(width: 8),
-                      _EpisodeStatusLabel(available: available, completed: completed),
+                      _EpisodeStatusLabel(
+                        available: available,
+                        completed: completed,
+                      ),
                     ],
                   ],
                 ),
                 const SizedBox(height: 6),
                 Text(
                   episode.overview ?? '',
-                  style: TextStyle(fontSize: 13, height: 1.4, color: theme.textTheme.bodySmall?.color),
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -194,7 +223,8 @@ class _EpisodeListState extends State<EpisodeList> {
                     width: 132,
                     height: 76,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: Colors.grey[300]),
+                    placeholder: (context, url) =>
+                        Container(color: Colors.grey[300]),
                     errorWidget: (context, url, error) => _stillPlaceholder(),
                   )
                 : _stillPlaceholder(),
@@ -259,7 +289,11 @@ class _EpisodeStatusLabel extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
           ),
         ],
       ),
@@ -282,7 +316,9 @@ class _EpisodeMetaRow extends StatelessWidget {
     }
     final mediaFile = file;
     if (mediaFile != null && mediaFile.duration > 0) {
-      parts.add(MediaFormat.compactDuration(Duration(milliseconds: mediaFile.duration)));
+      parts.add(
+        MediaFormat.compactDuration(Duration(milliseconds: mediaFile.duration)),
+      );
     }
 
     if (parts.isEmpty) return const SizedBox.shrink();
@@ -290,7 +326,11 @@ class _EpisodeMetaRow extends StatelessWidget {
       parts.join(' • '),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: TextStyle(fontSize: 12, color: theme.textTheme.bodySmall?.color, fontWeight: FontWeight.w600),
+      style: TextStyle(
+        fontSize: 12,
+        color: theme.textTheme.bodySmall?.color,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 
@@ -323,7 +363,11 @@ class _EpisodeHeader extends StatelessWidget {
           children: [
             Text(
               '剧集',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             SizedBox(
               width: 92,
@@ -332,7 +376,10 @@ class _EpisodeHeader extends StatelessWidget {
                 placeholder: '选择季',
                 options: [
                   for (final season in sortedSeasons)
-                    AppSelectOption(value: season, label: '第 ${season.seasonNumber} 季'),
+                    AppSelectOption(
+                      value: season,
+                      label: '第 ${season.seasonNumber} 季',
+                    ),
                 ],
                 onChanged: onSeasonSelected,
               ),

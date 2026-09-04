@@ -37,7 +37,9 @@ void main() {
     expect(entity.parsedSeason, 2);
     expect(entity.parsedEpisode, 3);
     expect(entity.mediaType, StoredMediaType.episode);
-    expect(entity.tmdbId, '123_s2e3');
+    expect(entity.explicitTmdbId, '123_s2e3');
+    expect(entity.movieTmdbId, isNull);
+    expect(entity.episodeTmdbId, isNull);
     expect(entity.container, 'mkv');
     expect(entity.height, 2160);
     expect(entity.videoCodec, 'hevc');
@@ -48,47 +50,52 @@ void main() {
     expect(entity.versionLabel, '2160p BluRay');
   });
 
-  test('preserves a scraped TMDB id when reparsing has no embedded id', () {
-    final entity = MediaFileEntity()
-      ..path = '/movies/example.mkv'
-      ..fileName = 'example.mkv'
-      ..parsedTitle = 'Old title'
-      ..tmdbId = '456'
-      ..position = 12000
-      ..isFavorite = true;
+  test(
+    'preserves a confirmed movie match when reparsing has no embedded id',
+    () {
+      final entity = MediaFileEntity()
+        ..path = '/movies/example.mkv'
+        ..fileName = 'example.mkv'
+        ..parsedTitle = 'Old title'
+        ..movieTmdbId = '456'
+        ..position = 12000
+        ..isFavorite = true;
 
-    MediaFileMetadataMapper.updateEntity(
-      entity,
-      const ParsedMediaFilename(title: 'Example', versionLabel: ''),
-    );
+      MediaFileMetadataMapper.updateEntity(
+        entity,
+        const ParsedMediaFilename(title: 'Example', versionLabel: ''),
+      );
 
-    expect(entity.parsedTitle, 'Example');
-    expect(entity.mediaType, StoredMediaType.movie);
-    expect(entity.tmdbId, '456');
-    expect(entity.versionLabel, isNull);
-    expect(entity.position, 12000);
-    expect(entity.isFavorite, isTrue);
-  });
+      expect(entity.parsedTitle, 'Example');
+      expect(entity.mediaType, StoredMediaType.movie);
+      expect(entity.movieTmdbId, '456');
+      expect(entity.explicitTmdbId, isNull);
+      expect(entity.versionLabel, isNull);
+      expect(entity.position, 12000);
+      expect(entity.isFavorite, isTrue);
+    },
+  );
 
-  test('prefers an embedded TMDB id when reparsing an existing entity', () {
+  test('keeps an explicit TMDB id separate from a confirmed match', () {
     final entity = MediaFileEntity()
       ..path = '/movies/{tmdb-789}/example.mkv'
       ..fileName = 'example.mkv'
       ..parsedTitle = 'Example'
-      ..tmdbId = '456';
+      ..movieTmdbId = '456';
 
     MediaFileMetadataMapper.updateEntity(
       entity,
       const ParsedMediaFilename(title: 'Example', tmdbId: '789'),
     );
 
-    expect(entity.tmdbId, '789');
+    expect(entity.explicitTmdbId, '789');
+    expect(entity.movieTmdbId, '456');
   });
 
-  test('clears an incompatible TMDB id when media type changes', () {
+  test('clears incompatible confirmed links when media type changes', () {
     final entity = MediaFileEntity()
       ..mediaType = StoredMediaType.movie
-      ..tmdbId = '1555290';
+      ..movieTmdbId = '1555290';
 
     MediaFileMetadataMapper.updateEntity(
       entity,
@@ -101,6 +108,7 @@ void main() {
     );
 
     expect(entity.mediaType, StoredMediaType.episode);
-    expect(entity.tmdbId, isNull);
+    expect(entity.movieTmdbId, isNull);
+    expect(entity.episodeTmdbId, isNull);
   });
 }

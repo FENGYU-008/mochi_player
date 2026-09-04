@@ -7,6 +7,55 @@ void main() {
   _usesParentTitleForTaggedEpisodeOnlyFiles();
   _usesMovieFolderTitleAndYear();
   _parsesShortMovieTitlesWithTechnicalTags();
+  _removesRankingPrefixFromParsedTitle();
+  _decodesHtmlEntitiesInTitles();
+  _removesSingleLetterPrefixBeforeChineseTitle();
+  _doesNotTreatTechnicalSuffixAsEpisodeNumber();
+}
+
+void _removesSingleLetterPrefixBeforeChineseTitle() {
+  final result = FilenameParser.parse(
+    fileName: 'E01.mkv',
+    filePath: '/资源/R人生切割术/S01/E01.mkv',
+  );
+
+  _expectEquals(result.title, '人生切割术', 'path title');
+  _expectEquals(result.season, 1, 'season');
+  _expectEquals(result.episode, 1, 'episode');
+}
+
+void _doesNotTreatTechnicalSuffixAsEpisodeNumber() {
+  for (final fileName in [
+    '离职.Severance.S01E04.1080p.H265.mp4',
+    '离职.Severance.S01E04.1080p.H265-官方中字.mp4',
+  ]) {
+    final result = FilenameParser.parse(
+      fileName: fileName,
+      filePath: '/资源/R人生切割术/S01/$fileName',
+    );
+
+    _expectEquals(result.title, '离职 Severance', 'title');
+    _expectEquals(result.season, 1, 'season');
+    _expectEquals(result.episode, 4, 'episode');
+  }
+}
+
+void _decodesHtmlEntitiesInTitles() {
+  final result = FilenameParser.parse(
+    fileName: 'Top224.国王的演讲.The.King&#39;s.Speech.2010.Bluray.1080p.mkv',
+  );
+
+  _expectEquals(result.title, "国王的演讲 The King's Speech", 'title');
+  _expectEquals(result.year, 2010, 'year');
+}
+
+void _removesRankingPrefixFromParsedTitle() {
+  final result = FilenameParser.parse(
+    fileName: 'Top231.月球.Moon.2009.Bluray.1080p.x265.AAC(5.1).GREENOTEA.mkv',
+  );
+
+  _expectEquals(result.title, '月球 Moon', 'title');
+  _expectEquals(result.year, 2009, 'year');
 }
 
 void _parsesCommonEpisodeFilenames() {
@@ -48,14 +97,6 @@ void _parsesCommonEpisodeFilenames() {
 void _usesSeasonFolders() {
   final cases = [
     _ExpectedParse(
-      '进击的巨人01.mp4',
-      path: '/media/进击的巨人/进击的巨人 S01/进击的巨人01.mp4',
-      title: '进击的巨人',
-      season: 1,
-      episode: 1,
-      container: 'mp4',
-    ),
-    _ExpectedParse(
       '1.mp4',
       path: '/media/进击的巨人/第一季/1.mp4',
       title: '进击的巨人',
@@ -69,6 +110,14 @@ void _usesSeasonFolders() {
       title: '进击的巨人',
       season: 12,
       episode: 3,
+      container: 'mkv',
+    ),
+    _ExpectedParse(
+      '第1集.mkv',
+      path: '/media/进击的巨人/S01/第1集.mkv',
+      title: '进击的巨人',
+      season: 1,
+      episode: 1,
       container: 'mkv',
     ),
   ];

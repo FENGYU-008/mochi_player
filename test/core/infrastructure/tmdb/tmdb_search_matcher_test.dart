@@ -4,28 +4,17 @@ import 'package:mochi_player/core/infrastructure/tmdb/tmdb_search_matcher.dart';
 void main() {
   const matcher = TmdbSearchMatcher();
 
-  test('prefers an exact title over a more popular partial match', () {
-    final exact = {
-      'id': 1,
-      'title': 'Dune',
-      'original_title': 'Dune',
-      'popularity': 1,
-    };
-    final popularPartial = {
-      'id': 2,
-      'title': 'Dune: Part Two',
-      'original_title': 'Dune: Part Two',
-      'poster_path': '/poster.jpg',
-      'popularity': 80,
-    };
+  test('preserves TMDB provider ranking for one complete query', () {
+    final first = {'id': 1, 'title': 'Provider result'};
+    final later = {'id': 2, 'title': 'Later result'};
 
     expect(
-      matcher.findBest([popularPartial, exact], 'Dune', isTV: false),
-      same(exact),
+      matcher.findBest([first, later], '完整清洗后的中英文标题', isTV: false),
+      same(first),
     );
   });
 
-  test('uses TV title fields when matching shows', () {
+  test('returns the provider result for shows', () {
     final result = {
       'id': 3,
       'name': '进击的巨人',
