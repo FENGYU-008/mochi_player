@@ -104,10 +104,7 @@ class _PlayerControlsState extends State<PlayerControls> {
     ]);
 
     _updateTime();
-    _timeTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => _updateTime(),
-    );
+    _timeTimer = Timer.periodic(const Duration(seconds: 10), (_) => _updateTime());
   }
 
   void _updateTime() {
@@ -161,8 +158,7 @@ class _PlayerControlsState extends State<PlayerControls> {
               isPlaying: _isPlaying,
               isAlwaysOnTop: widget.isMiniPlayerAlwaysOnTop,
               onPlayPause: () => _onTap(widget.player.playOrPause),
-              onToggleAlwaysOnTop: () =>
-                  _onTap(widget.onToggleMiniPlayerAlwaysOnTop ?? () {}),
+              onToggleAlwaysOnTop: () => _onTap(widget.onToggleMiniPlayerAlwaysOnTop ?? () {}),
               onRestoreWindow: () => _onTap(widget.onPip ?? () {}),
             ),
           ),
@@ -182,9 +178,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                 secondaryTitle: widget.secondaryTitle,
                 systemTime: _systemTime,
                 isFullScreen: widget.isFullScreen,
-                onBack: () => _onTap(
-                  widget.onBack ?? () => Navigator.of(context).maybePop(),
-                ),
+                onBack: () => _onTap(widget.onBack ?? () => Navigator.of(context).maybePop()),
               ),
             ),
 
@@ -198,28 +192,16 @@ class _PlayerControlsState extends State<PlayerControls> {
                     if (!widget.isMiniPlayer && widget.onPrevious != null) ...[
                       PlayerControlButton(
                         onPressed: () => _onTap(widget.onPrevious!),
-                        child: const Icon(
-                          Icons.skip_previous_rounded,
-                          color: Colors.white,
-                          size: 21,
-                        ),
+                        child: const Icon(Icons.skip_previous_rounded, color: Colors.white, size: 21),
                       ),
                       const SizedBox(width: 4),
                     ],
 
                     // 2. 快退
                     PlayerControlButton(
-                      onPressed: () => _onTap(
-                        () => widget.player.seek(
-                          widget.player.state.position -
-                              const Duration(seconds: 10),
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.replay_10_rounded,
-                        color: Colors.white,
-                        size: 21,
-                      ),
+                      onPressed: () =>
+                          _onTap(() => widget.player.seek(widget.player.state.position - const Duration(seconds: 10))),
+                      child: const Icon(Icons.replay_10_rounded, color: Colors.white, size: 21),
                     ),
                     const SizedBox(width: 4),
 
@@ -227,9 +209,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                     PlayerControlButton(
                       onPressed: () => _onTap(widget.player.playOrPause),
                       child: Icon(
-                        _isPlaying
-                            ? Icons.pause_rounded
-                            : Icons.play_arrow_rounded,
+                        _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                         color: Colors.white,
                         size: 26,
                       ),
@@ -238,17 +218,9 @@ class _PlayerControlsState extends State<PlayerControls> {
 
                     // 4. 快进
                     PlayerControlButton(
-                      onPressed: () => _onTap(
-                        () => widget.player.seek(
-                          widget.player.state.position +
-                              const Duration(seconds: 10),
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.forward_10_rounded,
-                        color: Colors.white,
-                        size: 21,
-                      ),
+                      onPressed: () =>
+                          _onTap(() => widget.player.seek(widget.player.state.position + const Duration(seconds: 10))),
+                      child: const Icon(Icons.forward_10_rounded, color: Colors.white, size: 21),
                     ),
 
                     // 5. 下一集
@@ -256,11 +228,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                       const SizedBox(width: 4),
                       PlayerControlButton(
                         onPressed: () => _onTap(widget.onNext!),
-                        child: const Icon(
-                          Icons.skip_next_rounded,
-                          color: Colors.white,
-                          size: 21,
-                        ),
+                        child: const Icon(Icons.skip_next_rounded, color: Colors.white, size: 21),
                       ),
                     ],
 
@@ -270,15 +238,12 @@ class _PlayerControlsState extends State<PlayerControls> {
                     const Spacer(),
 
                     // 右侧功能区
-                    if (widget.onSubtitleSelected != null &&
-                        widget.subtitleTracks.isNotEmpty) ...[
+                    if (widget.onSubtitleSelected != null && widget.subtitleTracks.isNotEmpty) ...[
                       _SubtitleMenuButton(
                         tracks: widget.subtitleTracks,
                         selectedTrack: widget.selectedSubtitleTrack,
-                        onExternalSubtitleRequested:
-                            widget.onExternalSubtitleRequested,
-                        overrideEmbeddedStyle:
-                            widget.overrideEmbeddedSubtitleStyle,
+                        onExternalSubtitleRequested: widget.onExternalSubtitleRequested,
+                        overrideEmbeddedStyle: widget.overrideEmbeddedSubtitleStyle,
                         onSelected: (track) {
                           widget.onInteraction?.call();
                           widget.onSubtitleSelected?.call(track);
@@ -292,9 +257,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                       const SizedBox(width: 4),
                     ],
 
-                    if (!widget.isMiniPlayer &&
-                        widget.onAudioSelected != null &&
-                        widget.audioTracks.isNotEmpty) ...[
+                    if (!widget.isMiniPlayer && widget.onAudioSelected != null && widget.audioTracks.isNotEmpty) ...[
                       _AudioMenuButton(
                         tracks: widget.audioTracks,
                         selectedTrack: widget.selectedAudioTrack,
@@ -322,9 +285,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                         onPressed: () => _onTap(widget.onPip!),
                         tooltip: widget.isMiniPlayer ? '退出小窗' : '小窗播放',
                         child: Icon(
-                          widget.isMiniPlayer
-                              ? Icons.open_in_full_rounded
-                              : Icons.picture_in_picture_alt_rounded,
+                          widget.isMiniPlayer ? Icons.open_in_full_rounded : Icons.picture_in_picture_alt_rounded,
                           color: Colors.white,
                           size: 18,
                         ),
@@ -342,9 +303,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                             widget.player.setVolume(newVol);
                           }),
                           child: Icon(
-                            _volume == 0
-                                ? Icons.volume_off_rounded
-                                : Icons.volume_up_rounded,
+                            _volume == 0 ? Icons.volume_off_rounded : Icons.volume_up_rounded,
                             color: Colors.white,
                             size: 18,
                           ),
@@ -356,12 +315,8 @@ class _PlayerControlsState extends State<PlayerControls> {
                             child: SliderTheme(
                               data: SliderThemeData(
                                 trackHeight: 2,
-                                thumbShape: const RoundSliderThumbShape(
-                                  enabledThumbRadius: 5,
-                                ),
-                                overlayShape: const RoundSliderOverlayShape(
-                                  overlayRadius: 8,
-                                ),
+                                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+                                overlayShape: const RoundSliderOverlayShape(overlayRadius: 8),
                                 activeTrackColor: Colors.white,
                                 inactiveTrackColor: Colors.white24,
                                 thumbColor: Colors.white,
@@ -382,9 +337,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                     PlayerControlButton(
                       onPressed: () => _onTap(widget.onToggleFullScreen),
                       child: Icon(
-                        widget.isFullScreen
-                            ? Icons.fullscreen_exit_rounded
-                            : Icons.fullscreen_rounded,
+                        widget.isFullScreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
                         color: Colors.white,
                         size: 21,
                       ),
@@ -407,11 +360,7 @@ class _RateMenuButton extends StatelessWidget {
   final ValueChanged<double> onSelected;
   final ValueChanged<bool>? onMenuVisibilityChanged;
 
-  const _RateMenuButton({
-    required this.rate,
-    required this.onSelected,
-    this.onMenuVisibilityChanged,
-  });
+  const _RateMenuButton({required this.rate, required this.onSelected, this.onMenuVisibilityChanged});
 
   String _labelFor(double value) {
     if (value == value.roundToDouble()) {
@@ -443,11 +392,7 @@ class _RateMenuButton extends StatelessWidget {
         width: 56,
         child: Text(
           _labelFor(rate),
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
         ),
       ),
     );
@@ -476,9 +421,7 @@ class _AudioMenuButton extends StatelessWidget {
     if (title != null && title.isNotEmpty) {
       parts.add(title);
     }
-    if (language != null &&
-        language.isNotEmpty &&
-        title?.toLowerCase() != language.toLowerCase()) {
+    if (language != null && language.isNotEmpty && title?.toLowerCase() != language.toLowerCase()) {
       parts.add(language);
     }
     if (codec != null && codec.isNotEmpty) {
@@ -521,13 +464,7 @@ class _AudioMenuButton extends StatelessWidget {
           ),
         ],
       ),
-      child: PlayerMenuButtonSurface(
-        child: const Icon(
-          Icons.graphic_eq_rounded,
-          color: Colors.white,
-          size: 18,
-        ),
-      ),
+      child: PlayerMenuButtonSurface(child: const Icon(Icons.graphic_eq_rounded, color: Colors.white, size: 18)),
     );
   }
 }
@@ -551,8 +488,7 @@ class _SubtitleMenuButton extends StatelessWidget {
     this.onMenuVisibilityChanged,
   });
 
-  bool _isOff(SubtitleTrack track) =>
-      track.id == 'no' && !track.uri && !track.data;
+  bool _isOff(SubtitleTrack track) => track.id == 'no' && !track.uri && !track.data;
 
   String _labelFor(SubtitleTrack track) {
     if (_isOff(track)) return '关闭字幕';
@@ -563,9 +499,7 @@ class _SubtitleMenuButton extends StatelessWidget {
     if (title != null && title.isNotEmpty) {
       parts.add(title);
     }
-    if (language != null &&
-        language.isNotEmpty &&
-        title?.toLowerCase() != language.toLowerCase()) {
+    if (language != null && language.isNotEmpty && title?.toLowerCase() != language.toLowerCase()) {
       parts.add(language);
     }
     if (parts.isEmpty) {
@@ -619,13 +553,7 @@ class _SubtitleMenuButton extends StatelessWidget {
           ),
         ],
       ),
-      child: PlayerMenuButtonSurface(
-        child: const Icon(
-          Icons.closed_caption_rounded,
-          color: Colors.white,
-          size: 18,
-        ),
-      ),
+      child: PlayerMenuButtonSurface(child: const Icon(Icons.closed_caption_rounded, color: Colors.white, size: 18)),
     );
   }
 }
@@ -730,11 +658,7 @@ class _DurationLabel extends StatelessWidget {
       stream: player.stream.position,
       builder: (_, snap) => Text(
         "${_fmt(snap.data ?? Duration.zero)} / ${_fmt(player.state.duration)}",
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 12,
-          fontFeatures: [FontFeature.tabularFigures()],
-        ),
+        style: const TextStyle(color: Colors.white70, fontSize: 12, fontFeatures: [FontFeature.tabularFigures()]),
       ),
     );
   }

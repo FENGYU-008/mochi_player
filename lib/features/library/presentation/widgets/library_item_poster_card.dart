@@ -25,9 +25,9 @@ class LibraryItemPosterCard extends StatelessWidget {
 
   String? _subtitle(LibraryItem item) {
     if (item is TVShow) {
-      final seasons = item.numberOfSeasons;
-      if (seasons != null && seasons > 0) {
-        return MediaFormat.seasonCount(seasons);
+      final localSeasonCount = item.seasons.length;
+      if (localSeasonCount > 0) {
+        return MediaFormat.seasonCount(localSeasonCount);
       }
     }
     return item.releaseYear?.toString();

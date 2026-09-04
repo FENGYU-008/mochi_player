@@ -193,9 +193,9 @@ class MediaLibraryQueries {
       subtitle = MediaFormat.episodeLabel(file);
     }
     if (subtitle == null && libraryItem is TVShow) {
-      final seasonCount = libraryItem.numberOfSeasons;
-      if (seasonCount != null && seasonCount > 0) {
-        subtitle = MediaFormat.seasonCount(seasonCount);
+      final localSeasonCount = libraryItem.seasons.length;
+      if (localSeasonCount > 0) {
+        subtitle = MediaFormat.seasonCount(localSeasonCount);
       }
     }
     subtitle ??= libraryItem?.releaseYear?.toString();

@@ -274,9 +274,9 @@ class _MetadataStrip extends StatelessWidget {
       items.add(AppTag(text: certification, appearance: AppAppearance.overlay));
     }
     if (viewModel.isTVShow) {
-      final seasons = viewModel.seasons.length;
-      if (seasons > 0) {
-        items.add(AppTag(text: MediaFormat.seasonCount(seasons), appearance: AppAppearance.overlay));
+      final totalSeasonCount = viewModel.totalSeasonCount;
+      if (totalSeasonCount != null && totalSeasonCount > 0) {
+        items.add(AppTag(text: '共 $totalSeasonCount 季', appearance: AppAppearance.overlay));
       }
     }
     items.addAll(viewModel.genres.take(3).map((genre) => AppTag(text: genre, appearance: AppAppearance.overlay)));

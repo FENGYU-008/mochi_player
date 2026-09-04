@@ -18,6 +18,10 @@ abstract final class AppMessage {
     _show(content, _MessageType.error, duration);
   }
 
+  static void warning(String content, {Duration duration = _defaultDuration}) {
+    _show(content, _MessageType.warning, duration);
+  }
+
   static AppMessageHandle loading(String content, {Duration? duration}) {
     return _show(content, _MessageType.loading, duration);
   }
@@ -304,6 +308,7 @@ class _MessageCard extends StatelessWidget {
     return switch (type) {
       _MessageType.success => Icon(Icons.check_circle_outline_rounded, size: 18, color: color),
       _MessageType.error => Icon(Icons.error_outline_rounded, size: 18, color: color),
+      _MessageType.warning => Icon(Icons.info_outline_rounded, size: 18, color: color),
       _MessageType.loading => SizedBox(
         width: 16,
         height: 16,
@@ -316,12 +321,13 @@ class _MessageCard extends StatelessWidget {
     return switch (type) {
       _MessageType.success => AppColors.success(context),
       _MessageType.error => AppColors.danger(context),
+      _MessageType.warning => AppColors.rating,
       _MessageType.loading => Theme.of(context).colorScheme.primary,
     };
   }
 }
 
-enum _MessageType { success, error, loading }
+enum _MessageType { success, error, warning, loading }
 
 class _QueuedMessage {
   const _QueuedMessage({required this.id, required this.message, required this.type, required this.visible});

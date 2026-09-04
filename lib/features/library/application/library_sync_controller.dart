@@ -168,22 +168,23 @@ class LibrarySyncController extends ChangeNotifier {
         }
       }
       _catalog.markMediaCatalogChanged();
-      final summary = MediaSourceScanSummary(
+      _logger.i(
+        '全部媒体源扫描完成：启用 ${sources.length} 个，'
+        '成功 $completedSourceCount 个，失败 $failedSourceCount 个，'
+        '发现 $discoveredFileCount 个视频，新增 $newFileCount 个，'
+        '移除 $removedFileCount 个',
+      );
+      final scrapeResult = await _scrapeScannedMediaFiles();
+      return MediaSourceScanSummary(
         enabledSourceCount: sources.length,
         completedSourceCount: completedSourceCount,
         failedSourceCount: failedSourceCount,
         discoveredFileCount: discoveredFileCount,
         newFileCount: newFileCount,
         removedFileCount: removedFileCount,
+        metadataMatchedCount: scrapeResult?.successCount,
+        metadataFailedCount: scrapeResult?.failCount,
       );
-      _logger.i(
-        '全部媒体源扫描完成：启用 ${summary.enabledSourceCount} 个，'
-        '成功 ${summary.completedSourceCount} 个，失败 ${summary.failedSourceCount} 个，'
-        '发现 ${summary.discoveredFileCount} 个视频，新增 ${summary.newFileCount} 个，'
-        '移除 ${summary.removedFileCount} 个',
-      );
-      await _scrapeScannedMediaFiles();
-      return summary;
     } catch (error, stackTrace) {
       _logger.e('扫描媒体源失败', error: error, stackTrace: stackTrace);
       _error = '扫描媒体源失败: $error';
@@ -203,8 +204,8 @@ class LibrarySyncController extends ChangeNotifier {
 
   /// Parses every discovered file again before scraping so both newly added
   /// and existing media can receive updated TMDB identifiers and metadata.
-  Future<void> _scrapeScannedMediaFiles() async {
-    if (_catalog.mediaFiles.isEmpty || !_tmdbService.isConfigured) return;
+  Future<ScrapeResult?> _scrapeScannedMediaFiles() async {
+    if (_catalog.mediaFiles.isEmpty || !_tmdbService.isConfigured) return null;
 
     for (final file in _catalog.mediaFiles) {
       final parsed = FilenameParser.parse(fileName: file.fileName, filePath: file.path);
@@ -213,7 +214,7 @@ class LibrarySyncController extends ChangeNotifier {
     await _db.saveMediaFiles(_catalog.mediaFiles);
     _catalog.markMediaCatalogChanged();
     notifyListeners();
-    await _scrapeMetadata();
+    return _scrapeMetadata();
   }
 
   void reset() {
@@ -232,12 +233,15 @@ class LibrarySyncController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _scrapeMetadata() async {
-    if (_isScraping) return;
+  Future<ScrapeResult?> _scrapeMetadata() async {
+    if (_isScraping) return null;
 
     _isScraping = true;
     _scrapeCompleted = 0;
-    _scrapeTotal = _catalog.mediaFiles.length;
+    // The scraper determines the real workload after excluding files that
+    // already have persisted metadata. Do not briefly show the full catalog
+    // size as if every file were going to be scraped.
+    _scrapeTotal = 0;
     _scrapeSuccessCount = 0;
     _scrapeFailCount = 0;
     _scrapeCurrentTitle = null;
@@ -290,9 +294,11 @@ class LibrarySyncController extends ChangeNotifier {
         _catalog.markMetadataChanged();
         _catalog.markMediaCatalogChanged();
       }
+      return result;
     } catch (error, stackTrace) {
       _logger.e('刮削失败', error: error, stackTrace: stackTrace);
       _error = '刮削失败: $error';
+      return null;
     } finally {
       _isScraping = false;
       _scrapeCurrentTitle = null;
@@ -392,6 +398,8 @@ class MediaSourceScanSummary {
     required this.discoveredFileCount,
     required this.newFileCount,
     required this.removedFileCount,
+    this.metadataMatchedCount,
+    this.metadataFailedCount,
   });
 
   final int enabledSourceCount;
@@ -400,4 +408,9 @@ class MediaSourceScanSummary {
   final int discoveredFileCount;
   final int newFileCount;
   final int removedFileCount;
+
+  /// Null means metadata scraping was not attempted, typically because the
+  /// TMDB API key is not configured.
+  final int? metadataMatchedCount;
+  final int? metadataFailedCount;
 }

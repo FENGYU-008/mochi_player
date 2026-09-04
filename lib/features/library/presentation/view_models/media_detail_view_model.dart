@@ -53,6 +53,9 @@ class MediaDetailViewModel {
 
   TVShow? get tvShow => _item is TVShow ? _item : null;
 
+  /// Total season count provided by TMDB, distinct from locally indexed seasons.
+  int? get totalSeasonCount => tvShow?.numberOfSeasons;
+
   /// 仅 TVShow 有效
   List<Season> get seasons {
     return tvShow?.seasons ?? const [];

@@ -51,13 +51,10 @@ class _PlayerPageState extends State<PlayerPage> {
   MediaFile get _currentItem => _playbackController.currentItem;
 
   String get _displayTitle {
-    if (widget.contextTitle != null &&
-        _currentItem.mediaType == MediaType.episode) {
+    if (widget.contextTitle != null && _currentItem.mediaType == MediaType.episode) {
       return widget.contextTitle!;
     }
-    return _currentItem.parsedTitle.isNotEmpty
-        ? _currentItem.parsedTitle
-        : _currentItem.fileName;
+    return _currentItem.parsedTitle.isNotEmpty ? _currentItem.parsedTitle : _currentItem.fileName;
   }
 
   String? get _displaySecondaryTitle {
@@ -137,9 +134,7 @@ class _PlayerPageState extends State<PlayerPage> {
   }
 
   void _setControlBarBounds(Rect bounds) {
-    if (_isDisposed ||
-        _windowModeController.isMiniPlayer ||
-        _controlBarBounds == bounds) {
+    if (_isDisposed || _windowModeController.isMiniPlayer || _controlBarBounds == bounds) {
       return;
     }
     setState(() => _controlBarBounds = bounds);
@@ -164,11 +159,9 @@ class _PlayerPageState extends State<PlayerPage> {
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.space || key == LogicalKeyboardKey.keyK) {
       player.playOrPause();
-    } else if (key == LogicalKeyboardKey.arrowLeft ||
-        key == LogicalKeyboardKey.keyJ) {
+    } else if (key == LogicalKeyboardKey.arrowLeft || key == LogicalKeyboardKey.keyJ) {
       player.seek(player.state.position - const Duration(seconds: 10));
-    } else if (key == LogicalKeyboardKey.arrowRight ||
-        key == LogicalKeyboardKey.keyL) {
+    } else if (key == LogicalKeyboardKey.arrowRight || key == LogicalKeyboardKey.keyL) {
       player.seek(player.state.position + const Duration(seconds: 10));
     } else if (key == LogicalKeyboardKey.arrowUp) {
       _playbackController.adjustVolume(5);
@@ -182,8 +175,7 @@ class _PlayerPageState extends State<PlayerPage> {
       _playbackController.cycleSubtitleTrack();
     } else if (key == LogicalKeyboardKey.keyA) {
       _playbackController.cycleAudioTrack();
-    } else if (key == LogicalKeyboardKey.escape &&
-        _windowModeController.isFullScreen) {
+    } else if (key == LogicalKeyboardKey.escape && _windowModeController.isFullScreen) {
       unawaited(_windowModeController.exitFullScreen());
     }
     return KeyEventResult.handled;
@@ -201,11 +193,7 @@ class _PlayerPageState extends State<PlayerPage> {
     _playbackController.removeListener(_handlePlaybackChanged);
     _playbackController.dispose();
     _windowModeController.removeListener(_handleWindowModeChanged);
-    unawaited(
-      _windowModeController.restoreWindow().whenComplete(
-        _windowModeController.dispose,
-      ),
-    );
+    unawaited(_windowModeController.restoreWindow().whenComplete(_windowModeController.dispose));
     _focusNode.dispose();
     super.dispose();
   }
@@ -248,13 +236,7 @@ class _PlayerPageState extends State<PlayerPage> {
                 ),
               ),
               if (_playbackController.isBuffering)
-                const Center(
-                  child: SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: CircularProgressIndicator(strokeWidth: 3),
-                  ),
-                ),
+                const Center(child: SizedBox(width: 44, height: 44, child: CircularProgressIndicator(strokeWidth: 3))),
               if (_playbackController.playerError case final error?)
                 Positioned(
                   left: 24,
@@ -267,16 +249,14 @@ class _PlayerPageState extends State<PlayerPage> {
                     onAction: _playbackController.clearError,
                   ),
                 ),
-              if (_playbackController.showResumeNotice &&
-                  _playbackController.playerError == null)
+              if (_playbackController.showResumeNotice && _playbackController.playerError == null)
                 Positioned(
                   left: 24,
                   right: 24,
                   top: 72,
                   child: _PlayerMessage(
                     icon: Icons.history_rounded,
-                    message:
-                        '已从 ${_playbackController.resumePositionLabel ?? '上次进度'} 继续播放',
+                    message: '已从 ${_playbackController.resumePositionLabel ?? '上次进度'} 继续播放',
                   ),
                 ),
               if (_playbackController.overrideEmbeddedSubtitleStyle)
@@ -297,13 +277,7 @@ class _PlayerPageState extends State<PlayerPage> {
                                 fontSize: subtitleFontSize,
                                 height: 1.25,
                                 color: Colors.white,
-                                shadows: const [
-                                  Shadow(
-                                    blurRadius: 2,
-                                    color: Colors.black,
-                                    offset: Offset(1, 1),
-                                  ),
-                                ],
+                                shadows: const [Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1, 1))],
                               ),
                               textHeightBehavior: const TextHeightBehavior(
                                 applyHeightToFirstAscent: false,
@@ -322,19 +296,15 @@ class _PlayerPageState extends State<PlayerPage> {
                 isVisible: _isControlsVisible,
                 isFullScreen: _windowModeController.isFullScreen,
                 isMiniPlayer: _windowModeController.isMiniPlayer,
-                isMiniPlayerAlwaysOnTop:
-                    _windowModeController.isMiniPlayerAlwaysOnTop,
+                isMiniPlayerAlwaysOnTop: _windowModeController.isMiniPlayerAlwaysOnTop,
                 onBack: () => unawaited(_handleBackPressed()),
                 onToggleFullScreen: _windowModeController.toggleFullScreen,
                 onPrevious: _playbackController.hasPrevious
                     ? () => unawaited(_playbackController.playQueueOffset(-1))
                     : null,
-                onNext: _playbackController.hasNext
-                    ? () => unawaited(_playbackController.playQueueOffset(1))
-                    : null,
+                onNext: _playbackController.hasNext ? () => unawaited(_playbackController.playQueueOffset(1)) : null,
                 onPip: _windowModeController.toggleMiniPlayer,
-                onToggleMiniPlayerAlwaysOnTop:
-                    _windowModeController.toggleMiniPlayerAlwaysOnTop,
+                onToggleMiniPlayerAlwaysOnTop: _windowModeController.toggleMiniPlayerAlwaysOnTop,
                 onControlBarBoundsChanged: _setControlBarBounds,
                 audioTracks: _playbackController.audioTracks,
                 selectedAudioTrack: _playbackController.selectedAudioTrack,
@@ -342,14 +312,10 @@ class _PlayerPageState extends State<PlayerPage> {
                   unawaited(_playbackController.setAudioTrack(track));
                 },
                 subtitleTracks: _playbackController.subtitleTracks,
-                selectedSubtitleTrack:
-                    _playbackController.selectedSubtitleTrack,
-                onExternalSubtitleRequested: () =>
-                    unawaited(_loadExternalSubtitle()),
-                overrideEmbeddedSubtitleStyle:
-                    _playbackController.overrideEmbeddedSubtitleStyle,
-                onSubtitleStyleOverrideChanged:
-                    _playbackController.setSubtitleStyleOverride,
+                selectedSubtitleTrack: _playbackController.selectedSubtitleTrack,
+                onExternalSubtitleRequested: () => unawaited(_loadExternalSubtitle()),
+                overrideEmbeddedSubtitleStyle: _playbackController.overrideEmbeddedSubtitleStyle,
+                onSubtitleStyleOverrideChanged: _playbackController.setSubtitleStyleOverride,
                 onMenuVisibilityChanged: _setPlayerMenuVisibility,
                 onSubtitleSelected: (track) {
                   unawaited(_playbackController.setSubtitleTrack(track));
@@ -365,18 +331,13 @@ class _PlayerPageState extends State<PlayerPage> {
   }
 
   Future<void> _loadExternalSubtitle() async {
-    const subtitleFiles = XTypeGroup(
-      label: '字幕文件',
-      extensions: ['srt', 'ass', 'ssa', 'vtt'],
-    );
+    const subtitleFiles = XTypeGroup(label: '字幕文件', extensions: ['srt', 'ass', 'ssa', 'vtt']);
 
     try {
       final selectedFile = await openFile(acceptedTypeGroups: [subtitleFiles]);
       if (selectedFile == null || !mounted) return;
 
-      final loaded = await _playbackController.loadExternalSubtitle(
-        selectedFile.path,
-      );
+      final loaded = await _playbackController.loadExternalSubtitle(selectedFile.path);
       if (!loaded && mounted) {
         AppMessage.error('无法加载所选字幕文件');
       }
@@ -393,12 +354,7 @@ class _PlayerMessage extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
 
-  const _PlayerMessage({
-    required this.icon,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-  });
+  const _PlayerMessage({required this.icon, required this.message, this.actionLabel, this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -410,9 +366,7 @@ class _PlayerMessage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.black.withAlpha((255 * 0.72).round()),
           borderRadius: BorderRadius.circular(AppRadii.full),
-          border: Border.all(
-            color: Colors.white.withAlpha((255 * 0.12).round()),
-          ),
+          border: Border.all(color: Colors.white.withAlpha((255 * 0.12).round())),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

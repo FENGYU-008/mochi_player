@@ -2,6 +2,7 @@ import 'package:logger/logger.dart';
 import 'package:mochi_player/core/infrastructure/database/database_service.dart';
 import 'package:mochi_player/core/infrastructure/database/entities/entities.dart';
 import 'package:mochi_player/core/infrastructure/tmdb/tmdb_service.dart';
+import 'package:mochi_player/features/library/infrastructure/metadata_search_title_variants.dart';
 
 /// 元数据刮削服务
 /// 负责协调 TMDB 搜索和数据库存储
@@ -91,6 +92,13 @@ class MetadataScraper {
     var completedCount = 0;
 
     _logger.i('🎬 批量刮削开始: 电影 ${movieFiles.length} 个, 剧集文件 ${tvFiles.length} 个');
+
+    // Publish the real workload before the first network request. The UI used
+    // to initialise progress with the entire catalog size, even though most
+    // files were filtered out because their metadata already existed.
+    await onProgress?.call(
+      ScrapeProgress(completed: 0, total: totalCount, successCount: 0, failCount: 0, currentTitle: ''),
+    );
 
     // 2. 刮削电影 (并发)
     await _runWithConcurrency(movieFiles, (file) async {
@@ -187,9 +195,15 @@ class MetadataScraper {
       TVShowMetadataEntity? metadata;
       final firstFile = files.first;
 
-      // 1. 尝试从文件 ID 恢复
+      // A plain show ID used to be written as a fallback when a specific
+      // episode could not be mapped. It is not a completed episode scrape and
+      // may even belong to a similarly named, but incorrect show.
+      await _clearFallbackShowLinks(files);
+
+      // 1. Only an episode-specific ID is authoritative enough to recover a
+      // show without searching again.
       final existingId = _extractShowTmdbIdFromFiles(files);
-      if (existingId != null) {
+      if (existingId != null && _hasEpisodeSpecificId(files)) {
         metadata = await _db.getTVShowByTmdbId(existingId);
         metadata ??= await _tmdb.fetchTVShowById(int.parse(existingId));
       }
@@ -219,8 +233,9 @@ class MetadataScraper {
       final tvId = int.parse(metadata.tmdbId);
       final seasonNumbers = files.map((f) => f.parsedSeason).whereType<int>().toSet();
 
+      var matchedFileCount = 0;
       for (final seasonNum in seasonNumbers) {
-        await _scrapeSeasonAndEpisodes(
+        matchedFileCount += await _scrapeSeasonAndEpisodes(
           tvId,
           metadata.tmdbId,
           seasonNum,
@@ -228,14 +243,15 @@ class MetadataScraper {
         );
       }
 
-      // 5. 兜底更新文件关联 (以防某些文件在 _scrapeSeasonAndEpisodes 中没被处理)
-      for (final file in files) {
-        if (file.tmdbId == null || file.tmdbId!.isEmpty) {
-          file.tmdbId = metadata.tmdbId; // 关联到剧集ID作为fallback
-          await _db.saveMediaFile(file);
-        }
+      // Files without an episode mapping remain unlinked and are reported as
+      // failures. Associating them with the show ID masks the problem and
+      // makes later scans look like duplicate successful scrapes.
+      result.successCount += matchedFileCount;
+      final unmatchedFileCount = files.length - matchedFileCount;
+      if (unmatchedFileCount > 0) {
+        result.failCount += unmatchedFileCount;
+        _logger.w('⚠️ 剧集 "$showTitle" 有 $unmatchedFileCount 集未匹配到 TMDB 单集信息');
       }
-      result.successCount += files.length;
       return metadata;
     } catch (e) {
       _logger.e('❌ 刮削剧集出错: $showTitle - $e');
@@ -244,7 +260,7 @@ class MetadataScraper {
     }
   }
 
-  Future<void> _scrapeSeasonAndEpisodes(
+  Future<int> _scrapeSeasonAndEpisodes(
     int tvId,
     String showTmdbId,
     int seasonNum,
@@ -252,13 +268,14 @@ class MetadataScraper {
   ) async {
     final seasonKey = '${showTmdbId}_s$seasonNum';
     final season = await _tmdb.fetchSeason(tvId, seasonNum, showTmdbId: showTmdbId);
-    if (season == null) return;
+    if (season == null) return 0;
 
     if (await _db.getSeasonByKey(seasonKey) == null) {
       await _db.saveSeasonMetadata(season.season);
     }
     final episodesByNumber = {for (final episode in season.episodes) episode.episodeNumber: episode};
 
+    var matchedFileCount = 0;
     for (final file in seasonFiles) {
       final epNum = file.parsedEpisode;
       final episode = episodesByNumber[epNum];
@@ -270,7 +287,9 @@ class MetadataScraper {
 
       file.tmdbId = episode.tmdbId;
       await _db.saveMediaFile(file);
+      matchedFileCount++;
     }
+    return matchedFileCount;
   }
 
   // ===== 通用搜索策略 =====
@@ -347,34 +366,21 @@ class MetadataScraper {
     return match?.group(1);
   }
 
-  List<String> _buildSearchTitleVariants(String title) {
-    final variants = <String>[];
-    _addTitleVariant(variants, title);
-
-    final withoutBrackets = title
-        .replaceAll(RegExp(r'[\[\(（【][^\]\)）】]+[\]\)）】]'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    _addTitleVariant(variants, withoutBrackets);
-
-    // 中文
-    final zh = RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf：，。！？]+').allMatches(title).map((m) => m.group(0)!).join(' ').trim();
-    _addTitleVariant(variants, zh);
-
-    // 英文
-    final en = RegExp(r"[A-Za-z][A-Za-z\s\-']+[A-Za-z]").allMatches(title).map((m) => m.group(0)!).join(' ').trim();
-    _addTitleVariant(variants, en);
-
-    return variants;
+  bool _hasEpisodeSpecificId(List<MediaFileEntity> files) {
+    return files.any((file) => RegExp(r'^\d+_s\d+e\d+$').hasMatch(file.tmdbId ?? ''));
   }
 
-  void _addTitleVariant(List<String> variants, String value) {
-    final normalized = value.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (normalized.isEmpty) return;
+  Future<void> _clearFallbackShowLinks(List<MediaFileEntity> files) async {
+    for (final file in files) {
+      final tmdbId = file.tmdbId;
+      if (tmdbId == null || tmdbId.isEmpty || tmdbId.contains('_s')) continue;
+      file.tmdbId = null;
+      await _db.saveMediaFile(file);
+    }
+  }
 
-    final key = _normalizeGroupKey(normalized);
-    final exists = variants.any((item) => _normalizeGroupKey(item) == key);
-    if (!exists) variants.add(normalized);
+  List<String> _buildSearchTitleVariants(String title) {
+    return MetadataSearchTitleVariants.build(title);
   }
 
   Future<void> _runWithConcurrency<T>(List<T> tasks, Future<void> Function(T) action, int maxConcurrent) async {

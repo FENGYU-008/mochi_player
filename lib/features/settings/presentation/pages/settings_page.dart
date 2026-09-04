@@ -1327,14 +1327,18 @@ class _SettingsPageState extends State<SettingsPage> {
     }
     final message =
         '扫描完成：发现 ${summary.discoveredFileCount} 个视频，新增 ${summary.newFileCount} 个，移除 ${summary.removedFileCount} 个';
+    final metadataMessage = switch ((summary.metadataMatchedCount, summary.metadataFailedCount)) {
+      (final int matched, final int failed) => 'TMDB：已匹配 $matched 个，未匹配 $failed 个',
+      _ => '未配置 TMDB API Key，已跳过元数据刮削',
+    };
     if (error != null) {
       AppMessage.error('$message；$error');
     } else if (summary.failedSourceCount > 0) {
-      AppMessage.error('$message；${summary.failedSourceCount} 个媒体源扫描失败');
-    } else if (context.read<AppSettingsProvider>().hasTmdbApiKey) {
-      AppMessage.success('$message；TMDB 元数据已刮削');
+      AppMessage.error('$message；${summary.failedSourceCount} 个媒体源扫描失败；$metadataMessage');
+    } else if (summary.metadataFailedCount case final failed? when failed > 0) {
+      AppMessage.warning('$message；$metadataMessage');
     } else {
-      AppMessage.success('$message；未配置 TMDB API Key，已跳过元数据刮削');
+      AppMessage.success('$message；$metadataMessage');
     }
   }
 
