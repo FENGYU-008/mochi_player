@@ -52,6 +52,7 @@ class ScrapeCandidate {
   final String? episodeTmdbId;
 
   bool get isMovie => kind == ScrapeCandidateKind.movie;
+
   bool get isEpisode => kind == ScrapeCandidateKind.episode;
 
   String? get numericExplicitTmdbId {

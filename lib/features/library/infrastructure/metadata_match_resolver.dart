@@ -8,13 +8,10 @@ import 'package:mochi_player/features/library/application/scrape_plan.dart';
 /// Resolves parsed local media into a single, confidence-checked TMDB match.
 /// Persistence of fetched metadata belongs to the importer, not this class.
 class MetadataMatchResolver {
-  MetadataMatchResolver({
-    TmdbService? tmdb,
-    DatabaseService? database,
-    ScrapePlanFactory? planFactory,
-  }) : _tmdb = tmdb ?? TmdbService(),
-       _database = database ?? DatabaseService(),
-       _planFactory = planFactory ?? const ScrapePlanFactory();
+  MetadataMatchResolver({TmdbService? tmdb, DatabaseService? database, ScrapePlanFactory? planFactory})
+    : _tmdb = tmdb ?? TmdbService(),
+      _database = database ?? DatabaseService(),
+      _planFactory = planFactory ?? const ScrapePlanFactory();
 
   final TmdbService _tmdb;
   final DatabaseService _database;
@@ -22,31 +19,21 @@ class MetadataMatchResolver {
 
   bool get isConfigured => _tmdb.isConfigured;
 
-  Future<TmdbSeasonResult?> fetchSeason(
-    int tvId,
-    int seasonNumber, {
-    required String showTmdbId,
-  }) => _tmdb.fetchSeason(tvId, seasonNumber, showTmdbId: showTmdbId);
+  Future<TmdbSeasonResult?> fetchSeason(int tvId, int seasonNumber, {required String showTmdbId}) =>
+      _tmdb.fetchSeason(tvId, seasonNumber, showTmdbId: showTmdbId);
 
-  Future<MetadataMatch<MovieMetadataEntity>> resolveMovie(
-    ScrapeCandidate candidate,
-  ) async {
+  Future<MetadataMatch<MovieMetadataEntity>> resolveMovie(ScrapeCandidate candidate) async {
     final knownId = candidate.movieTmdbId ?? candidate.numericExplicitTmdbId;
     if (knownId != null) {
       final local = await _database.getMovieByTmdbId(knownId);
       if (local != null) {
-        return MetadataMatch.confirmed(
-          local,
-          source: MetadataMatchSource.localId,
-        );
+        return MetadataMatch.confirmed(local, source: MetadataMatchSource.localId);
       }
       final remote = await _tmdb.fetchMovieById(int.parse(knownId));
       if (remote != null) {
         return MetadataMatch.confirmed(
           remote,
-          source: candidate.movieTmdbId != null
-              ? MetadataMatchSource.localId
-              : MetadataMatchSource.explicitId,
+          source: candidate.movieTmdbId != null ? MetadataMatchSource.localId : MetadataMatchSource.explicitId,
         );
       }
     }
@@ -58,25 +45,16 @@ class MetadataMatchResolver {
     return const MetadataMatch.unmatched();
   }
 
-  Future<MetadataMatch<TVShowMetadataEntity>> resolveTVShow(
-    ScrapeCandidate candidate,
-  ) async {
-    final knownShowId =
-        candidate.tvShowTmdbId ?? candidate.numericExplicitTmdbId;
+  Future<MetadataMatch<TVShowMetadataEntity>> resolveTVShow(ScrapeCandidate candidate) async {
+    final knownShowId = candidate.tvShowTmdbId ?? candidate.numericExplicitTmdbId;
     if (knownShowId != null) {
       final local = await _database.getTVShowByTmdbId(knownShowId);
       if (local != null) {
-        return MetadataMatch.confirmed(
-          local,
-          source: MetadataMatchSource.localId,
-        );
+        return MetadataMatch.confirmed(local, source: MetadataMatchSource.localId);
       }
       final remote = await _tmdb.fetchTVShowById(int.parse(knownShowId));
       if (remote != null) {
-        return MetadataMatch.confirmed(
-          remote,
-          source: MetadataMatchSource.explicitId,
-        );
+        return MetadataMatch.confirmed(remote, source: MetadataMatchSource.explicitId);
       }
     }
 
@@ -87,35 +65,21 @@ class MetadataMatchResolver {
     return const MetadataMatch.unmatched();
   }
 
-  Future<MetadataMatch<MovieMetadataEntity>?> _searchMovieCandidates(
-    ScrapeCandidate candidate,
-  ) async {
-    for (final attempt
-        in _planFactory.createTitleSearchPlan(candidate).attempts) {
+  Future<MetadataMatch<MovieMetadataEntity>?> _searchMovieCandidates(ScrapeCandidate candidate) async {
+    for (final attempt in _planFactory.createTitleSearchPlan(candidate).attempts) {
       final remote = await _tmdb.fetchMovie(attempt.query, year: attempt.year);
       if (remote != null) {
-        return MetadataMatch.confirmed(
-          remote,
-          source: MetadataMatchSource.titleSearch,
-          query: attempt.query,
-        );
+        return MetadataMatch.confirmed(remote, source: MetadataMatchSource.titleSearch, query: attempt.query);
       }
     }
     return null;
   }
 
-  Future<MetadataMatch<TVShowMetadataEntity>?> _searchTVShowCandidates(
-    ScrapeCandidate candidate,
-  ) async {
-    for (final attempt
-        in _planFactory.createTitleSearchPlan(candidate).attempts) {
+  Future<MetadataMatch<TVShowMetadataEntity>?> _searchTVShowCandidates(ScrapeCandidate candidate) async {
+    for (final attempt in _planFactory.createTitleSearchPlan(candidate).attempts) {
       final remote = await _tmdb.fetchTVShow(attempt.query, year: attempt.year);
       if (remote != null) {
-        return MetadataMatch.confirmed(
-          remote,
-          source: MetadataMatchSource.titleSearch,
-          query: attempt.query,
-        );
+        return MetadataMatch.confirmed(remote, source: MetadataMatchSource.titleSearch, query: attempt.query);
       }
     }
     return null;
@@ -123,26 +87,12 @@ class MetadataMatchResolver {
 }
 
 class MetadataMatch<T> {
-  const MetadataMatch._({
-    required this.status,
-    this.metadata,
-    this.source,
-    this.query,
-  });
+  const MetadataMatch._({required this.status, this.metadata, this.source, this.query});
 
-  const MetadataMatch.unmatched()
-    : this._(status: MetadataMatchStatus.unmatched);
+  const MetadataMatch.unmatched() : this._(status: MetadataMatchStatus.unmatched);
 
-  factory MetadataMatch.confirmed(
-    T metadata, {
-    required MetadataMatchSource source,
-    String? query,
-  }) => MetadataMatch._(
-    status: MetadataMatchStatus.confirmed,
-    metadata: metadata,
-    source: source,
-    query: query,
-  );
+  factory MetadataMatch.confirmed(T metadata, {required MetadataMatchSource source, String? query}) =>
+      MetadataMatch._(status: MetadataMatchStatus.confirmed, metadata: metadata, source: source, query: query);
 
   final MetadataMatchStatus status;
   final T? metadata;

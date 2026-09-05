@@ -2,8 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:mochi_player/core/domain/media/models.dart';
 import 'package:mochi_player/core/infrastructure/database/database_service.dart';
-import 'package:mochi_player/core/infrastructure/database/entities/entities.dart'
-    as entity;
+import 'package:mochi_player/core/infrastructure/database/entities/entities.dart' as entity;
 import 'package:mochi_player/core/infrastructure/database/media_entity_mapper.dart';
 import 'package:mochi_player/features/library/application/library_search_matcher.dart';
 import 'package:mochi_player/features/library/application/library_sync_controller.dart';
@@ -17,11 +16,9 @@ import 'package:mochi_player/features/library/application/media_library_queries.
 /// [MediaLibraryQueries], and scan/scrape workflows are delegated to
 /// [LibrarySyncController].
 class MediaLibraryProvider extends ChangeNotifier {
-  MediaLibraryProvider({DatabaseService? database})
-    : _db = database ?? DatabaseService() {
+  MediaLibraryProvider({DatabaseService? database}) : _db = database ?? DatabaseService() {
     _queries = MediaLibraryQueries(_catalog);
-    _syncController = LibrarySyncController(catalog: _catalog, database: _db)
-      ..addListener(_relaySyncChanges);
+    _syncController = LibrarySyncController(catalog: _catalog, database: _db)..addListener(_relaySyncChanges);
   }
 
   final DatabaseService _db;
@@ -38,8 +35,7 @@ class MediaLibraryProvider extends ChangeNotifier {
 
   List<MediaFile> get uncategorized => _queries.uncategorized;
 
-  List<MediaCardViewData> get continueWatchingItems =>
-      _queries.continueWatchingItems;
+  List<MediaCardViewData> get continueWatchingItems => _queries.continueWatchingItems;
 
   List<MediaCardViewData> get favoriteItems => _queries.favoriteItems;
 
@@ -67,39 +63,26 @@ class MediaLibraryProvider extends ChangeNotifier {
 
   List<MediaFile> getVersions(String tmdbId) => _queries.getVersions(tmdbId);
 
-  List<MediaFile> getPlaybackQueue(MediaFile currentFile) =>
-      _queries.getPlaybackQueue(currentFile);
+  List<MediaFile> getPlaybackQueue(MediaFile currentFile) => _queries.getPlaybackQueue(currentFile);
 
   LibraryItem? getRandomHeroItem() => _queries.getRandomHeroItem();
 
   List<LibraryItem> searchLibrary(String query) =>
-      LibrarySearchMatcher.libraryItems<LibraryItem>([
-        ...movies,
-        ...tvShows,
-      ], query);
+      LibrarySearchMatcher.libraryItems<LibraryItem>([...movies, ...tvShows], query);
 
-  List<Movie> searchMovies(String query) =>
-      LibrarySearchMatcher.libraryItems(movies, query);
+  List<Movie> searchMovies(String query) => LibrarySearchMatcher.libraryItems(movies, query);
 
-  List<TVShow> searchTVShows(String query) =>
-      LibrarySearchMatcher.libraryItems(tvShows, query);
+  List<TVShow> searchTVShows(String query) => LibrarySearchMatcher.libraryItems(tvShows, query);
 
-  List<MediaCardViewData> searchFavorites(String query) =>
-      LibrarySearchMatcher.mediaCards(favoriteItems, query);
+  List<MediaCardViewData> searchFavorites(String query) => LibrarySearchMatcher.mediaCards(favoriteItems, query);
 
   Future<void> loadFromDatabase() => _syncController.loadFromDatabase();
 
-  Future<void> refreshLibraryMetadata() =>
-      _syncController.refreshLibraryMetadata();
+  Future<void> refreshLibraryMetadata() => _syncController.refreshLibraryMetadata();
 
-  Future<MediaSourceScanSummary?> scanMediaSources() =>
-      _syncController.scanEnabledMediaSources();
+  Future<MediaSourceScanSummary?> scanMediaSources() => _syncController.scanEnabledMediaSources();
 
-  Future<void> updateProgress(
-    MediaFile file,
-    int position, {
-    int? duration,
-  }) async {
+  Future<void> updateProgress(MediaFile file, int position, {int? duration}) async {
     final entity = _findMediaFileEntity(file);
     if (entity == null) {
       _logger.d('跳过临时文件播放进度: ${file.path}');
@@ -122,9 +105,7 @@ class MediaLibraryProvider extends ChangeNotifier {
     if (latest == null) return null;
 
     final index = _catalog.mediaFiles.indexWhere(
-      (item) =>
-          item.id == latest!.id ||
-          (item.sourceId == file.sourceId && item.path == file.path),
+      (item) => item.id == latest!.id || (item.sourceId == file.sourceId && item.path == file.path),
     );
     if (index >= 0) {
       _catalog.mediaFiles[index] = latest;
@@ -132,21 +113,16 @@ class MediaLibraryProvider extends ChangeNotifier {
     return MediaEntityMapper.toMediaFile(latest);
   }
 
-  bool isFavorite(String tmdbId) =>
-      getVersions(tmdbId).any((file) => file.isFavorite);
+  bool isFavorite(String tmdbId) => getVersions(tmdbId).any((file) => file.isFavorite);
 
   /// Applies one favorite state to every physical version of a title.
   Future<bool> setFavorite(String tmdbId, {required bool isFavorite}) async {
     final matchingFiles = _catalog.mediaFiles
-        .where(
-          (file) => file.movieTmdbId == tmdbId || file.tvShowTmdbId == tmdbId,
-        )
+        .where((file) => file.movieTmdbId == tmdbId || file.tvShowTmdbId == tmdbId)
         .toList();
     if (matchingFiles.isEmpty) return false;
 
-    final changedFiles = matchingFiles
-        .where((file) => file.isFavorite != isFavorite)
-        .toList();
+    final changedFiles = matchingFiles.where((file) => file.isFavorite != isFavorite).toList();
     if (changedFiles.isNotEmpty) {
       await _db.setFavorite(changedFiles, isFavorite: isFavorite);
       _catalog.markFavoriteChanged();
@@ -163,10 +139,7 @@ class MediaLibraryProvider extends ChangeNotifier {
 
   /// Removes in-memory library records already deleted for one storage source.
   void removeSourceMediaFromCatalog(String sourceId) {
-    final removed = _catalog.mediaFiles
-        .where((file) => file.sourceId == sourceId)
-        .map((file) => file.id)
-        .toSet();
+    final removed = _catalog.mediaFiles.where((file) => file.sourceId == sourceId).map((file) => file.id).toSet();
     if (removed.isEmpty) return;
 
     _catalog.mediaFiles.removeWhere((file) => removed.contains(file.id));
@@ -177,8 +150,7 @@ class MediaLibraryProvider extends ChangeNotifier {
 
   entity.MediaFileEntity? _findMediaFileEntity(MediaFile file) {
     for (final entity in _catalog.mediaFiles) {
-      if (entity.id == file.id ||
-          (entity.sourceId == file.sourceId && entity.path == file.path)) {
+      if (entity.id == file.id || (entity.sourceId == file.sourceId && entity.path == file.path)) {
         return entity;
       }
     }

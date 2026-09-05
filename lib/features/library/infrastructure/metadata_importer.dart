@@ -6,15 +6,11 @@ import 'package:mochi_player/core/infrastructure/tmdb/tmdb_season_result.dart';
 ///
 /// It never searches by title and never performs network I/O.
 class MetadataImporter {
-  MetadataImporter({DatabaseService? database})
-    : _database = database ?? DatabaseService();
+  MetadataImporter({DatabaseService? database}) : _database = database ?? DatabaseService();
 
   final DatabaseService _database;
 
-  Future<bool> importMovie(
-    MovieMetadataEntity movie,
-    MediaFileEntity file,
-  ) async {
+  Future<bool> importMovie(MovieMetadataEntity movie, MediaFileEntity file) async {
     final exists = await _database.getMovieByTmdbId(movie.tmdbId);
     if (exists == null) await _database.saveMovieMetadata(movie);
     file
@@ -30,18 +26,12 @@ class MetadataImporter {
     return exists == null;
   }
 
-  Future<int> importSeasonEpisodes(
-    TmdbSeasonResult result,
-    String showTmdbId,
-    List<MediaFileEntity> files,
-  ) async {
+  Future<int> importSeasonEpisodes(TmdbSeasonResult result, String showTmdbId, List<MediaFileEntity> files) async {
     final seasonKey = '${showTmdbId}_s${result.season.seasonNumber}';
     if (await _database.getSeasonByKey(seasonKey) == null) {
       await _database.saveSeasonMetadata(result.season);
     }
-    final episodesByNumber = {
-      for (final episode in result.episodes) episode.episodeNumber: episode,
-    };
+    final episodesByNumber = {for (final episode in result.episodes) episode.episodeNumber: episode};
 
     var imported = 0;
     for (final file in files) {

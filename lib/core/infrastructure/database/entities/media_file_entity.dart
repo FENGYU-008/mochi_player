@@ -62,8 +62,7 @@ class MediaFileEntity {
   String? episodeTmdbId;
 
   @Enumerated(EnumType.ordinal)
-  StoredMetadataMatchStatus metadataMatchStatus =
-      StoredMetadataMatchStatus.pending;
+  StoredMetadataMatchStatus metadataMatchStatus = StoredMetadataMatchStatus.pending;
 
   // ===== 技术信息 =====
 
