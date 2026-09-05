@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mochi_player/features/playback/application/external_subtitle_track.dart';
+import 'package:path/path.dart' as path;
 
 void main() {
   group('ExternalSubtitleTrack', () {
@@ -7,7 +8,7 @@ void main() {
       final track = ExternalSubtitleTrack.fromPath('/media/Movie.zh-CN.srt');
 
       expect(track.uri, isTrue);
-      expect(track.id, '/media/Movie.zh-CN.srt');
+      expect(track.id, path.normalize('/media/Movie.zh-CN.srt'));
       expect(track.title, 'Movie.zh-CN');
     });
 
@@ -15,7 +16,7 @@ void main() {
       final track = ExternalSubtitleTrack.fromPath('/media/Movie.sub');
 
       expect(track.uri, isTrue);
-      expect(track.id, '/media/Movie.sub');
+      expect(track.id, path.normalize('/media/Movie.sub'));
       expect(track.title, 'Movie');
     });
 
@@ -28,7 +29,7 @@ void main() {
     test('normalizes a path before it is used as a loaded-file key', () {
       expect(
         ExternalSubtitleTrack.normalizePath('/media/films/../Movie.srt'),
-        '/media/Movie.srt',
+        path.normalize('/media/Movie.srt'),
       );
     });
   });
