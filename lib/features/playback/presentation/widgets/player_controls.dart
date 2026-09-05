@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:mochi_player/core/ui/app_ui.dart';
 import 'package:mochi_player/features/playback/presentation/widgets/player_overlay.dart';
 import 'package:mochi_player/features/playback/presentation/widgets/player_popup_menu.dart';
+import 'package:mochi_player/features/playback/presentation/widgets/player_seek_time_preview.dart';
 
 class PlayerControls extends StatefulWidget {
   final Player player;
@@ -78,10 +79,10 @@ class _PlayerControlsState extends State<PlayerControls> {
   bool _isPlaying = false;
   double _volume = 100.0;
   double _rate = 1.0;
-  String _systemTime = '';
+  String _cacheSpeed = '';
 
   // 资源
-  Timer? _timeTimer;
+  Timer? _cacheSpeedTimer;
   final List<StreamSubscription> _subscriptions = [];
 
   @override
@@ -103,21 +104,40 @@ class _PlayerControlsState extends State<PlayerControls> {
       }),
     ]);
 
-    _updateTime();
-    _timeTimer = Timer.periodic(const Duration(seconds: 10), (_) => _updateTime());
+    unawaited(_updateCacheSpeed());
+    _cacheSpeedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      unawaited(_updateCacheSpeed());
+    });
   }
 
-  void _updateTime() {
-    if (mounted) {
-      setState(() {
-        _systemTime = DateFormat('HH:mm').format(DateTime.now());
-      });
+  Future<void> _updateCacheSpeed() async {
+    final platform = widget.player.platform;
+    if (platform is! NativePlayer) return;
+
+    try {
+      final bytesPerSecond = double.tryParse(await platform.getProperty('cache-speed'));
+      final cacheSpeed = bytesPerSecond == null || !bytesPerSecond.isFinite || bytesPerSecond <= 0
+          ? ''
+          : _formatCacheSpeed(bytesPerSecond);
+      if (mounted && cacheSpeed != _cacheSpeed) {
+        setState(() => _cacheSpeed = cacheSpeed);
+      }
+    } catch (_) {
+      // `cache-speed` is unavailable before a source is opened and for some local inputs.
     }
+  }
+
+  static String _formatCacheSpeed(double bytesPerSecond) {
+    const bytesPerMegabyte = 1024 * 1024;
+    if (bytesPerSecond >= bytesPerMegabyte) {
+      return '${(bytesPerSecond / bytesPerMegabyte).toStringAsFixed(1)} MB/s';
+    }
+    return '${(bytesPerSecond / 1024).toStringAsFixed(0)} KB/s';
   }
 
   @override
   void dispose() {
-    _timeTimer?.cancel();
+    _cacheSpeedTimer?.cancel();
     for (var s in _subscriptions) {
       s.cancel();
     }
@@ -176,7 +196,7 @@ class _PlayerControlsState extends State<PlayerControls> {
               child: PlayerTopBar(
                 title: widget.title,
                 secondaryTitle: widget.secondaryTitle,
-                systemTime: _systemTime,
+                cacheSpeed: _cacheSpeed,
                 isFullScreen: widget.isFullScreen,
                 onBack: () => _onTap(widget.onBack ?? () => Navigator.of(context).maybePop()),
               ),
@@ -188,7 +208,15 @@ class _PlayerControlsState extends State<PlayerControls> {
                 progress: _VideoSeekBar(player: widget.player),
                 controls: Row(
                   children: [
-                    // 1. 上一集
+                    // Keep the content aligned with the Slider track instead
+                    // of its wider touch target.
+                    const SizedBox(width: AppSpacing.md),
+
+                    // 1. 当前进度优先放在左侧，紧接着才是播放控制。
+                    _DurationLabel(player: widget.player),
+                    const SizedBox(width: 16),
+
+                    // 2. 上一集
                     if (!widget.isMiniPlayer && widget.onPrevious != null) ...[
                       PlayerControlButton(
                         onPressed: () => _onTap(widget.onPrevious!),
@@ -197,7 +225,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                       const SizedBox(width: 4),
                     ],
 
-                    // 2. 快退
+                    // 3. 快退
                     PlayerControlButton(
                       onPressed: () =>
                           _onTap(() => widget.player.seek(widget.player.state.position - const Duration(seconds: 10))),
@@ -205,7 +233,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                     ),
                     const SizedBox(width: 4),
 
-                    // 3. 播放/暂停 (统一大小，但保留图标视觉差异)
+                    // 4. 播放/暂停 (统一大小，但保留图标视觉差异)
                     PlayerControlButton(
                       onPressed: () => _onTap(widget.player.playOrPause),
                       child: Icon(
@@ -216,14 +244,14 @@ class _PlayerControlsState extends State<PlayerControls> {
                     ),
                     const SizedBox(width: 4),
 
-                    // 4. 快进
+                    // 5. 快进
                     PlayerControlButton(
                       onPressed: () =>
                           _onTap(() => widget.player.seek(widget.player.state.position + const Duration(seconds: 10))),
                       child: const Icon(Icons.forward_10_rounded, color: Colors.white, size: 21),
                     ),
 
-                    // 5. 下一集
+                    // 6. 下一集
                     if (!widget.isMiniPlayer && widget.onNext != null) ...[
                       const SizedBox(width: 4),
                       PlayerControlButton(
@@ -231,10 +259,6 @@ class _PlayerControlsState extends State<PlayerControls> {
                         child: const Icon(Icons.skip_next_rounded, color: Colors.white, size: 21),
                       ),
                     ],
-
-                    const SizedBox(width: 16),
-                    _DurationLabel(player: widget.player),
-
                     const Spacer(),
 
                     // 右侧功能区
@@ -283,7 +307,6 @@ class _PlayerControlsState extends State<PlayerControls> {
                     if (widget.onPip != null) ...[
                       PlayerControlButton(
                         onPressed: () => _onTap(widget.onPip!),
-                        tooltip: widget.isMiniPlayer ? '退出小窗' : '小窗播放',
                         child: Icon(
                           widget.isMiniPlayer ? Icons.open_in_full_rounded : Icons.picture_in_picture_alt_rounded,
                           color: Colors.white,
@@ -364,9 +387,9 @@ class _RateMenuButton extends StatelessWidget {
 
   String _labelFor(double value) {
     if (value == value.roundToDouble()) {
-      return '${value.toInt()}X';
+      return '${value.toInt()}×';
     }
-    return '${value.toStringAsFixed(2).replaceAll(RegExp(r'0$'), '')}X';
+    return '${value.toStringAsFixed(2).replaceAll(RegExp(r'0$'), '')}×';
   }
 
   @override
@@ -389,10 +412,16 @@ class _RateMenuButton extends StatelessWidget {
         ],
       ),
       child: PlayerMenuButtonSurface(
-        width: 56,
+        width: 42,
         child: Text(
           _labelFor(rate),
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            height: 1,
+            letterSpacing: -0.2,
+          ),
         ),
       ),
     );
@@ -569,10 +598,16 @@ class _VideoSeekBar extends StatefulWidget {
 }
 
 class _VideoSeekBarState extends State<_VideoSeekBar> {
+  static const double _trackHorizontalInset = AppSpacing.md;
+  static const double _previewVerticalOffset = 34;
+
   Duration _pos = Duration.zero;
   Duration _dur = Duration.zero;
   Duration _buf = Duration.zero;
   bool _dragging = false;
+  Duration? _previewPosition;
+  Offset? _previewOffset;
+  OverlayEntry? _previewOverlay;
   late List<StreamSubscription> _subs;
 
   @override
@@ -594,10 +629,54 @@ class _VideoSeekBarState extends State<_VideoSeekBar> {
 
   @override
   void dispose() {
+    _hidePreview();
     for (var s in _subs) {
       s.cancel();
     }
     super.dispose();
+  }
+
+  void _showPreview(double value) {
+    final renderBox = context.findRenderObject();
+    if (renderBox is! RenderBox || !renderBox.hasSize) return;
+
+    final usableWidth = (renderBox.size.width - _trackHorizontalInset * 2).clamp(0.0, double.infinity);
+    final fraction = _dur.inMilliseconds == 0 ? 0.0 : (value / _dur.inMilliseconds).clamp(0.0, 1.0);
+    _previewPosition = Duration(milliseconds: value.round());
+    _previewOffset = renderBox.localToGlobal(Offset(_trackHorizontalInset + usableWidth * fraction, 0));
+
+    _previewOverlay ??= OverlayEntry(
+      builder: (context) => Positioned(
+        left: (_previewOffset ?? Offset.zero).dx,
+        top: (_previewOffset ?? Offset.zero).dy - _previewVerticalOffset,
+        child: IgnorePointer(
+          child: FractionalTranslation(
+            translation: const Offset(-0.5, 0),
+            child: PlayerSeekTimePreview(position: _previewPosition ?? Duration.zero),
+          ),
+        ),
+      ),
+    );
+    if (!_previewOverlay!.mounted) {
+      Overlay.of(context, rootOverlay: true).insert(_previewOverlay!);
+    } else {
+      _previewOverlay!.markNeedsBuild();
+    }
+  }
+
+  void _hidePreview() {
+    _previewPosition = null;
+    _previewOffset = null;
+    _previewOverlay?.remove();
+    _previewOverlay = null;
+  }
+
+  void _previewAt(Offset localPosition, double width) {
+    if (_dur == Duration.zero) return;
+    final usableWidth = (width - _trackHorizontalInset * 2).clamp(0.0, double.infinity);
+    if (usableWidth == 0) return;
+    final fraction = ((localPosition.dx - _trackHorizontalInset) / usableWidth).clamp(0.0, 1.0);
+    _showPreview(_dur.inMilliseconds * fraction);
   }
 
   @override
@@ -606,34 +685,45 @@ class _VideoSeekBarState extends State<_VideoSeekBar> {
     final val = _pos.inMilliseconds.toDouble().clamp(0.0, max);
     final bufVal = _buf.inMilliseconds.toDouble().clamp(0.0, max);
 
-    return SizedBox(
-      height: 10,
-      child: SliderTheme(
-        data: SliderThemeData(
-          trackHeight: 2,
-          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
-          overlayShape: const RoundSliderOverlayShape(overlayRadius: 9),
-          activeTrackColor: Theme.of(context).primaryColor,
-          inactiveTrackColor: Colors.white24,
-          secondaryActiveTrackColor: Colors.white38,
-          thumbColor: Colors.white,
-          trackShape: const RoundedRectSliderTrackShape(),
-        ),
-        child: Slider(
-          min: 0.0,
-          max: max,
-          value: val,
-          secondaryTrackValue: bufVal,
-          onChangeStart: (_) {
-            setState(() => _dragging = true);
-          },
-          onChanged: (v) {
-            setState(() => _pos = Duration(milliseconds: v.toInt()));
-          },
-          onChangeEnd: (v) {
-            _dragging = false;
-            widget.player.seek(Duration(milliseconds: v.toInt()));
-          },
+    return LayoutBuilder(
+      builder: (context, constraints) => MouseRegion(
+        onHover: (event) => _previewAt(event.localPosition, constraints.maxWidth),
+        onExit: (_) {
+          if (!_dragging) _hidePreview();
+        },
+        child: SizedBox(
+          height: 10,
+          child: SliderTheme(
+            data: SliderThemeData(
+              trackHeight: 2,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 9),
+              activeTrackColor: Theme.of(context).primaryColor,
+              inactiveTrackColor: Colors.white24,
+              secondaryActiveTrackColor: Colors.white38,
+              thumbColor: Colors.white,
+              trackShape: const RoundedRectSliderTrackShape(),
+            ),
+            child: Slider(
+              value: val,
+              min: 0.0,
+              max: max,
+              secondaryTrackValue: bufVal,
+              onChangeStart: (value) {
+                setState(() => _dragging = true);
+                _showPreview(value);
+              },
+              onChanged: (value) {
+                setState(() => _pos = Duration(milliseconds: value.toInt()));
+                _showPreview(value);
+              },
+              onChangeEnd: (value) {
+                setState(() => _dragging = false);
+                _hidePreview();
+                widget.player.seek(Duration(milliseconds: value.toInt()));
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -641,23 +731,24 @@ class _VideoSeekBarState extends State<_VideoSeekBar> {
 }
 
 // ================== 时间标签 ==================
+String _formatPlaybackDuration(Duration duration) {
+  final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+  return duration.inHours > 0 ? '${duration.inHours}:$minutes:$seconds' : '$minutes:$seconds';
+}
+
 class _DurationLabel extends StatelessWidget {
   final Player player;
 
   const _DurationLabel({required this.player});
-
-  String _fmt(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return d.inHours > 0 ? "${d.inHours}:$m:$s" : "$m:$s";
-  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<Duration>(
       stream: player.stream.position,
       builder: (_, snap) => Text(
-        "${_fmt(snap.data ?? Duration.zero)} / ${_fmt(player.state.duration)}",
+        '${_formatPlaybackDuration(snap.data ?? Duration.zero)} / '
+        '${_formatPlaybackDuration(player.state.duration)}',
         style: const TextStyle(color: Colors.white70, fontSize: 12, fontFeatures: [FontFeature.tabularFigures()]),
       ),
     );

@@ -18,7 +18,7 @@ void main() {
           PlayerTopBar(
             title: '进击的巨人',
             secondaryTitle: '第 1 季 · 第 1 集',
-            systemTime: '18:11',
+            cacheSpeed: '3.2 MB/s',
             isFullScreen: false,
             onBack: () {},
           ),
@@ -34,8 +34,9 @@ void main() {
       expect(find.text('进击的巨人'), findsOneWidget);
       expect(find.text('第 1 季 · 第 1 集'), findsOneWidget);
 
-      final time = find.byKey(const ValueKey('player-system-time'));
-      expect(tester.getTopRight(time).dx, 1176);
+      final cacheSpeed = find.byKey(const ValueKey('player-cache-speed'));
+      expect(tester.getTopRight(cacheSpeed).dx, 1176);
+      expect(find.text('3.2 MB/s'), findsOneWidget);
 
       final glass = tester.widget<AppGlassSurface>(
         find.descendant(of: backButton, matching: find.byType(AppGlassSurface)),
@@ -73,7 +74,7 @@ void main() {
       _testApp(
         PlayerTopBar(
           title: '电影',
-          systemTime: '18:11',
+          cacheSpeed: '3.2 MB/s',
           isFullScreen: true,
           onBack: () {},
         ),
@@ -84,6 +85,21 @@ void main() {
       tester.getTopLeft(find.byKey(const ValueKey('player-back-button'))).dx,
       AppSpacing.xxl,
     );
+  });
+
+  testWidgets('hides the cache speed when it is unavailable', (tester) async {
+    await tester.pumpWidget(
+      _testApp(
+        PlayerTopBar(
+          title: '电影',
+          cacheSpeed: '',
+          isFullScreen: true,
+          onBack: () {},
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('player-cache-speed')), findsNothing);
   });
 
   testWidgets(

@@ -120,18 +120,18 @@ class _SubtitleAvoidanceLayoutDelegate extends SingleChildLayoutDelegate {
 
 /// 播放器顶部信息栏。
 ///
-/// 只负责返回入口、媒体标题和系统时间，不持有播放状态。
+/// 只负责返回入口、媒体标题和缓存速度，不持有播放状态。
 class PlayerTopBar extends StatelessWidget {
   final String title;
   final String? secondaryTitle;
-  final String systemTime;
+  final String cacheSpeed;
   final bool isFullScreen;
   final VoidCallback onBack;
 
   const PlayerTopBar({
     super.key,
     required this.title,
-    required this.systemTime,
+    required this.cacheSpeed,
     required this.isFullScreen,
     required this.onBack,
     this.secondaryTitle,
@@ -195,21 +195,23 @@ class PlayerTopBar extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.xxl),
-              Padding(
-                padding: const EdgeInsets.only(top: 9),
-                child: Text(
-                  systemTime,
-                  key: const ValueKey('player-system-time'),
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    height: 1.2,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                    shadows: _topBarTextShadows,
+              if (cacheSpeed.isNotEmpty) ...[
+                const SizedBox(width: AppSpacing.xxl),
+                Padding(
+                  padding: const EdgeInsets.only(top: 9),
+                  child: Text(
+                    cacheSpeed,
+                    key: const ValueKey('player-cache-speed'),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      height: 1.2,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                      shadows: _topBarTextShadows,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

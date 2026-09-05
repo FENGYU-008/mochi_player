@@ -37,6 +37,8 @@ class PlayerPage extends StatefulWidget {
 }
 
 class _PlayerPageState extends State<PlayerPage> {
+  static const _controlsAutoHideDelay = Duration(seconds: 4);
+
   late final AppSettings _playbackSettings;
   late final PlayerPlaybackController _playbackController;
   late final PlayerWindowModeController _windowModeController;
@@ -108,7 +110,7 @@ class _PlayerPageState extends State<PlayerPage> {
     if (_isDisposed) return;
     _hideControlsTimer?.cancel();
     if (_isPlayerMenuOpen) return;
-    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
+    _hideControlsTimer = Timer(_controlsAutoHideDelay, () {
       if (mounted && !_isPlayerMenuOpen) {
         setState(() => _isControlsVisible = false);
       }
